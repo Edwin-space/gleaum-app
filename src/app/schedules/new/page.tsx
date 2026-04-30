@@ -12,7 +12,9 @@ import {
   PAYMENT_METHOD_LABELS,
 } from '@/types';
 import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
-import { sampleUsers } from '@/lib/sampleData';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useFamily } from '@/hooks/useFamily';
+import { useSchedules } from '@/hooks/useSchedules';
 
 // ── 공통 입력 스타일 ──
 const inputCls =
@@ -23,6 +25,11 @@ const labelCls =
 export default function NewSchedulePage() {
   const router = useRouter();
 
+  const { user, familyGroupId } = useCurrentUser();
+  const { members } = useFamily(familyGroupId);
+  const { create } = useSchedules(familyGroupId);
+
+  const [saving, setSaving] = useState(false);
   const [type, setType]         = useState<ScheduleType>('shared');
   const [title, setTitle]       = useState('');
   const [date, setDate]         = useState('');
@@ -38,7 +45,7 @@ export default function NewSchedulePage() {
   const [amount, setAmount]               = useState('');
   const [category, setCategory]           = useState<ExpenseCategory>('education');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('auto');
-  // 사진 첨부
+  // 사진 첨부 (UI 전용)
   const [attachments, setAttachments] = useState<{ id: string; name: string; url: string; source: string }[]>([]);
 
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
@@ -50,7 +57,6 @@ export default function NewSchedulePage() {
   };
 
   const handlePhotoLocal = () => {
-    // 실제 구현 시 input[type=file] 트리거
     const mockFile = { id: Date.now().toString(), name: '사진_' + (attachments.length + 1) + '.jpg', url: '', source: 'local' };
     setAttachments((prev) => [...prev, mockFile]);
   };
@@ -64,9 +70,49 @@ export default function NewSchedulePage() {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleSave = () => {
-    // TODO: Supabase 저장
-    router.back();
+  const handleSave = async () => {
+    if (!title.trim()) {
+      alert('제목을 입력해주세요');
+      return;
+    }
+    if (!date) {
+      alert('날짜를 선택해주세요');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // 날짜 + 시간 조합
+      const startDateTime = new Date(`${date}T${startTime || '00:00'}:00`);
+      const endDateTime   = endTime ? new Date(`${date}T${endTime}:00`) : undefined;
+
+      // 참여자가 없으면 현재 사용자 자동 포함
+      const participantIds = participants.length > 0 ? participants : (user ? [user.id] : []);
+
+      await create({
+        title:            title.trim(),
+        type,
+        startTime:        startDateTime,
+        endTime:          endDateTime,
+        status:           'pending',
+        locationAddress:  address || undefined,
+        referenceUrl:     refUrl || undefined,
+        reminder,
+        repeat,
+        memo:             memo || undefined,
+        participantIds,
+        amount:           type === 'expense' && amount ? parseInt(amount) : undefined,
+        expenseCategory:  type === 'expense' ? category : undefined,
+        paymentMethod:    type === 'expense' ? paymentMethod : undefined,
+      });
+
+      router.back();
+    } catch (e) {
+      console.error('저장 오류:', e);
+      alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -79,10 +125,11 @@ export default function NewSchedulePage() {
         rightAction={
           <button
             onClick={handleSave}
-            className="px-4 py-1.5 rounded-full text-[14px] font-semibold text-white"
+            disabled={saving}
+            className="px-4 py-1.5 rounded-full text-[14px] font-semibold text-white disabled:opacity-60"
             style={{ background: 'var(--color-primary)' }}
           >
-            저장
+            {saving ? '저장 중...' : '저장'}
           </button>
         }
       />
@@ -135,7 +182,7 @@ export default function NewSchedulePage() {
 
         {/* ── 날짜 & 시간 ── */}
         <div>
-          <label className={labelCls} style={{ color: 'var(--color-ink-muted-48)' }}>날짜</label>
+          <label className={labelCls} style={{ color: 'var(--color-ink-muted-48)' }}>날짜 *</label>
           <input
             type="date"
             value={date}
@@ -238,31 +285,37 @@ export default function NewSchedulePage() {
           </div>
         )}
 
-        {/* ── 참여자 ── */}
+        {/* ── 참여자 (실데이터 가족 멤버) ── */}
         <div>
           <label className={labelCls} style={{ color: 'var(--color-ink-muted-48)' }}>참여자</label>
-          <div className="flex gap-2 flex-wrap">
-            {sampleUsers.map((u) => {
-              const selected = participants.includes(u.id);
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => toggleParticipant(u.id)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full text-[13px] font-medium transition-all"
-                  style={{
-                    background: selected ? 'var(--color-primary)' : 'white',
-                    color: selected ? 'white' : 'var(--color-ink)',
-                    border: selected ? 'none' : '1px solid var(--color-hairline)',
-                    fontFamily: "'Noto Sans KR',sans-serif",
-                  }}
-                >
-                  <span>{u.avatar}</span>
-                  <span>{u.name}</span>
-                  <span className="text-[10px] opacity-70">({u.role === 'parent' ? '부모' : '자녀'})</span>
-                </button>
-              );
-            })}
-          </div>
+          {members.length === 0 ? (
+            <p className="text-[13px]" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+              가족 멤버를 불러오는 중...
+            </p>
+          ) : (
+            <div className="flex gap-2 flex-wrap">
+              {members.map((u) => {
+                const selected = participants.includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    onClick={() => toggleParticipant(u.id)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-full text-[13px] font-medium transition-all"
+                    style={{
+                      background: selected ? 'var(--color-primary)' : 'white',
+                      color: selected ? 'white' : 'var(--color-ink)',
+                      border: selected ? 'none' : '1px solid var(--color-hairline)',
+                      fontFamily: "'Noto Sans KR',sans-serif",
+                    }}
+                  >
+                    <span>{u.avatar}</span>
+                    <span>{u.name}</span>
+                    <span className="text-[10px] opacity-70">({u.role === 'parent' ? '부모' : '자녀'})</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── 장소 ── */}
@@ -278,7 +331,6 @@ export default function NewSchedulePage() {
               style={{ borderColor: 'var(--color-hairline)', fontFamily: "'Noto Sans KR',sans-serif" }}
             />
           </div>
-          {/* 지도 미리보기 */}
           {address && (
             <div
               className="mt-2 h-32 rounded-xl overflow-hidden flex items-center justify-center"
@@ -349,8 +401,6 @@ export default function NewSchedulePage() {
         {/* ── 사진 첨부 ── */}
         <div>
           <label className={labelCls} style={{ color: 'var(--color-ink-muted-48)' }}>사진 및 파일 첨부</label>
-
-          {/* 소스 선택 버튼 */}
           <div className="grid grid-cols-2 gap-3 mb-3">
             <button
               onClick={handlePhotoLocal}
@@ -378,7 +428,6 @@ export default function NewSchedulePage() {
             </button>
           </div>
 
-          {/* 첨부 파일 목록 */}
           {attachments.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
               {attachments.map((a) => (
@@ -397,12 +446,6 @@ export default function NewSchedulePage() {
                   >
                     ✕
                   </button>
-                  <div
-                    className="absolute bottom-0 left-0 right-0 px-1 py-0.5"
-                    style={{ background: 'rgba(0,0,0,0.4)' }}
-                  >
-                    <p className="text-[9px] text-white truncate">{a.name}</p>
-                  </div>
                 </div>
               ))}
             </div>
@@ -429,7 +472,7 @@ export default function NewSchedulePage() {
         <div className="grid grid-cols-2 gap-3 pt-2 pb-6">
           <button
             onClick={() => router.back()}
-            className="h-13 rounded-2xl text-[15px] font-semibold transition-all active:scale-95"
+            className="h-12 rounded-2xl text-[15px] font-semibold transition-all active:scale-95"
             style={{
               border: '1px solid var(--color-hairline)',
               color: 'var(--color-ink-muted-48)',
@@ -440,10 +483,11 @@ export default function NewSchedulePage() {
           </button>
           <button
             onClick={handleSave}
-            className="h-13 rounded-2xl text-[15px] font-semibold text-white transition-all active:scale-95"
+            disabled={saving}
+            className="h-12 rounded-2xl text-[15px] font-semibold text-white transition-all active:scale-95 disabled:opacity-60"
             style={{ background: 'var(--color-primary)', fontFamily: "'Noto Sans KR',sans-serif" }}
           >
-            일정 저장
+            {saving ? '저장 중...' : '일정 저장'}
           </button>
         </div>
       </div>

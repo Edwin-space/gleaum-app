@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
-import { currentUser } from '@/lib/sampleData';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SettingRowProps {
   icon: string;
@@ -70,6 +71,17 @@ function SectionTitle({ title }: { title: string }) {
 }
 
 export default function MyPage() {
+  const { user, loading } = useCurrentUser();
+  const { signOut } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-dvh pb-24">
       <AppHeader title="마이페이지" showLogo={false} showNotification={false} />
@@ -81,20 +93,20 @@ export default function MyPage() {
             className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
             style={{ background: 'var(--brand-gradient)' }}
           >
-            {currentUser.avatar}
+            {user?.avatar ?? '👤'}
           </div>
           <div className="flex-1">
             <p className="text-[18px] font-bold" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
-              {currentUser.name}
+              {user?.name ?? '사용자'}
             </p>
             <p className="text-[13px]" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
-              {currentUser.email}
+              {user?.email ?? ''}
             </p>
             <span
               className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
               style={{ background: 'rgba(0,132,204,0.1)', color: 'var(--color-primary)', fontFamily: "'Noto Sans KR',sans-serif" }}
             >
-              {currentUser.role === 'parent' ? '부모' : '자녀'}
+              {user?.role === 'parent' ? '부모' : '자녀'}
             </span>
           </div>
           <button
@@ -133,7 +145,7 @@ export default function MyPage() {
 
       <div className="mx-4 mt-3 bg-white rounded-2xl overflow-hidden divide-y" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
         <SectionTitle title="계정" />
-        <SettingRow icon="🚪" label="로그아웃" danger onClick={() => {}} />
+        <SettingRow icon="🚪" label="로그아웃" danger onClick={signOut} />
       </div>
 
       <p

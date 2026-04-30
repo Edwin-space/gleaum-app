@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { StatusBadge, TypeBadge } from '@/components/ui/Badge';
-import { sampleSchedules, sampleUsers } from '@/lib/sampleData';
+import { getScheduleById, updateScheduleStatus, deleteSchedule } from '@/lib/db';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useFamily } from '@/hooks/useFamily';
 import {
   formatDate, formatTime, formatAmount,
   getScheduleTypeColor,
@@ -12,20 +14,53 @@ import {
 import {
   EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS, REPEAT_LABELS,
-  SCHEDULE_STATUS_LABELS,
 } from '@/types';
-import type { ScheduleStatus } from '@/types';
+import type { Schedule, ScheduleStatus } from '@/types';
 
 export default function ScheduleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [schedules, setSchedules] = useState(sampleSchedules);
+  const { familyGroupId } = useCurrentUser();
+  const { members } = useFamily(familyGroupId);
+
+  const [schedule, setSchedule] = useState<Schedule | null | undefined>(undefined); // undefined = loading
   const [showDeleteModal, setShowDeleteModal]     = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  const schedule = schedules.find((s) => s.id === id);
+  // 일정 로드
+  useEffect(() => {
+    if (!id) return;
+    getScheduleById(id).then((s) => setSchedule(s ?? null));
+  }, [id]);
 
+  const handleUpdateStatus = async (status: ScheduleStatus) => {
+    if (!schedule) return;
+    await updateScheduleStatus(schedule.id, status);
+    setSchedule({ ...schedule, status });
+    setShowCompletionModal(false);
+  };
+
+  const handleDelete = async () => {
+    if (!schedule) return;
+    await deleteSchedule(schedule.id);
+    router.back();
+  };
+
+  const sendReNotify = () => {
+    alert(`📣 ${schedule?.title} 재알림을 발송했습니다.`);
+  };
+
+  // 로딩 상태
+  if (schedule === undefined) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // 존재하지 않는 일정
   if (!schedule) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4">
@@ -40,19 +75,9 @@ export default function ScheduleDetailPage() {
     );
   }
 
-  const typeColor      = getScheduleTypeColor(schedule.type);
-  const participantUsers = sampleUsers.filter((u) => schedule.participants.includes(u.id));
+  const typeColor = getScheduleTypeColor(schedule.type);
+  const participantUsers = members.filter((u) => schedule.participants.includes(u.id));
 
-  const updateStatus = (status: ScheduleStatus) => {
-    setSchedules((prev) => prev.map((s) => s.id === id ? { ...s, status } : s));
-    setShowCompletionModal(false);
-  };
-
-  const sendReNotify = () => {
-    alert(`📣 ${schedule.title} 재알림을 발송했습니다.`);
-  };
-
-  // 상태 스텝 (자녀일정)
   const steps: { key: ScheduleStatus; label: string }[] = [
     { key: 'pending',     label: '대기중' },
     { key: 'in_progress', label: '진행중' },
@@ -62,7 +87,6 @@ export default function ScheduleDetailPage() {
 
   return (
     <div className="min-h-dvh pb-10" style={{ background: 'var(--color-canvas-parchment)' }}>
-      {/* 헤더 */}
       <AppHeader
         showBack
         showLogo={false}
@@ -70,7 +94,6 @@ export default function ScheduleDetailPage() {
         title="일정 상세"
         rightAction={
           <button
-            onClick={() => router.push(`/schedules/${id}/edit`)}
             className="text-[14px] font-medium"
             style={{ color: 'var(--color-primary)', fontFamily: "'Noto Sans KR',sans-serif" }}
           >
@@ -96,7 +119,6 @@ export default function ScheduleDetailPage() {
           >
             {schedule.title}
           </h1>
-          {/* 날짜/시간 */}
           <div className="flex items-center gap-2 text-[14px]" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
             <span>📅</span>
             <span>{formatDate(schedule.startTime)}</span>
@@ -126,7 +148,6 @@ export default function ScheduleDetailPage() {
               {steps.map((step, i) => {
                 const isActive = schedule.status === step.key;
                 const isPast   = i < currentStepIdx;
-                const isMissed = schedule.status === 'missed';
                 const stepColor = isPast || isActive
                   ? (step.key === 'completed' ? 'var(--color-status-done)'
                     : step.key === 'in_progress' ? 'var(--color-status-progress)'
@@ -165,7 +186,6 @@ export default function ScheduleDetailPage() {
                   </div>
                 );
               })}
-              {/* 미완료 표시 */}
               {schedule.status === 'missed' && (
                 <div className="flex flex-col items-center gap-1.5 ml-2">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold"
@@ -245,7 +265,6 @@ export default function ScheduleDetailPage() {
             <p className="text-[14px]" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
               {schedule.location.address}
             </p>
-            {/* 지도 미리보기 플레이스홀더 */}
             <div
               className="mt-3 h-36 rounded-xl flex items-center justify-center"
               style={{ background: 'var(--color-canvas-parchment)', border: '1px solid var(--color-hairline)' }}
@@ -253,28 +272,10 @@ export default function ScheduleDetailPage() {
               <div className="text-center">
                 <span className="text-4xl">🗺️</span>
                 <p className="text-[11px] mt-1" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
-                  Google Maps API 키 설정 후 지도가 표시됩니다
+                  지도 표시 영역
                 </p>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* 참고 URL */}
-        {schedule.referenceUrl && (
-          <div className="bg-white rounded-2xl p-5" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-            <p className="text-[13px] font-semibold mb-2" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
-              🔗 참고 URL
-            </p>
-            <a
-              href={schedule.referenceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[14px] break-all"
-              style={{ color: 'var(--color-primary)' }}
-            >
-              {schedule.referenceUrl}
-            </a>
           </div>
         )}
 
@@ -292,11 +293,10 @@ export default function ScheduleDetailPage() {
 
         {/* 액션 버튼 */}
         <div className="space-y-2 pb-6">
-          {/* 자녀일정 — 완료 확인 / 재알림 */}
           {schedule.type === 'child' && schedule.status === 'in_progress' && (
             <button
               onClick={() => setShowCompletionModal(true)}
-              className="w-full py-4 rounded-2xl text-[15px] font-semibold text-white active:scale-[0.98] transition-transform"
+              className="w-full py-4 rounded-2xl text-[15px] font-semibold active:scale-[0.98] transition-transform"
               style={{ background: 'var(--color-schedule-child)', color: 'var(--brand-black)', fontFamily: "'Noto Sans KR',sans-serif" }}
             >
               ✓ 완료 확인하기
@@ -311,7 +311,6 @@ export default function ScheduleDetailPage() {
               🔔 재알림 보내기
             </button>
           )}
-          {/* 삭제 */}
           <button
             onClick={() => setShowDeleteModal(true)}
             className="w-full py-3.5 rounded-2xl text-[14px] font-medium active:scale-[0.98] transition-transform"
@@ -335,13 +334,13 @@ export default function ScheduleDetailPage() {
               {schedule.title}
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => updateStatus('missed')}
-                className="py-3.5 rounded-2xl text-[15px] font-semibold active:scale-95 transition-transform"
+              <button onClick={() => handleUpdateStatus('missed')}
+                className="py-3.5 rounded-2xl text-[15px] font-semibold active:scale-95"
                 style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}>
                 ✗ 미완료
               </button>
-              <button onClick={() => updateStatus('completed')}
-                className="py-3.5 rounded-2xl text-[15px] font-semibold text-white active:scale-95 transition-transform"
+              <button onClick={() => handleUpdateStatus('completed')}
+                className="py-3.5 rounded-2xl text-[15px] font-semibold active:scale-95"
                 style={{ background: 'var(--color-schedule-child)', color: 'var(--brand-black)', fontFamily: "'Noto Sans KR',sans-serif" }}>
                 ✓ 완료
               </button>
@@ -368,7 +367,7 @@ export default function ScheduleDetailPage() {
                 style={{ background: 'var(--color-canvas-parchment)', color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
                 취소
               </button>
-              <button onClick={() => router.back()}
+              <button onClick={handleDelete}
                 className="py-3.5 rounded-2xl text-[15px] font-semibold text-white active:scale-95"
                 style={{ background: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}>
                 삭제

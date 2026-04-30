@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ScheduleCard } from '@/components/ui/Card';
-import { sampleSchedules } from '@/lib/sampleData';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useSchedules } from '@/hooks/useSchedules';
 import type { ScheduleType } from '@/types';
 import { SCHEDULE_TYPE_LABELS } from '@/types';
 
@@ -23,7 +24,12 @@ export default function SchedulesPage() {
   const [filter, setFilter] = useState<'all' | ScheduleType>('all');
   const [search, setSearch] = useState('');
 
-  const filtered = sampleSchedules.filter((s) => {
+  const { familyGroupId, loading: userLoading } = useCurrentUser();
+  const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
+
+  const loading = userLoading || schedulesLoading;
+
+  const filtered = schedules.filter((s) => {
     const matchType   = filter === 'all' || s.type === filter;
     const matchSearch = !search || s.title.includes(search);
     return matchType && matchSearch;
@@ -71,32 +77,41 @@ export default function SchedulesPage() {
         ))}
       </div>
 
+      {/* 로딩 */}
+      {loading && (
+        <div className="flex justify-center py-16">
+          <div className="w-6 h-6 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+        </div>
+      )}
+
       {/* 일정 목록 */}
-      <div className="px-4 space-y-2">
-        {filtered.length > 0 ? (
-          filtered.map((s) => (
-            <ScheduleCard
-              key={s.id}
-              schedule={s}
-              onClick={() => router.push(`/schedules/${s.id}`)}
-            />
-          ))
-        ) : (
-          <div className="flex flex-col items-center py-20 gap-3">
-            <span className="text-4xl">📭</span>
-            <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: 'var(--color-ink-muted-48)' }}>
-              등록된 일정이 없습니다
-            </p>
-            <Link
-              href="/schedules/new"
-              className="mt-2 px-5 py-2.5 rounded-full text-[14px] font-semibold text-white"
-              style={{ background: 'var(--color-primary)' }}
-            >
-              일정 추가하기
-            </Link>
-          </div>
-        )}
-      </div>
+      {!loading && (
+        <div className="px-4 space-y-2">
+          {filtered.length > 0 ? (
+            filtered.map((s) => (
+              <ScheduleCard
+                key={s.id}
+                schedule={s}
+                onClick={() => router.push(`/schedules/${s.id}`)}
+              />
+            ))
+          ) : (
+            <div className="flex flex-col items-center py-20 gap-3">
+              <span className="text-4xl">📭</span>
+              <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: 'var(--color-ink-muted-48)' }}>
+                등록된 일정이 없습니다
+              </p>
+              <Link
+                href="/schedules/new"
+                className="mt-2 px-5 py-2.5 rounded-full text-[14px] font-semibold text-white"
+                style={{ background: 'var(--color-primary)' }}
+              >
+                일정 추가하기
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       <BottomNav />
     </div>
