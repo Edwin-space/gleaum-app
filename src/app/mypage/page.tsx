@@ -21,15 +21,20 @@ interface SettingRowProps {
 function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onClick }: SettingRowProps) {
   const content = (
     <div
-      className="flex items-center gap-3 px-4 py-3.5 active:bg-gray-50"
+      className="flex items-center gap-3 px-4 py-3.5 active:bg-[rgba(90,50,250,0.03)]"
       onClick={onClick}
     >
-      <span className="text-lg w-7 text-center flex-shrink-0">{icon}</span>
+      <div
+        className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0"
+        style={{ background: danger ? 'rgba(239,68,68,0.08)' : 'rgba(90,50,250,0.06)' }}
+      >
+        <span className="text-base">{icon}</span>
+      </div>
       <span
         className="flex-1 text-[15px]"
         style={{
           fontFamily: "'Noto Sans KR',sans-serif",
-          color: danger ? '#EF4444' : 'var(--color-ink)',
+          color: danger ? '#EF4444' : '#1A1B2E',
         }}
       >
         {label}
@@ -37,7 +42,7 @@ function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onCli
       {isToggle ? (
         <div
           className="w-11 h-6 rounded-full relative transition-all"
-          style={{ background: toggled ? 'var(--color-primary)' : 'var(--color-hairline)' }}
+          style={{ background: toggled ? '#5A32FA' : '#E5E5EA' }}
         >
           <div
             className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
@@ -45,12 +50,12 @@ function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onCli
           />
         </div>
       ) : value ? (
-        <span className="text-[13px]" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+        <span className="text-[13px]" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
           {value}
         </span>
       ) : (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M9 18L15 12L9 6" stroke="var(--color-ink-muted-48)" strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M9 18L15 12L9 6" stroke="#C7C7CC" strokeWidth="1.8" strokeLinecap="round"/>
         </svg>
       )}
     </div>
@@ -59,11 +64,11 @@ function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onCli
   return href ? <Link href={href}>{content}</Link> : content;
 }
 
-function SectionTitle({ title }: { title: string }) {
+function SectionHeader({ title }: { title: string }) {
   return (
     <p
-      className="px-4 pt-5 pb-1 text-[12px] font-semibold"
-      style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif", letterSpacing: '0.05em' }}
+      className="px-4 pt-5 pb-2 text-[11px] font-bold tracking-widest uppercase"
+      style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}
     >
       {title}
     </p>
@@ -76,87 +81,128 @@ export default function MyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+      <div className="min-h-dvh flex items-center justify-center" style={{ background: '#FAFAFD' }}>
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh pb-24">
+    <div className="min-h-dvh pb-28" style={{ background: '#FAFAFD' }}>
       <AppHeader title="마이페이지" showLogo={false} showNotification={false} />
 
-      {/* 프로필 카드 */}
-      <div className="mx-4 my-4 bg-white rounded-3xl p-5" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-        <div className="flex items-center gap-4">
+      {/* 프로필 히어로 카드 */}
+      <div
+        className="mx-4 mt-4 mb-2 rounded-[28px] p-6 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)',
+          boxShadow: '0 12px 40px rgba(90,50,250,0.30)',
+        }}
+      >
+        {/* 장식 원 */}
+        <div style={{
+          position: 'absolute', top: '-40px', right: '-40px',
+          width: '160px', height: '160px', borderRadius: '50%',
+          background: 'rgba(255,255,255,0.07)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-30px', left: '60px',
+          width: '120px', height: '120px', borderRadius: '50%',
+          background: 'rgba(255,255,255,0.05)',
+          pointerEvents: 'none',
+        }} />
+
+        <div className="flex items-center gap-4 relative z-10">
+          {/* 아바타 */}
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-            style={{ background: 'var(--brand-gradient)' }}
+            className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-[36px] flex-shrink-0"
+            style={{
+              background: 'rgba(255,255,255,0.20)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }}
           >
             {user?.avatar ?? '👤'}
           </div>
-          <div className="flex-1">
-            <p className="text-[18px] font-bold" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-[20px] font-bold text-white truncate" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
               {user?.name ?? '사용자'}
             </p>
-            <p className="text-[13px]" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[13px] text-white/70 truncate mt-0.5" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
               {user?.email ?? ''}
             </p>
             <span
-              className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-              style={{ background: 'rgba(0,132,204,0.1)', color: 'var(--color-primary)', fontFamily: "'Noto Sans KR',sans-serif" }}
+              className="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-bold"
+              style={{
+                background: 'rgba(255,255,255,0.20)',
+                color: 'white',
+                fontFamily: "'Noto Sans KR',sans-serif",
+              }}
             >
-              {user?.role === 'parent' ? '부모' : '자녀'}
+              {user?.role === 'parent' ? '👨‍👩‍👧‍👦 부모' : '👶 자녀'}
             </span>
           </div>
+
           <button
-            className="px-3 py-1.5 rounded-full text-[13px] font-medium"
-            style={{ border: '1px solid var(--color-hairline)', color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold"
+            style={{
+              background: 'rgba(255,255,255,0.20)',
+              color: 'white',
+              fontFamily: "'Noto Sans KR',sans-serif",
+            }}
           >
             수정
           </button>
         </div>
       </div>
 
-      {/* 설정 목록 */}
-      <div className="mx-4 bg-white rounded-2xl overflow-hidden divide-y divide-[var(--color-hairline)]" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-        <SectionTitle title="알림 설정" />
+      {/* 알림 설정 */}
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+        <SectionHeader title="알림 설정" />
         <SettingRow icon="📅" label="공유일정 알림" isToggle toggled={true} />
         <SettingRow icon="👤" label="개인일정 알림" isToggle toggled={true} />
         <SettingRow icon="👦" label="자녀일정 알림" isToggle toggled={true} />
         <SettingRow icon="🔔" label="미완료 재알림" isToggle toggled={true} />
         <SettingRow icon="💰" label="정기지출 결제 알림" isToggle toggled={true} />
-        <SettingRow icon="🌙" label="방해금지 시간" value="오후 10:00 ~ 오전 8:00" />
+        <SettingRow icon="🌙" label="방해금지 시간" value="오후 10시 ~ 오전 8시" />
       </div>
 
-      <div className="mx-4 mt-3 bg-white rounded-2xl overflow-hidden divide-y" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-        <SectionTitle title="연동 서비스" />
+      {/* 연동 서비스 */}
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+        <SectionHeader title="연동 서비스" />
         <SettingRow icon="📆" label="구글 캘린더 연동" value="연동됨" href="/settings/calendar" />
         <SettingRow icon="💾" label="구글 드라이브 연동" value="연동됨" />
         <SettingRow icon="👨‍👩‍👧‍👦" label="우리 가족 관리" href="/family" />
       </div>
 
-      <div className="mx-4 mt-3 bg-white rounded-2xl overflow-hidden divide-y" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-        <SectionTitle title="앱 정보" />
+      {/* 앱 정보 */}
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+        <SectionHeader title="앱 정보" />
         <SettingRow icon="📋" label="개인정보 처리방침" />
         <SettingRow icon="📄" label="이용약관" />
         <SettingRow icon="ℹ️" label="버전 정보" value="v1.0.0" />
       </div>
 
-      <div className="mx-4 mt-3 bg-white rounded-2xl overflow-hidden divide-y" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-        <SectionTitle title="계정" />
+      {/* 계정 */}
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+        <SectionHeader title="계정" />
         <SettingRow icon="🚪" label="로그아웃" danger onClick={signOut} />
       </div>
 
       <p
-        className="text-center mt-4 mb-2 text-[11px]"
-        style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}
+        className="text-center mt-4 mb-2 text-[12px] underline"
+        style={{ color: '#C7C7CC', fontFamily: "'Noto Sans KR',sans-serif" }}
       >
         회원탈퇴
       </p>
 
-      {/* 하단 로고 */}
-      <div className="flex justify-center py-4 opacity-30">
+      <div className="flex justify-center py-4 opacity-20">
         <GleaumAppIcon size={28} />
       </div>
 
