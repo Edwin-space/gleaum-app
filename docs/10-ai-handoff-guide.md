@@ -8,7 +8,7 @@
 
 1. **백엔드/DB 구조 절대 변경 금지** — `supabase/schema.sql`, `src/lib/db.ts`, `src/types/index.ts`의 핵심 구조는 건드리지 말 것.
 2. **단일 DB 진입점 유지** — 모든 Supabase 쿼리는 반드시 `src/lib/db.ts`에만 추가.
-3. **디자인 시스템 준수** — 색상, 그림자, 반지름은 반드시 `src/styles/tokens.css`의 토큰 또는 `#5A32FA` 브랜드 컬러를 사용.
+3. **디자인 시스템 준수** — 색상, 그림자, 반지름은 반드시 `DESIGN.md` + `design-system-ui.html`을 기준으로, `src/styles/tokens.css`의 토큰을 사용. ⚠️ Purple(`#5A32FA`)은 폐기됨 → Brand Blue(`#0084CC`) / Teal(`#0CC9B5`) / Green(`#2EE895`) 사용.
 4. **RLS 보안** — 새 테이블 생성 시 반드시 RLS 활성화 + `my_family_group_id()` 기반 정책 추가.
 5. **TypeScript 엄격 모드** — 타입 오류 없이 `npm run build` 통과해야 함.
 6. **배포 자동화** — `main` 브랜치에 push하면 Vercel이 자동 배포. 작업 후 반드시 commit + push.
@@ -36,7 +36,7 @@
 | 가계부 (정기지출) | `/budget` | ✅ 실 DB 연동 |
 | 마이페이지 + 로그아웃 | `/mypage` | ✅ 실 DB 연동 |
 | 알림 목록 | `/notifications` | ✅ 실 DB 연동 |
-| Vibrant Purple 디자인 | **전 페이지** | ✅ 100% 통일 완료 |
+| Green/Teal/Blue 디자인 시스템 | **전 페이지 + DESIGN.md** | ✅ 100% 통일 완료 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 
 ### ❌ 미구현 기능 (우선순위 순)
@@ -61,7 +61,11 @@
 - `joinFamilyByCode()` 반환 타입: `{ success, alreadyMember?, familyName? }`
 
 ### 2단계 ✅: 전 페이지 디자인 리뉴얼 — 완료
-7개 페이지 전부 Vibrant Purple 통일 완료.
+7개 페이지 전부 Green/Teal/Blue 브랜드 컬러 통일 완료.
+- `DESIGN.md` — 디자인 시스템 마스터 명세서 (12개 섹션)
+- `design-system-ui.html` — 시각적 UI 컴포넌트 가이드 (10개 섹션)
+- `DESIGN_PREVIEW.html` — 8개 화면 인터랙티브 프로토타입 (시연용)
+- `AGENTS.md` — 모든 AI가 디자인 시스템을 자동 참조하도록 연결 완료
 
 ---
 

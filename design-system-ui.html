@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gleaum Design System — UI Components v2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--green:#2EE895;--teal:#0CC9B5;--blue:#0084CC;
+--navy:#1A1B2E;--black:#0A0A0A;
+--gray-100:#F5F5F3;--gray-200:#E8E8E4;--gray-400:#AEAEA8;--gray-600:#6E6E66;
+--parchment:#FAFAFD;
+--gradient:linear-gradient(135deg,#2EE895 0%,#0CC9B5 50%,#0084CC 100%);
+--shadow-card:0 8px 32px rgba(0,132,204,0.08);
+--shadow-fab:0 8px 24px rgba(12,201,181,0.4);
+--font-display:'Outfit','Pretendard',system-ui,sans-serif;
+--font-body:'Pretendard','Outfit',system-ui,sans-serif;
+}
+body{font-family:var(--font-body);background:#F7F6F2;color:var(--navy);line-height:1.6;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{display:none}
+
+/* Layout */
+.ds-page{max-width:1100px;margin:0 auto}
+.ds-hero{background:var(--black);padding:60px 48px;position:relative;overflow:hidden}
+.ds-hero::before{content:'';position:absolute;top:-80px;right:-60px;width:400px;height:400px;background:radial-gradient(circle,rgba(46,232,149,0.12) 0%,transparent 65%);pointer-events:none}
+.ds-hero .eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:24px}
+.ds-hero h1{font-family:var(--font-display);font-size:42px;font-weight:300;color:#fff;letter-spacing:-0.02em;margin-bottom:8px}
+.ds-hero .sub{font-family:var(--font-body);font-size:15px;color:var(--gray-400);font-weight:300}
+
+.section{padding:56px 48px;border-bottom:1px solid var(--gray-200)}
+.section-num{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-600);font-weight:600;margin-bottom:6px}
+.section-title{font-family:var(--font-display);font-size:24px;font-weight:600;letter-spacing:-0.02em;color:var(--navy);margin-bottom:32px}
+.section-desc{font-size:14px;color:var(--gray-600);margin-bottom:32px;max-width:560px;line-height:1.7}
+
+/* Swatches */
+.palette{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:32px}
+.swatch .color{height:72px;border-radius:12px 12px 0 0}
+.swatch .info{padding:10px 12px;background:#fff;border:1px solid var(--gray-200);border-top:none;border-radius:0 0 12px 12px}
+.swatch .name{font-size:12px;font-weight:600;display:block;color:var(--navy)}
+.swatch .hex{font-size:11px;color:var(--gray-600);font-family:monospace}
+.gradient-bar{height:64px;border-radius:12px;background:var(--gradient);margin-bottom:12px;display:flex;align-items:center;padding:0 24px}
+.gradient-bar span{font-size:11px;font-weight:600;color:rgba(10,10,10,0.6)}
+
+/* Type scale */
+.type-row{display:grid;grid-template-columns:140px 1fr;gap:20px;align-items:baseline;padding:20px 0;border-bottom:1px solid var(--gray-200)}
+.type-meta{font-size:11px;color:var(--gray-600);font-family:monospace;line-height:1.8}
+
+/* Spacing demo */
+.space-demo{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.space-block{background:var(--blue);border-radius:4px;opacity:0.15}
+.space-label{font-size:10px;color:var(--gray-600);text-align:center;margin-top:4px;font-family:monospace}
+
+/* Glass container */
+.glass-stage{position:relative;background:var(--parchment);padding:48px;border-radius:24px;overflow:hidden;border:1px solid var(--gray-200)}
+.glass-stage .blob-a{position:absolute;top:-15%;left:-10%;width:50%;height:60%;background:radial-gradient(circle,rgba(46,232,149,0.18) 0%,transparent 70%);pointer-events:none}
+.glass-stage .blob-b{position:absolute;bottom:-20%;right:-10%;width:55%;height:55%;background:radial-gradient(circle,rgba(0,132,204,0.12) 0%,transparent 70%);pointer-events:none}
+
+/* Glass card */
+.glass-card{background:rgba(255,255,255,0.65);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.8);border-radius:24px;padding:24px;box-shadow:var(--shadow-card)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:9999px;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;font-family:var(--font-body);height:44px;padding:0 24px}
+.btn:hover{opacity:0.92;transform:translateY(-1px)}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(0,132,204,0.25)}
+.btn-teal{background:var(--teal);color:#fff;box-shadow:0 4px 14px rgba(12,201,181,0.2)}
+.btn-green{background:var(--green);color:var(--navy);box-shadow:0 4px 14px rgba(46,232,149,0.2)}
+.btn-outline{background:transparent;color:var(--blue);border:2px solid var(--blue)}
+.btn-gradient{background:var(--gradient);color:#fff;box-shadow:var(--shadow-fab)}
+.btn-ghost{background:transparent;color:var(--blue)}
+.btn-danger{background:#FEE2E2;color:#DC2626}
+.btn-disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed;pointer-events:none}
+.btn-sm{height:32px;font-size:13px;padding:0 16px}
+.btn-lg{height:52px;font-size:17px;padding:0 32px}
+
+/* States display */
+.states-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center}
+.states-grid .label{font-size:10px;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.08em;margin-top:8px;font-weight:600}
+
+/* Inputs */
+.ui-input{width:100%;padding:14px 20px;border-radius:16px;border:2px solid transparent;background:var(--gray-100);font-size:16px;outline:none;transition:all 0.2s;font-family:var(--font-body);color:var(--navy)}
+.ui-input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 4px rgba(12,201,181,0.1)}
+.ui-input-error{border-color:#EF4444;background:#FEF2F2}
+.input-label{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;display:block}
+.input-helper{font-size:12px;color:var(--gray-600);margin-top:4px}
+.input-error-msg{font-size:12px;color:#EF4444;margin-top:4px}
+
+/* Schedule item */
+.schedule-item{display:flex;align-items:center;gap:16px;background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 20px rgba(0,132,204,0.04);margin-bottom:12px}
+.icon-circle{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:9999px;font-size:11px;font-weight:600}
+
+/* Bottom nav */
+.nav-demo{background:var(--gray-200);padding:48px 24px;border-radius:20px;display:flex;justify-content:center}
+.bottom-nav{background:rgba(255,255,255,0.9);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.6);border-radius:32px;height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:relative;box-shadow:var(--shadow-card);width:380px}
+.fab{position:absolute;top:-26px;left:50%;transform:translateX(-50%);width:56px;height:56px;background:var(--gradient);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-fab);color:#fff;cursor:pointer}
+.nav-icon{width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.nav-icon .lbl{font-size:10px;font-weight:600}
+
+/* Header demo */
+.header-demo{background:rgba(255,255,255,0.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,132,204,0.06);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-radius:16px 16px 0 0}
+
+/* Modal demo */
+.modal-demo{position:relative;background:rgba(26,27,46,0.3);border-radius:20px;padding:40px 20px 0;overflow:hidden;height:320px;display:flex;align-items:flex-end}
+.modal-sheet{background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 32px;width:100%;box-shadow:0 -10px 40px rgba(0,0,0,0.1)}
+.modal-handle{width:48px;height:5px;background:var(--gray-200);border-radius:99px;margin:0 auto 20px}
+
+/* Grid helpers */
+.cols-2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.cols-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* Footer */
+.ds-footer{background:var(--black);padding:32px 48px;display:flex;justify-content:space-between;align-items:center}
+.ds-footer .note{font-size:12px;color:var(--gray-600)}
+</style>
+</head>
+<body>
+<div class="ds-page">
+
+<!-- HERO -->
+<div class="ds-hero">
+  <div class="eyebrow">Gleaum Design System · UI Components · v2.0</div>
+  <h1>gleaum <span style="color:var(--green)">◆</span></h1>
+  <div class="sub">나, 그리고 연인/가족의 일상 네트워크 — Complete UI Specification</div>
+</div>
+
+<!-- 01 COLORS -->
+<div class="section">
+  <div class="section-num">01 · Color System</div>
+  <div class="section-title">브랜드 컬러 & 시맨틱 팔레트</div>
+  <div class="section-desc">모든 UI 요소는 아래 5가지 브랜드 컬러와 그라디언트만 사용합니다. Purple(#5A32FA)은 폐기되었습니다.</div>
+
+  <div class="palette">
+    <div class="swatch"><div class="color" style="background:#2EE895"></div><div class="info"><span class="name">Brand Green</span><span class="hex">#2EE895</span></div></div>
+    <div class="swatch"><div class="color" style="background:#0CC9B5"></div><div class="info"><span class="name">Brand Teal</span><span class="hex">#0CC9B5</span></div></div>
+    <div class="swatch"><div class="color" style="background:#0084CC"></div><div class="info"><span class="name">Brand Blue</span><span class="hex">#0084CC</span></div></div>
+    <div class="swatch"><div class="color" style="background:#1A1B2E"></div><div class="info"><span class="name">Brand Navy</span><span class="hex">#1A1B2E</span></div></div>
+    <div class="swatch"><div class="color" style="background:#0A0A0A"></div><div class="info"><span class="name">Brand Black</span><span class="hex">#0A0A0A</span></div></div>
+  </div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">Brand Gradient (135°)</div>
+  <div class="gradient-bar"><span>#2EE895 → #0CC9B5 → #0084CC</span></div>
+
+  <div style="margin-top:32px;font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">Schedule Type Colors (일정 유형별)</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div class="swatch"><div class="color" style="background:#0084CC"></div><div class="info"><span class="name">공유 Shared</span><span class="hex">#0084CC</span></div></div>
+    <div class="swatch"><div class="color" style="background:#0CC9B5"></div><div class="info"><span class="name">개인 Personal</span><span class="hex">#0CC9B5</span></div></div>
+    <div class="swatch"><div class="color" style="background:#2EE895"></div><div class="info"><span class="name">자녀 Child</span><span class="hex">#2EE895</span></div></div>
+    <div class="swatch"><div class="color" style="background:#F59E0B"></div><div class="info"><span class="name">지출 Expense</span><span class="hex">#F59E0B</span></div></div>
+  </div>
+
+  <div style="margin-top:32px;font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">Status Colors (상태별)</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div class="swatch"><div class="color" style="background:#AEAEA8"></div><div class="info"><span class="name">대기중 Pending</span><span class="hex">#AEAEA8</span></div></div>
+    <div class="swatch"><div class="color" style="background:#0084CC"></div><div class="info"><span class="name">진행중 Progress</span><span class="hex">#0084CC</span></div></div>
+    <div class="swatch"><div class="color" style="background:#2EE895"></div><div class="info"><span class="name">완료 Done</span><span class="hex">#2EE895</span></div></div>
+    <div class="swatch"><div class="color" style="background:#EF4444"></div><div class="info"><span class="name">미완료 Missed</span><span class="hex">#EF4444</span></div></div>
+  </div>
+</div>
+
+<!-- 02 TYPOGRAPHY -->
+<div class="section">
+  <div class="section-num">02 · Typography</div>
+  <div class="section-title">타이포그래피 스케일</div>
+  <div class="section-desc">영문/숫자는 Outfit, 한국어는 Pretendard를 사용합니다. 모든 텍스트는 아래 스케일을 준수합니다.</div>
+
+  <div class="type-row">
+    <div class="type-meta">Hero Title<br>26px / Bold 700<br>tracking: -0.02em</div>
+    <div style="font-size:26px;font-weight:700;letter-spacing:-0.02em">The Kim Family 일정</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">Card Title<br>18–20px / Bold 700<br>tracking: -0.01em</div>
+    <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em">오늘의 가족 일정</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">Section Title<br>17px / Bold 700<br>tracking: tight</div>
+    <div style="font-size:17px;font-weight:700">6월 18일 일정</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">Body<br>16px / Regular 400<br>line-height: 1.5</div>
+    <div style="font-size:16px;font-weight:400;color:var(--gray-600)">글리움은 가족의 모든 일정을 한 곳에서 관리하는 앱입니다.</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">Caption / Time<br>13px / SemiBold 600<br>color: Gray 400</div>
+    <div style="font-size:13px;font-weight:600;color:var(--gray-400)">08:30 AM · 발레 학원</div>
+  </div>
+  <div class="type-row" style="border:none">
+    <div class="type-meta">Micro / Label<br>10–11px / SemiBold 600<br>uppercase, tracking</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gray-600)">Schedule · Badge · Tab</div>
+  </div>
+</div>
+
+<!-- 03 SPACING -->
+<div class="section">
+  <div class="section-num">03 · Spacing & Grid</div>
+  <div class="section-title">4px Base Grid 시스템</div>
+  <div class="section-desc">모든 여백은 4px의 배수를 사용합니다. 좌우 기본 패딩은 20px(5×4)이며, 컴포넌트 간 간격은 12px 또는 16px을 기본으로 합니다.</div>
+
+  <div class="space-demo">
+    <div style="text-align:center"><div class="space-block" style="width:16px;height:16px"></div><div class="space-label">4px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:24px;height:24px"></div><div class="space-label">8px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:32px;height:32px"></div><div class="space-label">12px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:40px;height:40px"></div><div class="space-label">16px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:52px;height:52px"></div><div class="space-label">20px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:64px;height:64px"></div><div class="space-label">24px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:80px;height:80px"></div><div class="space-label">32px</div></div>
+    <div style="text-align:center"><div class="space-block" style="width:104px;height:104px"></div><div class="space-label">48px</div></div>
+  </div>
+
+  <div style="margin-top:40px;font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">Border Radius System</div>
+  <div style="display:flex;gap:24px;align-items:flex-end">
+    <div style="text-align:center"><div style="width:60px;height:60px;background:var(--gray-200);border-radius:8px"></div><div class="space-label">8px<br>Small</div></div>
+    <div style="text-align:center"><div style="width:60px;height:60px;background:var(--gray-200);border-radius:16px"></div><div class="space-label">16px<br>Input</div></div>
+    <div style="text-align:center"><div style="width:80px;height:80px;background:var(--gray-200);border-radius:24px"></div><div class="space-label">24px<br>Card ★</div></div>
+    <div style="text-align:center"><div style="width:80px;height:80px;background:var(--gray-200);border-radius:32px"></div><div class="space-label">32px<br>NavBar</div></div>
+    <div style="text-align:center"><div style="width:60px;height:60px;background:var(--gray-200);border-radius:9999px"></div><div class="space-label">Full<br>Pill/FAB</div></div>
+  </div>
+</div>
+
+<!-- 04 BUTTONS -->
+<div class="section">
+  <div class="section-num">04 · Buttons</div>
+  <div class="section-title">버튼 시스템 (Pill Shape, 모든 상태)</div>
+  <div class="section-desc">모든 버튼은 완전 라운드(9999px)이며, 최소 높이 44px(터치 영역)을 확보합니다. Active 시 scale(0.96)으로 누르는 물리적 피드백을 제공합니다.</div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">Variants</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px">
+    <button class="btn btn-primary">Primary (Blue)</button>
+    <button class="btn btn-teal">Secondary (Teal)</button>
+    <button class="btn btn-green">Success (Green)</button>
+    <button class="btn btn-gradient">Gradient</button>
+    <button class="btn btn-outline">Outline</button>
+    <button class="btn btn-ghost">Ghost</button>
+    <button class="btn btn-danger">Danger</button>
+    <button class="btn btn-disabled">Disabled</button>
+  </div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">Sizes</div>
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:32px">
+    <button class="btn btn-primary btn-sm">Small (32px)</button>
+    <button class="btn btn-primary">Medium (44px)</button>
+    <button class="btn btn-primary btn-lg">Large (52px)</button>
+  </div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">States (Primary 기준)</div>
+  <div class="states-grid">
+    <div><button class="btn btn-primary">Default</button><div class="label">opacity: 1.0</div></div>
+    <div><button class="btn btn-primary" style="opacity:0.92;transform:translateY(-1px)">Hover</button><div class="label">opacity: 0.92, Y-1px</div></div>
+    <div><button class="btn btn-primary" style="transform:scale(0.96)">Active</button><div class="label">scale(0.96)</div></div>
+    <div><button class="btn btn-disabled">Disabled</button><div class="label">opacity: 0.5</div></div>
+  </div>
+</div>
+
+<!-- 05 BADGES -->
+<div class="section">
+  <div class="section-num">05 · Badges & Tags</div>
+  <div class="section-title">배지 시스템 (일정 유형 & 상태)</div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">Type Badges (배경 12% opacity)</div>
+  <div style="display:flex;gap:10px;margin-bottom:32px">
+    <span class="badge" style="background:rgba(0,132,204,0.12);color:#0084CC">공유일정</span>
+    <span class="badge" style="background:rgba(12,201,181,0.12);color:#0CC9B5">개인일정</span>
+    <span class="badge" style="background:rgba(46,232,149,0.15);color:#0A9E5C">자녀일정</span>
+    <span class="badge" style="background:rgba(245,158,11,0.12);color:#B45309">정기지출</span>
+  </div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">Status Badges (Solid)</div>
+  <div style="display:flex;gap:10px">
+    <span class="badge" style="background:#AEAEA8;color:#fff">⏳ 대기중</span>
+    <span class="badge" style="background:#0084CC;color:#fff">▶ 진행중</span>
+    <span class="badge" style="background:#2EE895;color:#0A0A0A">✓ 완료</span>
+    <span class="badge" style="background:#EF4444;color:#fff">! 미완료</span>
+  </div>
+</div>
+
+<!-- 06 GLASSMORPHISM CARDS -->
+<div class="section">
+  <div class="section-num">06 · Glassmorphism Cards</div>
+  <div class="section-title">글래스모피즘 카드 & 일정 아이템</div>
+  <div class="section-desc">카드는 반투명 흰색(65% opacity) + blur(24px) + 컬러 섀도우 조합입니다. 카드 라운딩은 항상 24px입니다.</div>
+
+  <div class="glass-stage">
+    <div class="blob-a"></div>
+    <div class="blob-b"></div>
+    <div style="position:relative;z-index:10">
+      <div class="cols-2">
+        <div>
+          <div style="font-size:12px;color:var(--gray-600);font-weight:600;margin-bottom:12px">Glass Card (Default)</div>
+          <div class="glass-card" style="margin-bottom:16px">
+            <div style="font-size:20px;font-weight:700;margin-bottom:4px;letter-spacing:-0.02em">오늘의 가족 일정</div>
+            <div style="font-size:14px;color:var(--gray-400);margin-bottom:20px">진행중 1건 · 완료 2건</div>
+            <div class="schedule-item">
+              <div class="icon-circle" style="background:rgba(0,132,204,0.1);color:#0084CC">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <div style="font-size:16px;font-weight:700;color:var(--navy)">가족 외식</div>
+                <div style="font-size:13px;font-weight:600;color:var(--gray-400)">12:00 PM</div>
+              </div>
+            </div>
+            <div class="schedule-item" style="margin-bottom:0">
+              <div class="icon-circle" style="background:rgba(46,232,149,0.1);color:#2EE895">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div style="font-size:16px;font-weight:700;color:var(--navy)">유나 발레 학원</div>
+                <div style="font-size:13px;font-weight:600;color:var(--gray-400)">08:30 AM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--gray-600);font-weight:600;margin-bottom:12px">Dark Card Variant</div>
+          <div style="background:rgba(26,27,46,0.9);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.2);color:#fff;margin-bottom:16px">
+            <div style="font-size:20px;font-weight:700;margin-bottom:4px">자녀 일정 요약</div>
+            <div style="font-size:14px;color:var(--gray-400);margin-bottom:20px">완료율 66%</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <svg width="56" height="56" style="transform:rotate(-90deg)"><circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.15)" stroke-width="5" fill="none"/><circle cx="28" cy="28" r="24" stroke="#2EE895" stroke-width="5" fill="none" stroke-dasharray="151" stroke-dashoffset="51" stroke-linecap="round"/></svg>
+              <div><div style="font-size:28px;font-weight:700">66%</div><div style="font-size:12px;color:var(--gray-400)">3건 중 2건 완료</div></div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--gray-600);font-weight:600;margin-bottom:12px">Hero Gradient Card</div>
+          <div style="background:var(--gradient);border-radius:24px;padding:24px;color:#fff">
+            <div style="font-size:18px;font-weight:700;margin-bottom:4px">이번 달 정기지출</div>
+            <div style="font-size:28px;font-weight:700;margin-top:8px">₩ 1,240,000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 07 INPUTS -->
+<div class="section">
+  <div class="section-num">07 · Inputs & Forms</div>
+  <div class="section-title">입력 필드 (16px Radius, Focus = Teal)</div>
+
+  <div class="cols-2">
+    <div>
+      <label class="input-label">일정 제목</label>
+      <input class="ui-input" type="text" placeholder="일정 제목을 입력하세요">
+      <div class="input-helper">포커스 시 테두리가 Brand Teal로 변합니다.</div>
+    </div>
+    <div>
+      <label class="input-label">오류 상태 예시</label>
+      <input class="ui-input ui-input-error" type="text" value="잘못된 입력">
+      <div class="input-error-msg">올바른 형식으로 입력해주세요.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;font-size:12px;color:var(--gray-600);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px">Chip Selector (일정 유형 선택)</div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-primary btn-sm">공유 일정</button>
+    <button class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600)">자녀 일정</button>
+    <button class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600)">개인 일정</button>
+    <button class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600)">정기 지출</button>
+  </div>
+</div>
+
+<!-- 08 NAVIGATION -->
+<div class="section">
+  <div class="section-num">08 · Navigation</div>
+  <div class="section-title">헤더, 하단 플로팅 바 & FAB</div>
+  <div class="section-desc">헤더는 반투명 블러(blur 20px) 처리합니다. 하단 바는 바닥에서 32px 띄우고 32px radius로 둥글며, 중앙 FAB는 바 위로 26px 돌출됩니다.</div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;margin-bottom:12px">App Header (blur, 56px height)</div>
+  <div class="header-demo" style="margin-bottom:32px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="20" height="20" fill="none" stroke="var(--navy)" stroke-width="2.2" stroke-linecap="round"><path d="M15 18L9 12L15 6"/></svg>
+      <span style="font-size:17px;font-weight:700;color:var(--navy)">일정 상세</span>
+    </div>
+    <div style="position:relative">
+      <svg width="22" height="22" fill="none" stroke="var(--navy)" stroke-width="2.2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <span style="position:absolute;top:-4px;right:-6px;min-width:16px;height:16px;border-radius:99px;background:#0084CC;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px">3</span>
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:var(--gray-600);font-weight:600;margin-bottom:12px">Bottom Navigation + Protruding FAB</div>
+  <div class="nav-demo">
+    <div class="bottom-nav">
+      <div class="fab">
+        <svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><line x1="14" y1="7" x2="14" y2="21"/><line x1="7" y1="14" x2="21" y2="14"/></svg>
+      </div>
+      <div class="nav-icon"><svg width="26" height="26" fill="none" stroke="#0084CC" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="lbl" style="color:#0084CC">홈</span></div>
+      <div class="nav-icon" style="margin-right:20px"><svg width="26" height="26" fill="none" stroke="#8E8E93" stroke-width="2.5"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="lbl" style="color:#8E8E93">일정</span></div>
+      <div class="nav-icon" style="margin-left:20px"><svg width="26" height="26" fill="none" stroke="#8E8E93" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span class="lbl" style="color:#8E8E93">가계부</span></div>
+      <div class="nav-icon"><svg width="26" height="26" fill="none" stroke="#8E8E93" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="lbl" style="color:#8E8E93">마이</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 09 MODAL -->
+<div class="section">
+  <div class="section-num">09 · Modal & Bottom Sheet</div>
+  <div class="section-title">바텀시트 모달 (slideUp, 32px top radius)</div>
+
+  <div class="modal-demo">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:16px">새로운 일정 추가</div>
+      <input class="ui-input" type="text" placeholder="일정 제목을 입력하세요" style="margin-bottom:16px">
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <button class="btn btn-primary btn-sm">공유 일정</button>
+        <button class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600)">자녀 일정</button>
+        <button class="btn btn-sm" style="background:var(--gray-100);color:var(--gray-600)">개인 일정</button>
+      </div>
+      <button class="btn btn-gradient" style="width:100%">일정 등록하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 10 ICONOGRAPHY -->
+<div class="section" style="border:none">
+  <div class="section-num">10 · Iconography</div>
+  <div class="section-title">아이콘 규칙 (Stroke 2.5px, Round Cap)</div>
+  <div class="section-desc">모든 아이콘은 Lucide 스타일을 따르며, stroke-width 2.5px, stroke-linecap round, 24×24 viewBox를 사용합니다. 아이콘 컨테이너는 48×48px 원형 배경(10% opacity)에 배치합니다.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px">
+    <div style="text-align:center">
+      <div class="icon-circle" style="background:rgba(0,132,204,0.1);color:#0084CC;margin:0 auto 8px">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div style="font-size:11px;color:var(--gray-600)">공유 일정</div>
+    </div>
+    <div style="text-align:center">
+      <div class="icon-circle" style="background:rgba(12,201,181,0.1);color:#0CC9B5;margin:0 auto 8px">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div style="font-size:11px;color:var(--gray-600)">개인 일정</div>
+    </div>
+    <div style="text-align:center">
+      <div class="icon-circle" style="background:rgba(46,232,149,0.1);color:#2EE895;margin:0 auto 8px">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M12 14c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/></svg>
+      </div>
+      <div style="font-size:11px;color:var(--gray-600)">자녀 일정</div>
+    </div>
+    <div style="text-align:center">
+      <div class="icon-circle" style="background:rgba(245,158,11,0.1);color:#F59E0B;margin:0 auto 8px">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      </div>
+      <div style="font-size:11px;color:var(--gray-600)">정기 지출</div>
+    </div>
+    <div style="text-align:center">
+      <div class="icon-circle" style="background:rgba(239,68,68,0.1);color:#EF4444;margin:0 auto 8px">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </div>
+      <div style="font-size:11px;color:var(--gray-600)">알림</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="ds-footer">
+  <div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:300;color:#fff;letter-spacing:-0.02em">gleaum <span style="color:var(--green)">◆</span></div>
+    <div class="note" style="margin-top:4px">나, 그리고 연인/가족의 일상 네트워크</div>
+  </div>
+  <div style="text-align:right">
+    <div class="note">Design System v2.0 — UI Components</div>
+    <div class="note" style="margin-top:4px">gleaum-app.vercel.app</div>
+  </div>
+</div>
