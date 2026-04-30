@@ -15,6 +15,7 @@ import type {
   FamilyGroup,
   Notification,
 } from '@/types';
+import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googleCalendar';
 
 // ── Row types (DB → TypeScript 변환용) ─────────────────────
 
@@ -58,6 +59,7 @@ export interface ScheduleRow {
   amount: number | null;
   expense_category: ExpenseCategory | null;
   payment_method: PaymentMethod | null;
+  google_event_id: string | null;
   created_at: string;
   updated_at: string;
   schedule_participants?: { user_id: string }[];
@@ -103,6 +105,7 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
     amount: row.amount ?? undefined,
     expenseCategory: row.expense_category ?? undefined,
     paymentMethod: row.payment_method ?? undefined,
+    googleEventId: row.google_event_id ?? undefined,
   };
 }
 
@@ -375,7 +378,37 @@ export async function createSchedule(
 ): Promise<Schedule | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
   if (!user) return null;
+
+  let googleEventId: string | null = null;
+
+  if (session?.provider_token) {
+    const tempSchedule: Schedule = {
+      id: 'temp',
+      title: input.title,
+      type: input.type,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      allDay: input.allDay,
+      status: input.status ?? 'pending',
+      participants: input.participantIds ?? [user.id],
+      familyGroupId,
+      createdBy: user.id,
+      repeat: input.repeat ?? 'none',
+      repeatEndDate: input.repeatEndDate,
+      memo: input.memo,
+      location: input.locationAddress ? { address: input.locationAddress } : undefined,
+    };
+    try {
+      const gEvent = await createGoogleEvent(session.provider_token, tempSchedule);
+      if (gEvent && gEvent.id) {
+        googleEventId = gEvent.id;
+      }
+    } catch (err) {
+      console.error('Google 캘린더 생성 실패:', err);
+    }
+  }
 
   const { data: schedule, error } = await supabase
     .from('schedules')
@@ -399,6 +432,7 @@ export async function createSchedule(
       amount:           input.amount ?? null,
       expense_category: input.expenseCategory ?? null,
       payment_method:   input.paymentMethod ?? null,
+      google_event_id:  googleEventId,
     })
     .select()
     .single();
@@ -452,6 +486,20 @@ export async function updateSchedule(
   if (updates.repeat !== undefined)         dbUpdates.repeat           = updates.repeat;
   if (updates.amount !== undefined)         dbUpdates.amount           = updates.amount;
 
+  const { data: existing, error: fetchErr } = await supabase.from('schedules').select('*').eq('id', id).single();
+  
+  if (!fetchErr && existing && existing.google_event_id) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.provider_token) {
+      const tempSchedule = rowToSchedule({ ...existing, ...dbUpdates } as ScheduleRow);
+      try {
+        await updateGoogleEvent(session.provider_token, existing.google_event_id, tempSchedule);
+      } catch (err) {
+        console.error('Google 캘린더 수정 실패:', err);
+      }
+    }
+  }
+
   const { error } = await supabase.from('schedules').update(dbUpdates).eq('id', id);
   return !error;
 }
@@ -459,6 +507,19 @@ export async function updateSchedule(
 /** 일정 삭제 */
 export async function deleteSchedule(id: string): Promise<boolean> {
   const supabase = createClient();
+  const { data: existing } = await supabase.from('schedules').select('google_event_id').eq('id', id).single();
+
+  if (existing?.google_event_id) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.provider_token) {
+      try {
+        await deleteGoogleEvent(session.provider_token, existing.google_event_id);
+      } catch (err) {
+        console.error('Google 캘린더 삭제 실패:', err);
+      }
+    }
+  }
+
   const { error } = await supabase.from('schedules').delete().eq('id', id);
   return !error;
 }

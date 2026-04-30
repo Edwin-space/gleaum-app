@@ -69,40 +69,16 @@
 
 ---
 
-### 3단계: Google Calendar 연동 (🟡 중요, Day 5)
+### 3단계 ✅: Google Calendar 연동 (완료)
 
 **사전 작업 (수동)**:
-1. Google Cloud Console → API 및 서비스 → **Google Calendar API** 활성화
-2. Google Cloud Console → API 및 서비스 → **Google Drive API** 활성화
+1. Google Cloud Console → API 및 서비스 → **Google Calendar API** 활성화 (사용자 수행 대기)
+2. Supabase SQL Editor → `ALTER TABLE schedules ADD COLUMN google_event_id text;` (사용자 수행 대기)
 
-**코드 작업**:
-
-`src/lib/googleCalendar.ts` 신규 생성:
-```typescript
-// 글리움 → 구글 캘린더
-export async function createGoogleEvent(token: string, schedule: Schedule) {
-  return fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      summary: schedule.title,
-      start: { dateTime: schedule.startTime.toISOString() },
-      end: { dateTime: (schedule.endTime ?? schedule.startTime).toISOString() },
-      location: schedule.location?.address,
-      description: schedule.memo
-    })
-  }).then(r => r.json())
-}
-
-export async function updateGoogleEvent(token: string, eventId: string, schedule: Schedule) { ... }
-export async function deleteGoogleEvent(token: string, eventId: string) { ... }
-export async function fetchGoogleEvents(token: string, timeMin: string, timeMax: string) { ... }
-```
-
-DB 마이그레이션 (Supabase SQL Editor):
-```sql
-ALTER TABLE schedules ADD COLUMN google_event_id text;
-```
+**코드 작업 (완료)**:
+- `src/lib/googleCalendar.ts`: `createGoogleEvent`, `updateGoogleEvent`, `deleteGoogleEvent` 통신 레이어 구현 완료
+- `src/lib/db.ts`: 일정 CUD 시점에 구글 API와 동기화되는 로직 구현 완료
+- `src/types/index.ts`: `Schedule` 및 `ScheduleRow` 타입에 `googleEventId` 확장 완료
 
 ---
 

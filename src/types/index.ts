@@ -66,6 +66,8 @@ export interface Schedule {
   amount?: number;
   expenseCategory?: ExpenseCategory;
   paymentMethod?: PaymentMethod;
+  // 구글 캘린더 연동
+  googleEventId?: string;
 }
 
 export interface FamilyGroup {
