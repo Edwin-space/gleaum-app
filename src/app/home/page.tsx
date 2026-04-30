@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { GleaumLogo } from '@/components/ui/GleaumLogo';
 import { ScheduleCard } from '@/components/ui/Card';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -40,14 +41,11 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 flex items-center justify-between px-5 pt-12 pb-4"
         style={{ background: 'transparent' }}>
         <div>
-          <p className="text-[13px] font-semibold" style={{ color: '#8E8E93' }}>안녕하세요!</p>
-          <h1 className="text-[26px] font-bold tracking-tight" style={{ color: 'var(--color-ink)' }}>
-            {user?.name ? `${user.name.charAt(0)}씨 가족` : '글리움 가족'}
-          </h1>
+          <GleaumLogo variant="light" size="sm" showTagline={true} />
         </div>
         <Link href="/notifications"
           className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden"
-          style={{ background: '#EBE5FF', border: '2px solid white', boxShadow: '0 2px 8px rgba(90,50,250,0.12)' }}>
+          style={{ background: 'rgba(0,132,204,0.1)', border: '2px solid white', boxShadow: '0 2px 8px rgba(0,132,204,0.12)' }}>
           <span className="text-2xl">{user?.avatar ?? '👤'}</span>
         </Link>
       </header>
@@ -62,9 +60,9 @@ export default function HomePage() {
               onClick={() => setView(v)}
               className="flex-1 py-2.5 rounded-full text-[14px] font-bold transition-all"
               style={{
-                background: view === v ? '#5A32FA' : 'transparent',
+                background: view === v ? '#0084CC' : 'transparent',
                 color:      view === v ? 'white'   : '#8E8E93',
-                boxShadow:  view === v ? '0 4px 12px rgba(90,50,250,0.3)' : 'none',
+                boxShadow:  view === v ? '0 4px 12px rgba(0,132,204,0.3)' : 'none',
               }}
             >
               {viewLabels[v]}
@@ -85,7 +83,7 @@ export default function HomePage() {
         {loading && (
           <div className="flex justify-center py-6">
             <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: '#5A32FA', borderTopColor: 'transparent' }} />
+              style={{ borderColor: '#0084CC', borderTopColor: 'transparent' }} />
           </div>
         )}
 
@@ -93,10 +91,10 @@ export default function HomePage() {
         {!loading && totalChild > 0 && (
           <Link href="/schedules/children"
             className="flex items-center justify-between rounded-[24px] p-6 text-white active:scale-[0.98] transition-transform"
-            style={{ background: '#5A32FA', boxShadow: '0 8px 24px rgba(90,50,250,0.35)' }}>
+            style={{ background: 'var(--brand-gradient)', boxShadow: '0 8px 24px rgba(12,201,181,0.35)' }}>
             <div>
               <h2 className="text-[20px] font-bold tracking-tight mb-1">오늘 자녀 일정 →</h2>
-              <p className="text-[14px] font-semibold" style={{ color: '#EBE5FF' }}>
+              <p className="text-[14px] font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>
                 {pendingToday > 0 && `진행중 ${pendingToday}건`}
                 {pendingToday > 0 && completedToday > 0 && ' · '}
                 {completedToday > 0 && `완료 ${completedToday}건`}
@@ -146,7 +144,7 @@ export default function HomePage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-14 gap-3">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-                  style={{ background: '#EBE5FF' }}>
+                  style={{ background: 'rgba(0,132,204,0.1)' }}>
                   📭
                 </div>
                 <p className="font-semibold" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>

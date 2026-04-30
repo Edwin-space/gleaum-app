@@ -27,7 +27,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={cn('rounded-[20px] overflow-hidden shadow-card', variants[variant], paddings[padding], className)}
+        className={cn('rounded-[24px] overflow-hidden shadow-card', variants[variant], paddings[padding], className)}
         {...props}
       >
         {children}
@@ -51,8 +51,8 @@ interface ScheduleCardProps {
 // 일정 유형별 아이콘 + 배경색
 const TYPE_ICON_CONFIG = {
   shared: {
-    bg: 'rgba(90,50,250,0.10)',
-    color: '#5A32FA',
+    bg: 'rgba(0,132,204,0.10)',
+    color: '#0084CC',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -64,8 +64,8 @@ const TYPE_ICON_CONFIG = {
     ),
   },
   personal: {
-    bg: 'rgba(6,182,212,0.10)',
-    color: '#06B6D4',
+    bg: 'rgba(12,201,181,0.10)',
+    color: '#0CC9B5',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -75,8 +75,8 @@ const TYPE_ICON_CONFIG = {
     ),
   },
   child: {
-    bg: 'rgba(16,185,129,0.10)',
-    color: '#10B981',
+    bg: 'rgba(46,232,149,0.10)',
+    color: '#2EE895',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -104,8 +104,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-[20px] p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform"
-      style={{ boxShadow: '0 8px 30px rgba(90,50,250,0.06)' }}
+      className="bg-white rounded-[24px] p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-card"
     >
       {/* 아이콘 원형 */}
       <div
