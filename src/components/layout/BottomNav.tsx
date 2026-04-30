@@ -63,13 +63,10 @@ export function BottomNav() {
     /* 전체 고정 영역 — pointer-events none으로 클릭 통과 */
     <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-40 pointer-events-none">
       <div
-        className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto"
+        className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto glass-card"
         style={{
-          background: 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
           borderRadius: '32px',
-          boxShadow: '0 8px 30px rgba(0,132,204,0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.4)',
         }}
       >
         {/* FAB — 중앙 상단 돌출 */}

@@ -11,10 +11,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ variant = 'default', padding = 'md', className, children, ...props }, ref) => {
     const variants = {
-      default:          'bg-white',
-      dark:             'bg-[var(--color-surface-dark)] text-white',
+      default:          'glass-card',
+      dark:             'bg-[#1A1B2E]/90 backdrop-blur-2xl text-white border border-white/10 shadow-2xl',
       parchment:        'bg-[var(--color-canvas-parchment)]',
-      'gradient-border': 'bg-white border border-transparent',
+      'gradient-border': 'glass-card border-transparent',
     };
 
     const paddings = {
@@ -104,7 +104,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-[24px] p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform shadow-card"
+      className="glass-card rounded-[24px] p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform"
     >
       {/* 아이콘 원형 */}
       <div
