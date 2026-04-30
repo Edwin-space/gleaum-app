@@ -1,6 +1,18 @@
 @import "../styles/tokens.css";
 @import "tailwindcss";
 
+/* ── Tailwind v4 테마 확장 ── */
+@theme {
+  --color-brand:       #5A32FA;
+  --color-brand-light: #EBE5FF;
+  --color-ink:         #1A1B2E;
+  --color-ink-muted:   #8E8E93;
+  --shadow-card:       0 8px 30px rgba(90,50,250,0.06);
+  --shadow-fab:        0 8px 24px rgba(90,50,250,0.40);
+  --shadow-modal:      0 -10px 40px rgba(0,0,0,0.10);
+  --radius-card:       24px;
+}
+
 /* ── 기본 리셋 ── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -110,3 +122,49 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
 .type-bar-personal { background: var(--color-schedule-personal); }
 .type-bar-child    { background: var(--color-schedule-child); }
 .type-bar-expense  { background: var(--color-schedule-expense); }
+
+/* ── 배경 블롭 (Figma 리뉴얼) ── */
+.blob-1 {
+  position: fixed; top: -100px; left: -100px;
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(255,235,153,0.45) 0%, rgba(255,235,153,0) 70%);
+  z-index: 0; pointer-events: none; border-radius: 50%;
+}
+.blob-2 {
+  position: fixed; top: 160px; right: -160px;
+  width: 520px; height: 520px;
+  background: radial-gradient(circle, rgba(153,240,255,0.35) 0%, rgba(153,240,255,0) 70%);
+  z-index: 0; pointer-events: none; border-radius: 50%;
+}
+.blob-3 {
+  position: fixed; bottom: -60px; left: -60px;
+  width: 460px; height: 460px;
+  background: radial-gradient(circle, rgba(200,153,255,0.28) 0%, rgba(200,153,255,0) 70%);
+  z-index: 0; pointer-events: none; border-radius: 50%;
+}
+
+/* ── 애니메이션 (Figma 리뉴얼) ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.3s ease forwards; }
+.animate-slide-up   { animation: slideUp  0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-fade-in    { animation: fadeIn   0.2s ease forwards; }
+
+/* ── 카드 그림자 (Figma 리뉴얼) ── */
+.shadow-card  { box-shadow: 0 8px 30px rgba(90,50,250,0.06); }
+.shadow-fab   { box-shadow: 0 8px 24px rgba(90,50,250,0.40); }
+.shadow-modal { box-shadow: 0 -10px 40px rgba(0,0,0,0.10); }
+
+/* ── 앱 셸 위 콘텐츠가 z-index 1 이상이어야 블롭 위에 뜸 ── */
+#app-shell > * { position: relative; z-index: 1; }

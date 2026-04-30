@@ -1,19 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
-const navItems = [
+const NAV_ITEMS = [
   {
     href: '/home',
     label: '홈',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M3 9.5L12 3L21 9.5V20C21 20.55 20.55 21 20 21H15V15H9V21H4C3.45 21 3 20.55 3 20V9.5Z"
-          fill={active ? 'var(--color-primary)' : 'none'}
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8" strokeLinejoin="round"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+        stroke={active ? '#5A32FA' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
     ),
   },
@@ -21,66 +20,36 @@ const navItems = [
     href: '/schedules',
     label: '일정',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="4" width="18" height="18" rx="3"
-          fill={active ? 'rgba(0,132,204,0.1)' : 'none'}
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8"/>
-        <path d="M8 2V6M16 2V6M3 10H21"
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8" strokeLinecap="round"/>
-        <circle cx="8" cy="15" r="1.2"
-          fill={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}/>
-        <circle cx="12" cy="15" r="1.2"
-          fill={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}/>
-        <circle cx="16" cy="15" r="1.2"
-          fill={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+        stroke={active ? '#5A32FA' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+        <line x1="16" x2="16" y1="2" y2="6"/>
+        <line x1="8" x2="8" y1="2" y2="6"/>
+        <line x1="3" x2="21" y1="10" y2="10"/>
       </svg>
     ),
   },
-  {
-    href: '/schedules/new',
-    label: '추가',
-    icon: (_active: boolean) => (
-      <div
-        className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg -mt-5"
-        style={{ background: 'var(--brand-gradient)' }}
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
-        </svg>
-      </div>
-    ),
-  },
+  // FAB 자리 (중앙 빈칸)
+  null,
   {
     href: '/budget',
     label: '가계부',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="5" width="20" height="16" rx="2"
-          fill={active ? 'rgba(0,132,204,0.1)' : 'none'}
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8"/>
-        <path d="M16 12C16 13.1 15.1 14 14 14H10C8.9 14 8 13.1 8 12C8 10.9 8.9 10 10 10H14C15.1 10 16 10.9 16 12Z"
-          fill={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}/>
-        <path d="M2 9H22"
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8" strokeLinecap="round"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+        stroke={active ? '#5A32FA' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="14" x="2" y="5" rx="2"/>
+        <line x1="2" x2="22" y1="10" y2="10"/>
       </svg>
     ),
   },
   {
     href: '/mypage',
-    label: '마이페이지',
+    label: '마이',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="8" r="4"
-          fill={active ? 'rgba(0,132,204,0.1)' : 'none'}
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8"/>
-        <path d="M4 20C4 17.8 7.6 16 12 16C16.4 16 20 17.8 20 20"
-          stroke={active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)'}
-          strokeWidth="1.8" strokeLinecap="round"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+        stroke={active ? '#5A32FA' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
       </svg>
     ),
   },
@@ -88,42 +57,83 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router   = useRouter();
 
   return (
-    <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/90 backdrop-blur-xl z-50"
-      style={{
-        borderTop: '1px solid var(--color-hairline)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      <div className="flex items-end justify-around px-2 pt-2 pb-3">
-        {navItems.map((item) => {
-          const active = pathname.startsWith(item.href) && item.href !== '/schedules/new';
-          const isCenter = item.href === '/schedules/new';
+    /* 전체 고정 영역 — pointer-events none으로 클릭 통과 */
+    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-40 pointer-events-none">
+      <div
+        className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto"
+        style={{
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRadius: '32px',
+          boxShadow: '0 8px 30px rgba(90,50,250,0.10)',
+        }}
+      >
+        {/* FAB — 중앙 상단 돌출 */}
+        <button
+          onClick={() => router.push('/schedules/new')}
+          className="absolute -top-7 left-1/2 -translate-x-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center text-white transition-transform active:scale-90 hover:-translate-y-0.5 pointer-events-auto"
+          style={{
+            background: '#5A32FA',
+            boxShadow: '0 8px 24px rgba(90,50,250,0.40)',
+          }}
+          aria-label="일정 추가"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+            fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
 
+        {/* 왼쪽 2개 */}
+        {NAV_ITEMS.slice(0, 2).map((item) => {
+          if (!item) return null;
+          const active = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'flex flex-col items-center gap-0.5 flex-1',
-                isCenter && 'items-center'
-              )}
+              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90"
             >
               {item.icon(active)}
-              {!isCenter && (
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: active ? 'var(--color-primary)' : 'var(--color-ink-muted-48)' }}
-                >
-                  {item.label}
-                </span>
-              )}
+              <span
+                className="text-[10px] font-semibold"
+                style={{ color: active ? '#5A32FA' : '#8E8E93' }}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* 중앙 FAB 자리 spacer */}
+        <div className="flex-1" />
+
+        {/* 오른쪽 2개 */}
+        {NAV_ITEMS.slice(3).map((item) => {
+          if (!item) return null;
+          const active = pathname === item.href || pathname.startsWith(item.href + '/');
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90"
+            >
+              {item.icon(active)}
+              <span
+                className="text-[10px] font-semibold"
+                style={{ color: active ? '#5A32FA' : '#8E8E93' }}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 }

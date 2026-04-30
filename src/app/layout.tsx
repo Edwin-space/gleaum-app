@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#0A0A0A',
+  themeColor: '#FAFAFD',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -29,6 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="h-full bg-[var(--color-canvas-parchment)]">
+        {/* 배경 블롭 그래픽 */}
+        <div className="blob-1" />
+        <div className="blob-2" />
+        <div className="blob-3" />
         <div id="app-shell">
           {children}
         </div>

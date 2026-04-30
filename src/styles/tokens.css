@@ -10,7 +10,9 @@
   /* ── 브랜드 컬러 (gleaum_design_system.html) ── */
   --brand-green:       #2EE895;
   --brand-teal:        #0CC9B5;
-  --brand-blue:        #0084CC;
+  --brand-blue:        #5A32FA;   /* Vibrant Purple (피그마 리뉴얼) */
+  --brand-purple:      #5A32FA;
+  --brand-purple-light: #EBE5FF;
   --brand-navy:        #1A1B2E;
   --brand-black:       #0A0A0A;
 
@@ -19,13 +21,14 @@
   --brand-gradient-subtle: linear-gradient(135deg, rgba(46,232,149,0.12) 0%, rgba(12,201,181,0.08) 50%, rgba(0,132,204,0.06) 100%);
 
   /* ── UI 액션 컬러 (DESIGN-apple.md 기반, 글리움 브랜드 적용) ── */
-  --color-primary:          #0084CC;   /* Brand Blue — 모든 인터랙티브 요소 */
-  --color-primary-focus:    #0CC9B5;   /* Brand Teal — 포커스 링 */
-  --color-primary-on-dark:  #2EE895;   /* Brand Green — 다크 배경 위 */
+  --color-primary:          #5A32FA;   /* Brand Purple — 모든 인터랙티브 요소 */
+  --color-primary-light:    #EBE5FF;   /* Brand Purple Light */
+  --color-primary-focus:    #7B5BFF;   /* Purple 포커스 링 */
+  --color-primary-on-dark:  #EBE5FF;   /* 다크 배경 위 */
 
   /* ── 서피스 (DESIGN-apple.md 구조, 글리움 중성 적용) ── */
   --color-canvas:           #FFFFFF;
-  --color-canvas-parchment: #F5F5F3;   /* 글리움 Gray 100 */
+  --color-canvas-parchment: #FAFAFD;   /* Figma 리뉴얼 소프트 배경 */
   --color-surface-pearl:    #FAFAFA;
   --color-surface-dark:     #0A0A0A;   /* 글리움 Brand Black */
   --color-surface-dark-2:   #141414;
@@ -45,15 +48,15 @@
   --color-divider-soft: #F0F0F0;
 
   /* ── 일정 유형 컬러 ── */
-  --color-schedule-shared:   #0084CC;   /* 공유일정 — Brand Blue */
-  --color-schedule-personal: #0CC9B5;   /* 개인일정 — Brand Teal */
-  --color-schedule-child:    #2EE895;   /* 자녀일정 — Brand Green */
+  --color-schedule-shared:   #5A32FA;   /* 공유일정 — Brand Purple */
+  --color-schedule-personal: #06B6D4;   /* 개인일정 — Cyan */
+  --color-schedule-child:    #10B981;   /* 자녀일정 — Emerald */
   --color-schedule-expense:  #F59E0B;   /* 정기지출 — Amber */
 
   /* ── 상태 컬러 ── */
   --color-status-pending:    #AEAEA8;   /* 대기중 */
-  --color-status-progress:   #0084CC;   /* 진행중 */
-  --color-status-done:       #2EE895;   /* 완료 */
+  --color-status-progress:   #5A32FA;   /* 진행중 — Purple */
+  --color-status-done:       #10B981;   /* 완료 — Emerald */
   --color-status-missed:     #EF4444;   /* 미완료 */
 
   /* ── 타이포그래피 (DESIGN-apple.md 스케일) ── */
@@ -92,7 +95,7 @@
   --radius-full:  9999px;
 
   /* ── 앱 전용 ── */
-  --radius-card:      16px;
+  --radius-card:      24px;   /* Figma 리뉴얼 — 더 둥글게 */
   --radius-app-icon:  22px;
   --bottom-nav-height: 64px;
   --header-height:     56px;
