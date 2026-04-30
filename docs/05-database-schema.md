@@ -1,0 +1,149 @@
+# 05. 데이터베이스 스키마
+
+## Supabase 프로젝트
+
+- **프로젝트 ID**: `tyvjdsescukaeorcuaga`
+- **URL**: `https://tyvjdsescukaeorcuaga.supabase.co`
+- **스키마 파일**: `supabase/schema.sql` (루트에 있음)
+
+> ⚠️ 신규 환경 세팅 시 `supabase/schema.sql` 전체를 Supabase SQL Editor에서 실행해야 합니다.
+
+---
+
+## 테이블 구조
+
+### `family_groups` — 가족 그룹
+```sql
+id          uuid PRIMARY KEY DEFAULT gen_random_uuid()
+name        text NOT NULL                    -- "김씨 가족"
+invite_code text UNIQUE                      -- "GLEAUM-AB12"
+created_by  uuid REFERENCES auth.users(id)
+created_at  timestamptz DEFAULT now()
+```
+
+### `profiles` — 사용자 프로필 (auth.users 확장)
+```sql
+id              uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
+name            text                         -- 구글 계정 이름
+email           text
+avatar          text DEFAULT '👤'
+role            text DEFAULT 'parent'        -- 'parent' | 'child' | 'guest'
+family_group_id uuid REFERENCES family_groups(id)
+google_id       text
+updated_at      timestamptz DEFAULT now()
+```
+
+### `schedules` — 일정
+```sql
+id               uuid PRIMARY KEY DEFAULT gen_random_uuid()
+title            text NOT NULL
+type             text NOT NULL               -- 'shared' | 'personal' | 'child' | 'expense'
+start_time       timestamptz NOT NULL
+end_time         timestamptz
+all_day          boolean DEFAULT false
+status           text DEFAULT 'pending'      -- 'pending' | 'in_progress' | 'completed' | 'missed'
+location_address text
+location_lat     float
+location_lng     float
+reference_url    text
+reminder         int DEFAULT 0              -- 분 단위 (0=없음, 30=30분전)
+repeat           text DEFAULT 'none'        -- 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
+repeat_end_date  timestamptz
+memo             text
+family_group_id  uuid REFERENCES family_groups(id) NOT NULL
+created_by       uuid REFERENCES auth.users(id) NOT NULL
+-- 정기지출 전용
+amount           int
+expense_category text                       -- 'education' | 'housing' | 'utility' | 'insurance' | 'subscription' | 'other'
+payment_method   text                       -- 'auto' | 'card' | 'cash' | 'other'
+created_at       timestamptz DEFAULT now()
+updated_at       timestamptz DEFAULT now()
+```
+
+### `schedule_participants` — 일정 참여자 (N:M)
+```sql
+schedule_id uuid REFERENCES schedules(id) ON DELETE CASCADE
+user_id     uuid REFERENCES profiles(id) ON DELETE CASCADE
+PRIMARY KEY (schedule_id, user_id)
+```
+
+### `notifications` — 알림
+```sql
+id          uuid PRIMARY KEY DEFAULT gen_random_uuid()
+user_id     uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL
+schedule_id uuid REFERENCES schedules(id) ON DELETE SET NULL
+title       text NOT NULL
+body        text NOT NULL
+type        text DEFAULT 'reminder'  -- 'reminder' | 're_notify' | 'completion' | 'invite' | 'system'
+read        boolean DEFAULT false
+created_at  timestamptz DEFAULT now()
+```
+
+---
+
+## RLS (Row Level Security) 정책
+
+모든 테이블에 RLS 활성화됨. **가족 그룹 단위**로 데이터 격리.
+
+### 핵심 helper 함수
+```sql
+-- 현재 사용자의 family_group_id 반환
+CREATE FUNCTION my_family_group_id() RETURNS uuid
+  AS $$ SELECT family_group_id FROM profiles WHERE id = auth.uid() $$
+  LANGUAGE sql SECURITY DEFINER STABLE;
+```
+
+### 정책 요약
+| 테이블 | 읽기 | 쓰기 |
+|--------|------|------|
+| `family_groups` | 내 가족 그룹만 | 생성자만 수정 |
+| `profiles` | 같은 가족 그룹 | 본인만 수정 |
+| `schedules` | 같은 가족 그룹 | 같은 가족 그룹 |
+| `schedule_participants` | 가족 그룹의 일정만 | 가족 그룹의 일정만 |
+| `notifications` | 본인 것만 | 본인만 수정 |
+
+---
+
+## 트리거
+
+### `on_auth_user_created` — 신규 회원 프로필 자동 생성
+```sql
+-- auth.users에 INSERT 시 자동으로 profiles에도 생성
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+```
+
+### `schedules_updated_at` — 수정 시각 자동 갱신
+```sql
+CREATE TRIGGER schedules_updated_at
+  BEFORE UPDATE ON schedules
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+```
+
+---
+
+## 첫 로그인 흐름 (`auth/callback/route.ts`)
+
+```
+구글 로그인 완료
+  → /auth/callback 서버 라우트 실행
+  → supabase.auth.exchangeCodeForSession(code)
+  → profiles 테이블 확인
+  → 프로필 없으면 → profiles INSERT
+  → family_group_id 없으면
+    → family_groups INSERT (이름: "X씨 가족", 초대코드 자동생성)
+    → profiles UPDATE (family_group_id 연결)
+  → /home 리다이렉트
+```
+
+---
+
+## 데이터 변환 함수 (`src/lib/db.ts`)
+
+DB Row → TypeScript 타입 변환:
+```typescript
+rowToSchedule(row: ScheduleRow): Schedule  // snake_case → camelCase, string→Date
+rowToUser(row: ProfileRow): User
+rowToNotification(row: NotificationRow): Notification
+```
