@@ -12,17 +12,9 @@
 
 ## Day 5 — Google 연동 심화
 
-### 🔴 초대 링크 페이지 (`/invite/[code]`)
-현재 초대 코드가 생성되지만, 링크를 클릭했을 때 처리하는 페이지가 없음.
-
-**구현 필요 사항**:
-```
-/invite/[code]/page.tsx 생성
-  → 로그인 여부 확인
-  → 비로그인: 로그인 페이지로 이동 (코드 유지)
-  → 로그인: joinFamilyByCode(code) 호출
-  → 성공: /family 페이지로 이동
-```
+### ✅ 초대 링크 페이지 (`/invite/[code]`) — 완료
+`src/app/invite/[code]/page.tsx` 구현 완료.
+비로그인 → `/login?next=` 파라미터로 OAuth 후 자동 복귀 → `joinFamilyByCode()` 자동 처리.
 
 ### 🟡 Google Calendar 양방향 동기화
 **사전 조건**: Google Cloud Console에서 Calendar API 활성화 필요
@@ -75,35 +67,19 @@ ALTER TABLE schedules ADD COLUMN google_event_id text;
 
 ## Day 7 — 나머지 화면 디자인 리뉴얼
 
-현재 Vibrant Purple 디자인이 적용되지 않은 페이지들:
+### ✅ 전 페이지 Vibrant Purple 리뉴얼 — 완료
 
-### 🟡 `/schedules/new` (일정 추가 폼)
-- 현재: 기존 스타일 유지
-- 목표: 바텀시트 스타일, 보라 primary 버튼, 파스텔 카테고리 칩
+모든 페이지에 `#5A32FA` 보라 브랜드 디자인 통일 적용됨:
 
-### 🟡 `/schedules/[id]` (일정 상세)
-- 현재: 기본 카드 레이아웃
-- 목표: 히어로 색상 바, 둥근 카드, 보라 액션 버튼
-
-### 🟡 `/schedules/children` (자녀 일정)
-- 현재: 기본 스타일
-- 목표: 그라디언트 요약 카드, 아이콘 스텝퍼
-
-### 🟡 `/family` (가족 관리)
-- 현재: 다크 헤더 카드
-- 목표: Figma 보라 그라디언트 카드
-
-### 🟡 `/budget` (가계부)
-- 현재: 그라디언트 카드 (구 스타일)
-- 목표: 보라 기반 카드, 카테고리 프로그레스 바
-
-### 🟡 `/mypage` (마이페이지)
-- 현재: 흰 카드 설정 목록
-- 목표: 프로필 아바타 강조, 보라 포인트
-
-### 🟡 `/notifications` (알림)
-- 현재: 기본 카드
-- 목표: 읽지않음 강조 (보라 배경), 타입 아이콘 원형
+| 페이지 | 완료 내용 |
+|--------|----------|
+| `/schedules/new` | 이모지 유형 칩, 보라 포커스 테두리, 그라디언트 저장 버튼 |
+| `/schedules/[id]` | 유형별 그라디언트 히어로 헤더, 24px 둥근 카드, 보라 버튼 |
+| `/schedules/children` | SVG 원형 완료율 프로그레스, 보라 탭/스텝퍼 |
+| `/family` | 보라 그라디언트 히어로 카드 |
+| `/budget` | 보라 그라디언트 요약 카드, 카테고리 아이콘 칩+진행률 바 |
+| `/mypage` | 보라 그라디언트 프로필 히어로, 아이콘 칩 설정 행 |
+| `/notifications` | 타입별 원형 아이콘, 미읽음 보라 배경/테두리 |
 
 ---
 

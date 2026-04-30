@@ -24,6 +24,7 @@
 | Google OAuth 로그인 | `/login` → `/auth/callback` | ✅ 완전 작동 |
 | 첫 로그인 시 프로필 자동 생성 | `auth/callback/route.ts` | ✅ 완전 작동 |
 | 가족 그룹 자동 생성 | `auth/callback/route.ts` | ✅ 완전 작동 |
+| 초대 링크 페이지 | `/invite/[code]` | ✅ 완전 구현 |
 | 홈 대시보드 | `/home` | ✅ 실 DB 연동 |
 | 일정 목록/검색/필터 | `/schedules` | ✅ 실 DB 연동 |
 | 일정 생성 | `/schedules/new` | ✅ DB 저장 |
@@ -33,67 +34,32 @@
 | 가계부 (정기지출) | `/budget` | ✅ 실 DB 연동 |
 | 마이페이지 + 로그아웃 | `/mypage` | ✅ 실 DB 연동 |
 | 알림 목록 | `/notifications` | ✅ 실 DB 연동 |
-| Vibrant Purple 디자인 | 전체 앱 | ✅ 적용 완료 |
+| Vibrant Purple 디자인 | **전 페이지** | ✅ 100% 통일 완료 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 
 ### ❌ 미구현 기능 (우선순위 순)
 
-| 기능 | 우선순위 | 관련 문서 |
-|------|---------|----------|
-| 초대 링크 페이지 `/invite/[code]` | 🔴 필수 | 08-features-pending.md |
-| 일정 수정 페이지 `/schedules/[id]/edit` | 🟢 선택 | 08-features-pending.md |
-| FCM 푸시 알림 | 🔴 필수 (Day 6) | 08-features-pending.md |
-| Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | 08-features-pending.md |
-| Google Drive 사진 첨부 | 🟡 중요 (Day 5) | 08-features-pending.md |
-| 나머지 페이지 디자인 리뉴얼 | 🟡 중요 (Day 7) | 08-features-pending.md |
+| 기능 | 우선순위 | 비고 |
+|------|---------|------|
+| FCM 푸시 알림 | 🔴 필수 (Day 6) | Firebase 프로젝트 생성 필요 |
+| Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 |
+| Google Drive 사진 첨부 | 🟡 중요 (Day 5) | Drive API 활성화 필요 |
+| 일정 수정 페이지 `/schedules/[id]/edit` | 🟢 선택 | UI만 없음, DB 함수는 있음 |
+| Google OAuth 앱 게시 (프로덕션) | 🟢 선택 | 테스트 사용자 외 로그인 불가 |
 
 ---
 
 ## 다음 작업 순서 (추천)
 
-### 1단계: 초대 링크 페이지 (🔴 필수, ~1시간)
+> ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 
-파일 생성: `src/app/invite/[code]/page.tsx`
+### 1단계 ✅: 초대 링크 페이지 — 완료
+`src/app/invite/[code]/page.tsx` 구현 완료.
+- 비로그인: `/login?next=/invite/[code]` → OAuth → 콜백 → 다시 초대 페이지 → 자동 합류
+- `joinFamilyByCode()` 반환 타입: `{ success, alreadyMember?, familyName? }`
 
-```typescript
-// 로직 흐름:
-// 1. URL에서 [code] 추출
-// 2. useCurrentUser()로 로그인 상태 확인
-// 3. 비로그인 → localStorage에 code 저장 → /login으로 이동
-// 4. 로그인 → db.joinFamilyByCode(code) 호출
-// 5. 성공 → /family로 이동
-// 6. 실패 (이미 가족 있음, 코드 오류) → 에러 메시지 표시
-
-import { joinFamilyByCode } from '@/lib/db'
-// → db.ts에 이미 구현되어 있음!
-```
-
-로그인 후 코드 자동 처리: `src/app/auth/callback/route.ts`에 아래 추가
-```typescript
-// 로그인 후 localStorage의 pendingInviteCode가 있으면 joinFamilyByCode() 호출
-// (클라이언트사이드에서 처리해야 함 — route.ts는 서버이므로)
-```
-
-미들웨어에서 `/invite/[code]`는 공개 경로로 이미 설정됨 (`src/middleware.ts`).
-
----
-
-### 2단계: 나머지 페이지 디자인 리뉴얼 (🟡 중요, ~3시간)
-
-디자인 원칙 (자세한 내용 → `docs/03-design-system.md`, `DESIGN_HANDOFF_TO_CLAUDE.md`):
-- 브랜드 컬러: `#5A32FA` (Vibrant Purple)
-- 배경: `#FAFAFD` (거의 흰색)
-- 카드: `border-radius: 24px`, `box-shadow: 0 8px 30px rgba(90,50,250,0.06)`
-- 보라 그라디언트 헤더 카드 (그라디언트: `linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)`)
-
-**리뉴얼 대상 페이지들**:
-- `/schedules/new` — 바텀시트 스타일, 보라 primary 버튼
-- `/schedules/[id]` — 히어로 색상 바, 둥근 카드
-- `/schedules/children` — 그라디언트 요약 카드
-- `/family` — 보라 그라디언트 헤더 카드
-- `/budget` — 보라 기반 카드, 카테고리 프로그레스 바
-- `/mypage` — 프로필 아바타 강조
-- `/notifications` — 읽지않음 강조 (보라 배경)
+### 2단계 ✅: 전 페이지 디자인 리뉴얼 — 완료
+7개 페이지 전부 Vibrant Purple 통일 완료.
 
 ---
 

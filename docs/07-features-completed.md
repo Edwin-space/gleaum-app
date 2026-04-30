@@ -84,6 +84,32 @@
 
 ---
 
+---
+
+## Day 5 — 초대 링크 + 전 페이지 디자인 리뉴얼 (완료)
+
+### 초대 링크 페이지 (`/invite/[code]`)
+- [x] `src/app/invite/[code]/page.tsx` 신규 생성
+  - 비로그인 시 `/login?next=/invite/[code]` 리다이렉트
+  - 로그인 시 `joinFamilyByCode()` 자동 호출
+  - 성공 / 이미멤버 / 유효하지않은코드 3가지 상태 UI
+  - 성공 후 2초 뒤 `/family`로 자동 이동
+- [x] `src/middleware.ts` — `/invite` 공개 경로 추가
+- [x] `src/hooks/useAuth.ts` — `signInWithGoogle(next?)` 파라미터 추가
+- [x] `src/app/login/page.tsx` — `?next=` 파라미터 읽어서 OAuth에 전달 + 초대 배너 표시
+- [x] `src/lib/db.ts` — `joinFamilyByCode` 반환 타입 강화 (`{ success, alreadyMember, familyName }`) + `getFamilyByCode` 추가
+
+### 나머지 7개 페이지 디자인 리뉴얼 (Vibrant Purple 통일)
+- [x] `/notifications` — 타입별 원형 컬러 아이콘, 미읽음 보라 배경/테두리 강조
+- [x] `/mypage` — 보라 그라디언트 프로필 히어로 카드, 아이콘 칩 설정 행
+- [x] `/family` — 다크 헤더 → 보라 그라디언트 카드, `joinFamilyByCode` 버그 수정
+- [x] `/budget` — 보라 그라디언트 요약 카드, 카테고리 아이콘 칩, 진행률 바
+- [x] `/schedules/children` — SVG 원형 완료율 프로그레스, 보라 탭, 보라 스텝퍼+그림자
+- [x] `/schedules/[id]` — 유형별 그라디언트 히어로 헤더, 둥근 카드(24px), 보라 버튼
+- [x] `/schedules/new` — 이모지 유형 칩, 포커스 보라 테두리, 그라디언트 저장 버튼
+
+---
+
 ## 현재 앱 상태
 
 - **배포 URL**: https://gleaum-app.vercel.app
@@ -91,4 +117,5 @@
 - **데이터**: 실 Supabase DB ✅
 - **일정 CRUD**: 생성/조회/상태변경/삭제 ✅
 - **가족 관리**: 그룹 생성, 초대코드 생성, 합류 ✅
-- **디자인**: Vibrant Purple Figma 스타일 ✅
+- **초대 링크**: `/invite/[code]` 완전 작동 ✅
+- **디자인**: 전 페이지 Vibrant Purple 통일 완료 ✅
