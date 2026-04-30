@@ -1,16 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function LoginPage() {
+function LoginContent() {
   const { signInWithGoogle } = useAuth();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') ?? undefined;
   const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    await signInWithGoogle();
+    await signInWithGoogle(next);
   };
 
   return (
@@ -51,6 +54,23 @@ export default function LoginPage() {
         >
           <GleaumAppIcon size={52} />
         </div>
+
+        {/* 초대 배너 (next 파라미터가 있을 때만 표시) */}
+        {next && next.startsWith('/invite/') && (
+          <div
+            className="w-full flex items-center gap-3 px-5 py-4 rounded-[20px] mb-6"
+            style={{
+              background: 'rgba(90,50,250,0.08)',
+              border: '1.5px solid rgba(90,50,250,0.15)',
+            }}
+          >
+            <span className="text-2xl">👨‍👩‍👧‍👦</span>
+            <div>
+              <p className="text-[13px] font-bold" style={{ color: '#5A32FA' }}>가족 초대 링크</p>
+              <p className="text-[12px]" style={{ color: '#8E8E93' }}>로그인 후 자동으로 가족에 합류됩니다</p>
+            </div>
+          </div>
+        )}
 
         {/* 서비스명 */}
         <h1
@@ -159,5 +179,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-dvh flex items-center justify-center" style={{ background: '#FAFAFD' }}>
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(90,50,250,0.3)', borderTopColor: '#5A32FA' }} />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

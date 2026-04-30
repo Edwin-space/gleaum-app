@@ -185,26 +185,52 @@ export async function getFamilyWithMembers(familyGroupId: string): Promise<{
   };
 }
 
-/** 초대 코드로 가족 합류 */
-export async function joinFamilyByCode(inviteCode: string): Promise<boolean> {
+/** 초대 코드로 가족 그룹 정보 조회 (미가입자도 조회 가능하도록 anon key 사용) */
+export async function getFamilyByCode(inviteCode: string): Promise<{ id: string; name: string } | null> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-
-  const { data: group, error: groupError } = await supabase
+  const { data, error } = await supabase
     .from('family_groups')
-    .select('id')
+    .select('id, name')
     .eq('invite_code', inviteCode)
     .single();
 
-  if (groupError || !group) return false;
+  if (error || !data) return null;
+  return { id: data.id, name: data.name };
+}
+
+/** 초대 코드로 가족 합류 */
+export async function joinFamilyByCode(inviteCode: string): Promise<{ success: boolean; alreadyMember?: boolean; familyName?: string }> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false };
+
+  // 이미 가족 그룹이 있는지 확인
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('family_group_id')
+    .eq('id', user.id)
+    .single();
+
+  // 초대 코드로 그룹 찾기
+  const { data: group, error: groupError } = await supabase
+    .from('family_groups')
+    .select('id, name')
+    .eq('invite_code', inviteCode)
+    .single();
+
+  if (groupError || !group) return { success: false };
+
+  // 이미 같은 가족 그룹 멤버인 경우
+  if (profile?.family_group_id === group.id) {
+    return { success: true, alreadyMember: true, familyName: group.name };
+  }
 
   const { error } = await supabase
     .from('profiles')
     .update({ family_group_id: group.id })
     .eq('id', user.id);
 
-  return !error;
+  return { success: !error, familyName: group.name };
 }
 
 /** 신규 가족 그룹 생성 + 프로필에 연결 */
