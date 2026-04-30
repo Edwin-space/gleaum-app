@@ -1,26 +1,112 @@
+@import "../styles/tokens.css";
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── 기본 리셋 ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--color-ink);
+  background-color: var(--color-canvas-parchment);
+  line-height: 1.47;
+  letter-spacing: -0.374px;
 }
+
+/* ── 모바일 앱 쉘 ── */
+#app-shell {
+  max-width: 430px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: var(--color-canvas-parchment);
+  position: relative;
+  overflow-x: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+}
+
+/* ── 스크롤바 숨김 ── */
+::-webkit-scrollbar { display: none; }
+* { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── 타이포그래피 ── */
+.text-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.28px;
+}
+.text-tagline {
+  font-family: var(--font-display);
+  font-size: var(--text-tagline);
+  font-weight: 600;
+  line-height: 1.19;
+}
+.text-body-strong {
+  font-size: var(--text-body-lg);
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+}
+.text-caption {
+  font-size: var(--text-caption);
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+}
+.text-fine {
+  font-size: var(--text-fine);
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.12px;
+}
+
+/* ── 브랜드 그라디언트 텍스트 ── */
+.text-brand-gradient {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── 버튼 ── */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+}
+button:active { transform: scale(0.97); transition: transform 0.1s ease; }
+
+/* ── 입력 ── */
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--color-ink);
+  outline: none;
+}
+
+/* ── 한국어 줄바꿈 ── */
+p, span, div { word-break: keep-all; overflow-wrap: break-word; }
+
+/* ── 상태 배지 컬러 ── */
+.badge-pending  { background: var(--color-status-pending);  color: white; }
+.badge-progress { background: var(--color-status-progress); color: white; }
+.badge-done     { background: var(--color-status-done);     color: var(--brand-black); }
+.badge-missed   { background: var(--color-status-missed);   color: white; }
+
+/* ── 일정 유형 좌측 바 ── */
+.type-bar-shared   { background: var(--color-schedule-shared); }
+.type-bar-personal { background: var(--color-schedule-personal); }
+.type-bar-child    { background: var(--color-schedule-child); }
+.type-bar-expense  { background: var(--color-schedule-expense); }

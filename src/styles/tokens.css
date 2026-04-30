@@ -1,0 +1,99 @@
+/* ============================================================
+   글리움 (Gleaum) Design Tokens
+   Source 1: gleaum_design_system.html — Brand & Logo
+   Source 2: DESIGN-apple.md — UI Components
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+:root {
+  /* ── 브랜드 컬러 (gleaum_design_system.html) ── */
+  --brand-green:       #2EE895;
+  --brand-teal:        #0CC9B5;
+  --brand-blue:        #0084CC;
+  --brand-navy:        #1A1B2E;
+  --brand-black:       #0A0A0A;
+
+  /* 브랜드 그라디언트 */
+  --brand-gradient: linear-gradient(135deg, #2EE895 0%, #0CC9B5 50%, #0084CC 100%);
+  --brand-gradient-subtle: linear-gradient(135deg, rgba(46,232,149,0.12) 0%, rgba(12,201,181,0.08) 50%, rgba(0,132,204,0.06) 100%);
+
+  /* ── UI 액션 컬러 (DESIGN-apple.md 기반, 글리움 브랜드 적용) ── */
+  --color-primary:          #0084CC;   /* Brand Blue — 모든 인터랙티브 요소 */
+  --color-primary-focus:    #0CC9B5;   /* Brand Teal — 포커스 링 */
+  --color-primary-on-dark:  #2EE895;   /* Brand Green — 다크 배경 위 */
+
+  /* ── 서피스 (DESIGN-apple.md 구조, 글리움 중성 적용) ── */
+  --color-canvas:           #FFFFFF;
+  --color-canvas-parchment: #F5F5F3;   /* 글리움 Gray 100 */
+  --color-surface-pearl:    #FAFAFA;
+  --color-surface-dark:     #0A0A0A;   /* 글리움 Brand Black */
+  --color-surface-dark-2:   #141414;
+  --color-surface-dark-3:   #1E1E1E;
+  --color-surface-dark-4:   #2A2A2A;
+
+  /* ── 텍스트 ── */
+  --color-ink:          #1A1B2E;   /* 글리움 Brand Navy */
+  --color-ink-muted-80: #333333;
+  --color-ink-muted-48: #6E6E66;   /* 글리움 Gray 600 */
+  --color-on-primary:   #FFFFFF;
+  --color-on-dark:      #FFFFFF;
+  --color-body-muted:   #AEAEA8;   /* 글리움 Gray 400 */
+
+  /* ── 보더/구분선 ── */
+  --color-hairline:     #E8E8E4;   /* 글리움 Gray 200 */
+  --color-divider-soft: #F0F0F0;
+
+  /* ── 일정 유형 컬러 ── */
+  --color-schedule-shared:   #0084CC;   /* 공유일정 — Brand Blue */
+  --color-schedule-personal: #0CC9B5;   /* 개인일정 — Brand Teal */
+  --color-schedule-child:    #2EE895;   /* 자녀일정 — Brand Green */
+  --color-schedule-expense:  #F59E0B;   /* 정기지출 — Amber */
+
+  /* ── 상태 컬러 ── */
+  --color-status-pending:    #AEAEA8;   /* 대기중 */
+  --color-status-progress:   #0084CC;   /* 진행중 */
+  --color-status-done:       #2EE895;   /* 완료 */
+  --color-status-missed:     #EF4444;   /* 미완료 */
+
+  /* ── 타이포그래피 (DESIGN-apple.md 스케일) ── */
+  --font-display:  'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-korean:   'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  --font-body:     'DM Sans', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+
+  --text-hero:     56px;
+  --text-display:  40px;
+  --text-display-md: 34px;
+  --text-lead:     28px;
+  --text-tagline:  21px;
+  --text-body-lg:  17px;
+  --text-body:     16px;
+  --text-caption:  14px;
+  --text-fine:     12px;
+  --text-micro:    10px;
+
+  /* ── 간격 (DESIGN-apple.md spacing) ── */
+  --space-xxs:  4px;
+  --space-xs:   8px;
+  --space-sm:   12px;
+  --space-md:   17px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-xxl:  48px;
+  --space-section: 80px;
+
+  /* ── 라운드 (DESIGN-apple.md rounded) ── */
+  --radius-none:  0px;
+  --radius-xs:    5px;
+  --radius-sm:    8px;
+  --radius-md:    11px;
+  --radius-lg:    18px;
+  --radius-pill:  9999px;
+  --radius-full:  9999px;
+
+  /* ── 앱 전용 ── */
+  --radius-card:      16px;
+  --radius-app-icon:  22px;
+  --bottom-nav-height: 64px;
+  --header-height:     56px;
+}
