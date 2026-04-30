@@ -21,12 +21,12 @@ interface SettingRowProps {
 function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onClick }: SettingRowProps) {
   const content = (
     <div
-      className="flex items-center gap-3 px-4 py-3.5 active:bg-[rgba(90,50,250,0.03)]"
+      className="flex items-center gap-3 px-4 py-3.5 active:bg-[rgba(0,132,204,0.03)]"
       onClick={onClick}
     >
       <div
         className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0"
-        style={{ background: danger ? 'rgba(239,68,68,0.08)' : 'rgba(90,50,250,0.06)' }}
+        style={{ background: danger ? 'rgba(239,68,68,0.08)' : 'rgba(0,132,204,0.06)' }}
       >
         <span className="text-base">{icon}</span>
       </div>
@@ -42,7 +42,7 @@ function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onCli
       {isToggle ? (
         <div
           className="w-11 h-6 rounded-full relative transition-all"
-          style={{ background: toggled ? '#5A32FA' : '#E5E5EA' }}
+          style={{ background: toggled ? '#0084CC' : '#E5E5EA' }}
         >
           <div
             className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
@@ -83,7 +83,7 @@ export default function MyPage() {
     return (
       <div className="min-h-dvh flex items-center justify-center" style={{ background: '#FAFAFD' }}>
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }} />
+          style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
       </div>
     );
   }
@@ -96,8 +96,8 @@ export default function MyPage() {
       <div
         className="mx-4 mt-4 mb-2 rounded-[28px] p-6 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)',
-          boxShadow: '0 12px 40px rgba(90,50,250,0.30)',
+          background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+          boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
         }}
       >
         {/* 장식 원 */}
@@ -159,8 +159,8 @@ export default function MyPage() {
       </div>
 
       {/* 알림 설정 */}
-      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
-        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.05)' }}>
         <SectionHeader title="알림 설정" />
         <SettingRow icon="📅" label="공유일정 알림" isToggle toggled={true} />
         <SettingRow icon="👤" label="개인일정 알림" isToggle toggled={true} />
@@ -171,8 +171,8 @@ export default function MyPage() {
       </div>
 
       {/* 연동 서비스 */}
-      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
-        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.05)' }}>
         <SectionHeader title="연동 서비스" />
         <SettingRow icon="📆" label="구글 캘린더 연동" value="연동됨" href="/settings/calendar" />
         <SettingRow icon="💾" label="구글 드라이브 연동" value="연동됨" />
@@ -180,8 +180,8 @@ export default function MyPage() {
       </div>
 
       {/* 앱 정보 */}
-      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
-        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.05)' }}>
         <SectionHeader title="앱 정보" />
         <SettingRow icon="📋" label="개인정보 처리방침" />
         <SettingRow icon="📄" label="이용약관" />
@@ -189,8 +189,8 @@ export default function MyPage() {
       </div>
 
       {/* 계정 */}
-      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(90,50,250,0.06)]"
-        style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}>
+      <div className="mx-4 mt-3 bg-white rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]"
+        style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.05)' }}>
         <SectionHeader title="계정" />
         <SettingRow icon="🚪" label="로그아웃" danger onClick={signOut} />
       </div>

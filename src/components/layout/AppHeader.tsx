@@ -40,7 +40,7 @@ export function AppHeader({
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: dark
           ? '1px solid rgba(255,255,255,0.06)'
-          : '1px solid rgba(90,50,250,0.06)',
+          : '1px solid rgba(0,132,204,0.06)',
       }}
     >
       {/* 왼쪽 */}
@@ -85,7 +85,7 @@ export function AppHeader({
             {notificationCount > 0 && (
               <span
                 className="absolute top-1 right-1 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[10px] font-bold text-white px-1"
-                style={{ background: '#5A32FA' }}
+                style={{ background: '#0084CC' }}
               >
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>

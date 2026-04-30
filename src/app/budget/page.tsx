@@ -47,9 +47,9 @@ export default function BudgetPage() {
       <div className="flex items-center justify-between px-5 py-3">
         <button onClick={prevMonth}
           className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
-          style={{ background: 'rgba(90,50,250,0.06)' }}>
+          style={{ background: 'rgba(0,132,204,0.06)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="#5A32FA" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M15 18L9 12L15 6" stroke="#0084CC" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </button>
         <div className="text-center">
@@ -57,14 +57,14 @@ export default function BudgetPage() {
             {formatMonthYear(viewDate)}
           </h2>
           {isCurrentMonth && (
-            <span className="text-[11px] font-semibold" style={{ color: '#5A32FA' }}>이번 달</span>
+            <span className="text-[11px] font-semibold" style={{ color: '#0084CC' }}>이번 달</span>
           )}
         </div>
         <button onClick={nextMonth}
           className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
-          style={{ background: 'rgba(90,50,250,0.06)' }}>
+          style={{ background: 'rgba(0,132,204,0.06)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18L15 12L9 6" stroke="#5A32FA" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M9 18L15 12L9 6" stroke="#0084CC" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </button>
       </div>
@@ -72,7 +72,7 @@ export default function BudgetPage() {
       {loading ? (
         <div className="flex justify-center py-10">
           <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }} />
+            style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
         </div>
       ) : (
         <>
@@ -80,8 +80,8 @@ export default function BudgetPage() {
           <div
             className="mx-4 mb-4 rounded-[28px] overflow-hidden relative"
             style={{
-              background: 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)',
-              boxShadow: '0 12px 40px rgba(90,50,250,0.30)',
+              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
             }}
           >
             {/* 장식 원 */}
@@ -131,7 +131,7 @@ export default function BudgetPage() {
           {categories.length > 0 && (
             <div
               className="mx-4 mb-4 bg-white rounded-[24px] p-5"
-              style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}
+              style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}
             >
               <h3 className="text-[14px] font-bold mb-4" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
                 카테고리별 지출
@@ -164,7 +164,7 @@ export default function BudgetPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(90,50,250,0.06)' }}>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,132,204,0.06)' }}>
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${pct}%`, background: catColor }}
@@ -189,7 +189,7 @@ export default function BudgetPage() {
                   <div
                     key={e.id}
                     className="bg-white rounded-[20px] flex items-center gap-3 px-4 py-3.5"
-                    style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.05)' }}
+                    style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.05)' }}
                   >
                     <div
                       className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-shrink-0"
@@ -212,8 +212,8 @@ export default function BudgetPage() {
                       <span
                         className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
                         style={{
-                          background: e.status === 'completed' ? 'rgba(16,185,129,0.10)' : 'rgba(90,50,250,0.08)',
-                          color:      e.status === 'completed' ? '#059669' : '#5A32FA',
+                          background: e.status === 'completed' ? 'rgba(16,185,129,0.10)' : 'rgba(0,132,204,0.08)',
+                          color:      e.status === 'completed' ? '#059669' : '#0084CC',
                           fontFamily: "'Noto Sans KR',sans-serif",
                         }}
                       >
@@ -227,7 +227,7 @@ export default function BudgetPage() {
               <div className="flex flex-col items-center py-16 gap-4">
                 <div
                   className="w-20 h-20 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(90,50,250,0.06)' }}
+                  style={{ background: 'rgba(0,132,204,0.06)' }}
                 >
                   <span className="text-4xl">💰</span>
                 </div>

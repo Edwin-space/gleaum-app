@@ -71,14 +71,14 @@ export default function InvitePage() {
 
         <div
           className="w-20 h-20 rounded-[24px] flex items-center justify-center mb-6"
-          style={{ background: '#5A32FA', boxShadow: '0 12px 40px rgba(90,50,250,0.35)' }}
+          style={{ background: '#0084CC', boxShadow: '0 12px 40px rgba(0,132,204,0.35)' }}
         >
           <span className="text-4xl">👨‍👩‍👧‍👦</span>
         </div>
 
         <div
           className="w-10 h-10 rounded-full border-[3px] border-t-transparent animate-spin mb-4"
-          style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }}
+          style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }}
         />
 
         <p className="text-[16px] font-bold" style={{ color: '#1A1B2E' }}>
@@ -124,7 +124,7 @@ export default function InvitePage() {
           합류 완료!
         </h1>
         {familyName && (
-          <p className="text-[17px] font-semibold mb-1" style={{ color: '#5A32FA' }}>
+          <p className="text-[17px] font-semibold mb-1" style={{ color: '#0084CC' }}>
             {familyName}
           </p>
         )}
@@ -155,7 +155,7 @@ export default function InvitePage() {
 
         <div
           className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
-          style={{ background: 'rgba(90,50,250,0.10)' }}
+          style={{ background: 'rgba(0,132,204,0.10)' }}
         >
           <span className="text-5xl">👨‍👩‍👧‍👦</span>
         </div>
@@ -164,7 +164,7 @@ export default function InvitePage() {
           이미 가족 멤버예요
         </h1>
         {familyName && (
-          <p className="text-[16px] font-semibold mb-1" style={{ color: '#5A32FA' }}>
+          <p className="text-[16px] font-semibold mb-1" style={{ color: '#0084CC' }}>
             {familyName}
           </p>
         )}
@@ -175,7 +175,7 @@ export default function InvitePage() {
         <button
           onClick={() => router.replace('/family')}
           className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"
-          style={{ background: '#5A32FA', boxShadow: '0 8px 24px rgba(90,50,250,0.35)' }}
+          style={{ background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)' }}
         >
           가족 페이지로 이동
         </button>
@@ -230,7 +230,7 @@ export default function InvitePage() {
         <button
           onClick={() => router.replace('/home')}
           className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"
-          style={{ background: '#5A32FA', boxShadow: '0 8px 24px rgba(90,50,250,0.35)' }}
+          style={{ background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)' }}
         >
           홈으로 이동
         </button>
@@ -248,7 +248,7 @@ export default function InvitePage() {
       <button
         onClick={() => router.replace('/home')}
         className="mt-6 px-8 py-3 rounded-[16px] font-bold text-white"
-        style={{ background: '#5A32FA' }}
+        style={{ background: '#0084CC' }}
       >
         홈으로
       </button>

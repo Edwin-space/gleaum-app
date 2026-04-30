@@ -60,8 +60,8 @@ export default function ChildrenSchedulePage() {
       <div
         className="mx-4 mt-4 rounded-[28px] p-5 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)',
-          boxShadow: '0 12px 40px rgba(90,50,250,0.30)',
+          background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+          boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
         }}
       >
         {/* 장식 원 */}
@@ -123,10 +123,10 @@ export default function ChildrenSchedulePage() {
             onClick={() => setActiveTab(tab.id)}
             className="flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold transition-all active:scale-95"
             style={{
-              background: activeTab === tab.id ? '#5A32FA' : 'white',
+              background: activeTab === tab.id ? '#0084CC' : 'white',
               color:      activeTab === tab.id ? 'white' : '#8E8E93',
-              border:     activeTab === tab.id ? 'none' : '1.5px solid rgba(90,50,250,0.12)',
-              boxShadow:  activeTab === tab.id ? '0 4px 16px rgba(90,50,250,0.30)' : 'none',
+              border:     activeTab === tab.id ? 'none' : '1.5px solid rgba(0,132,204,0.12)',
+              boxShadow:  activeTab === tab.id ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
               fontFamily: "'Noto Sans KR',sans-serif",
             }}
           >
@@ -139,7 +139,7 @@ export default function ChildrenSchedulePage() {
       {loading && (
         <div className="flex justify-center py-10">
           <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }} />
+            style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
         </div>
       )}
 
@@ -149,7 +149,7 @@ export default function ChildrenSchedulePage() {
           {childSchedules.length === 0 ? (
             <div className="flex flex-col items-center py-16 gap-4">
               <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(90,50,250,0.06)' }}>
+                style={{ background: 'rgba(0,132,204,0.06)' }}>
                 <span className="text-4xl">📭</span>
               </div>
               <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '15px', fontWeight: 600, color: '#1A1B2E' }}>
@@ -169,7 +169,7 @@ export default function ChildrenSchedulePage() {
                 <div
                   key={schedule.id}
                   className="bg-white rounded-[24px] p-4"
-                  style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}
+                  style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}
                 >
                   {/* 헤더 */}
                   <div className="flex items-start justify-between mb-3">
@@ -188,11 +188,11 @@ export default function ChildrenSchedulePage() {
                       style={{
                         background: isMissed ? 'rgba(239,68,68,0.10)'
                           : schedule.status === 'completed' ? 'rgba(16,185,129,0.10)'
-                          : schedule.status === 'in_progress' ? 'rgba(90,50,250,0.10)'
+                          : schedule.status === 'in_progress' ? 'rgba(0,132,204,0.10)'
                           : 'rgba(156,163,175,0.12)',
                         color: isMissed ? '#EF4444'
                           : schedule.status === 'completed' ? '#059669'
-                          : schedule.status === 'in_progress' ? '#5A32FA'
+                          : schedule.status === 'in_progress' ? '#0084CC'
                           : '#9CA3AF',
                         fontFamily: "'Noto Sans KR',sans-serif",
                       }}
@@ -228,7 +228,7 @@ export default function ChildrenSchedulePage() {
                         const isPast   = i < currentStepIdx;
                         const dotColor = isPast || isActive
                           ? step.key === 'completed' ? '#10B981'
-                            : step.key === 'in_progress' ? '#5A32FA'
+                            : step.key === 'in_progress' ? '#0084CC'
                             : '#9CA3AF'
                           : '#E5E5EA';
 
@@ -295,8 +295,8 @@ export default function ChildrenSchedulePage() {
                         onClick={() => alert(`${schedule.title} 재알림 발송!`)}
                         className="flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all active:scale-95"
                         style={{
-                          background: 'rgba(90,50,250,0.08)',
-                          color: '#5A32FA',
+                          background: 'rgba(0,132,204,0.08)',
+                          color: '#0084CC',
                           fontFamily: "'Noto Sans KR',sans-serif",
                         }}
                       >

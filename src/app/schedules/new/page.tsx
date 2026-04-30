@@ -20,7 +20,7 @@ const inputBase = 'w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-white border
 
 // 유형별 칩 설정
 const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; activeBg: string; label: string }> = {
-  shared:   { icon: '👨‍👩‍👧‍👦', activeColor: '#5A32FA', activeBg: 'rgba(90,50,250,0.10)',  label: '공유' },
+  shared:   { icon: '👨‍👩‍👧‍👦', activeColor: '#0084CC', activeBg: 'rgba(0,132,204,0.10)',  label: '공유' },
   personal: { icon: '👤',       activeColor: '#0891B2', activeBg: 'rgba(6,182,212,0.10)',  label: '개인' },
   child:    { icon: '🧒',       activeColor: '#059669', activeBg: 'rgba(16,185,129,0.10)', label: '자녀' },
   expense:  { icon: '💰',       activeColor: '#D97706', activeBg: 'rgba(245,158,11,0.10)', label: '지출' },
@@ -108,17 +108,17 @@ export default function NewSchedulePage() {
         style={{
           background: 'rgba(250,250,253,0.92)',
           backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(90,50,250,0.06)',
+          borderBottom: '1px solid rgba(0,132,204,0.06)',
           paddingTop: `calc(env(safe-area-inset-top) + 12px)`,
         }}
       >
         <button
           onClick={() => router.back()}
           className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(90,50,250,0.06)' }}
+          style={{ background: 'rgba(0,132,204,0.06)' }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="#5A32FA" strokeWidth="2.2" strokeLinecap="round"/>
+            <path d="M15 18L9 12L15 6" stroke="#0084CC" strokeWidth="2.2" strokeLinecap="round"/>
           </svg>
         </button>
 
@@ -131,8 +131,8 @@ export default function NewSchedulePage() {
           disabled={saving}
           className="px-4 py-2 rounded-full text-[14px] font-bold text-white disabled:opacity-60 transition-all active:scale-95"
           style={{
-            background: saving ? '#9B89FC' : 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)',
-            boxShadow: '0 4px 16px rgba(90,50,250,0.35)',
+            background: saving ? '#9B89FC' : 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+            boxShadow: '0 4px 16px rgba(0,132,204,0.35)',
           }}
         >
           {saving ? '저장중' : '저장'}
@@ -155,7 +155,7 @@ export default function NewSchedulePage() {
                   className="py-3 rounded-[16px] text-[12px] font-bold flex flex-col items-center gap-1 transition-all active:scale-95"
                   style={{
                     background: selected ? cfg.activeBg : 'white',
-                    border: selected ? `2px solid ${cfg.activeColor}40` : '2px solid rgba(90,50,250,0.06)',
+                    border: selected ? `2px solid ${cfg.activeColor}40` : '2px solid rgba(0,132,204,0.06)',
                     color: selected ? cfg.activeColor : '#8E8E93',
                     boxShadow: selected ? `0 4px 16px ${cfg.activeColor}25` : 'none',
                     fontFamily: "'Noto Sans KR',sans-serif",
@@ -178,7 +178,7 @@ export default function NewSchedulePage() {
             placeholder="일정 제목을 입력하세요"
             className={inputBase}
             style={{
-              borderColor: title ? '#5A32FA' : 'rgba(90,50,250,0.12)',
+              borderColor: title ? '#0084CC' : 'rgba(0,132,204,0.12)',
               fontFamily: "'Noto Sans KR',sans-serif",
             }}
           />
@@ -192,7 +192,7 @@ export default function NewSchedulePage() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className={inputBase}
-            style={{ borderColor: date ? '#5A32FA' : 'rgba(90,50,250,0.12)' }}
+            style={{ borderColor: date ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
           />
         </div>
 
@@ -204,7 +204,7 @@ export default function NewSchedulePage() {
               value={startTime}
               onChange={(e) => setStart(e.target.value)}
               className={inputBase}
-              style={{ borderColor: startTime ? '#5A32FA' : 'rgba(90,50,250,0.12)' }}
+              style={{ borderColor: startTime ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
             />
           </div>
           <div>
@@ -214,7 +214,7 @@ export default function NewSchedulePage() {
               value={endTime}
               onChange={(e) => setEnd(e.target.value)}
               className={inputBase}
-              style={{ borderColor: endTime ? '#5A32FA' : 'rgba(90,50,250,0.12)' }}
+              style={{ borderColor: endTime ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
             />
           </div>
         </div>
@@ -301,10 +301,10 @@ export default function NewSchedulePage() {
                   <button key={u.id} onClick={() => toggleParticipant(u.id)}
                     className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all active:scale-95"
                     style={{
-                      background: selected ? '#5A32FA' : 'white',
+                      background: selected ? '#0084CC' : 'white',
                       color: selected ? 'white' : '#8E8E93',
-                      border: selected ? 'none' : '2px solid rgba(90,50,250,0.12)',
-                      boxShadow: selected ? '0 4px 16px rgba(90,50,250,0.30)' : 'none',
+                      border: selected ? 'none' : '2px solid rgba(0,132,204,0.12)',
+                      boxShadow: selected ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
                       fontFamily: "'Noto Sans KR',sans-serif",
                     }}
                   >
@@ -327,12 +327,12 @@ export default function NewSchedulePage() {
               onChange={(e) => setAddress(e.target.value)}
               placeholder="장소를 입력하세요"
               className={inputBase + ' pl-10'}
-              style={{ borderColor: address ? '#5A32FA' : 'rgba(90,50,250,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
+              style={{ borderColor: address ? '#0084CC' : 'rgba(0,132,204,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
             />
           </div>
           {address && (
             <div className="mt-2 h-28 rounded-[16px] flex items-center justify-center"
-              style={{ background: 'rgba(90,50,250,0.04)', border: '1.5px dashed rgba(90,50,250,0.15)' }}>
+              style={{ background: 'rgba(0,132,204,0.04)', border: '1.5px dashed rgba(0,132,204,0.15)' }}>
               <div className="text-center">
                 <span className="text-3xl">🗺️</span>
                 <p className="text-[12px] mt-1" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>{address}</p>
@@ -351,7 +351,7 @@ export default function NewSchedulePage() {
               onChange={(e) => setRefUrl(e.target.value)}
               placeholder="참고 웹사이트 (선택)"
               className={inputBase + ' pl-10'}
-              style={{ borderColor: refUrl ? '#5A32FA' : 'rgba(90,50,250,0.12)' }}
+              style={{ borderColor: refUrl ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
             />
           </div>
         </div>
@@ -364,10 +364,10 @@ export default function NewSchedulePage() {
               <button key={opt.value} onClick={() => setReminder(opt.value)}
                 className="px-3.5 py-2 rounded-full text-[12px] font-semibold transition-all active:scale-95"
                 style={{
-                  background: reminder === opt.value ? '#5A32FA' : 'white',
+                  background: reminder === opt.value ? '#0084CC' : 'white',
                   color: reminder === opt.value ? 'white' : '#8E8E93',
-                  border: reminder === opt.value ? 'none' : '2px solid rgba(90,50,250,0.12)',
-                  boxShadow: reminder === opt.value ? '0 4px 12px rgba(90,50,250,0.30)' : 'none',
+                  border: reminder === opt.value ? 'none' : '2px solid rgba(0,132,204,0.12)',
+                  boxShadow: reminder === opt.value ? '0 4px 12px rgba(0,132,204,0.30)' : 'none',
                   fontFamily: "'Noto Sans KR',sans-serif",
                 }}
               >
@@ -384,7 +384,7 @@ export default function NewSchedulePage() {
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as RepeatType)}
             className={inputBase}
-            style={{ borderColor: repeat !== 'none' ? '#5A32FA' : 'rgba(90,50,250,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ borderColor: repeat !== 'none' ? '#0084CC' : 'rgba(0,132,204,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
           >
             {(Object.entries(REPEAT_LABELS) as [RepeatType, string][]).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
@@ -399,7 +399,7 @@ export default function NewSchedulePage() {
             <button
               onClick={() => setAttachments((prev) => [...prev, { id: Date.now().toString(), name: `사진_${prev.length + 1}.jpg`, source: 'local' }])}
               className="flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all active:scale-95"
-              style={{ background: 'white', border: '2px dashed rgba(90,50,250,0.25)', color: '#5A32FA', fontFamily: "'Noto Sans KR',sans-serif" }}
+              style={{ background: 'white', border: '2px dashed rgba(0,132,204,0.25)', color: '#0084CC', fontFamily: "'Noto Sans KR',sans-serif" }}
             >
               <span>📱</span> 내 휴대폰
             </button>
@@ -417,7 +417,7 @@ export default function NewSchedulePage() {
               {attachments.map((a) => (
                 <div key={a.id}
                   className="relative flex-shrink-0 w-20 h-20 rounded-[14px] flex items-center justify-center"
-                  style={{ background: 'rgba(90,50,250,0.06)', border: '1.5px solid rgba(90,50,250,0.12)' }}>
+                  style={{ background: 'rgba(0,132,204,0.06)', border: '1.5px solid rgba(0,132,204,0.12)' }}>
                   <span className="text-2xl">{a.source === 'local' ? '🖼️' : '📄'}</span>
                   <button onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
                     className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
@@ -440,7 +440,7 @@ export default function NewSchedulePage() {
             placeholder="메모를 입력하세요 (선택)"
             rows={3}
             className={inputBase + ' resize-none leading-relaxed'}
-            style={{ borderColor: memo ? '#5A32FA' : 'rgba(90,50,250,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ borderColor: memo ? '#0084CC' : 'rgba(0,132,204,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
           />
         </div>
 
@@ -448,14 +448,14 @@ export default function NewSchedulePage() {
         <div className="grid grid-cols-2 gap-3 pt-2 pb-8">
           <button onClick={() => router.back()}
             className="h-[56px] rounded-[20px] text-[15px] font-bold transition-all active:scale-95"
-            style={{ border: '2px solid rgba(90,50,250,0.15)', color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            style={{ border: '2px solid rgba(0,132,204,0.15)', color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
             취소
           </button>
           <button onClick={handleSave} disabled={saving}
             className="h-[56px] rounded-[20px] text-[15px] font-bold text-white transition-all active:scale-95 disabled:opacity-60"
             style={{
-              background: 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)',
-              boxShadow: '0 8px 24px rgba(90,50,250,0.35)',
+              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
               fontFamily: "'Noto Sans KR',sans-serif",
             }}>
             {saving ? '저장 중...' : '일정 저장'}

@@ -25,19 +25,19 @@ function LoginContent() {
       <div style={{
         position: 'absolute', top: '-80px', left: '-80px',
         width: '380px', height: '380px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,235,153,0.55) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(46,232,149,0.2) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
       <div style={{
         position: 'absolute', top: '120px', right: '-140px',
         width: '480px', height: '480px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(153,240,255,0.40) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(12,201,181,0.15) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
       <div style={{
         position: 'absolute', bottom: '-40px', left: '-40px',
         width: '420px', height: '420px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(200,153,255,0.35) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(0,132,204,0.1) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
@@ -46,13 +46,13 @@ function LoginContent() {
 
         {/* 앱 아이콘 */}
         <div
-          className="w-24 h-24 rounded-[28px] flex items-center justify-center mb-8"
+          className="mb-8"
           style={{
-            background: '#5A32FA',
-            boxShadow: '0 16px 48px rgba(90,50,250,0.35)',
+            boxShadow: '0 16px 48px rgba(0,132,204,0.25)',
+            borderRadius: '28px'
           }}
         >
-          <GleaumAppIcon size={52} />
+          <GleaumAppIcon size={96} radius={28} />
         </div>
 
         {/* 초대 배너 (next 파라미터가 있을 때만 표시) */}
@@ -60,13 +60,13 @@ function LoginContent() {
           <div
             className="w-full flex items-center gap-3 px-5 py-4 rounded-[20px] mb-6"
             style={{
-              background: 'rgba(90,50,250,0.08)',
-              border: '1.5px solid rgba(90,50,250,0.15)',
+              background: 'rgba(0,132,204,0.08)',
+              border: '1.5px solid rgba(0,132,204,0.15)',
             }}
           >
             <span className="text-2xl">👨‍👩‍👧‍👦</span>
             <div>
-              <p className="text-[13px] font-bold" style={{ color: '#5A32FA' }}>가족 초대 링크</p>
+              <p className="text-[13px] font-bold" style={{ color: '#0084CC' }}>가족 초대 링크</p>
               <p className="text-[12px]" style={{ color: '#8E8E93' }}>로그인 후 자동으로 가족에 합류됩니다</p>
             </div>
           </div>
@@ -89,7 +89,7 @@ function LoginContent() {
         {/* 기능 소개 카드 */}
         <div className="w-full space-y-3">
           {[
-            { icon: '📅', text: '공유·개인·자녀 일정 한눈에 관리', color: 'rgba(90,50,250,0.08)' },
+            { icon: '📅', text: '공유·개인·자녀 일정 한눈에 관리', color: 'rgba(0,132,204,0.08)' },
             { icon: '✅', text: '아이들 일정 완료 여부 실시간 확인', color: 'rgba(16,185,129,0.08)' },
             { icon: '💰', text: '정기지출 가계부 자동 정리',          color: 'rgba(245,158,11,0.08)' },
           ].map((item) => (
@@ -98,7 +98,7 @@ function LoginContent() {
               className="flex items-center gap-4 px-5 py-4 rounded-[20px]"
               style={{
                 background: item.color,
-                boxShadow: '0 2px 12px rgba(90,50,250,0.04)',
+                boxShadow: '0 2px 12px rgba(0,132,204,0.04)',
               }}
             >
               <span className="text-2xl flex-shrink-0">{item.icon}</span>
@@ -129,9 +129,9 @@ function LoginContent() {
           disabled={loading}
           className="w-full flex items-center justify-center gap-3 h-[60px] rounded-[20px] font-bold text-[16px] transition-transform active:scale-[0.97] disabled:opacity-70"
           style={{
-            background: loading ? '#5A32FA' : 'white',
+            background: loading ? '#0084CC' : 'white',
             color: loading ? 'white' : '#1A1B2E',
-            boxShadow: '0 8px 30px rgba(90,50,250,0.12)',
+            boxShadow: '0 8px 30px rgba(0,132,204,0.12)',
             fontFamily: "'Noto Sans KR', sans-serif",
           }}
         >
@@ -163,8 +163,8 @@ function LoginContent() {
           disabled={loading}
           className="w-full flex items-center justify-center gap-2 h-[52px] rounded-[20px] font-bold text-[15px] text-white mt-3 transition-transform active:scale-[0.97] disabled:opacity-70"
           style={{
-            background: '#5A32FA',
-            boxShadow: '0 8px 24px rgba(90,50,250,0.35)',
+            background: '#0084CC',
+            boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
             fontFamily: "'Noto Sans KR', sans-serif",
           }}
         >
@@ -186,7 +186,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-dvh flex items-center justify-center" style={{ background: '#FAFAFD' }}>
-        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(90,50,250,0.3)', borderTopColor: '#5A32FA' }} />
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(0,132,204,0.3)', borderTopColor: '#0084CC' }} />
       </div>
     }>
       <LoginContent />

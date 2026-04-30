@@ -17,7 +17,7 @@ import type { Schedule, ScheduleStatus } from '@/types';
 
 // 유형별 설정
 const typeConfig = {
-  shared:   { icon: '👨‍👩‍👧‍👦', bg: 'rgba(90,50,250,0.10)',  color: '#5A32FA',  gradient: 'linear-gradient(135deg, #7C5CFC 0%, #5A32FA 100%)' },
+  shared:   { icon: '👨‍👩‍👧‍👦', bg: 'rgba(0,132,204,0.10)',  color: '#0084CC',  gradient: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)' },
   personal: { icon: '👤',       bg: 'rgba(6,182,212,0.10)',  color: '#0891B2',  gradient: 'linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)' },
   child:    { icon: '🧒',       bg: 'rgba(16,185,129,0.10)', color: '#059669',  gradient: 'linear-gradient(135deg, #34D399 0%, #059669 100%)' },
   expense:  { icon: '💰',       bg: 'rgba(245,158,11,0.10)', color: '#D97706',  gradient: 'linear-gradient(135deg, #FCD34D 0%, #D97706 100%)' },
@@ -63,7 +63,7 @@ export default function ScheduleDetailPage() {
     return (
       <div className="min-h-dvh flex items-center justify-center" style={{ background: '#FAFAFD' }}>
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }} />
+          style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function ScheduleDetailPage() {
         <button
           onClick={() => router.back()}
           className="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white"
-          style={{ background: '#5A32FA' }}
+          style={{ background: '#0084CC' }}
         >
           돌아가기
         </button>
@@ -158,7 +158,7 @@ export default function ScheduleDetailPage() {
 
         {/* 자녀일정 상태 스텝퍼 */}
         {schedule.type === 'child' && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}>
+          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-4"
               style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>진행 상황</p>
             <div className="flex items-center">
@@ -167,7 +167,7 @@ export default function ScheduleDetailPage() {
                 const isPast   = i < currentStepIdx;
                 const dotColor = isPast || isActive
                   ? step.key === 'completed' ? '#10B981'
-                    : step.key === 'in_progress' ? '#5A32FA'
+                    : step.key === 'in_progress' ? '#0084CC'
                     : '#9CA3AF'
                   : '#E5E5EA';
 
@@ -214,7 +214,7 @@ export default function ScheduleDetailPage() {
 
         {/* 정기지출 정보 */}
         {schedule.type === 'expense' && schedule.amount !== undefined && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}>
+          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-3"
               style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>정기지출 정보</p>
             <div className="flex items-center justify-between mb-3">
@@ -224,7 +224,7 @@ export default function ScheduleDetailPage() {
               </span>
             </div>
             {schedule.expenseCategory && (
-              <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(90,50,250,0.06)' }}>
+              <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(0,132,204,0.06)' }}>
                 <span style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: '#8E8E93' }}>카테고리</span>
                 <span className="flex items-center gap-1.5 text-[14px] font-semibold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
                   <span>{EXPENSE_CATEGORY_ICONS[schedule.expenseCategory]}</span>
@@ -233,7 +233,7 @@ export default function ScheduleDetailPage() {
               </div>
             )}
             {schedule.paymentMethod && (
-              <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(90,50,250,0.06)' }}>
+              <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(0,132,204,0.06)' }}>
                 <span style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: '#8E8E93' }}>결제 수단</span>
                 <span className="text-[14px] font-semibold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
                   {PAYMENT_METHOD_LABELS[schedule.paymentMethod]}
@@ -245,14 +245,14 @@ export default function ScheduleDetailPage() {
 
         {/* 참여자 */}
         {participantUsers.length > 0 && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}>
+          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-3"
               style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>참여자</p>
             <div className="flex flex-wrap gap-2">
               {participantUsers.map((u) => (
                 <div key={u.id}
                   className="flex items-center gap-2 px-3 py-2 rounded-full"
-                  style={{ background: 'rgba(90,50,250,0.06)', border: '1px solid rgba(90,50,250,0.10)' }}>
+                  style={{ background: 'rgba(0,132,204,0.06)', border: '1px solid rgba(0,132,204,0.10)' }}>
                   <span>{u.avatar}</span>
                   <span className="text-[13px] font-semibold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
                     {u.name}
@@ -265,14 +265,14 @@ export default function ScheduleDetailPage() {
 
         {/* 장소 */}
         {schedule.location && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}>
+          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-2"
               style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>📍 장소</p>
             <p className="text-[14px] font-medium" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
               {schedule.location.address}
             </p>
             <div className="mt-3 h-36 rounded-[16px] flex items-center justify-center"
-              style={{ background: 'rgba(90,50,250,0.04)', border: '1.5px dashed rgba(90,50,250,0.15)' }}>
+              style={{ background: 'rgba(0,132,204,0.04)', border: '1.5px dashed rgba(0,132,204,0.15)' }}>
               <div className="text-center">
                 <span className="text-4xl">🗺️</span>
                 <p className="text-[11px] mt-1" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>지도 표시 영역</p>
@@ -283,7 +283,7 @@ export default function ScheduleDetailPage() {
 
         {/* 메모 */}
         {schedule.memo && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(90,50,250,0.06)' }}>
+          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-2"
               style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>📝 메모</p>
             <p className="text-[14px] leading-relaxed" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
@@ -311,8 +311,8 @@ export default function ScheduleDetailPage() {
               onClick={() => alert(`📣 ${schedule?.title} 재알림을 발송했습니다.`)}
               className="w-full py-4 rounded-[20px] text-[15px] font-bold active:scale-[0.98] transition-transform"
               style={{
-                background: 'rgba(90,50,250,0.08)',
-                color: '#5A32FA',
+                background: 'rgba(0,132,204,0.08)',
+                color: '#0084CC',
                 fontFamily: "'Noto Sans KR',sans-serif",
               }}
             >

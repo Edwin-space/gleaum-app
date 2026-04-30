@@ -9,7 +9,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import type { Notification } from '@/types';
 
 const typeConfig: Record<string, { icon: string; bg: string; color: string }> = {
-  reminder:   { icon: '⏰', bg: 'rgba(90,50,250,0.10)',  color: '#5A32FA' },
+  reminder:   { icon: '⏰', bg: 'rgba(0,132,204,0.10)',  color: '#0084CC' },
   re_notify:  { icon: '🔔', bg: 'rgba(245,158,11,0.10)', color: '#D97706' },
   completion: { icon: '✅', bg: 'rgba(16,185,129,0.10)', color: '#059669' },
   invite:     { icon: '👥', bg: 'rgba(6,182,212,0.10)',  color: '#0891B2' },
@@ -54,7 +54,7 @@ export default function NotificationsPage() {
             <button
               onClick={handleMarkAllRead}
               className="text-[13px] font-semibold px-3 py-1.5 rounded-full"
-              style={{ background: 'rgba(90,50,250,0.08)', color: '#5A32FA', fontFamily: "'Noto Sans KR',sans-serif" }}
+              style={{ background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontFamily: "'Noto Sans KR',sans-serif" }}
             >
               모두 읽음
             </button>
@@ -67,7 +67,7 @@ export default function NotificationsPage() {
         <div className="mx-4 mt-4 mb-2">
           <span
             className="text-[13px] font-semibold px-3 py-1 rounded-full"
-            style={{ background: 'rgba(90,50,250,0.08)', color: '#5A32FA', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontFamily: "'Noto Sans KR',sans-serif" }}
           >
             읽지 않은 알림 {unreadCount}개
           </span>
@@ -77,7 +77,7 @@ export default function NotificationsPage() {
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'rgba(90,50,250,0.2)', borderTopColor: '#5A32FA' }} />
+            style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
         </div>
       ) : (
         <div className="px-4 pt-2 space-y-2">
@@ -90,9 +90,9 @@ export default function NotificationsPage() {
                   onClick={() => !n.read && handleMarkRead(n.id)}
                   className="flex gap-3 p-4 rounded-[20px] transition-all cursor-pointer active:scale-[0.99]"
                   style={{
-                    background: n.read ? 'white' : 'rgba(90,50,250,0.05)',
-                    border: n.read ? '1px solid rgba(90,50,250,0.06)' : '1.5px solid rgba(90,50,250,0.18)',
-                    boxShadow: n.read ? '0 2px 12px rgba(90,50,250,0.04)' : '0 4px 20px rgba(90,50,250,0.08)',
+                    background: n.read ? 'white' : 'rgba(0,132,204,0.05)',
+                    border: n.read ? '1px solid rgba(0,132,204,0.06)' : '1.5px solid rgba(0,132,204,0.18)',
+                    boxShadow: n.read ? '0 2px 12px rgba(0,132,204,0.04)' : '0 4px 20px rgba(0,132,204,0.08)',
                   }}
                 >
                   {/* 아이콘 원형 */}
@@ -112,7 +112,7 @@ export default function NotificationsPage() {
                         {n.title}
                       </p>
                       {!n.read && (
-                        <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: '#5A32FA' }} />
+                        <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: '#0084CC' }} />
                       )}
                     </div>
                     <p
@@ -132,7 +132,7 @@ export default function NotificationsPage() {
             <div className="flex flex-col items-center py-24 gap-4">
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(90,50,250,0.06)' }}
+                style={{ background: 'rgba(0,132,204,0.06)' }}
               >
                 <span className="text-4xl">🔕</span>
               </div>
