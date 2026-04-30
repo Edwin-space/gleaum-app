@@ -125,7 +125,7 @@
 ## 오리지널 브랜드 일관성 통합 (완료)
 
 - [x] **브랜드 컬러 롤백**: `#5A32FA` (Vibrant Purple) → 오리지널 `gleaum_design_system.html` 기반 Green/Teal/Blue (`#0084CC`, `#0CC9B5`, `#2EE895`)로 100% 복구 완료
-- [x] **로고 적용**: `AppHeader` 및 홈 화면 최상단에 `GleaumLogo` SVG 다이아몬드 로고 및 "반짝이는 글이 모여있는 공간" 슬로건 적용 완료
+- [x] **로고 적용**: `AppHeader` 및 홈 화면 최상단에 `GleaumLogo` SVG 다이아몬드 로고 및 "나, 그리고 연인/가족의 일상 네트워크" 슬로건 적용 완료
 - [x] **UI/UX 구조 유지**: 피그마의 둥근 카드 (`radius: 24px`), 블롭(Blob) 배경, 모던 그림자 효과 등 형태적 구조는 유지하되 컬러만 브랜드 오리지널 컬러로 완벽 치환
 - [x] `BottomNav` FAB 버튼 및 아이콘 컬러 → Brand Blue 및 Brand Gradient로 치환
 - [x] **빌드 테스트 통과**: 타입 및 린트 오류 없이 `npm run build` 통과 확인

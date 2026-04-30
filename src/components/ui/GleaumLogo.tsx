@@ -78,7 +78,7 @@ export function GleaumLogo({
             letterSpacing: '0.01em',
           }}
         >
-          반짝이는 글이 모여있는 공간
+          나, 그리고 연인/가족의 일상 네트워크
         </span>
       )}
     </div>

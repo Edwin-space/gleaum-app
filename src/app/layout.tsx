@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '글리움 — 반짝이는 글이 모여있는 공간',
+  title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
   description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
   manifest: '/manifest.json',
   appleWebApp: {
