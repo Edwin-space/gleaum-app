@@ -73,7 +73,7 @@ export default function ScheduleDetailPage() {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: '#FAFAFD' }}>
         <span className="text-5xl">📭</span>
-        <p style={{ fontFamily: "'Noto Sans KR',sans-serif", color: '#8E8E93' }}>일정을 찾을 수 없습니다</p>
+        <p style={{ color: '#8E8E93' }}>일정을 찾을 수 없습니다</p>
         <button
           onClick={() => router.back()}
           className="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white"
@@ -115,12 +115,12 @@ export default function ScheduleDetailPage() {
               <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </button>
-          <span className="text-[15px] font-bold text-white" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+          <span className="text-[15px] font-bold text-white" style={{  }}>
             일정 상세
           </span>
           <button
             className="px-3 py-1.5 rounded-full text-[13px] font-semibold"
-            style={{ background: 'rgba(255,255,255,0.20)', color: 'white', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ background: 'rgba(255,255,255,0.20)', color: 'white' }}
           >
             수정
           </button>
@@ -135,19 +135,19 @@ export default function ScheduleDetailPage() {
             >
               <span className="text-lg">{cfg.icon}</span>
             </div>
-            <span className="text-[12px] font-bold text-white/80 uppercase tracking-wide" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <span className="text-[12px] font-bold text-white/80 uppercase tracking-wide" style={{  }}>
               {schedule.type === 'shared' ? '공유 일정' : schedule.type === 'personal' ? '개인 일정' : schedule.type === 'child' ? '자녀 일정' : '정기 지출'}
             </span>
           </div>
-          <h1 className="text-[24px] font-bold text-white leading-tight" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+          <h1 className="text-[24px] font-bold text-white leading-tight" style={{  }}>
             {schedule.title}
           </h1>
-          <div className="flex items-center gap-3 mt-2 text-white/80 text-[13px]" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+          <div className="flex items-center gap-3 mt-2 text-white/80 text-[13px]" style={{  }}>
             <span>📅 {formatDate(schedule.startTime)}</span>
             <span>⏰ {formatTime(schedule.startTime)}{schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}</span>
           </div>
           {schedule.repeat !== 'none' && (
-            <span className="inline-block mt-1.5 text-[12px] text-white/70" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <span className="inline-block mt-1.5 text-[12px] text-white/70" style={{  }}>
               🔁 {REPEAT_LABELS[schedule.repeat]}
             </span>
           )}
@@ -160,7 +160,7 @@ export default function ScheduleDetailPage() {
         {schedule.type === 'child' && (
           <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-4"
-              style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>진행 상황</p>
+              style={{ color: '#8E8E93' }}>진행 상황</p>
             <div className="flex items-center">
               {steps.map((step, i) => {
                 const isActive = schedule.status === step.key;
@@ -185,7 +185,6 @@ export default function ScheduleDetailPage() {
                         {isPast ? '✓' : i + 1}
                       </div>
                       <span className="text-[11px]" style={{
-                        fontFamily: "'Noto Sans KR',sans-serif",
                         color: isActive ? dotColor : '#C7C7CC',
                         fontWeight: isActive ? 700 : 400,
                       }}>
@@ -203,7 +202,7 @@ export default function ScheduleDetailPage() {
                 <div className="flex flex-col items-center gap-1.5 ml-3">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold"
                     style={{ background: '#EF4444', color: 'white' }}>!</div>
-                  <span className="text-[11px] font-bold" style={{ color: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[11px] font-bold" style={{ color: '#EF4444' }}>
                     미완료
                   </span>
                 </div>
@@ -216,17 +215,17 @@ export default function ScheduleDetailPage() {
         {schedule.type === 'expense' && schedule.amount !== undefined && (
           <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-3"
-              style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>정기지출 정보</p>
+              style={{ color: '#8E8E93' }}>정기지출 정보</p>
             <div className="flex items-center justify-between mb-3">
-              <span style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: '#8E8E93' }}>금액</span>
+              <span style={{ fontSize: '14px', color: '#8E8E93' }}>금액</span>
               <span className="text-[24px] font-bold" style={{ color: '#1A1B2E' }}>
                 {formatAmount(schedule.amount)}
               </span>
             </div>
             {schedule.expenseCategory && (
               <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(0,132,204,0.06)' }}>
-                <span style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: '#8E8E93' }}>카테고리</span>
-                <span className="flex items-center gap-1.5 text-[14px] font-semibold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                <span style={{ fontSize: '14px', color: '#8E8E93' }}>카테고리</span>
+                <span className="flex items-center gap-1.5 text-[14px] font-semibold" style={{ color: '#1A1B2E' }}>
                   <span>{EXPENSE_CATEGORY_ICONS[schedule.expenseCategory]}</span>
                   {EXPENSE_CATEGORY_LABELS[schedule.expenseCategory]}
                 </span>
@@ -234,8 +233,8 @@ export default function ScheduleDetailPage() {
             )}
             {schedule.paymentMethod && (
               <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(0,132,204,0.06)' }}>
-                <span style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: '#8E8E93' }}>결제 수단</span>
-                <span className="text-[14px] font-semibold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                <span style={{ fontSize: '14px', color: '#8E8E93' }}>결제 수단</span>
+                <span className="text-[14px] font-semibold" style={{ color: '#1A1B2E' }}>
                   {PAYMENT_METHOD_LABELS[schedule.paymentMethod]}
                 </span>
               </div>
@@ -247,14 +246,14 @@ export default function ScheduleDetailPage() {
         {participantUsers.length > 0 && (
           <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-3"
-              style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>참여자</p>
+              style={{ color: '#8E8E93' }}>참여자</p>
             <div className="flex flex-wrap gap-2">
               {participantUsers.map((u) => (
                 <div key={u.id}
                   className="flex items-center gap-2 px-3 py-2 rounded-full"
                   style={{ background: 'rgba(0,132,204,0.06)', border: '1px solid rgba(0,132,204,0.10)' }}>
                   <span>{u.avatar}</span>
-                  <span className="text-[13px] font-semibold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[13px] font-semibold" style={{ color: '#1A1B2E' }}>
                     {u.name}
                   </span>
                 </div>
@@ -267,15 +266,15 @@ export default function ScheduleDetailPage() {
         {schedule.location && (
           <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-2"
-              style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>📍 장소</p>
-            <p className="text-[14px] font-medium" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+              style={{ color: '#8E8E93' }}>📍 장소</p>
+            <p className="text-[14px] font-medium" style={{ color: '#1A1B2E' }}>
               {schedule.location.address}
             </p>
             <div className="mt-3 h-36 rounded-[16px] flex items-center justify-center"
               style={{ background: 'rgba(0,132,204,0.04)', border: '1.5px dashed rgba(0,132,204,0.15)' }}>
               <div className="text-center">
                 <span className="text-4xl">🗺️</span>
-                <p className="text-[11px] mt-1" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>지도 표시 영역</p>
+                <p className="text-[11px] mt-1" style={{ color: '#8E8E93' }}>지도 표시 영역</p>
               </div>
             </div>
           </div>
@@ -285,8 +284,8 @@ export default function ScheduleDetailPage() {
         {schedule.memo && (
           <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
             <p className="text-[12px] font-bold tracking-widest uppercase mb-2"
-              style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>📝 메모</p>
-            <p className="text-[14px] leading-relaxed" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+              style={{ color: '#8E8E93' }}>📝 메모</p>
+            <p className="text-[14px] leading-relaxed" style={{ color: '#1A1B2E' }}>
               {schedule.memo}
             </p>
           </div>
@@ -313,7 +312,6 @@ export default function ScheduleDetailPage() {
               style={{
                 background: 'rgba(0,132,204,0.08)',
                 color: '#0084CC',
-                fontFamily: "'Noto Sans KR',sans-serif",
               }}
             >
               🔔 재알림 보내기
@@ -322,7 +320,7 @@ export default function ScheduleDetailPage() {
           <button
             onClick={() => setShowDeleteModal(true)}
             className="w-full py-3.5 rounded-[20px] text-[14px] font-semibold active:scale-[0.98] transition-transform"
-            style={{ background: 'rgba(239,68,68,0.06)', color: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ background: 'rgba(239,68,68,0.06)', color: '#EF4444' }}
           >
             일정 삭제
           </button>
@@ -335,16 +333,16 @@ export default function ScheduleDetailPage() {
           onClick={() => setShowCompletionModal(false)}>
           <div className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-10" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
-            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E' }}>
               일정을 완료했나요?
             </p>
-            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93' }}>
               {schedule.title}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => handleUpdateStatus('missed')}
                 className="py-3.5 rounded-[16px] text-[15px] font-bold active:scale-95"
-                style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>
                 ✗ 미완료
               </button>
               <button onClick={() => handleUpdateStatus('completed')}
@@ -366,21 +364,21 @@ export default function ScheduleDetailPage() {
           onClick={() => setShowDeleteModal(false)}>
           <div className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-10" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
-            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E' }}>
               일정을 삭제할까요?
             </p>
-            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93' }}>
               삭제된 일정은 복구할 수 없습니다
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setShowDeleteModal(false)}
                 className="py-3.5 rounded-[16px] text-[15px] font-semibold"
-                style={{ background: '#FAFAFD', color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                style={{ background: '#FAFAFD', color: '#8E8E93' }}>
                 취소
               </button>
               <button onClick={handleDelete}
                 className="py-3.5 rounded-[16px] text-[15px] font-bold text-white active:scale-95"
-                style={{ background: '#EF4444', boxShadow: '0 4px 16px rgba(239,68,68,0.30)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                style={{ background: '#EF4444', boxShadow: '0 4px 16px rgba(239,68,68,0.30)' }}>
                 삭제
               </button>
             </div>

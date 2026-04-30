@@ -28,7 +28,6 @@ export default function HomePage() {
   const missedToday     = childSchedules.filter((s) => s.status === 'missed').length;
   const totalChild      = childSchedules.length;
   const progressPct     = totalChild > 0 ? Math.round((completedToday / totalChild) * 100) : 0;
-  // SVG 원형 프로그레스: r=30, circumference=188.5
   const circumference   = 188.5;
   const dashOffset      = circumference - (circumference * progressPct) / 100;
 
@@ -37,32 +36,30 @@ export default function HomePage() {
   return (
     <div className="min-h-dvh pb-36">
 
-      {/* ── 헤더 (인라인 — Figma 스타일) ── */}
+      {/* ── 헤더 ── */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-5 pt-12 pb-4"
         style={{ background: 'transparent' }}>
-        <div>
-          <GleaumLogo variant="light" size="sm" showTagline={true} />
-        </div>
+        <GleaumLogo variant="light" size="sm" showTagline={true} />
         <Link href="/notifications"
-          className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden"
-          style={{ background: 'rgba(0,132,204,0.1)', border: '2px solid white', boxShadow: '0 2px 8px rgba(0,132,204,0.12)' }}>
-          <span className="text-2xl">{user?.avatar ?? '👤'}</span>
+          className="w-11 h-11 glass-card rounded-full flex items-center justify-center overflow-hidden"
+          style={{ border: '1.5px solid rgba(255,255,255,0.7)' }}>
+          <span className="text-xl">{user?.avatar ?? '👤'}</span>
         </Link>
       </header>
 
-      <div className="px-5 space-y-6">
+      <div className="px-5 space-y-5">
 
         {/* ── 뷰 토글 Pill ── */}
-        <div className="flex bg-white rounded-full p-1.5 shadow-card">
+        <div className="glass-card flex rounded-full p-1.5">
           {(['month', 'week', 'day'] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
               className="flex-1 py-2.5 rounded-full text-[14px] font-bold transition-all"
               style={{
-                background: view === v ? '#0084CC' : 'transparent',
-                color:      view === v ? 'white'   : '#8E8E93',
-                boxShadow:  view === v ? '0 4px 12px rgba(0,132,204,0.3)' : 'none',
+                background: view === v ? 'var(--color-ink)' : 'transparent',
+                color:      view === v ? 'white' : 'var(--color-ink-muted-80)',
+                boxShadow:  view === v ? '0 4px 12px rgba(26,27,46,0.2)' : 'none',
               }}
             >
               {viewLabels[v]}
@@ -71,7 +68,7 @@ export default function HomePage() {
         </div>
 
         {/* ── 캘린더 ── */}
-        <div className="bg-white rounded-[24px] p-4 shadow-card">
+        <div className="glass-card rounded-[24px] p-4">
           <CalendarView
             schedules={schedules}
             selectedDate={selectedDate}
@@ -83,7 +80,7 @@ export default function HomePage() {
         {loading && (
           <div className="flex justify-center py-6">
             <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: '#0084CC', borderTopColor: 'transparent' }} />
+              style={{ borderColor: 'var(--brand-teal)', borderTopColor: 'transparent' }} />
           </div>
         )}
 
@@ -91,26 +88,21 @@ export default function HomePage() {
         {!loading && totalChild > 0 && (
           <Link href="/schedules/children"
             className="flex items-center justify-between rounded-[24px] p-6 text-white active:scale-[0.98] transition-transform"
-            style={{ background: 'var(--brand-gradient)', boxShadow: '0 8px 24px rgba(12,201,181,0.35)' }}>
+            style={{ background: 'var(--brand-gradient)', boxShadow: '0 8px 32px rgba(12,201,181,0.35)' }}>
             <div>
               <h2 className="text-[20px] font-bold tracking-tight mb-1">오늘 자녀 일정 →</h2>
-              <p className="text-[14px] font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <p className="text-[14px] font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {pendingToday > 0 && `진행중 ${pendingToday}건`}
                 {pendingToday > 0 && completedToday > 0 && ' · '}
                 {completedToday > 0 && `완료 ${completedToday}건`}
                 {missedToday > 0 && ` · 미완료 ${missedToday}건`}
               </p>
             </div>
-            {/* 원형 프로그레스 */}
             <div className="relative w-[68px] h-[68px] flex-shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
-                <circle cx="34" cy="34" r="30" stroke="rgba(255,255,255,0.2)"
-                  strokeWidth="6" fill="none" />
-                <circle cx="34" cy="34" r="30" stroke="white"
-                  strokeWidth="6" fill="none"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={dashOffset}
-                  strokeLinecap="round" />
+                <circle cx="34" cy="34" r="30" stroke="rgba(255,255,255,0.2)" strokeWidth="6" fill="none" />
+                <circle cx="34" cy="34" r="30" stroke="white" strokeWidth="6" fill="none"
+                  strokeDasharray={circumference} strokeDashoffset={dashOffset} strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center font-bold text-[15px]">
                 {progressPct}%
@@ -126,7 +118,7 @@ export default function HomePage() {
               <h3 className="text-[18px] font-bold tracking-tight" style={{ color: 'var(--color-ink)' }}>
                 {formatDateShort(selectedDate)} 일정
               </h3>
-              <span className="text-[13px] font-bold" style={{ color: '#8E8E93' }}>
+              <span className="text-[13px] font-bold" style={{ color: 'var(--color-ink-muted-80)' }}>
                 총 {todaySchedules.length}개
               </span>
             </div>
@@ -142,12 +134,14 @@ export default function HomePage() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-14 gap-3">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-                  style={{ background: 'rgba(0,132,204,0.1)' }}>
-                  📭
+              <div className="glass-card flex flex-col items-center justify-center py-14 gap-3 rounded-[24px]">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,132,204,0.08)' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+                  </svg>
                 </div>
-                <p className="font-semibold" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                <p className="font-semibold text-[15px]" style={{ color: 'var(--color-ink-muted-80)' }}>
                   등록된 일정이 없습니다
                 </p>
               </div>

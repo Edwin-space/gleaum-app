@@ -24,15 +24,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko" className="h-full">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
           rel="stylesheet"
         />
       </head>
-      <body className="h-full bg-[var(--color-canvas-parchment)]">
-        {/* 배경 블롭 그래픽 */}
-        <div className="blob-1" />
-        <div className="blob-2" />
-        <div className="blob-3" />
+      <body className="h-full">
+        {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
+        <div className="mesh-bg">
+          <div className="mesh-blob mesh-blob-1" />
+          <div className="mesh-blob mesh-blob-2" />
+          <div className="mesh-blob mesh-blob-3" />
+        </div>
         <div id="app-shell">
           {children}
         </div>

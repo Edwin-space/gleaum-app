@@ -54,7 +54,7 @@ export default function SchedulesPage() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="일정 검색"
             className="flex-1 bg-transparent text-[15px] placeholder:text-[var(--color-ink-muted-48)]"
-            style={{ fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{  }}
           />
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function SchedulesPage() {
           ) : (
             <div className="flex flex-col items-center py-20 gap-3">
               <span className="text-4xl">📭</span>
-              <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '14px', color: 'var(--color-ink-muted-48)' }}>
+              <p style={{ fontSize: '14px', color: 'var(--color-ink-muted-48)' }}>
                 등록된 일정이 없습니다
               </p>
               <Link

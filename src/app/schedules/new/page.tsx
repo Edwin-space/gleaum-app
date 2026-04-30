@@ -29,7 +29,7 @@ const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; acti
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[11px] font-bold tracking-widest uppercase mb-2"
-      style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+      style={{ color: '#8E8E93' }}>
       {children}
     </p>
   );
@@ -122,7 +122,7 @@ export default function NewSchedulePage() {
           </svg>
         </button>
 
-        <p className="text-[16px] font-bold" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+        <p className="text-[16px] font-bold" style={{ color: '#1A1B2E' }}>
           일정 추가
         </p>
 
@@ -158,7 +158,6 @@ export default function NewSchedulePage() {
                     border: selected ? `2px solid ${cfg.activeColor}40` : '2px solid rgba(0,132,204,0.06)',
                     color: selected ? cfg.activeColor : '#8E8E93',
                     boxShadow: selected ? `0 4px 16px ${cfg.activeColor}25` : 'none',
-                    fontFamily: "'Noto Sans KR',sans-serif",
                   }}
                 >
                   <span className="text-xl">{cfg.icon}</span>
@@ -179,7 +178,6 @@ export default function NewSchedulePage() {
             className={inputBase}
             style={{
               borderColor: title ? '#0084CC' : 'rgba(0,132,204,0.12)',
-              fontFamily: "'Noto Sans KR',sans-serif",
             }}
           />
         </div>
@@ -225,7 +223,7 @@ export default function NewSchedulePage() {
             className="space-y-4 p-5 rounded-[20px]"
             style={{ background: 'rgba(245,158,11,0.05)', border: '2px solid rgba(245,158,11,0.15)' }}
           >
-            <p className="text-[13px] font-bold" style={{ color: '#D97706', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[13px] font-bold" style={{ color: '#D97706' }}>
               💰 정기지출 정보
             </p>
 
@@ -255,7 +253,6 @@ export default function NewSchedulePage() {
                       background: category === cat ? 'rgba(245,158,11,0.12)' : 'white',
                       border: category === cat ? '2px solid rgba(245,158,11,0.35)' : '2px solid rgba(245,158,11,0.12)',
                       color: category === cat ? '#D97706' : '#8E8E93',
-                      fontFamily: "'Noto Sans KR',sans-serif",
                     }}
                   >
                     <span>{EXPENSE_CATEGORY_ICONS[cat]}</span>
@@ -275,7 +272,6 @@ export default function NewSchedulePage() {
                       background: paymentMethod === m ? 'rgba(245,158,11,0.12)' : 'white',
                       border: paymentMethod === m ? '2px solid rgba(245,158,11,0.35)' : '2px solid rgba(245,158,11,0.12)',
                       color: paymentMethod === m ? '#D97706' : '#8E8E93',
-                      fontFamily: "'Noto Sans KR',sans-serif",
                     }}
                   >
                     {PAYMENT_METHOD_LABELS[m]}
@@ -290,7 +286,7 @@ export default function NewSchedulePage() {
         <div>
           <SectionLabel>참여자</SectionLabel>
           {members.length === 0 ? (
-            <p className="text-[13px]" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[13px]" style={{ color: '#8E8E93' }}>
               가족 멤버를 불러오는 중...
             </p>
           ) : (
@@ -305,7 +301,6 @@ export default function NewSchedulePage() {
                       color: selected ? 'white' : '#8E8E93',
                       border: selected ? 'none' : '2px solid rgba(0,132,204,0.12)',
                       boxShadow: selected ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
-                      fontFamily: "'Noto Sans KR',sans-serif",
                     }}
                   >
                     <span>{u.avatar}</span>
@@ -327,7 +322,7 @@ export default function NewSchedulePage() {
               onChange={(e) => setAddress(e.target.value)}
               placeholder="장소를 입력하세요"
               className={inputBase + ' pl-10'}
-              style={{ borderColor: address ? '#0084CC' : 'rgba(0,132,204,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
+              style={{ borderColor: address ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
             />
           </div>
           {address && (
@@ -335,7 +330,7 @@ export default function NewSchedulePage() {
               style={{ background: 'rgba(0,132,204,0.04)', border: '1.5px dashed rgba(0,132,204,0.15)' }}>
               <div className="text-center">
                 <span className="text-3xl">🗺️</span>
-                <p className="text-[12px] mt-1" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>{address}</p>
+                <p className="text-[12px] mt-1" style={{ color: '#8E8E93' }}>{address}</p>
               </div>
             </div>
           )}
@@ -368,7 +363,6 @@ export default function NewSchedulePage() {
                   color: reminder === opt.value ? 'white' : '#8E8E93',
                   border: reminder === opt.value ? 'none' : '2px solid rgba(0,132,204,0.12)',
                   boxShadow: reminder === opt.value ? '0 4px 12px rgba(0,132,204,0.30)' : 'none',
-                  fontFamily: "'Noto Sans KR',sans-serif",
                 }}
               >
                 {opt.label}
@@ -384,7 +378,7 @@ export default function NewSchedulePage() {
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as RepeatType)}
             className={inputBase}
-            style={{ borderColor: repeat !== 'none' ? '#0084CC' : 'rgba(0,132,204,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ borderColor: repeat !== 'none' ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
           >
             {(Object.entries(REPEAT_LABELS) as [RepeatType, string][]).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
@@ -399,14 +393,14 @@ export default function NewSchedulePage() {
             <button
               onClick={() => setAttachments((prev) => [...prev, { id: Date.now().toString(), name: `사진_${prev.length + 1}.jpg`, source: 'local' }])}
               className="flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all active:scale-95"
-              style={{ background: 'white', border: '2px dashed rgba(0,132,204,0.25)', color: '#0084CC', fontFamily: "'Noto Sans KR',sans-serif" }}
+              style={{ background: 'white', border: '2px dashed rgba(0,132,204,0.25)', color: '#0084CC' }}
             >
               <span>📱</span> 내 휴대폰
             </button>
             <button
               onClick={() => setAttachments((prev) => [...prev, { id: Date.now().toString(), name: `드라이브_${prev.length + 1}.jpg`, source: 'google_drive' }])}
               className="flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all active:scale-95"
-              style={{ background: 'white', border: '2px dashed rgba(6,182,212,0.30)', color: '#0891B2', fontFamily: "'Noto Sans KR',sans-serif" }}
+              style={{ background: 'white', border: '2px dashed rgba(6,182,212,0.30)', color: '#0891B2' }}
             >
               <span>☁️</span> 구글 드라이브
             </button>
@@ -426,7 +420,7 @@ export default function NewSchedulePage() {
               ))}
             </div>
           )}
-          <p className="text-[11px] mt-2" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+          <p className="text-[11px] mt-2" style={{ color: '#8E8E93' }}>
             최대 10개 · JPG, PNG, PDF 지원
           </p>
         </div>
@@ -440,7 +434,7 @@ export default function NewSchedulePage() {
             placeholder="메모를 입력하세요 (선택)"
             rows={3}
             className={inputBase + ' resize-none leading-relaxed'}
-            style={{ borderColor: memo ? '#0084CC' : 'rgba(0,132,204,0.12)', fontFamily: "'Noto Sans KR',sans-serif" }}
+            style={{ borderColor: memo ? '#0084CC' : 'rgba(0,132,204,0.12)' }}
           />
         </div>
 
@@ -448,7 +442,7 @@ export default function NewSchedulePage() {
         <div className="grid grid-cols-2 gap-3 pt-2 pb-8">
           <button onClick={() => router.back()}
             className="h-[56px] rounded-[20px] text-[15px] font-bold transition-all active:scale-95"
-            style={{ border: '2px solid rgba(0,132,204,0.15)', color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            style={{ border: '2px solid rgba(0,132,204,0.15)', color: '#8E8E93' }}>
             취소
           </button>
           <button onClick={handleSave} disabled={saving}
@@ -456,7 +450,6 @@ export default function NewSchedulePage() {
             style={{
               background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
               boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
-              fontFamily: "'Noto Sans KR',sans-serif",
             }}>
             {saving ? '저장 중...' : '일정 저장'}
           </button>

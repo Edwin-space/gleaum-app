@@ -74,22 +74,22 @@ export default function ChildrenSchedulePage() {
         <div className="flex items-center justify-between relative z-10">
           {/* 텍스트 통계 */}
           <div>
-            <p className="text-[12px] font-semibold text-white/70 mb-3" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[12px] font-semibold text-white/70 mb-3" style={{  }}>
               오늘 자녀 일정 · {formatDateShort(today)}
             </p>
             <div className="flex gap-5">
               <div>
                 <p className="text-[30px] font-bold text-white leading-none">{todaySchedules.length}</p>
-                <p className="text-[11px] text-white/70 mt-1" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>전체</p>
+                <p className="text-[11px] text-white/70 mt-1" style={{  }}>전체</p>
               </div>
               <div>
                 <p className="text-[30px] font-bold text-white leading-none">{completedCount}</p>
-                <p className="text-[11px] text-white/70 mt-1" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>완료</p>
+                <p className="text-[11px] text-white/70 mt-1" style={{  }}>완료</p>
               </div>
               {missedCount > 0 && (
                 <div>
                   <p className="text-[30px] font-bold leading-none" style={{ color: '#FFD166' }}>{missedCount}</p>
-                  <p className="text-[11px] text-white/70 mt-1" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>미완료</p>
+                  <p className="text-[11px] text-white/70 mt-1" style={{  }}>미완료</p>
                 </div>
               )}
             </div>
@@ -127,7 +127,6 @@ export default function ChildrenSchedulePage() {
               color:      activeTab === tab.id ? 'white' : '#8E8E93',
               border:     activeTab === tab.id ? 'none' : '1.5px solid rgba(0,132,204,0.12)',
               boxShadow:  activeTab === tab.id ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
-              fontFamily: "'Noto Sans KR',sans-serif",
             }}
           >
             {tab.label}
@@ -152,10 +151,10 @@ export default function ChildrenSchedulePage() {
                 style={{ background: 'rgba(0,132,204,0.06)' }}>
                 <span className="text-4xl">📭</span>
               </div>
-              <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '15px', fontWeight: 600, color: '#1A1B2E' }}>
+              <p style={{ fontSize: '15px', fontWeight: 600, color: '#1A1B2E' }}>
                 자녀 일정이 없어요
               </p>
-              <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '13px', color: '#8E8E93' }}>
+              <p style={{ fontSize: '13px', color: '#8E8E93' }}>
                 일정 추가에서 자녀 일정을 등록하세요
               </p>
             </div>
@@ -174,10 +173,10 @@ export default function ChildrenSchedulePage() {
                   {/* 헤더 */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0 mr-3">
-                      <p className="text-[15px] font-bold truncate" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                      <p className="text-[15px] font-bold truncate" style={{ color: '#1A1B2E' }}>
                         {schedule.title}
                       </p>
-                      <p className="text-[12px] mt-0.5" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                      <p className="text-[12px] mt-0.5" style={{ color: '#8E8E93' }}>
                         {formatDateShort(schedule.startTime)} · {formatTime(schedule.startTime)}
                         {schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}
                       </p>
@@ -194,7 +193,6 @@ export default function ChildrenSchedulePage() {
                           : schedule.status === 'completed' ? '#059669'
                           : schedule.status === 'in_progress' ? '#0084CC'
                           : '#9CA3AF',
-                        fontFamily: "'Noto Sans KR',sans-serif",
                       }}
                     >
                       {isMissed ? '미완료' : schedule.status === 'completed' ? '완료' : schedule.status === 'in_progress' ? '진행중' : '대기'}
@@ -211,7 +209,6 @@ export default function ChildrenSchedulePage() {
                           style={{
                             background: 'rgba(16,185,129,0.10)',
                             color: '#059669',
-                            fontFamily: "'Noto Sans KR',sans-serif",
                           }}
                         >
                           {c.avatar} {c.name}
@@ -246,7 +243,6 @@ export default function ChildrenSchedulePage() {
                                 {isPast ? '✓' : i + 1}
                               </div>
                               <span className="text-[10px]" style={{
-                                fontFamily: "'Noto Sans KR',sans-serif",
                                 color: isActive ? dotColor : '#C7C7CC',
                                 fontWeight: isActive ? 700 : 400,
                               }}>
@@ -270,7 +266,7 @@ export default function ChildrenSchedulePage() {
                       style={{ background: 'rgba(239,68,68,0.06)' }}
                     >
                       <span className="text-sm">⚠️</span>
-                      <p className="text-[12px] font-semibold" style={{ color: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                      <p className="text-[12px] font-semibold" style={{ color: '#EF4444' }}>
                         미완료 처리된 일정입니다
                       </p>
                     </div>
@@ -297,7 +293,6 @@ export default function ChildrenSchedulePage() {
                         style={{
                           background: 'rgba(0,132,204,0.08)',
                           color: '#0084CC',
-                          fontFamily: "'Noto Sans KR',sans-serif",
                         }}
                       >
                         🔔 재알림 보내기
@@ -317,21 +312,21 @@ export default function ChildrenSchedulePage() {
           onClick={() => setCompletionModal(null)}>
           <div className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-10" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
-            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E' }}>
               일정을 완료했나요?
             </p>
-            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93' }}>
               {completionModal.title}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => handleStatusUpdate(completionModal.id, 'missed')}
                 className="py-3.5 rounded-[16px] text-[15px] font-bold active:scale-95"
-                style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>
                 ✗ 미완료
               </button>
               <button onClick={() => handleStatusUpdate(completionModal.id, 'completed')}
                 className="py-3.5 rounded-[16px] text-[15px] font-bold text-white active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                style={{ background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)' }}>
                 ✓ 완료
               </button>
             </div>

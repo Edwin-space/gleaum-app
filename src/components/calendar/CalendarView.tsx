@@ -44,7 +44,7 @@ export function CalendarView({ schedules, selectedDate, onSelectDate }: Calendar
         </button>
 
         <div className="flex items-center gap-2">
-          <h2 style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '16px', fontWeight: 600, color: 'var(--color-ink)' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-ink)' }}>
             {formatMonthYear(viewDate)}
           </h2>
           <button

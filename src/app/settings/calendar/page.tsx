@@ -76,15 +76,15 @@ export default function CalendarSyncPage() {
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-2"
                   style={{ background: 'rgba(46,232,149,0.12)' }}>
                   <span className="w-2 h-2 rounded-full" style={{ background: 'var(--brand-green)' }} />
-                  <span className="text-[12px] font-semibold" style={{ color: '#0A9E5C', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[12px] font-semibold" style={{ color: '#0A9E5C' }}>
                     연동됨
                   </span>
                 </div>
-                <p className="text-[14px]" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                <p className="text-[14px]" style={{ color: 'var(--color-ink)' }}>
                   {user?.email ?? 'google@gmail.com'}
                 </p>
                 {lastSynced && (
-                  <p className="text-[12px] mt-1" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <p className="text-[12px] mt-1" style={{ color: 'var(--color-ink-muted-48)' }}>
                     마지막 동기화: {formatSyncTime(lastSynced)}
                   </p>
                 )}
@@ -93,7 +93,7 @@ export default function CalendarSyncPage() {
               {/* 동기화 방향 설정 */}
               <div className="space-y-1 mb-4">
                 <div className="flex items-center justify-between py-3 px-1 border-t" style={{ borderColor: 'var(--color-hairline)' }}>
-                  <span className="text-[14px]" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[14px]" style={{ color: 'var(--color-ink)' }}>
                     글리움 → 구글 캘린더
                   </span>
                   <button
@@ -106,7 +106,7 @@ export default function CalendarSyncPage() {
                   </button>
                 </div>
                 <div className="flex items-center justify-between py-3 px-1 border-t" style={{ borderColor: 'var(--color-hairline)' }}>
-                  <span className="text-[14px]" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[14px]" style={{ color: 'var(--color-ink)' }}>
                     구글 캘린더 → 글리움
                   </span>
                   <button
@@ -125,24 +125,24 @@ export default function CalendarSyncPage() {
                 onClick={handleSync}
                 disabled={isSyncing}
                 className="w-full py-3.5 rounded-2xl text-[15px] font-semibold text-white mb-3 active:scale-[0.98] transition-all disabled:opacity-60"
-                style={{ background: 'var(--color-primary)', fontFamily: "'Noto Sans KR',sans-serif" }}
+                style={{ background: 'var(--color-primary)' }}
               >
                 {isSyncing ? '동기화 중...' : '🔄 지금 동기화'}
               </button>
               <button
                 onClick={handleDisconnect}
                 className="w-full py-3 rounded-2xl text-[14px] font-medium active:scale-[0.98] transition-all"
-                style={{ color: '#EF4444', background: 'rgba(239,68,68,0.06)', fontFamily: "'Noto Sans KR',sans-serif" }}
+                style={{ color: '#EF4444', background: 'rgba(239,68,68,0.06)' }}
               >
                 연동 해제
               </button>
             </>
           ) : (
             <>
-              <p className="text-[16px] font-semibold text-center mb-2" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+              <p className="text-[16px] font-semibold text-center mb-2" style={{ color: 'var(--color-ink)' }}>
                 구글 캘린더와 연동하면
               </p>
-              <p className="text-[14px] text-center mb-6" style={{ color: 'var(--color-ink-muted-48)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+              <p className="text-[14px] text-center mb-6" style={{ color: 'var(--color-ink-muted-48)' }}>
                 모든 일정이 자동으로 동기화됩니다
               </p>
 
@@ -157,7 +157,7 @@ export default function CalendarSyncPage() {
                     style={{ background: 'var(--color-schedule-child)' }}>
                     <span className="text-[10px] font-bold text-black">✓</span>
                   </div>
-                  <span className="text-[14px]" style={{ color: 'var(--color-ink)', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[14px]" style={{ color: 'var(--color-ink)' }}>
                     {benefit}
                   </span>
                 </div>
@@ -166,7 +166,7 @@ export default function CalendarSyncPage() {
               <button
                 onClick={() => setIsConnected(true)}
                 className="w-full flex items-center justify-center gap-3 mt-6 py-4 rounded-2xl text-[15px] font-semibold active:scale-[0.98] transition-transform"
-                style={{ background: 'white', color: '#1A1A1A', border: '1px solid var(--color-hairline)', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', fontFamily: "'Noto Sans KR',sans-serif" }}
+                style={{ background: 'white', color: '#1A1A1A', border: '1px solid var(--color-hairline)', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
               >
                 <svg width="20" height="20" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>

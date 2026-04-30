@@ -40,31 +40,29 @@ export default function BudgetPage() {
   const isCurrentMonth = viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth();
 
   return (
-    <div className="min-h-dvh pb-28" style={{ background: '#FAFAFD' }}>
+    <div className="min-h-dvh pb-28">
       <AppHeader title="가계부" showLogo={false} />
 
       {/* 월 네비게이터 */}
       <div className="flex items-center justify-between px-5 py-3">
         <button onClick={prevMonth}
-          className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
-          style={{ background: 'rgba(0,132,204,0.06)' }}>
+          className="w-10 h-10 glass-card flex items-center justify-center rounded-full transition-all active:scale-90">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="#0084CC" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M15 18L9 12L15 6" stroke="var(--brand-blue)" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
         </button>
         <div className="text-center">
-          <h2 style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '18px', fontWeight: 700, color: '#1A1B2E' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-ink)', letterSpacing: '-0.5px' }}>
             {formatMonthYear(viewDate)}
           </h2>
           {isCurrentMonth && (
-            <span className="text-[11px] font-semibold" style={{ color: '#0084CC' }}>이번 달</span>
+            <span className="text-[11px] font-semibold" style={{ color: 'var(--brand-blue)' }}>이번 달</span>
           )}
         </div>
         <button onClick={nextMonth}
-          className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
-          style={{ background: 'rgba(0,132,204,0.06)' }}>
+          className="w-10 h-10 glass-card flex items-center justify-center rounded-full transition-all active:scale-90">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18L15 12L9 6" stroke="#0084CC" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M9 18L15 12L9 6" stroke="var(--brand-blue)" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
         </button>
       </div>
@@ -72,7 +70,7 @@ export default function BudgetPage() {
       {loading ? (
         <div className="flex justify-center py-10">
           <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
+            style={{ borderColor: 'var(--brand-teal)', borderTopColor: 'transparent' }} />
         </div>
       ) : (
         <>
@@ -80,7 +78,7 @@ export default function BudgetPage() {
           <div
             className="mx-4 mb-4 rounded-[28px] overflow-hidden relative"
             style={{
-              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              background: 'var(--brand-gradient)',
               boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
             }}
           >
@@ -97,14 +95,11 @@ export default function BudgetPage() {
             }} />
 
             <div className="px-6 py-6 relative z-10">
-              <p className="text-[13px] text-white/70 mb-1" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
-                이번 달 정기지출
-              </p>
+              <p className="text-[13px] text-white/70 mb-1">이번 달 정기지출</p>
               <p className="text-[36px] font-bold text-white" style={{ letterSpacing: '-1.5px' }}>
                 {formatAmount(total)}
               </p>
 
-              {/* 프로그레스 바 */}
               <div className="mt-4 h-2 rounded-full bg-white/20 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
@@ -112,28 +107,22 @@ export default function BudgetPage() {
                 />
               </div>
 
-              {/* 통계 */}
               <div className="flex justify-between mt-3">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-white/80" />
-                  <span className="text-[12px] text-white/70" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
+                  <span className="text-[12px] text-white/70">
                     완료 {completedCnt}건 ({Math.round(completePct)}%)
                   </span>
                 </div>
-                <span className="text-[12px] text-white/70" style={{ fontFamily: "'Noto Sans KR',sans-serif" }}>
-                  예정 {pendingCnt}건
-                </span>
+                <span className="text-[12px] text-white/70">예정 {pendingCnt}건</span>
               </div>
             </div>
           </div>
 
           {/* 카테고리별 현황 */}
           {categories.length > 0 && (
-            <div
-              className="mx-4 mb-4 bg-white rounded-[24px] p-5"
-              style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}
-            >
-              <h3 className="text-[14px] font-bold mb-4" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <div className="glass-card mx-4 mb-4 rounded-[24px] p-5">
+              <h3 className="text-[14px] font-bold mb-4" style={{ color: 'var(--color-ink)' }}>
                 카테고리별 지출
               </h3>
               <div className="space-y-4">
@@ -151,20 +140,20 @@ export default function BudgetPage() {
                           >
                             {EXPENSE_CATEGORY_ICONS[category]}
                           </div>
-                          <span className="text-[13px] font-medium" style={{ fontFamily: "'Noto Sans KR',sans-serif", color: '#1A1B2E' }}>
+                          <span className="text-[13px] font-medium" style={{ color: 'var(--color-ink)' }}>
                             {EXPENSE_CATEGORY_LABELS[category]}
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[13px] font-bold" style={{ color: '#1A1B2E' }}>
+                          <span className="text-[13px] font-bold" style={{ color: 'var(--color-ink)' }}>
                             {formatAmount(amt)}
                           </span>
-                          <span className="text-[11px] ml-1.5" style={{ color: '#8E8E93' }}>
+                          <span className="text-[11px] ml-1.5" style={{ color: 'var(--color-ink-muted-80)' }}>
                             {Math.round(pct)}%
                           </span>
                         </div>
                       </div>
-                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,132,204,0.06)' }}>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,132,204,0.08)' }}>
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${pct}%`, background: catColor }}
@@ -179,8 +168,8 @@ export default function BudgetPage() {
 
           {/* 지출 목록 */}
           <div className="px-4">
-            <h3 className="text-[13px] font-bold mb-3 tracking-widest uppercase"
-              style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+            <h3 className="text-[11px] font-bold mb-3 tracking-widest uppercase"
+              style={{ color: 'var(--color-ink-muted-80)' }}>
               지출 내역
             </h3>
             {expenses.length > 0 ? (
@@ -188,8 +177,7 @@ export default function BudgetPage() {
                 {expenses.map((e) => (
                   <div
                     key={e.id}
-                    className="bg-white rounded-[20px] flex items-center gap-3 px-4 py-3.5"
-                    style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.05)' }}
+                    className="glass-card flex items-center gap-3 px-4 py-3.5 rounded-[20px]"
                   >
                     <div
                       className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-shrink-0"
@@ -198,23 +186,22 @@ export default function BudgetPage() {
                       {EXPENSE_CATEGORY_ICONS[e.expenseCategory ?? 'other']}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-semibold truncate" style={{ color: '#1A1B2E', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                      <p className="text-[14px] font-semibold truncate" style={{ color: 'var(--color-ink)' }}>
                         {e.title}
                       </p>
-                      <p className="text-[12px]" style={{ color: '#8E8E93', fontFamily: "'Noto Sans KR',sans-serif" }}>
+                      <p className="text-[12px]" style={{ color: 'var(--color-ink-muted-80)' }}>
                         매월 {e.startTime.getDate()}일 · {e.paymentMethod === 'auto' ? '자동이체' : e.paymentMethod === 'card' ? '카드' : '현금'}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
-                      <span className="text-[15px] font-bold" style={{ color: '#1A1B2E' }}>
+                      <span className="text-[15px] font-bold" style={{ color: 'var(--color-ink)' }}>
                         {formatAmount(e.amount ?? 0)}
                       </span>
                       <span
                         className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
                         style={{
                           background: e.status === 'completed' ? 'rgba(16,185,129,0.10)' : 'rgba(0,132,204,0.08)',
-                          color:      e.status === 'completed' ? '#059669' : '#0084CC',
-                          fontFamily: "'Noto Sans KR',sans-serif",
+                          color:      e.status === 'completed' ? '#059669' : 'var(--brand-blue)',
                         }}
                       >
                         {e.status === 'completed' ? '완료' : '예정'}
@@ -224,19 +211,15 @@ export default function BudgetPage() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center py-16 gap-4">
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(0,132,204,0.06)' }}
-                >
-                  <span className="text-4xl">💰</span>
+              <div className="glass-card flex flex-col items-center py-16 gap-4 rounded-[24px]">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,132,204,0.06)' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+                  </svg>
                 </div>
-                <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '15px', fontWeight: 600, color: '#1A1B2E' }}>
-                  등록된 지출이 없어요
-                </p>
-                <p style={{ fontFamily: "'Noto Sans KR',sans-serif", fontSize: '13px', color: '#8E8E93' }}>
-                  일정 추가에서 정기지출을 등록하세요
-                </p>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-ink)' }}>등록된 지출이 없어요</p>
+                <p style={{ fontSize: '13px', color: 'var(--color-ink-muted-80)' }}>일정 추가에서 정기지출을 등록하세요</p>
               </div>
             )}
           </div>

@@ -40,10 +40,16 @@ body {
   max-width: 430px;
   min-height: 100dvh;
   margin: 0 auto;
-  background: var(--color-canvas-parchment);
+  background: transparent;
   position: relative;
   overflow-x: hidden;
   box-shadow: 0 0 40px rgba(0,0,0,0.08);
+}
+
+/* 메쉬 그라디언트가 앱 셸 내부에도 적용되도록 body 배경 설정 */
+body {
+  background: #FAFAFD;
+  position: relative;
 }
 
 /* ── 스크롤바 숨김 ── */

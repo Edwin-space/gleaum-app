@@ -71,7 +71,6 @@ export function GleaumLogo({
       {showTagline && (
         <span
           style={{
-            fontFamily: "'Noto Sans KR', sans-serif",
             fontSize: '11px',
             color: variant === 'dark' || variant === 'gradient' ? '#6E6E66' : '#AEAEA8',
             fontWeight: 300,
