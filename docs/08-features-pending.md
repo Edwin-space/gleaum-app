@@ -67,10 +67,10 @@
 
 ## Day 8 — 품질 및 완성도
 
-### 🟡 PWA 완성
-- [ ] `public/manifest.json` 아이콘 세트 추가
-- [ ] 스플래시 스크린 설정
-- [ ] 오프라인 대응 (Service Worker)
+### ✅ PWA 완성 (완료)
+- `public/manifest.json` 생성 및 `standalone` 디스플레이 모드 적용 완료
+- `src/app/icon.tsx` 를 통한 고화질 다이아몬드 로고 아이콘 동적 생성 완료
+- `public/sw.js` 및 `PwaRegistry.tsx` 를 통한 오프라인 지원/설치 가능 요건 충족 완료
 
 ### 🟢 Google OAuth 앱 게시 (프로덕션)
 - Google Cloud Console → OAuth 동의화면 → **앱 게시**

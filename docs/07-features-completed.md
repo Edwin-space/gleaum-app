@@ -129,3 +129,11 @@
 - [x] **UI/UX 구조 유지**: 피그마의 둥근 카드 (`radius: 24px`), 블롭(Blob) 배경, 모던 그림자 효과 등 형태적 구조는 유지하되 컬러만 브랜드 오리지널 컬러로 완벽 치환
 - [x] `BottomNav` FAB 버튼 및 아이콘 컬러 → Brand Blue 및 Brand Gradient로 치환
 - [x] **빌드 테스트 통과**: 타입 및 린트 오류 없이 `npm run build` 통과 확인
+
+---
+
+## 앱 설치 및 접근성 (PWA) (완료)
+
+- [x] **매니페스트 구성**: `public/manifest.json` 생성 (`standalone` 모드 지원)
+- [x] **동적 앱 로고**: `src/app/icon.tsx` 를 사용한 고화질 다이아몬드 로고 자동 생성
+- [x] **오프라인/설치 지원**: `public/sw.js` (서비스 워커) 생성 및 `PwaRegistry.tsx`를 통한 글로벌 등록 완료
