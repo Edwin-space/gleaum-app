@@ -1,0 +1,18 @@
+{
+  "name": "글리움 (gleaum)",
+  "short_name": "글리움",
+  "description": "나, 그리고 연인/가족의 일상 네트워크",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAFD",
+  "theme_color": "#0A0A0A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
