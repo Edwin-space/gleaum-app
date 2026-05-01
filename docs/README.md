@@ -25,22 +25,20 @@
 
 ## ⚡ 빠른 컨텍스트
 
-- **서비스명**: 글리움 (Gleaum)
-- **성격**: 가족 공유 일정 관리 앱 (iOS/Android/Web PWA)
-- **현재 단계**: Day 4 완료 (DB 실데이터 연동 + 디자인 리뉴얼)
+- **서비스명**: 글리움 (gleaum)
+- **성격**: 개인/가족/연인 공유 일상 네트워크 앱 (iOS/Android/Web PWA)
+- **현재 단계**: Day 4 완료 (DB 실데이터 연동 + 신규 디자인 리뉴얼)
 - **배포 URL**: https://gleaum-app.vercel.app
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **Supabase 프로젝트 ID**: tyvjdsescukaeorcuaga
-- **개발 환경**: macOS, `/Volumes/WD_BLACK/Ai Works/gleaum/`
 
 ---
 
 ## 🚨 작업 시 절대 규칙
 
-1. **비즈니스 로직 (Supabase 연동, 훅, 타입) 절대 건드리지 말 것** — UI만 수정
+1. **비즈니스 로직 (Supabase 연동, 훅, 타입) 절대 건드리지 말 것** — 사전 상의 필수
 2. **`src/lib/db.ts`** — 모든 DB 접근의 단일 진입점, 구조 변경 금지
-3. **브랜드 컬러** `#5A32FA` (Vibrant Purple) — 모든 primary 색상
-4. **한국어 폰트** `Noto Sans KR` — 반드시 적용
+3. **디자인 시스템** — 구버전 보라색 테마는 폐기되었으며, 반드시 `DESIGN.md` 명세(Brand Green/Teal/Blue) 준수
+4. **한국어 폰트** `var(--font-kr)` — 반드시 적용 (Pretendard)
 5. **빌드 확인 필수** — `npm run build` 후 에러 없을 때만 push
 
 마지막 업데이트: 2026-04-30

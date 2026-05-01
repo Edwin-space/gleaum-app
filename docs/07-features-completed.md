@@ -70,14 +70,14 @@
 
 ## 디자인 리뉴얼 (완료)
 
-- [x] 브랜드 컬러 `#0084CC` → `#5A32FA` (Vibrant Purple)
-- [x] 배경 블롭 그라디언트 3개 (노랑/청록/보라)
+- [x] 오리지널 디자인 시스템 기반 Green/Teal/Blue 테마 전면 적용
+- [x] 배경 블롭 그라디언트 3개 (Green/Teal/Blue)
 - [x] BottomNav → 플로팅 pill + 보라 FAB 중앙 돌출
 - [x] ScheduleCard → 좌측 바 제거, 아이콘 원형 파스텔 배경
 - [x] 홈 대시보드 → 인사 헤더 + pill 뷰 토글 + 원형 프로그레스 바
 - [x] AppHeader → 반투명 블러
 - [x] 애니메이션 추가 (`fadeInUp`, `slideUp`)
-- [x] 로그인 페이지 전면 교체 (블롭 + 보라 버튼)
+- [x] 로그인 페이지 전면 교체 (블롭 + Brand Blue 버튼)
 - [x] 그림자 시스템 (`shadow-card`, `shadow-fab`, `shadow-modal`)
 - [x] DESIGN_HANDOFF_TO_CLAUDE.md 작성
 - [x] DESIGN_PREVIEW.html 인터랙티브 프로토타입
@@ -99,14 +99,14 @@
 - [x] `src/app/login/page.tsx` — `?next=` 파라미터 읽어서 OAuth에 전달 + 초대 배너 표시
 - [x] `src/lib/db.ts` — `joinFamilyByCode` 반환 타입 강화 (`{ success, alreadyMember, familyName }`) + `getFamilyByCode` 추가
 
-### 나머지 7개 페이지 디자인 리뉴얼 (Vibrant Purple 통일)
-- [x] `/notifications` — 타입별 원형 컬러 아이콘, 미읽음 보라 배경/테두리 강조
-- [x] `/mypage` — 보라 그라디언트 프로필 히어로 카드, 아이콘 칩 설정 행
-- [x] `/family` — 다크 헤더 → 보라 그라디언트 카드, `joinFamilyByCode` 버그 수정
-- [x] `/budget` — 보라 그라디언트 요약 카드, 카테고리 아이콘 칩, 진행률 바
-- [x] `/schedules/children` — SVG 원형 완료율 프로그레스, 보라 탭, 보라 스텝퍼+그림자
-- [x] `/schedules/[id]` — 유형별 그라디언트 히어로 헤더, 둥근 카드(24px), 보라 버튼
-- [x] `/schedules/new` — 이모지 유형 칩, 포커스 보라 테두리, 그라디언트 저장 버튼
+### 나머지 7개 페이지 디자인 리뉴얼 (Green/Teal/Blue 통일)
+- [x] `/notifications` — 타입별 원형 컬러 아이콘, 미읽음 테두리 강조
+- [x] `/mypage` — 그라디언트 프로필 히어로 카드, 아이콘 칩 설정 행
+- [x] `/family` — 다크 헤더 → 그라디언트 카드, `joinFamilyByCode` 버그 수정
+- [x] `/budget` — 그라디언트 요약 카드, 카테고리 아이콘 칩, 진행률 바
+- [x] `/schedules/children` — SVG 원형 완료율 프로그레스, 탭, 스텝퍼+그림자
+- [x] `/schedules/[id]` — 유형별 그라디언트 히어로 헤더, 둥근 카드(24px), 버튼
+- [x] `/schedules/new` — 이모지 유형 칩, 포커스 테두리, 그라디언트 저장 버튼
 
 ---
 
@@ -118,7 +118,7 @@
 - **일정 CRUD**: 생성/조회/상태변경/삭제 ✅
 - **가족 관리**: 그룹 생성, 초대코드 생성, 합류 ✅
 - **초대 링크**: `/invite/[code]` 완전 작동 ✅
-- **디자인**: 전 페이지 Vibrant Purple 통일 완료 ✅
+- **디자인**: 전 페이지 Green/Teal/Blue (글래스모피즘) 통일 완료 ✅
 
 ---
 

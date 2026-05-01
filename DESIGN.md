@@ -36,9 +36,9 @@
 ### 2.1. Brand Palette
 | Name | Hex | CSS Variable | Role & Usage |
 | :--- | :--- | :--- | :--- |
-| **Brand Green** | `#2EE895` | `--brand-green` | 완료(Completed), 긍정적 상태(Success), 자녀 일정 |
-| **Brand Teal** | `#0CC9B5` | `--brand-teal` | 포커스 링(Focus), 보조 액션(Secondary), 개인 일정 |
-| **Brand Blue** | `#0084CC` | `--color-primary` | **Primary Action**, 핵심 버튼, 공유 일정, 메인 테마 |
+| **Brand Green** | `#2EE895` | `--brand-green` | 완료(Completed), 긍정적 상태(Success), 그룹 목표/자녀 일정 |
+| **Brand Teal** | `#0CC9B5` | `--brand-teal` | 포커스 링(Focus), 보조 액션(Secondary), 개인 일정 (프라이버시) |
+| **Brand Blue** | `#0084CC` | `--color-primary` | **Primary Action**, 핵심 버튼, 공유 일정 (연인/가족), 1회성 외부 초대 모임 |
 | **Brand Navy** | `#1A1B2E` | `--brand-navy` | **Primary Text** (가장 어두운 텍스트 색상) |
 | **Brand Black** | `#0A0A0A` | `--brand-black` | 극대화된 대비 요소 (모달 오버레이 등) |
 
