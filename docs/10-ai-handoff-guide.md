@@ -54,12 +54,13 @@
 ## 다음 작업 순서 (추천)
 
 > [!IMPORTANT]
-> **🚨 사용자 필수 수행 대기 작업 (Google Calendar & FCM)**
-> 다음 작업을 요청받을 시, 반드시 사용자가 아래 수동 작업을 완료했는지 먼저 확인(학습)하세요. 이 수동 작업들이 완료되지 않았다면 다음 단계의 정상적인 진행이 불가능합니다.
-> 1. **[구글 캘린더 연동용]**: Google Cloud Console에서 `Google Calendar API` 활성화
-> 2. **[구글 캘린더 연동용]**: Supabase에서 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
-> 3. **[푸시 알림 연동용]**: Firebase 프로젝트 생성 및 FCM 서버 키 발급
-> 4. **[푸시 알림 연동용]**: Vercel에 Firebase 관련 환경변수(`NEXT_PUBLIC_FIREBASE_*`) 등록
+> **🚨 사용자 필수 수행 대기 작업 (2026년 5월 4일 일괄 처리 예정)**
+> 다음 작업을 요청받을 시, 반드시 사용자가 아래 수동 작업을 완료했는지 먼저 확인(학습)하세요. 이 수동 작업들이 완료되지 않았다면 기능이 정상적으로 동작하지 않습니다.
+> 1. **[인증]**: Supabase Dashboard -> Auth -> Redirect URLs에 `https://gleaum-app.vercel.app/auth/callback` 추가 여부 확인
+> 2. **[구글 캘린더 연동]**: Google Cloud Console에서 `Google Calendar API` 활성화
+> 3. **[구글 캘린더 연동]**: Supabase SQL Editor에서 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
+> 4. **[푸시 알림 연동]**: Firebase 프로젝트 생성 및 FCM 서버 키 발급
+> 5. **[푸시 알림 연동]**: Vercel에 Firebase 관련 환경변수(`NEXT_PUBLIC_FIREBASE_*`) 등록
 
 > ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 > ✅ 3단계(Google Calendar 연동) 코드 작업 완료됨. (수동 설정만 남음)

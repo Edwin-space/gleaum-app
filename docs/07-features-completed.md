@@ -137,3 +137,9 @@
 - [x] **매니페스트 구성**: `public/manifest.json` 생성 (`standalone` 모드 지원)
 - [x] **동적 앱 로고**: `src/app/icon.tsx` 를 사용한 고화질 다이아몬드 로고 자동 생성
 - [x] **오프라인/설치 지원**: `public/sw.js` (서비스 워커) 생성 및 `PwaRegistry.tsx`를 통한 글로벌 등록 완료
+
+---
+
+## 인프라 및 인증 (완료)
+
+- [x] **OAuth 도메인 리다이렉트 수정**: Vercel 배포 도메인이 아닌 실제 접속 도메인(`host`)으로 리다이렉트되도록 `auth/callback` 로직 수정 완료 (도메인 불일치로 인한 세션 유실 문제 해결)

@@ -22,7 +22,8 @@
 - 특정 `scheduleId` 기반의 외부 공개용 읽기 전용 뷰 페이지 (`/share/[scheduleId]`) 생성
 - 해당 링크를 받은 Guest 사용자는 로그인 없이(또는 간편 로그인 후) 해당 일정 정보만 열람 가능
 
-### 🟡 Google Calendar 양방향 동기화 (완료/테스트 대기)
+### ✅ Google Calendar 양방향 동기화 (코드 완료)
+> **중요**: 5월 4일 수동 인프라 설정(GCP API 활성화, DB 마이그레이션) 후 최종 테스트 예정
 **사전 조건**: Google Cloud Console에서 Calendar API 활성화 필요
 - `schedules` 테이블에 `google_event_id` 컬럼 추가 필요 (수동 작업 대기)
 - `src/lib/googleCalendar.ts` 구현 완료
