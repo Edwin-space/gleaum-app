@@ -108,11 +108,13 @@ export default function HomePage() {
         </div>
 
         {/* ── 캘린더 ── */}
-        <div className="glass-card rounded-[24px] p-4">
+        <div className="glass-card rounded-[24px] overflow-hidden"
+          style={{ padding: view === 'month' ? '16px' : '0 0 8px 0' }}>
           <CalendarView
             schedules={schedules}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
+            view={view}
           />
         </div>
 
