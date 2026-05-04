@@ -16,24 +16,16 @@
 `src/app/invite/[code]/page.tsx` 구현 완료.
 비로그인 → `/login?next=` 파라미터로 OAuth 후 자동 복귀 → `joinFamilyByCode()` 자동 처리.
 
-### 🟡 Google Calendar 양방향 동기화
-**사전 조건**: Google Cloud Console에서 Calendar API 활성화 필요
+### ✅ Google Calendar 양방향 동기화 — 코드 완료 (수동 설정 대기)
 
-**구현 계획** (`src/lib/googleCalendar.ts` 신규 생성):
-```typescript
-// 글리움 → 구글 캘린더 내보내기
-createGoogleEvent(token, schedule)
-updateGoogleEvent(token, eventId, schedule)
-deleteGoogleEvent(token, eventId)
+**코드 작업 완료** (`src/lib/googleCalendar.ts` 구현됨):
+- `createGoogleEvent` / `updateGoogleEvent` / `deleteGoogleEvent` 구현 완료
+- `src/lib/db.ts`: 일정 CUD 시점에 Google Calendar와 동기화 로직 연결
+- `src/types/index.ts`: `googleEventId` 필드 추가 완료
 
-// 구글 캘린더 → 글리움 가져오기
-fetchGoogleEvents(token, calendarId, timeMin, timeMax)
-```
-
-**`schedules` 테이블에 `google_event_id` 컬럼 추가 필요**:
-```sql
-ALTER TABLE schedules ADD COLUMN google_event_id text;
-```
+**🔧 사용자가 직접 수행해야 하는 작업 (미완료)**:
+1. Google Cloud Console → Calendar API 활성화
+2. Supabase SQL Editor → `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
 
 ### 🟡 Google Drive 사진 첨부
 **사전 조건**: Google Cloud Console에서 Drive API 활성화 필요
@@ -67,19 +59,20 @@ ALTER TABLE schedules ADD COLUMN google_event_id text;
 
 ## Day 7 — 나머지 화면 디자인 리뉴얼
 
-### ✅ 전 페이지 Vibrant Purple 리뉴얼 — 완료
+### ✅ 전 페이지 프리미엄 UI 리뉴얼 — 완료
 
-모든 페이지에 `#5A32FA` 보라 브랜드 디자인 통일 적용됨:
+모든 페이지에 Glassmorphism + Blue/Teal/Green 브랜드 컬러 통일 적용됨:
 
 | 페이지 | 완료 내용 |
 |--------|----------|
-| `/schedules/new` | 이모지 유형 칩, 보라 포커스 테두리, 그라디언트 저장 버튼 |
-| `/schedules/[id]` | 유형별 그라디언트 히어로 헤더, 24px 둥근 카드, 보라 버튼 |
-| `/schedules/children` | SVG 원형 완료율 프로그레스, 보라 탭/스텝퍼 |
-| `/family` | 보라 그라디언트 히어로 카드 |
-| `/budget` | 보라 그라디언트 요약 카드, 카테고리 아이콘 칩+진행률 바 |
-| `/mypage` | 보라 그라디언트 프로필 히어로, 아이콘 칩 설정 행 |
-| `/notifications` | 타입별 원형 아이콘, 미읽음 보라 배경/테두리 |
+| `/schedules/new` | 이모지 유형 칩, 블루 포커스 테두리, 브랜드 그라디언트 저장 버튼 |
+| `/schedules/[id]` | 유형별 그라디언트 히어로 헤더, 24px 둥근 카드, 블루 버튼 |
+| `/schedules/children` | SVG 원형 완료율 프로그레스, 블루 탭/스텝퍼 |
+| `/family` | 브랜드 그라디언트 히어로 카드, glass-card |
+| `/budget` | 브랜드 그라디언트 요약 카드, 카테고리 아이콘 칩+진행률 바 |
+| `/mypage` | 브랜드 그라디언트 프로필 히어로, SVG 아이콘 설정 행 |
+| `/notifications` | SVG 타입별 원형 아이콘, 미읽음 컬러 테두리 |
+| `/login` | 메쉬 그라디언트 배경, glass-card, 다크 버튼 + Google G 로고 |
 
 ---
 
