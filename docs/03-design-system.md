@@ -1,16 +1,13 @@
-# 03. 디자인 시스템
+# 03. 디자인 시스템 (Premium UI Overhaul)
 
 ## 디자인 콘셉트
 
-**"Vibrant Purple & Soft Background"** — 피그마 기반 리뉴얼 완료 (2026-04-30)
+**"Premium Glassmorphism & Fluid Mesh Gradient"** — 프리미엄 리뉴얼 완료 (2026-04-30)
 
-- 밝고 부드러운 `#FAFAFD` 배경에 노랑/청록/보라 **블롭 그라디언트**
-- 메인 포인트 컬러 **Vibrant Purple `#5A32FA`**
-- 둥근 모서리, 부드러운 그림자, 파스텔 아이콘
-
-참고 파일:
-- `DESIGN_HANDOFF_TO_CLAUDE.md` — AI 디자인 인수인계 가이드
-- `DESIGN_PREVIEW.html` — 인터랙티브 프로토타입 (브라우저에서 열어볼 것)
+- **배경**: 정적인 블롭을 제거하고, 3가지 브랜드 컬러가 유기적으로 움직이는 **애니메이션 메쉬 그라디언트** 적용. 깊이감 있는 시각 경험 제공.
+- **레이아웃**: 모든 카드는 투명한 유리 질감의 **Glassmorphism (`.glass-card`)** 스타일 적용.
+- **타이포그래피**: 둔탁한 폰트에서 하이엔드 웹 서체인 **Outfit**과 **Pretendard** 조합으로 변경하여 자간과 가독성 극대화.
+- **아이콘**: 조잡한 이모지 아이콘을 배제하고, 정교한 **SVG 라인 아이콘** 시스템으로 통일.
 
 ---
 
@@ -20,114 +17,84 @@
 
 | 변수 | 값 | 용도 |
 |------|-----|------|
-| `--color-primary` | `#5A32FA` | 모든 인터랙티브 요소, 버튼, 활성 상태 |
-| `--color-primary-light` | `#EBE5FF` | 보라 연한 배경, 아이콘 배경 |
-| `--brand-navy` | `#1A1B2E` | 메인 텍스트 색상 |
-| `--color-ink` | `#1A1B2E` | 본문 텍스트 |
-| `--color-ink-muted-48` | `#8E8E93` | 보조 텍스트, 플레이스홀더 |
-| `--color-canvas-parchment` | `#FAFAFD` | 전체 배경 |
-| `--color-hairline` | `#E8E8E4` | 구분선, 테두리 |
+| `--brand-blue` | `#0084CC` | 공유 일정, 주요 포인트, 메인 액션 |
+| `--brand-teal` | `#0CC9B5` | 개인 일정, 서브 포인트 |
+| `--brand-green` | `#2EE895` | 자녀 일정, 완료/긍정 상태 |
+| `--color-ink` | `#1A1B2E` | 메인 텍스트 (깊은 네이비) |
+| `--color-ink-muted-80` | `#333333` | 본문 텍스트 (가독성 최적화) |
+| `--color-ink-muted-48` | `#6E6E66` | 보조 텍스트, 플레이스홀더 |
+| `--brand-gradient` | `linear-gradient(135deg, #2EE895 0%, #0CC9B5 50%, #0084CC 100%)` | 히어로 카드/FAB/주요 버튼 |
 
 ### 일정 유형 컬러
 
 | 유형 | 변수 | 값 |
 |------|------|-----|
-| 공유일정 | `--color-schedule-shared` | `#5A32FA` 보라 |
-| 개인일정 | `--color-schedule-personal` | `#06B6D4` 청록 |
-| 자녀일정 | `--color-schedule-child` | `#10B981` 에메랄드 |
+| 공유일정 | `--color-schedule-shared` | `#0084CC` 블루 |
+| 개인일정 | `--color-schedule-personal` | `#0CC9B5` 틸 |
+| 자녀일정 | `--color-schedule-child` | `#2EE895` 그린 |
 | 정기지출 | `--color-schedule-expense` | `#F59E0B` 앰버 |
-
-### 상태 컬러
-
-| 상태 | 변수 | 값 |
-|------|------|-----|
-| 대기중 | `--color-status-pending` | `#AEAEA8` 회색 |
-| 진행중 | `--color-status-progress` | `#5A32FA` 보라 |
-| 완료 | `--color-status-done` | `#10B981` 에메랄드 |
-| 미완료 | `--color-status-missed` | `#EF4444` 빨강 |
 
 ---
 
 ## 타이포그래피
 
-| 폰트 | 용도 |
-|------|------|
-| **DM Sans** | 영문, 숫자, 헤드라인 |
-| **Noto Sans KR** | 한국어 전용 (`fontFamily: "'Noto Sans KR', sans-serif"`) |
+| 서체 | 용도 | 적용 |
+|------|------|------|
+| **Outfit** | 영문, 숫자, 헤드라인 | `font-family: var(--font-display)` |
+| **Pretendard** | 한국어 본문, 인터페이스 | `font-family: var(--font-body)` |
 
-### 텍스트 크기 규칙
-- 페이지 타이틀: `text-[26px] font-bold tracking-tight`
-- 섹션 타이틀: `text-[18px] font-bold`
-- 카드 제목: `text-[16px] font-bold`
-- 본문: `text-[14px] font-semibold`
-- 보조: `text-[13px]` color `#8E8E93`
-- 미세: `text-[11px]` color `#8E8E93`
+### 텍스트 가이드
+- **자간(Letter Spacing)**: 시각적 밀도를 위해 `-0.01em` ~ `-0.03em` 적용.
+- **페이지 타이틀**: `text-[36px] ~ [40px] font-bold tracking-tight`
+- **카드 제목**: `text-[16px] font-bold`
+- **본문**: `text-[14px] font-medium`
+
+---
+
+## 핵심 유틸리티
+
+### Glassmorphism (`.glass-card`)
+```css
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 132, 204, 0.08);
+}
+```
+
+### Mesh Gradient (`.mesh-bg`)
+배경에 3개의 거대한 블러 원(`mesh-blob`)이 천천히 회전하며 몽환적인 분위기를 연출합니다.
 
 ---
 
 ## 컴포넌트 규칙
 
-### 카드
-```
-bg-white rounded-[20px] p-4
-boxShadow: '0 8px 30px rgba(90,50,250,0.06)'
-```
+### 카드 (Schedules, Notifications 등)
+- 배경색 대신 `.glass-card` 클래스 사용.
+- 모서리 곡률: `rounded-[24px]` 또는 `rounded-[20px]`.
+- 클릭 인터랙션: `active:scale-[0.98] transition-all`.
 
 ### 버튼 (Primary)
-```
-background: '#5A32FA'
-boxShadow: '0 8px 24px rgba(90,50,250,0.35)'
-borderRadius: rounded-full 또는 rounded-[20px]
-font-bold text-white
-```
-
-### 입력 필드
-```
-bg-gray-50 rounded-2xl px-5 py-4
-border border-transparent
-focus:border-[#5A32FA]/30
-```
-
-### 배지
-- `src/components/ui/Badge.tsx` 에 `TypeBadge`, `StatusBadge` 컴포넌트 존재
-
----
-
-## 배경 블롭 (`globals.css`)
-
-```css
-.blob-1 { /* 노란색 — 좌상단 */ background: radial-gradient(circle, rgba(255,235,153,0.45) ...) }
-.blob-2 { /* 청록색 — 우측 */ background: radial-gradient(circle, rgba(153,240,255,0.35) ...) }
-.blob-3 { /* 보라색 — 좌하단 */ background: radial-gradient(circle, rgba(200,153,255,0.28) ...) }
-```
-
-`layout.tsx`에서 `#app-shell` 밖(body)에 배치됨.
-
----
-
-## 그림자 클래스
-
-| 클래스 | 값 | 용도 |
-|--------|-----|------|
-| `.shadow-card` | `0 8px 30px rgba(90,50,250,0.06)` | 일반 카드 |
-| `.shadow-fab` | `0 8px 24px rgba(90,50,250,0.40)` | FAB 버튼 |
-| `.shadow-modal` | `0 -10px 40px rgba(0,0,0,0.10)` | 모달/바텀시트 |
+- `background: var(--color-ink)` (네이비) 또는 `var(--brand-gradient)`.
+- 강력한 그림자: `box-shadow: 0 12px 32px rgba(26, 27, 46, 0.2)`.
+- 높이: 대형 버튼 `h-[64px]`, 일반 `h-[52px]`.
 
 ---
 
 ## 애니메이션 클래스
 
-| 클래스 | 효과 |
-|--------|------|
-| `.animate-fade-in-up` | 아래→위 페이드인 (0.3s) |
-| `.animate-slide-up` | 아래에서 슬라이드업 (0.35s, 모달용) |
-| `.animate-fade-in` | 단순 페이드인 (0.2s) |
+| 클래스 | 효과 | 용도 |
+|--------|------|------|
+| `.animate-fade-in-up` | 아래→위 페이드인 (0.4s) | 리스트 아이템 순차 등장 |
+| `.animate-slide-up` | 아래에서 슬라이드업 (0.45s) | 모달, 바텀 시트 |
+| `.mesh-bg` / `.mesh-blob` | 애니메이션 메쉬 배경 | `globals.css` — 로그인 페이지 전용 |
 
 ---
 
 ## BottomNav 구조
 
-- **플로팅 pill** — `bg-white/92 backdrop-blur-20px rounded-[32px]`
-- **FAB** — 중앙 상단 돌출, `background: #5A32FA`, `boxShadow: shadow-fab`
-- **4개 탭** — 홈, 일정, (FAB), 가계부, 마이
-- 활성 색상: `#5A32FA`, 비활성: `#8E8E93`
+- **플로팅 글래스**: `.glass-card` 스타일 적용, `rounded-[32px]`.
+- **FAB (중앙 버튼)**: 브랜드 그라디언트 적용, 화이트 라인 아이콘.
+- **아이콘**: 활성 시 브랜드 컬러, 비활성 시 가독성이 확보된 그레이(`var(--color-ink-muted-48)`).

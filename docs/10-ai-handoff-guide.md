@@ -8,7 +8,7 @@
 
 1. **백엔드/DB 구조 절대 변경 금지** — `supabase/schema.sql`, `src/lib/db.ts`, `src/types/index.ts`의 핵심 구조는 건드리지 말 것.
 2. **단일 DB 진입점 유지** — 모든 Supabase 쿼리는 반드시 `src/lib/db.ts`에만 추가.
-3. **디자인 시스템 준수** — 색상, 그림자, 반지름은 반드시 `DESIGN.md` + `design-system-ui.html`을 기준으로, `src/styles/tokens.css`의 토큰을 사용. ⚠️ Purple(`#5A32FA`)은 폐기됨 → Brand Blue(`#0084CC`) / Teal(`#0CC9B5`) / Green(`#2EE895`) 사용.
+3. **디자인 시스템 준수** — 색상, 그림자, 반지름은 반드시 `DESIGN.md` + `src/styles/tokens.css`의 토큰(`var(--brand-blue)`, `var(--brand-gradient)` 등)을 사용. ⚠️ **Purple(`#5A32FA`)은 완전 폐기** → Brand Blue(`#0084CC`) / Teal(`#0CC9B5`) / Green(`#2EE895`) 사용.
 4. **RLS 보안** — 새 테이블 생성 시 반드시 RLS 활성화 + `my_family_group_id()` 기반 정책 추가.
 5. **TypeScript 엄격 모드** — 타입 오류 없이 `npm run build` 통과해야 함.
 6. **배포 자동화** — `main` 브랜치에 push하면 Vercel이 자동 배포. 작업 후 반드시 commit + push.
@@ -17,7 +17,9 @@
 
 ---
 
-## 현재 앱 상태 (2025년 기준)
+## 현재 앱 상태 (2026-05-04 기준)
+
+> **디자인 히스토리 요약**: Claude(세션1)가 Vibrant Purple(`#5A32FA`)로 구현 → Antigravity AI가 오리지널 브랜드 컬러(Blue/Teal/Green)로 복구 + Glassmorphism + 메쉬 그라디언트 + 프리미엄 폰트(`Outfit`+`Pretendard`) 추가 적용. **현재 코드는 Blue/Teal/Green 기반이며 보라색(`#5A32FA`)은 사용 금지.**
 
 ### ✅ 작동하는 기능
 
@@ -36,7 +38,7 @@
 | 가계부 (정기지출) | `/budget` | ✅ 실 DB 연동 |
 | 마이페이지 + 로그아웃 | `/mypage` | ✅ 실 DB 연동 |
 | 알림 목록 | `/notifications` | ✅ 실 DB 연동 |
-| Green/Teal/Blue 디자인 시스템 | **전 페이지 + DESIGN.md** | ✅ 100% 통일 완료 |
+| Glassmorphism + Blue/Teal/Green 디자인 | **전 페이지 (DESIGN.md 기준)** | ✅ 프리미엄 리뉴얼 완료 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 
 ### ❌ 미구현 기능 (우선순위 순)
@@ -70,11 +72,13 @@
 - `joinFamilyByCode()` 반환 타입: `{ success, alreadyMember?, familyName? }`
 
 ### 2단계 ✅: 전 페이지 디자인 리뉴얼 — 완료
-7개 페이지 전부 Green/Teal/Blue 브랜드 컬러 통일 완료.
-- `DESIGN.md` — 디자인 시스템 마스터 명세서 (12개 섹션)
-- `design-system-ui.html` — 시각적 UI 컴포넌트 가이드 (10개 섹션)
-- `DESIGN_PREVIEW.html` — 8개 화면 인터랙티브 프로토타입 (시연용)
-- `AGENTS.md` — 모든 AI가 디자인 시스템을 자동 참조하도록 연결 완료
+7개 페이지 Glassmorphism(`.glass-card`) + 메쉬 그라디언트 배경(`.mesh-bg`) + Blue/Teal/Green 브랜드 컬러로 프리미엄 UI 완전 리뉴얼 완료.
+- 폰트: `Outfit` (영문/숫자) + `Pretendard` (국문)
+- 로그인 페이지: 메쉬 배경 + 다크(네이비) 버튼 + 화이트 Google G 로고
+- 모든 카드: `.glass-card` 유리 질감 (흰색 반투명 + backdrop-blur)
+- `DESIGN.md` — 디자인 시스템 마스터 명세서
+- `design-system-ui.html` — 시각적 UI 컴포넌트 가이드
+- `AGENTS.md` — AI 자동 참조 가이드
 
 ---
 
@@ -187,7 +191,8 @@ export default function NewPage() {
   const { user, familyGroupId, loading } = useCurrentUser()
   
   if (loading) return <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin w-8 h-8 border-2 border-[#5A32FA] border-t-transparent rounded-full"/>
+    <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full"
+      style={{ borderColor: 'rgba(0,132,204,0.3)', borderTopColor: 'var(--brand-blue)' }}/>
   </div>
   
   return (
