@@ -41,45 +41,63 @@ export default function SchedulesPage() {
   });
 
   return (
-    <div className="min-h-dvh pb-24">
-      <AppHeader title="일정" showLogo={false} showBack={false} />
+    <div className="min-h-dvh pb-24 lg:max-w-[1440px] lg:mx-auto lg:px-8 lg:pt-10">
+      <div className="lg:hidden">
+        <AppHeader title="일정" showLogo={false} showBack={false} />
+      </div>
 
-      {/* 검색 */}
-      <div className="px-4 py-3">
+      {/* PC 전용 타이틀 */}
+      <div className="hidden lg:flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-[32px] font-bold text-[#1A1B2E]">일정 관리</h1>
+          <p className="text-[15px] text-[#8E8E93] mt-1">우리 가족의 모든 계획을 한눈에 확인하세요</p>
+        </div>
+        <Link
+          href="/schedules/new"
+          className="flex items-center gap-2 px-6 py-3.5 rounded-[20px] text-[15px] font-bold text-white transition-all active:scale-95 shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', boxShadow: '0 8px 24px rgba(0,132,204,0.3)' }}
+        >
+          <span>➕</span>
+          새 일정 추가
+        </Link>
+      </div>
+
+      {/* 검색 및 필터 통합 영역 (PC/모바일 공용) */}
+      <div className="lg:glass-card lg:p-6 lg:rounded-[32px] lg:mb-10 lg:flex lg:items-center lg:gap-6">
         <div
-          className="flex items-center gap-2 px-4 h-11 rounded-full"
+          className="flex items-center gap-2 px-4 h-11 rounded-full lg:flex-1 lg:h-14 lg:px-6"
           style={{ background: 'white', border: '1px solid var(--color-hairline)' }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="7" stroke="var(--color-ink-muted-48)" strokeWidth="1.8"/>
             <path d="M16.5 16.5L21 21" stroke="var(--color-ink-muted-48)" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="일정 검색"
-            className="flex-1 bg-transparent text-[15px] placeholder:text-[var(--color-ink-muted-48)]"
-            style={{  }}
+            placeholder="어떤 일정을 찾으시나요?"
+            className="flex-1 bg-transparent text-[15px] lg:text-[16px] placeholder:text-[var(--color-ink-muted-48)] outline-none"
           />
         </div>
       </div>
 
       {/* 필터 탭 */}
-      <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
+      <div className="flex gap-2 px-4 pb-3 overflow-x-auto lg:px-0 lg:pb-0 lg:flex-nowrap">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all"
+            className="flex-shrink-0 px-4 py-2 lg:px-6 lg:py-3 rounded-full text-[13px] lg:text-[14px] font-bold transition-all"
             style={{
-              background: filter === f.key ? 'var(--color-primary)' : 'white',
+              background: filter === f.key ? 'var(--color-primary)' : 'rgba(0,132,204,0.04)',
               color:      filter === f.key ? 'white' : 'var(--color-ink-muted-48)',
-              border:     filter === f.key ? 'none' : '1px solid var(--color-hairline)',
+              border:     filter === f.key ? 'none' : '1px solid rgba(0,132,204,0.08)',
             }}
           >
             {f.label}
           </button>
         ))}
+      </div>
       </div>
 
       {/* 로딩 */}
@@ -91,7 +109,7 @@ export default function SchedulesPage() {
 
       {/* 일정 목록 */}
       {!loading && (
-        <div className="px-4 space-y-2">
+        <div className="px-4 lg:px-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.length > 0 ? (
             filtered.map((s) => (
               <ScheduleCard

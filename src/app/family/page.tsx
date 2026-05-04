@@ -46,23 +46,26 @@ export default function FamilyPage() {
   };
 
   return (
-    <div className="min-h-dvh pb-28">
-      <AppHeader
-        title="나의 그룹"
-        showLogo={false}
-        showBack
-        showNotification={false}
-        rightAction={
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold text-white transition-transform active:scale-95"
-            style={{ background: 'var(--brand-gradient)' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-            초대
-          </button>
-        }
-      />
+    <div className="min-h-dvh pb-28 lg:max-w-[1440px] lg:mx-auto lg:px-8 lg:pt-10">
+      <div className="lg:hidden">
+        <AppHeader title="나의 그룹" showLogo={false} showBack />
+      </div>
+
+      {/* PC 전용 타이틀 */}
+      <div className="hidden lg:flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-[32px] font-bold text-[#1A1B2E]">나의 그룹</h1>
+          <p className="text-[15px] text-[#8E8E93] mt-1">가족 구성원을 관리하고 새로운 멤버를 초대하세요</p>
+        </div>
+        <button
+          onClick={() => setShowInviteModal(true)}
+          className="flex items-center gap-2 px-6 py-3.5 rounded-[20px] text-[15px] font-bold text-white transition-all active:scale-95 shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', boxShadow: '0 8px 24px rgba(0,132,204,0.3)' }}
+        >
+          <span>➕</span>
+          가족 초대하기
+        </button>
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -73,7 +76,7 @@ export default function FamilyPage() {
         <>
           {/* 그룹 히어로 카드 */}
           <div
-            className="mx-4 mt-4 p-5 rounded-[28px] relative overflow-hidden"
+            className="mx-4 mt-4 lg:mx-0 p-6 lg:p-8 rounded-[28px] lg:rounded-[40px] relative overflow-hidden mb-10"
             style={{
               background: 'var(--brand-gradient)',
               boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
@@ -126,27 +129,27 @@ export default function FamilyPage() {
           </div>
 
           {/* 멤버 목록 */}
-          <div className="mx-4 mt-4">
-            <p className="text-[11px] font-bold tracking-widest uppercase mb-3"
+          <div className="mx-4 lg:mx-0 mt-4">
+            <p className="text-[11px] font-bold tracking-widest uppercase mb-4"
               style={{ color: 'var(--color-ink-muted-80)' }}>
               구성원
             </p>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="glass-card flex items-center gap-4 p-4 rounded-[20px]"
+                  className="glass-card flex items-center gap-4 p-5 rounded-[24px] hover:translate-y-[-4px] transition-all cursor-pointer"
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center text-3xl flex-shrink-0"
                     style={{ background: 'rgba(0,132,204,0.08)' }}>
                     {member.avatar}
                   </div>
                   <div className="flex-1">
-                    <p className="text-[15px] font-semibold" style={{ color: 'var(--color-ink)' }}>
+                    <p className="text-[16px] font-bold" style={{ color: 'var(--color-ink)' }}>
                       {member.name}
                     </p>
                     {member.email && (
-                      <p className="text-[12px]" style={{ color: 'var(--color-ink-muted-80)' }}>
+                      <p className="text-[12px] truncate max-w-[150px]" style={{ color: 'var(--color-ink-muted-80)' }}>
                         {member.email}
                       </p>
                     )}
@@ -162,31 +165,30 @@ export default function FamilyPage() {
                   </span>
                 </div>
               ))}
-            </div>
-          </div>
 
-          {/* 그룹 합류 버튼 */}
-          <div className="mx-4 mt-4">
-            <button
-              onClick={() => setShowJoinModal(true)}
-              className="glass-card w-full py-3.5 rounded-[20px] text-[14px] font-semibold transition-all active:scale-[0.98]"
-              style={{
-                border: '1.5px dashed rgba(0,132,204,0.25)',
-                color: 'var(--brand-blue)',
-              }}
-            >
-              다른 그룹에 합류하기
-            </button>
+              {/* 그룹 합류 카드 (PC 그리드에 맞춤) */}
+              <button
+                onClick={() => setShowJoinModal(true)}
+                className="glass-card flex flex-col items-center justify-center p-5 rounded-[24px] min-h-[100px] transition-all active:scale-[0.98]"
+                style={{
+                  border: '2px dashed rgba(0,132,204,0.20)',
+                  color: 'var(--brand-blue)',
+                }}
+              >
+                <span className="text-xl mb-1">🚪</span>
+                <span className="text-[14px] font-bold">다른 그룹 합류</span>
+              </button>
+            </div>
           </div>
         </>
       )}
 
       {/* ── 초대 모달 ── */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}
+        <div className="fixed inset-0 z-50 flex items-center lg:items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
           onClick={() => setShowInviteModal(false)}>
-          <div className="w-full max-w-[430px] glass-card rounded-t-[32px] p-6 pb-10 animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
+          <div className="w-full max-w-[430px] lg:max-w-[500px] glass-card rounded-t-[32px] lg:rounded-[32px] p-6 lg:p-8 pb-10 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6 lg:hidden" />
             <p className="text-[20px] font-bold mb-1" style={{ color: 'var(--color-ink)' }}>초대하기</p>
             <p className="text-[13px] mb-6" style={{ color: 'var(--color-ink-muted-80)' }}>아래 방법으로 초대하세요</p>
 
@@ -238,10 +240,10 @@ export default function FamilyPage() {
 
       {/* ── 그룹 합류 모달 ── */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}
+        <div className="fixed inset-0 z-50 flex items-center lg:items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
           onClick={() => setShowJoinModal(false)}>
-          <div className="w-full max-w-[430px] glass-card rounded-t-[32px] p-6 pb-10 animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
+          <div className="w-full max-w-[430px] lg:max-w-[500px] glass-card rounded-t-[32px] lg:rounded-[32px] p-6 lg:p-8 pb-10 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6 lg:hidden" />
             <p className="text-[20px] font-bold mb-1" style={{ color: 'var(--color-ink)' }}>그룹 합류</p>
             <p className="text-[13px] mb-5" style={{ color: 'var(--color-ink-muted-80)' }}>
               초대받은 코드를 입력하세요
