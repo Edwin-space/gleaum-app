@@ -147,6 +147,17 @@
 
 ---
 
+## 제품 모델 재정의 — Space 기반 확장 방향 (완료 - 2026-05-04)
+
+- [x] 초기 가족 관리 서비스 방향을 개인/연인/가족을 포괄하는 Space 기반 일상 네트워크로 재정의
+- [x] `docs/12-product-model.md` 신규 작성
+- [x] `family_groups`를 단기적으로 legacy Space 테이블로 해석하는 방향 정리
+- [x] `schedule.type`에 섞여 있던 개념을 Space / Category / Visibility / Automation Policy 축으로 분리
+- [x] 자녀 일정 자동 상태 전이를 `child` 전용이 아닌 `completion_required` 정책의 한 사례로 재정의
+- [x] 다음 자동화 구현 기준을 `/api/cron/automations` 또는 정책 기반 통합 cron으로 정리
+
+---
+
 ## 오리지널 브랜드 일관성 통합 (완료)
 
 - [x] **브랜드 컬러 롤백**: `#5A32FA` (Vibrant Purple) → 오리지널 `gleaum_design_system.html` 기반 Green/Teal/Blue (`#0084CC`, `#0CC9B5`, `#2EE895`)로 100% 복구 완료

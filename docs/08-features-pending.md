@@ -52,9 +52,12 @@
 - 설정된 `reminder` 분 전에 FCM 발송 + `notifications` 테이블 기록
 - Supabase에서 `pg_net` 호출 결과 확인 및 실행 완료
 
-### 🟡 자녀 일정 미완료 자동 상태 전이
-- 일정 종료 시각 기준으로 `missed` 처리하는 자동 상태 전이 로직은 아직 별도 구현 필요
-- 재알림 수동 발송 API는 구현됐으나, 자동 미완료 판정과 부모 자동 재알림은 다음 단계
+### 🔴 자동화 정책 기반 상태 전이
+- 제품 방향이 개인/연인/가족 Space 기반 서비스로 확장됨에 따라 `child` 전용 자동화 구현은 금지
+- `docs/12-product-model.md` 기준으로 `automation_policy` 기반 상태 전이 구현 필요
+- `completion_required`: 개인 루틴, 가족 케어, 자녀 일정, 심부름 등 완료 확인 일정 처리
+- `payment_due`: 개인/연인/가족 정기지출의 결제 예정/미납 알림 처리
+- 재알림 수동 발송 API는 구현됐으나, 자동 미완료/미납 판정과 대상자 규칙은 다음 단계
 
 ---
 
@@ -78,6 +81,13 @@
 ---
 
 ## Day 8 — 품질 및 완성도
+
+### 🔴 Space 기반 모델 마이그레이션
+- [ ] `family_groups.type` 추가로 기존 가족 그룹을 Space로 확장
+- [ ] `schedules.category`, `schedules.visibility`, `schedules.automation_policy` 추가
+- [ ] 기존 `schedule.type` 값을 신규 축으로 매핑
+- [ ] 중기적으로 `spaces`, `space_members`, `schedule_assignees`, `schedule_observers`, `notification_rules` 설계
+- [ ] 첫 로그인 시 `"X씨 가족"` 대신 개인 Space 또는 선택형 온보딩으로 전환 검토
 
 ### 🟡 PWA 완성
 - [ ] `public/manifest.json` 아이콘 세트 추가
@@ -109,5 +119,5 @@
 |------|------|------|
 | `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
 | 일정 수정 페이지 없음 | `/schedules/[id]`의 "수정" 버튼 미연결 | `src/app/schedules/[id]/page.tsx` |
-| 자녀 일정 자동 상태 전이 미구현 | 종료 시각 기준 `missed` 자동 처리 필요 | cron/API |
+| 자동화 정책 기반 상태 전이 미구현 | `child` 하드코딩 대신 `automation_policy` 기반 처리 필요 | cron/API |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |

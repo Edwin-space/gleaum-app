@@ -14,12 +14,14 @@
 6. **배포 자동화** — `main` 브랜치에 push하면 Vercel이 자동 배포. 작업 후 반드시 commit + push.
 7. **AI 간 작업 동기화 (문서 업데이트 필수)** — 서로 다른 AI가 협업하므로, 본인의 작업이 에러 없이 완료되면 **반드시 `docs/` 폴더 내 관련 문서(완료된 기능 등)를 업데이트**하여 다른 AI가 최신 상태를 알 수 있게 할 것.
 8. **디자인 일관성 절대 유지** — 작업된 디자인 결과물(특히 `DESIGN_PREVIEW.html` 및 `tokens.css` 기준)의 시각적 형태와 UX를 모든 페이지와 컴포넌트에서 완벽하게 일관성을 유지할 것.
+9. **제품 모델 방향 유지** — 글리움은 가족 전용 앱이 아니라 **개인/연인/가족 Space 기반 일상 네트워크**입니다. 신규 기능은 반드시 `docs/12-product-model.md`의 Space / Category / Automation Policy 기준으로 설계할 것.
 
 ---
 
 ## 현재 앱 상태 (2026-05-04 기준)
 
 > **디자인 히스토리 요약**: Claude(세션1)가 Vibrant Purple(`#5A32FA`)로 구현 → Antigravity AI가 오리지널 브랜드 컬러(Blue/Teal/Green)로 복구 + Glassmorphism + 메쉬 그라디언트 + 프리미엄 폰트(`Outfit`+`Pretendard`) 추가 적용. **현재 코드는 Blue/Teal/Green 기반이며 보라색(`#5A32FA`)은 사용 금지.**
+> **제품 방향 요약**: 초기 가족 관리 서비스에서 개인/연인/가족을 포괄하는 Space 기반 토털 서비스로 확장 중입니다. `family_groups`는 단기적으로 유지하지만 신규 설계에서는 legacy Space로 해석합니다.
 
 ### ✅ 작동하는 기능
 
@@ -49,7 +51,7 @@
 |------|---------|------|
 | Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 |
 | Google Drive 사진 첨부 | 🟡 중요 (Day 5) | Drive API 활성화 필요 |
-| 자녀 일정 자동 상태 전이 | 🔴 필수 (Day 6 후속) | pending→in_progress→missed 자동 처리 필요 |
+| 자동화 정책 기반 상태 전이 | 🔴 필수 (Day 6 후속) | `completion_required`, `payment_due` 등 정책 기반 처리 필요 |
 | 일정 수정 페이지 `/schedules/[id]/edit` | 🟢 선택 | UI만 없음, DB 함수는 있음 |
 | Google OAuth 앱 게시 (프로덕션) | 🟢 선택 | 테스트 사용자 외 로그인 불가 |
 
@@ -66,6 +68,7 @@
 > ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 > ✅ 3단계(Google Calendar 연동) 코드 작업 완료됨. (수동 설정만 남음)
 > ✅ 4단계(FCM 푸시 알림 + Supabase Cron 리마인더)는 완료됨. Supabase `pg_net` 실행 결과까지 확인 완료.
+> ✅ 5단계 전 제품 모델 재정의 완료. 자동 상태 전이는 `child` 전용이 아니라 `automation_policy` 기반으로 구현해야 함.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료
 `src/app/invite/[code]/page.tsx` 구현 완료.
@@ -106,13 +109,15 @@
 - Supabase SQL Editor에서 `pg_net`, `pg_cron` 활성화 및 `gleaum-reminders` 잡 등록 완료
 - Vercel Hobby 플랜 제한으로 `vercel.json`의 Cron 설정은 제거됨
 
-### 5단계: 자녀 일정 자동 상태 전이 (🔴 필수, Day 6 후속)
+### 5단계: 자동화 정책 기반 상태 전이 (🔴 필수, Day 6 후속)
 
 **필요 작업**:
-- 일정 시작 시각 도래: `pending` → `in_progress`
-- 일정 종료 시각 경과: `pending`/`in_progress` → `missed`
-- `missed` 전환 시 부모에게 자동 재알림 발송
-- 기존 Supabase cron 구조에 `/api/cron/status-transitions` 또는 통합 cron 로직 추가
+- `docs/12-product-model.md` 기준으로 Space / Category / Automation Policy 모델 유지
+- `schedule.type === 'child'` 하드코딩 금지
+- `completion_required`: 시작 시 `pending` → `in_progress`, 종료 후 미완료면 `missed`
+- `payment_due`: 결제일 도래/초과 상태 및 알림 처리
+- `missed` 또는 `overdue` 전환 시 assignee/observer/Space 멤버 규칙에 따라 FCM 재알림
+- 기존 Supabase cron 구조에 `/api/cron/automations` 또는 통합 cron 로직 추가
 
 ---
 
@@ -256,8 +261,9 @@ git push origin main
 3. `docs/04-file-structure.md` — 파일 구조 파악
 4. `docs/05-database-schema.md` — DB 구조 이해
 5. `docs/08-features-pending.md` — 다음 할 일 확인
-6. `DESIGN_HANDOFF_TO_CLAUDE.md` — 디자인 작업 시 필독
-7. 이 파일 (`10-ai-handoff-guide.md`) — 작업 시작
+6. `docs/12-product-model.md` — Space 기반 확장 방향 확인
+7. `DESIGN.md` — 디자인 작업 시 필독
+8. 이 파일 (`10-ai-handoff-guide.md`) — 작업 시작
 
 ---
 
