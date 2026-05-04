@@ -2,7 +2,8 @@
  * 글리움 — 일정 리마인더 크론잡 (FCM v1)
  * GET /api/cron/reminders
  *
- * Vercel Cron에서 5분마다 자동 호출됩니다 (vercel.json 참조).
+ * Supabase pg_cron + pg_net에서 5분마다 자동 호출됩니다.
+ * Vercel Hobby 플랜 제한 때문에 vercel.json crons는 사용하지 않습니다.
  * 리마인더 시각이 된 일정을 찾아 가족 구성원에게 FCM 알림을 발송합니다.
  */
 
@@ -11,7 +12,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
 
 export async function GET(req: NextRequest) {
-  // Vercel Cron 인증
+  // Supabase pg_net 호출 인증
   const authHeader = req.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

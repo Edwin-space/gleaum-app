@@ -25,7 +25,7 @@
 
 **🔧 사용자가 직접 수행해야 하는 작업 (미완료)**:
 1. Google Cloud Console → Calendar API 활성화
-2. Supabase SQL Editor → `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
+2. Supabase SQL Editor → `schedules.google_event_id` 컬럼 존재 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
 
 ### 🟡 Google Drive 사진 첨부
 **사전 조건**: Google Cloud Console에서 Drive API 활성화 필요
@@ -39,21 +39,22 @@
 
 ## Day 6 — 푸시 알림
 
-### 🔴 Firebase Cloud Messaging (FCM) 설정
-**필요 작업**:
-1. Firebase 프로젝트 생성
-2. FCM 서버 키 발급
-3. `public/firebase-messaging-sw.js` 서비스워커 생성
-4. 환경변수 추가: `NEXT_PUBLIC_FIREBASE_*`
+### ✅ Firebase Cloud Messaging (FCM) 설정 — 완료
+- Firebase 프로젝트 생성 및 FCM v1 발송 구조 구현 완료
+- `public/firebase-messaging-sw.js` 서비스워커 생성 완료
+- `src/lib/firebase.ts`, `src/hooks/useFCM.ts`, `src/components/FCMProvider.tsx` 구현 완료
+- 로그인 사용자의 FCM 토큰을 `profiles.fcm_token`에 저장
 
-### 🔴 일정 알림 시스템
-- 일정 생성 시 알림 예약 (Supabase Edge Function 또는 Vercel Cron)
-- 설정된 `reminder` 분 전에 FCM 발송
-- `notifications` 테이블에 기록
+### ✅ 일정 리마인더 알림 시스템 — 완료
+- `src/app/api/cron/reminders/route.ts` 구현 완료
+- Supabase `pg_cron` + `pg_net`으로 5분마다 `/api/cron/reminders` 호출하도록 등록 완료
+- Vercel Hobby 플랜 제한 때문에 `vercel.json`의 Vercel Cron 설정은 제거됨
+- 설정된 `reminder` 분 전에 FCM 발송 + `notifications` 테이블 기록
+- Supabase에서 `pg_net` 호출 결과 확인 및 실행 완료
 
-### 🟡 자녀 일정 미완료 재알림
-- 일정 종료 시각 기준으로 `missed` 처리
-- 부모에게 자동 재알림 발송
+### 🟡 자녀 일정 미완료 자동 상태 전이
+- 일정 종료 시각 기준으로 `missed` 처리하는 자동 상태 전이 로직은 아직 별도 구현 필요
+- 재알림 수동 발송 API는 구현됐으나, 자동 미완료 판정과 부모 자동 재알림은 다음 단계
 
 ---
 
@@ -108,5 +109,5 @@
 |------|------|------|
 | `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
 | 일정 수정 페이지 없음 | `/schedules/[id]`의 "수정" 버튼 미연결 | `src/app/schedules/[id]/page.tsx` |
-| 재알림 기능 미구현 | UI는 있으나 실제 발송 로직 없음 | 전반 |
+| 자녀 일정 자동 상태 전이 미구현 | 종료 시각 기준 `missed` 자동 처리 필요 | cron/API |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |

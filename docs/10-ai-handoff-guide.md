@@ -38,6 +38,8 @@
 | 가계부 (정기지출) | `/budget` | ✅ 실 DB 연동 |
 | 마이페이지 + 로그아웃 | `/mypage` | ✅ 실 DB 연동 |
 | 알림 목록 | `/notifications` | ✅ 실 DB 연동 |
+| FCM 푸시 알림 토큰 등록 | `useFCM`, `FCMProvider` | ✅ 구현 완료 |
+| 일정 리마인더 자동 발송 | Supabase `pg_cron` + `pg_net` → `/api/cron/reminders` | ✅ 등록/실행 확인 완료 |
 | Glassmorphism + Blue/Teal/Green 디자인 | **전 페이지 (DESIGN.md 기준)** | ✅ 프리미엄 리뉴얼 완료 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 
@@ -45,9 +47,9 @@
 
 | 기능 | 우선순위 | 비고 |
 |------|---------|------|
-| FCM 푸시 알림 | 🔴 필수 (Day 6) | Firebase 프로젝트 생성 필요 |
 | Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 |
 | Google Drive 사진 첨부 | 🟡 중요 (Day 5) | Drive API 활성화 필요 |
+| 자녀 일정 자동 상태 전이 | 🔴 필수 (Day 6 후속) | pending→in_progress→missed 자동 처리 필요 |
 | 일정 수정 페이지 `/schedules/[id]/edit` | 🟢 선택 | UI만 없음, DB 함수는 있음 |
 | Google OAuth 앱 게시 (프로덕션) | 🟢 선택 | 테스트 사용자 외 로그인 불가 |
 
@@ -56,15 +58,14 @@
 ## 다음 작업 순서 (추천)
 
 > [!IMPORTANT]
-> **🚨 사용자 필수 수행 대기 작업 (Google Calendar & FCM)**
+> **🚨 사용자 필수 수행 대기 작업 (Google Calendar)**
 > 다음 작업을 요청받을 시, 반드시 사용자가 아래 수동 작업을 완료했는지 먼저 확인(학습)하세요. 이 수동 작업들이 완료되지 않았다면 다음 단계의 정상적인 진행이 불가능합니다.
 > 1. **[구글 캘린더 연동용]**: Google Cloud Console에서 `Google Calendar API` 활성화
-> 2. **[구글 캘린더 연동용]**: Supabase에서 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
-> 3. **[푸시 알림 연동용]**: Firebase 프로젝트 생성 및 FCM 서버 키 발급
-> 4. **[푸시 알림 연동용]**: Vercel에 Firebase 관련 환경변수(`NEXT_PUBLIC_FIREBASE_*`) 등록
+> 2. **[구글 캘린더 연동용]**: 운영 DB에 `schedules.google_event_id` 컬럼이 있는지 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
 
 > ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 > ✅ 3단계(Google Calendar 연동) 코드 작업 완료됨. (수동 설정만 남음)
+> ✅ 4단계(FCM 푸시 알림 + Supabase Cron 리마인더)는 완료됨. Supabase `pg_net` 실행 결과까지 확인 완료.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료
 `src/app/invite/[code]/page.tsx` 구현 완료.
@@ -86,7 +87,7 @@
 
 **사전 작업 (수동)**:
 1. Google Cloud Console → API 및 서비스 → **Google Calendar API** 활성화 (사용자 수행 대기)
-2. Supabase SQL Editor → `ALTER TABLE schedules ADD COLUMN google_event_id text;` (사용자 수행 대기)
+2. Supabase SQL Editor → `schedules.google_event_id` 컬럼 존재 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;`
 
 **코드 작업 (완료)**:
 - `src/lib/googleCalendar.ts`: `createGoogleEvent`, `updateGoogleEvent`, `deleteGoogleEvent` 통신 레이어 구현 완료
@@ -95,18 +96,23 @@
 
 ---
 
-### 4단계: FCM 푸시 알림 (🔴 필수, Day 6)
+### 4단계 ✅: FCM 푸시 알림 + Supabase Cron 리마인더 — 완료
 
-**사전 작업 (수동)**:
-1. Firebase Console → 새 프로젝트 생성
-2. Cloud Messaging 탭 → 서버 키 복사
-3. Vercel 환경변수에 `NEXT_PUBLIC_FIREBASE_*` 추가
+- `public/firebase-messaging-sw.js` — 백그라운드 푸시 수신 서비스워커 구현
+- `src/lib/firebase.ts` — 브라우저 FCM 토큰 발급 및 포그라운드 메시지 처리
+- `src/hooks/useFCM.ts` + `src/components/FCMProvider.tsx` — 로그인 사용자 FCM 토큰 자동 저장
+- `src/lib/fcm.ts` — Firebase 서비스 계정 기반 FCM HTTP v1 발송 헬퍼 구현
+- `src/app/api/cron/reminders/route.ts` — 리마인더 대상 일정 조회 → 가족 구성원 FCM 발송 → `notifications` 기록
+- Supabase SQL Editor에서 `pg_net`, `pg_cron` 활성화 및 `gleaum-reminders` 잡 등록 완료
+- Vercel Hobby 플랜 제한으로 `vercel.json`의 Cron 설정은 제거됨
 
-**코드 작업**:
-- `public/firebase-messaging-sw.js` — 서비스워커 생성
-- `src/lib/firebase.ts` — Firebase 초기화
-- Supabase Edge Function 또는 Vercel Cron — 알림 예약 발송
-- `notifications` 테이블 활용 (이미 스키마에 있음)
+### 5단계: 자녀 일정 자동 상태 전이 (🔴 필수, Day 6 후속)
+
+**필요 작업**:
+- 일정 시작 시각 도래: `pending` → `in_progress`
+- 일정 종료 시각 경과: `pending`/`in_progress` → `missed`
+- `missed` 전환 시 부모에게 자동 재알림 발송
+- 기존 Supabase cron 구조에 `/api/cron/status-transitions` 또는 통합 cron 로직 추가
 
 ---
 

@@ -30,6 +30,7 @@ avatar          text DEFAULT '👤'
 role            text DEFAULT 'parent'        -- 'parent' | 'child' | 'guest'
 family_group_id uuid REFERENCES family_groups(id)
 google_id       text
+fcm_token       text                         -- FCM 웹 푸시 등록 토큰
 updated_at      timestamptz DEFAULT now()
 ```
 
@@ -56,6 +57,7 @@ created_by       uuid REFERENCES auth.users(id) NOT NULL
 amount           int
 expense_category text                       -- 'education' | 'housing' | 'utility' | 'insurance' | 'subscription' | 'other'
 payment_method   text                       -- 'auto' | 'card' | 'cash' | 'other'
+google_event_id  text                       -- Google Calendar 이벤트 ID
 created_at       timestamptz DEFAULT now()
 updated_at       timestamptz DEFAULT now()
 ```
@@ -119,6 +121,36 @@ CREATE TRIGGER on_auth_user_created
 CREATE TRIGGER schedules_updated_at
   BEFORE UPDATE ON schedules
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+```
+
+---
+
+## Supabase Cron / pg_net
+
+리마인더 발송은 Vercel Cron이 아니라 Supabase `pg_cron` + `pg_net`에서 처리합니다.
+Vercel Hobby 플랜의 Cron 제한 때문에 `vercel.json`에는 cron 설정을 두지 않습니다.
+
+### 필요한 확장
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pg_cron SCHEMA extensions;
+```
+
+### 등록된 잡
+```sql
+-- jobname: gleaum-reminders
+-- schedule: */5 * * * *
+-- target: https://gleaum-app.vercel.app/api/cron/reminders
+```
+
+요청 헤더에는 `Authorization: Bearer <CRON_SECRET>`이 포함되어야 하며,
+Vercel 환경변수 `CRON_SECRET`과 Supabase cron SQL의 Bearer 값이 반드시 같아야 합니다.
+
+### 확인 쿼리
+```sql
+SELECT jobname, schedule, command, active
+FROM cron.job
+WHERE jobname = 'gleaum-reminders';
 ```
 
 ---

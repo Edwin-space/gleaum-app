@@ -122,6 +122,31 @@
 
 ---
 
+## Day 6 — FCM 푸시 알림 + Supabase Cron 리마인더 (완료 - 2026-05-04)
+
+- [x] Firebase Cloud Messaging 클라이언트 연동
+  - `public/firebase-messaging-sw.js`
+  - `src/lib/firebase.ts`
+  - `src/hooks/useFCM.ts`
+  - `src/components/FCMProvider.tsx`
+- [x] 로그인 사용자 FCM 토큰 저장
+  - `profiles.fcm_token` 컬럼 사용
+  - `src/lib/db.ts` `saveFCMToken()` 구현
+- [x] FCM HTTP v1 서버 발송 구현
+  - `src/lib/fcm.ts`
+  - `FIREBASE_SERVICE_ACCOUNT_BASE64` 환경변수 사용
+- [x] 수동 재알림 API 구현
+  - `src/app/api/notifications/renotify/route.ts`
+- [x] 일정 리마인더 크론 API 구현
+  - `src/app/api/cron/reminders/route.ts`
+  - `CRON_SECRET` Bearer 인증 적용
+- [x] Vercel Hobby 플랜 Cron 제한 대응
+  - `vercel.json`의 Vercel Cron 설정 제거
+  - Supabase `pg_cron` + `pg_net`으로 5분마다 Vercel API 호출
+- [x] Supabase SQL Editor에서 `pg_net` 호출 결과 확인 및 실행 완료
+
+---
+
 ## 오리지널 브랜드 일관성 통합 (완료)
 
 - [x] **브랜드 컬러 롤백**: `#5A32FA` (Vibrant Purple) → 오리지널 `gleaum_design_system.html` 기반 Green/Teal/Blue (`#0084CC`, `#0CC9B5`, `#2EE895`)로 100% 복구 완료

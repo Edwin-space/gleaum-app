@@ -21,6 +21,7 @@ create table if not exists profiles (
   role            text check (role in ('parent', 'child', 'guest')) default 'parent',
   family_group_id uuid references family_groups(id),
   google_id       text,
+  fcm_token       text,
   updated_at      timestamptz default now()
 );
 
@@ -47,6 +48,7 @@ create table if not exists schedules (
   amount           int,
   expense_category text check (expense_category in ('education','housing','utility','insurance','subscription','other')),
   payment_method   text check (payment_method in ('auto','card','cash','other')),
+  google_event_id  text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );

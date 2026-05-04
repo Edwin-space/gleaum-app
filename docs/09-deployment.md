@@ -52,6 +52,7 @@ GitHub main 브랜치 push
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL | ✅ |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase 익명 키 | ✅ |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase 서버 관리 키 | ✅ |
+| `CRON_SECRET` | Supabase pg_net → Vercel API 호출 인증 | 수동 |
 
 > **Supabase-Vercel Integration**: Vercel Dashboard → Integrations → Supabase 연결 시 환경변수 자동 주입됨. 수동으로 설정할 필요 없음.
 
@@ -65,16 +66,22 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...      # Supabase Dashboard > Project Settings > 
 
 > ⚠️ `.env.local`은 `.gitignore`에 포함되어 있어 GitHub에 커밋되지 않음.
 
-### Day 6 이후 추가 예정 환경변수 (FCM)
+### FCM 환경변수
 
 ```bash
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=
+FIREBASE_SERVICE_ACCOUNT_BASE64=
+CRON_SECRET=
 ```
+
+> `FIREBASE_SERVICE_ACCOUNT_BASE64`는 Firebase 서비스 계정 JSON을 base64로 인코딩한 값입니다.
+> `CRON_SECRET`은 Supabase cron SQL의 `Authorization: Bearer ...` 값과 일치해야 합니다.
 
 ---
 
@@ -94,6 +101,25 @@ NEXT_PUBLIC_FIREBASE_VAPID_KEY=
    - Site URL: `https://gleaum-app.vercel.app`
    - Redirect URLs: `https://gleaum-app.vercel.app/auth/callback`
 3. **Database → RLS**: 모든 테이블 RLS 활성화됨
+4. **Database → Extensions**: `pg_net`, `pg_cron` 활성화됨
+5. **Cron Job**: `gleaum-reminders`가 5분마다 `/api/cron/reminders` 호출
+
+### Supabase Cron / pg_net
+
+Vercel Hobby 플랜에서는 Vercel Cron 사용이 제한되므로, 리마인더 자동 실행은 Supabase에서 처리합니다.
+
+```sql
+SELECT jobname, schedule, command, active
+FROM cron.job
+WHERE jobname = 'gleaum-reminders';
+```
+
+대상 API:
+
+```text
+GET https://gleaum-app.vercel.app/api/cron/reminders
+Authorization: Bearer <CRON_SECRET>
+```
 
 ---
 
