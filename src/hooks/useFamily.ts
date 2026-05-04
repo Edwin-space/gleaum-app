@@ -34,7 +34,7 @@ export function useFamily(familyGroupId: string | null): FamilyState {
   }, [familyGroupId]);
 
   useEffect(() => {
-    load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   return { group, members, loading, refresh: load };

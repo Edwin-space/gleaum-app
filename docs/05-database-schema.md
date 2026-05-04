@@ -25,14 +25,27 @@ created_at  timestamptz DEFAULT now()
 ```sql
 id              uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
 name            text                         -- 구글 계정 이름
+display_name    text                         -- 앱 기본 표시 이름 / 닉네임
+real_name       text                         -- 선택 입력 실명
+name_display_mode text DEFAULT 'nickname'    -- 'nickname' | 'real_name'
 email           text
 avatar          text DEFAULT '👤'
 role            text DEFAULT 'parent'        -- 'parent' | 'child' | 'guest'
 family_group_id uuid REFERENCES family_groups(id)
 google_id       text
 fcm_token       text                         -- FCM 웹 푸시 등록 토큰
+onboarding_completed_at timestamptz          -- 최초 개인화 온보딩 완료 시각
+timezone        text DEFAULT 'Asia/Seoul'
+locale          text DEFAULT 'ko-KR'
+preferences     jsonb DEFAULT '{}'           -- 홈 구성/사용 목적/Space 의도
+notification_settings jsonb DEFAULT '{}'     -- 알림 기본값
 updated_at      timestamptz DEFAULT now()
 ```
+
+### 온보딩 / 개인화 확장 SQL
+
+운영 DB에는 `supabase/onboarding-personalization.sql`을 실행해 위 개인화 컬럼과 신규 회원 트리거를 반영해야 합니다.
+앱 코드는 컬럼이 아직 없는 환경에서도 기존 홈이 깨지지 않도록 방어하지만, `/onboarding` 저장은 이 SQL 적용 후 정상 동작합니다.
 
 ### `schedules` — 일정
 ```sql

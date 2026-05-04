@@ -4,9 +4,46 @@
 
 export type UserRole = 'parent' | 'child' | 'guest';
 
+export type NameDisplayMode = 'nickname' | 'real_name';
+
+export type OnboardingPrimaryGoal =
+  | 'personal_schedule'
+  | 'routine'
+  | 'expense'
+  | 'couple'
+  | 'friends'
+  | 'family';
+
+export type HomeLayoutPreference =
+  | 'balanced'
+  | 'calendar_first'
+  | 'routine_first'
+  | 'expense_first'
+  | 'space_first';
+
+export type SpaceIntent = 'solo' | 'friends' | 'couple' | 'family';
+
+export interface OnboardingPreferences {
+  primaryGoal: OnboardingPrimaryGoal;
+  homeLayout: HomeLayoutPreference;
+  enabledModules: Array<'calendar' | 'routine' | 'expense' | 'spaces'>;
+  defaultReminderMinutes: number;
+  spaceIntent: SpaceIntent[];
+}
+
+export interface NotificationSettings {
+  scheduleReminders: boolean;
+  routineReminders: boolean;
+  expenseReminders: boolean;
+  spaceUpdates: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
+  displayName?: string;
+  realName?: string;
+  nameDisplayMode?: NameDisplayMode;
   email: string;
   avatar?: string;
   role: UserRole;

@@ -12,8 +12,10 @@ import type {
   ExpenseCategory,
   PaymentMethod,
   User,
-  FamilyGroup,
   Notification,
+  NameDisplayMode,
+  OnboardingPreferences,
+  NotificationSettings,
 } from '@/types';
 import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googleCalendar';
 
@@ -22,11 +24,19 @@ import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googl
 export interface ProfileRow {
   id: string;
   name: string | null;
+  display_name?: string | null;
+  real_name?: string | null;
+  name_display_mode?: NameDisplayMode | null;
   email: string | null;
   avatar: string | null;
   role: 'parent' | 'child' | 'guest';
   family_group_id: string | null;
   google_id: string | null;
+  onboarding_completed_at?: string | null;
+  timezone?: string | null;
+  locale?: string | null;
+  preferences?: Partial<OnboardingPreferences> | null;
+  notification_settings?: Partial<NotificationSettings> | null;
   updated_at: string;
 }
 
@@ -110,9 +120,13 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
 }
 
 export function rowToUser(row: ProfileRow): User {
+  const displayName = row.display_name ?? row.name ?? '사용자';
   return {
     id: row.id,
-    name: row.name ?? '이름 없음',
+    name: displayName,
+    displayName,
+    realName: row.real_name ?? undefined,
+    nameDisplayMode: row.name_display_mode ?? 'nickname',
     email: row.email ?? '',
     avatar: row.avatar ?? '👤',
     role: row.role,
@@ -167,6 +181,60 @@ export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' |
     .eq('id', user.id);
 
   if (error) throw new Error(error.message);
+}
+
+export interface CompleteOnboardingInput {
+  displayName: string;
+  realName?: string;
+  nameDisplayMode: NameDisplayMode;
+  primaryGoal: OnboardingPreferences['primaryGoal'];
+  homeLayout: OnboardingPreferences['homeLayout'];
+  enabledModules: OnboardingPreferences['enabledModules'];
+  defaultReminderMinutes: number;
+  spaceIntent: OnboardingPreferences['spaceIntent'];
+  notificationSettings: NotificationSettings;
+  timezone?: string;
+  locale?: string;
+}
+
+/** 최초 온보딩 완료 및 개인화 기본값 저장 */
+export async function completeOnboarding(input: CompleteOnboardingInput): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const displayName = input.displayName.trim();
+  if (!displayName) return false;
+
+  const preferences: OnboardingPreferences = {
+    primaryGoal: input.primaryGoal,
+    homeLayout: input.homeLayout,
+    enabledModules: input.enabledModules,
+    defaultReminderMinutes: input.defaultReminderMinutes,
+    spaceIntent: input.spaceIntent,
+  };
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      name: displayName,
+      display_name: displayName,
+      real_name: input.realName?.trim() || null,
+      name_display_mode: input.nameDisplayMode,
+      onboarding_completed_at: new Date().toISOString(),
+      timezone: input.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Asia/Seoul',
+      locale: input.locale ?? navigator.language ?? 'ko-KR',
+      preferences,
+      notification_settings: input.notificationSettings,
+    })
+    .eq('id', user.id);
+
+  if (error) {
+    console.error('온보딩 저장 오류:', error.message);
+    return false;
+  }
+
+  return true;
 }
 
 /** 가족 그룹 및 멤버 조회 */
@@ -299,8 +367,7 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
 
   // 가족 그룹 없으면 자동 생성
   if (!profile.family_group_id) {
-    const userName = profile.name ?? '사용자';
-    const familyName = `${userName.charAt(0)}씨 가족`;
+    const familyName = '나의 공간';
     const groupId = await createFamilyGroup(familyName);
     if (groupId) {
       profile.family_group_id = groupId;

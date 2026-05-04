@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -10,13 +10,14 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import { formatDateShort, isSameDay } from '@/lib/utils';
+import type { HomeLayoutPreference, OnboardingPreferences } from '@/types';
 
 export default function HomePage() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 
-  const { user, familyGroupId, loading: userLoading } = useCurrentUser();
+  const { user, profile, familyGroupId, loading: userLoading } = useCurrentUser();
   const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
 
   const loading = userLoading || schedulesLoading;
@@ -32,6 +33,45 @@ export default function HomePage() {
   const dashOffset      = circumference - (circumference * progressPct) / 100;
 
   const viewLabels = { month: '월간', week: '주간', day: '일간' } as const;
+  const preferences = (profile?.preferences ?? {}) as Partial<OnboardingPreferences>;
+  const homeLayout = preferences.homeLayout ?? 'balanced';
+  const primaryGoal = preferences.primaryGoal;
+
+  useEffect(() => {
+    if (!profile) return;
+    if ('onboarding_completed_at' in profile && !profile.onboarding_completed_at) {
+      router.replace('/onboarding');
+    }
+  }, [profile, router]);
+
+  const homeCopy: Record<HomeLayoutPreference, { title: string; body: string; accent: string }> = {
+    balanced: {
+      title: '오늘의 균형을 맞춰볼까요?',
+      body: '일정, 루틴, 자금, Space 소식을 한 화면에서 차분히 확인하세요.',
+      accent: 'var(--brand-gradient)',
+    },
+    calendar_first: {
+      title: '오늘 일정부터 선명하게 볼게요.',
+      body: '가장 가까운 약속과 캘린더 흐름을 우선으로 보여드립니다.',
+      accent: 'var(--brand-blue)',
+    },
+    routine_first: {
+      title: '완료해야 할 루틴을 먼저 챙길게요.',
+      body: '반복되는 습관과 완료 확인이 필요한 일을 놓치지 않게 도와드립니다.',
+      accent: 'var(--brand-green)',
+    },
+    expense_first: {
+      title: '다가오는 지출 흐름을 먼저 볼게요.',
+      body: '정기결제와 공동비용 알림을 중심으로 홈을 구성합니다.',
+      accent: '#F59E0B',
+    },
+    space_first: {
+      title: '함께 관리하는 Space를 먼저 볼게요.',
+      body: '친구, 연인, 가족과 연결된 일정과 자금 흐름을 우선합니다.',
+      accent: 'var(--brand-teal)',
+    },
+  };
+  const personalCopy = homeCopy[homeLayout];
 
   return (
     <div className="min-h-dvh pb-36">
@@ -75,6 +115,31 @@ export default function HomePage() {
             onSelectDate={setSelectedDate}
           />
         </div>
+
+        {!loading && profile?.onboarding_completed_at && (
+          <div className="glass-card rounded-[24px] p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[12px] font-bold mb-2" style={{ color: 'var(--brand-teal)', letterSpacing: '0.08em' }}>
+                  PERSONAL HOME
+                </p>
+                <h2 className="text-[20px] font-bold leading-tight mb-2" style={{ color: 'var(--color-ink)' }}>
+                  {user?.displayName ?? user?.name ?? '나'}님, {personalCopy.title}
+                </h2>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-muted-80)' }}>
+                  {personalCopy.body}
+                </p>
+              </div>
+              <span className="px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap"
+                style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--color-ink)' }}>
+                {primaryGoal ? '개인화됨' : '기본형'}
+              </span>
+            </div>
+            <div className="mt-4 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,132,204,0.08)' }}>
+              <div className="h-full rounded-full" style={{ width: '68%', background: personalCopy.accent }} />
+            </div>
+          </div>
+        )}
 
         {/* ── 로딩 ── */}
         {loading && (

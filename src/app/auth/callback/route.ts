@@ -14,9 +14,9 @@ export async function GET(request: Request) {
       const userId = data.user.id;
 
       // 프로필이 없으면 생성 (DB 트리거가 이미 처리하지만 안전망으로)
-      const { data: existingProfile } = await supabase
+      let { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id, family_group_id')
+        .select('*')
         .eq('id', userId)
         .single();
 
@@ -29,20 +29,24 @@ export async function GET(request: Request) {
           avatar: '👤',
           role:   'parent',
         });
+
+        const { data: createdProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        existingProfile = createdProfile;
       }
 
       // 가족 그룹이 없으면 자동 생성
       const profileFamilyGroupId = existingProfile?.family_group_id;
       if (!profileFamilyGroupId) {
-        const userName = data.user.user_metadata?.full_name
-          ?? data.user.email?.split('@')[0]
-          ?? '사용자';
         const inviteCode = `GLEAUM-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
         const { data: group } = await supabase
           .from('family_groups')
           .insert({
-            name:        `${userName.charAt(0)}씨 가족`,
+            name:        '나의 공간',
             invite_code: inviteCode,
             created_by:  userId,
           })
@@ -57,7 +61,11 @@ export async function GET(request: Request) {
         }
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      const supportsOnboarding = existingProfile && 'onboarding_completed_at' in existingProfile;
+      const needsOnboarding = supportsOnboarding && !existingProfile.onboarding_completed_at;
+      const shouldUseOnboarding = needsOnboarding && next === '/home';
+
+      return NextResponse.redirect(`${origin}${shouldUseOnboarding ? '/onboarding' : next}`);
     }
   }
 

@@ -158,6 +158,26 @@
 
 ---
 
+## 개인화 온보딩 1차 (완료 - 2026-05-04)
+
+- [x] `/onboarding` 페이지 신규 생성
+  - 앱 표시 이름/닉네임 설정
+  - 실명 표시 선택 옵션
+  - 시작 목적 선택: 개인 일정, 루틴, 자금, 연인, 친구/모임, 가족
+  - 홈 화면 우선순위 선택
+  - Space 시작 의도 선택
+  - 기본 알림 설정
+- [x] `profiles` 개인화 컬럼 설계 및 SQL 추가
+  - `display_name`, `real_name`, `name_display_mode`
+  - `onboarding_completed_at`, `timezone`, `locale`
+  - `preferences`, `notification_settings`
+- [x] `src/lib/db.ts`에 `completeOnboarding()` 추가
+- [x] 로그인 콜백에서 온보딩 미완료 사용자는 `/onboarding`으로 분기
+- [x] 홈 화면에 온보딩 기반 개인화 카드 1차 반영
+- [x] 신규 사용자 기본 그룹 이름을 `"X씨 가족"`에서 `"나의 공간"`으로 전환
+
+---
+
 ## 오리지널 브랜드 일관성 통합 (완료)
 
 - [x] **브랜드 컬러 롤백**: `#5A32FA` (Vibrant Purple) → 오리지널 `gleaum_design_system.html` 기반 Green/Teal/Blue (`#0084CC`, `#0CC9B5`, `#2EE895`)로 100% 복구 완료

@@ -83,6 +83,7 @@
 ## Day 8 — 품질 및 완성도
 
 ### 🔴 개인 중심 + Space 확장형 모델 마이그레이션
+- [ ] 운영 Supabase DB에 `supabase/onboarding-personalization.sql` 적용 확인
 - [ ] `family_groups.type` 추가로 기존 가족 그룹을 Space로 확장
 - [ ] `schedules.category`, `schedules.visibility`, `schedules.automation_policy` 추가
 - [ ] 기존 `schedule.type` 값을 신규 축으로 매핑

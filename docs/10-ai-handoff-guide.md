@@ -42,6 +42,8 @@
 | 알림 목록 | `/notifications` | ✅ 실 DB 연동 |
 | FCM 푸시 알림 토큰 등록 | `useFCM`, `FCMProvider` | ✅ 구현 완료 |
 | 일정 리마인더 자동 발송 | Supabase `pg_cron` + `pg_net` → `/api/cron/reminders` | ✅ 등록/실행 확인 완료 |
+| 개인화 온보딩 | `/onboarding`, `completeOnboarding()` | ✅ 1차 구현 완료 |
+| 홈 개인화 카드 | `/home` | ✅ 온보딩 preferences 기반 1차 반영 |
 | Glassmorphism + Blue/Teal/Green 디자인 | **전 페이지 (DESIGN.md 기준)** | ✅ 프리미엄 리뉴얼 완료 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 
@@ -51,6 +53,7 @@
 |------|---------|------|
 | Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 |
 | Google Drive 사진 첨부 | 🟡 중요 (Day 5) | Drive API 활성화 필요 |
+| 운영 DB 온보딩 SQL 적용 확인 | 🔴 필수 | `supabase/onboarding-personalization.sql` |
 | 자동화 정책 기반 상태 전이 | 🔴 필수 (Day 6 후속) | `completion_required`, `payment_due` 등 정책 기반 처리 필요 |
 | 일정 수정 페이지 `/schedules/[id]/edit` | 🟢 선택 | UI만 없음, DB 함수는 있음 |
 | Google OAuth 앱 게시 (프로덕션) | 🟢 선택 | 테스트 사용자 외 로그인 불가 |
@@ -64,11 +67,13 @@
 > 다음 작업을 요청받을 시, 반드시 사용자가 아래 수동 작업을 완료했는지 먼저 확인(학습)하세요. 이 수동 작업들이 완료되지 않았다면 다음 단계의 정상적인 진행이 불가능합니다.
 > 1. **[구글 캘린더 연동용]**: Google Cloud Console에서 `Google Calendar API` 활성화
 > 2. **[구글 캘린더 연동용]**: 운영 DB에 `schedules.google_event_id` 컬럼이 있는지 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
+> 3. **[온보딩/개인화]**: 운영 DB에 `supabase/onboarding-personalization.sql` 실행 필요. 미적용 시 `/onboarding` 저장이 실패함.
 
 > ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 > ✅ 3단계(Google Calendar 연동) 코드 작업 완료됨. (수동 설정만 남음)
 > ✅ 4단계(FCM 푸시 알림 + Supabase Cron 리마인더)는 완료됨. Supabase `pg_net` 실행 결과까지 확인 완료.
 > ✅ 5단계 전 제품 모델 재정의 완료. 자동 상태 전이는 `child` 전용이 아니라 `automation_policy` 기반으로 구현해야 함.
+> ✅ 개인화 온보딩 1차 구현 완료. 로그인 후 온보딩 미완료 사용자는 `/onboarding`으로 이동.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료
 `src/app/invite/[code]/page.tsx` 구현 완료.

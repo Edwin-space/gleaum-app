@@ -5,12 +5,14 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 
+const INITIAL_LAST_SYNCED = new Date(Date.now() - 1000 * 60 * 30);
+
 export default function CalendarSyncPage() {
   const { user } = useAuth();
   const [syncToGoogle,   setSyncToGoogle]   = useState(true);
   const [syncFromGoogle, setSyncFromGoogle] = useState(true);
   const [isSyncing,      setIsSyncing]      = useState(false);
-  const [lastSynced,     setLastSynced]     = useState<Date | null>(new Date(Date.now() - 1000 * 60 * 30));
+  const [lastSynced,     setLastSynced]     = useState<Date | null>(INITIAL_LAST_SYNCED);
   const [isConnected,    setIsConnected]    = useState(!!user);
 
   const handleSync = async () => {
