@@ -170,7 +170,7 @@ export async function getMyProfile(): Promise<ProfileRow | null> {
 }
 
 /** 프로필 업데이트 */
-export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' | 'avatar' | 'role'>>) {
+export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' | 'display_name' | 'avatar' | 'role' | 'notification_settings'>>) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('로그인 필요');
@@ -182,6 +182,21 @@ export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' |
 
   if (error) throw new Error(error.message);
 }
+
+/** 알림 설정 업데이트 */
+export async function updateNotificationSettings(settings: Partial<NotificationSettings>): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ notification_settings: settings })
+    .eq('id', user.id);
+
+  return !error;
+}
+
 
 export interface CompleteOnboardingInput {
   displayName: string;
@@ -543,18 +558,26 @@ export async function updateSchedule(
   const supabase = createClient();
 
   const dbUpdates: Record<string, unknown> = {};
-  if (updates.title !== undefined)          dbUpdates.title            = updates.title;
-  if (updates.startTime !== undefined)      dbUpdates.start_time       = updates.startTime.toISOString();
-  if (updates.endTime !== undefined)        dbUpdates.end_time         = updates.endTime.toISOString();
-  if (updates.status !== undefined)         dbUpdates.status           = updates.status;
-  if (updates.locationAddress !== undefined) dbUpdates.location_address = updates.locationAddress;
-  if (updates.memo !== undefined)           dbUpdates.memo             = updates.memo;
-  if (updates.reminder !== undefined)       dbUpdates.reminder         = updates.reminder;
-  if (updates.repeat !== undefined)         dbUpdates.repeat           = updates.repeat;
-  if (updates.amount !== undefined)         dbUpdates.amount           = updates.amount;
+  if (updates.title !== undefined)             dbUpdates.title            = updates.title;
+  if (updates.type !== undefined)              dbUpdates.type             = updates.type;
+  if (updates.startTime !== undefined)         dbUpdates.start_time       = updates.startTime.toISOString();
+  if (updates.endTime !== undefined)           dbUpdates.end_time         = updates.endTime?.toISOString() ?? null;
+  if (updates.allDay !== undefined)            dbUpdates.all_day          = updates.allDay;
+  if (updates.status !== undefined)            dbUpdates.status           = updates.status;
+  if (updates.locationAddress !== undefined)   dbUpdates.location_address = updates.locationAddress ?? null;
+  if (updates.locationLat !== undefined)       dbUpdates.location_lat     = updates.locationLat ?? null;
+  if (updates.locationLng !== undefined)       dbUpdates.location_lng     = updates.locationLng ?? null;
+  if (updates.referenceUrl !== undefined)      dbUpdates.reference_url    = updates.referenceUrl ?? null;
+  if (updates.reminder !== undefined)          dbUpdates.reminder         = updates.reminder;
+  if (updates.repeat !== undefined)            dbUpdates.repeat           = updates.repeat;
+  if (updates.repeatEndDate !== undefined)     dbUpdates.repeat_end_date  = updates.repeatEndDate?.toISOString() ?? null;
+  if (updates.memo !== undefined)              dbUpdates.memo             = updates.memo ?? null;
+  if (updates.amount !== undefined)            dbUpdates.amount           = updates.amount ?? null;
+  if (updates.expenseCategory !== undefined)   dbUpdates.expense_category = updates.expenseCategory ?? null;
+  if (updates.paymentMethod !== undefined)     dbUpdates.payment_method   = updates.paymentMethod ?? null;
 
   const { data: existing, error: fetchErr } = await supabase.from('schedules').select('*').eq('id', id).single();
-  
+
   if (!fetchErr && existing && existing.google_event_id) {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.provider_token) {
@@ -568,7 +591,19 @@ export async function updateSchedule(
   }
 
   const { error } = await supabase.from('schedules').update(dbUpdates).eq('id', id);
-  return !error;
+  if (error) return false;
+
+  // 참여자 업데이트 (participantIds가 전달된 경우)
+  if (updates.participantIds !== undefined) {
+    await supabase.from('schedule_participants').delete().eq('schedule_id', id);
+    if (updates.participantIds.length > 0) {
+      await supabase.from('schedule_participants').insert(
+        updates.participantIds.map((uid) => ({ schedule_id: id, user_id: uid }))
+      );
+    }
+  }
+
+  return true;
 }
 
 /** 일정 삭제 */

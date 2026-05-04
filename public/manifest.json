@@ -1,0 +1,27 @@
+{
+  "name": "글리움",
+  "short_name": "글리움",
+  "description": "나, 그리고 연인/가족의 일상 네트워크",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#FAFAFD",
+  "theme_color": "#0084CC",
+  "orientation": "portrait",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["lifestyle", "productivity"]
+}

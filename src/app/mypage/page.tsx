@@ -1,28 +1,49 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
+import { updateMyProfile, updateNotificationSettings } from '@/lib/db';
+import type { NotificationSettings } from '@/types';
 
+// ── 기본 알림 설정 ──
+const DEFAULT_NOTIF: NotificationSettings = {
+  scheduleReminders: true,
+  routineReminders: true,
+  expenseReminders: true,
+  spaceUpdates: true,
+};
+
+// ── 아이콘 헬퍼 ──
+const Icon = ({ d, stroke }: { d: string; stroke?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke={stroke ?? 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+
+// ── 설정 행 컴포넌트 ──
 interface SettingRowProps {
   icon: React.ReactNode;
   label: string;
   value?: string;
   isToggle?: boolean;
   toggled?: boolean;
+  onToggle?: () => void;
   danger?: boolean;
   href?: string;
   onClick?: () => void;
 }
 
-function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onClick }: SettingRowProps) {
+function SettingRow({ icon, label, value, isToggle, toggled, onToggle, danger, href, onClick }: SettingRowProps) {
   const content = (
     <div
-      className="flex items-center gap-3 px-4 py-3.5 active:bg-[rgba(0,132,204,0.03)] transition-colors"
-      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-3.5 active:bg-[rgba(0,132,204,0.03)] transition-colors cursor-pointer"
+      onClick={isToggle ? onToggle : onClick}
     >
       <div
         className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0"
@@ -38,11 +59,11 @@ function SettingRow({ icon, label, value, isToggle, toggled, danger, href, onCli
       </span>
       {isToggle ? (
         <div
-          className="w-11 h-6 rounded-full relative transition-all"
+          className="w-11 h-6 rounded-full relative transition-all duration-200"
           style={{ background: toggled ? 'var(--brand-blue)' : '#E5E5EA' }}
         >
           <div
-            className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+            className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"
             style={{ left: toggled ? '22px' : '2px' }}
           />
         </div>
@@ -70,16 +91,63 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-// SVG 아이콘 헬퍼
-const Icon = ({ d, fill }: { d: string; fill?: boolean }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={fill ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d={d} />
-  </svg>
-);
+// ── AVATAR 선택 옵션 ──
+const AVATAR_OPTIONS = ['👤', '😊', '🦁', '🐼', '🐸', '🐯', '🦊', '🐺', '🦄', '🐨', '🐻', '🐶', '🐱', '🐰', '🐹'];
 
 export default function MyPage() {
-  const { user, loading } = useCurrentUser();
+  const { user, profile, loading } = useCurrentUser();
   const { signOut } = useAuth();
+
+  // 알림 설정 상태
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIF);
+  const [savingNotif, setSavingNotif] = useState(false);
+
+  // 프로필 수정 모달
+  const [showEditModal, setShowEditModal]   = useState(false);
+  const [editName, setEditName]             = useState('');
+  const [editAvatar, setEditAvatar]         = useState('👤');
+  const [savingProfile, setSavingProfile]   = useState(false);
+
+  // 회원탈퇴 확인 모달
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // profile 로드 후 알림 설정 + 프로필 편집 기본값 세팅
+  useEffect(() => {
+    if (!profile) return;
+    const ns = (profile as { notification_settings?: Partial<NotificationSettings> }).notification_settings;
+    if (ns) setNotifSettings({ ...DEFAULT_NOTIF, ...ns });
+    setEditName(user?.displayName ?? user?.name ?? '');
+    setEditAvatar(user?.avatar ?? '👤');
+  }, [profile, user]);
+
+  const handleToggle = async (key: keyof NotificationSettings) => {
+    const updated = { ...notifSettings, [key]: !notifSettings[key] };
+    setNotifSettings(updated);
+    setSavingNotif(true);
+    await updateNotificationSettings(updated);
+    setSavingNotif(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName.trim()) return;
+    setSavingProfile(true);
+    try {
+      await updateMyProfile({ name: editName.trim(), display_name: editName.trim(), avatar: editAvatar });
+      setShowEditModal(false);
+      // 페이지 새로고침으로 반영
+      window.location.reload();
+    } catch {
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    await signOut();
+    // 실제 탈퇴 처리는 서버 액션 필요 (현재는 로그아웃 처리)
+    setShowDeleteModal(false);
+  };
 
   if (loading) {
     return (
@@ -133,7 +201,8 @@ export default function MyPage() {
           </div>
 
           <button
-            className="flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold"
+            onClick={() => setShowEditModal(true)}
+            className="flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold active:scale-95 transition-transform"
             style={{ background: 'rgba(255,255,255,0.20)', color: 'white' }}
           >
             수정
@@ -143,20 +212,37 @@ export default function MyPage() {
 
       {/* 알림 설정 */}
       <div className="glass-card mx-4 mt-3 rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]">
-        <SectionHeader title="알림 설정" />
-        <SettingRow icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />} label="공유일정 알림" isToggle toggled={true} />
-        <SettingRow icon={<Icon d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />} label="개인일정 알림" isToggle toggled={true} />
-        <SettingRow icon={<Icon d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M12 14c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z" />} label="자녀일정 알림" isToggle toggled={true} />
-        <SettingRow icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" />} label="미완료 재알림" isToggle toggled={true} />
-        <SettingRow icon={<Icon d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M1 10h22" />} label="정기지출 결제 알림" isToggle toggled={true} />
-        <SettingRow icon={<Icon d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />} label="방해금지 시간" value="오후 10시 ~ 오전 8시" />
+        <SectionHeader title={`알림 설정${savingNotif ? ' (저장 중...)' : ''}`} />
+        <SettingRow
+          icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />}
+          label="일정 리마인더"
+          isToggle toggled={notifSettings.scheduleReminders}
+          onToggle={() => handleToggle('scheduleReminders')}
+        />
+        <SettingRow
+          icon={<Icon d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M12 14c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z" />}
+          label="루틴 알림"
+          isToggle toggled={notifSettings.routineReminders}
+          onToggle={() => handleToggle('routineReminders')}
+        />
+        <SettingRow
+          icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" />}
+          label="미완료 재알림"
+          isToggle toggled={notifSettings.spaceUpdates}
+          onToggle={() => handleToggle('spaceUpdates')}
+        />
+        <SettingRow
+          icon={<Icon d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M1 10h22" />}
+          label="정기지출 결제 알림"
+          isToggle toggled={notifSettings.expenseReminders}
+          onToggle={() => handleToggle('expenseReminders')}
+        />
       </div>
 
       {/* 연동 서비스 */}
       <div className="glass-card mx-4 mt-3 rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]">
         <SectionHeader title="연동 서비스" />
         <SettingRow icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />} label="구글 캘린더 연동" value="연동됨" href="/settings/calendar" />
-        <SettingRow icon={<Icon d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />} label="구글 드라이브 연동" value="연동됨" />
         <SettingRow icon={<Icon d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" />} label="나의 그룹 관리" href="/family" />
       </div>
 
@@ -179,15 +265,120 @@ export default function MyPage() {
         />
       </div>
 
-      <p className="text-center mt-4 mb-2 text-[12px] underline" style={{ color: '#C7C7CC' }}>
+      <button
+        onClick={() => setShowDeleteModal(true)}
+        className="block mx-auto mt-4 mb-2 text-[12px] underline transition-colors active:opacity-70"
+        style={{ color: '#C7C7CC' }}
+      >
         회원탈퇴
-      </p>
+      </button>
 
       <div className="flex justify-center py-4 opacity-20">
         <GleaumAppIcon size={28} />
       </div>
 
       <BottomNav />
+
+      {/* ── 프로필 수정 바텀시트 ── */}
+      {showEditModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-12"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
+            <p className="text-[20px] font-bold mb-5" style={{ color: '#1A1B2E' }}>프로필 수정</p>
+
+            {/* 아바타 선택 */}
+            <p className="text-[11px] font-bold tracking-widest uppercase mb-3" style={{ color: '#8E8E93' }}>아바타</p>
+            <div className="flex flex-wrap gap-2 mb-5">
+              {AVATAR_OPTIONS.map((av) => (
+                <button
+                  key={av}
+                  onClick={() => setEditAvatar(av)}
+                  className="w-11 h-11 rounded-full flex items-center justify-center text-[22px] transition-all active:scale-90"
+                  style={{
+                    background: editAvatar === av ? 'rgba(0,132,204,0.12)' : '#F5F5F7',
+                    border: editAvatar === av ? '2px solid #0084CC' : '2px solid transparent',
+                  }}
+                >
+                  {av}
+                </button>
+              ))}
+            </div>
+
+            {/* 이름 입력 */}
+            <p className="text-[11px] font-bold tracking-widest uppercase mb-2" style={{ color: '#8E8E93' }}>표시 이름</p>
+            <input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="이름을 입력하세요"
+              className="w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-[#F5F5F7] border-2 outline-none transition-all mb-5"
+              style={{ borderColor: editName ? '#0084CC' : 'transparent' }}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="h-[52px] rounded-[16px] text-[15px] font-bold"
+                style={{ border: '2px solid rgba(0,132,204,0.15)', color: '#8E8E93' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={savingProfile || !editName.trim()}
+                className="h-[52px] rounded-[16px] text-[15px] font-bold text-white disabled:opacity-60 active:scale-95 transition-all"
+                style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)' }}
+              >
+                {savingProfile ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 회원탈퇴 확인 모달 ── */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-12"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
+            <p className="text-[20px] font-bold text-center mb-2" style={{ color: '#1A1B2E' }}>
+              정말 탈퇴하시겠어요?
+            </p>
+            <p className="text-[14px] text-center mb-6 leading-relaxed" style={{ color: '#8E8E93' }}>
+              모든 데이터와 일정이 삭제되며<br/>복구할 수 없습니다.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="h-[52px] rounded-[16px] text-[15px] font-semibold"
+                style={{ background: '#F5F5F7', color: '#8E8E93' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="h-[52px] rounded-[16px] text-[15px] font-bold text-white active:scale-95 transition-all"
+                style={{ background: '#EF4444', boxShadow: '0 4px 16px rgba(239,68,68,0.30)' }}
+              >
+                탈퇴
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -119,7 +119,8 @@ export default function ScheduleDetailPage() {
             일정 상세
           </span>
           <button
-            className="px-3 py-1.5 rounded-full text-[13px] font-semibold"
+            onClick={() => router.push(`/schedules/${id}/edit`)}
+            className="px-3 py-1.5 rounded-full text-[13px] font-semibold active:scale-95 transition-transform"
             style={{ background: 'rgba(255,255,255,0.20)', color: 'white' }}
           >
             수정
