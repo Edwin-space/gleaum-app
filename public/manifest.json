@@ -4,7 +4,7 @@
   "description": "나, 그리고 연인/가족의 일상 네트워크",
   "start_url": "/home",
   "display": "standalone",
-  "background_color": "#FAFAFD",
+  "background_color": "#0F1A2E",
   "theme_color": "#0084CC",
   "orientation": "portrait",
   "lang": "ko",
