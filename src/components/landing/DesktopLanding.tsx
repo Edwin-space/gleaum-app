@@ -18,35 +18,71 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
   };
 
   return (
-    <div className="landing-fullscreen min-h-dvh flex flex-col" style={{ background: 'var(--color-canvas-parchment)' }}>
+    <div className="landing-fullscreen min-h-dvh flex flex-col overflow-x-hidden"
+      style={{ background: 'var(--color-canvas-parchment)' }}>
 
       {/* ── 네비게이션 바 ── */}
-      <nav className="flex items-center justify-between px-12 py-6 relative z-10">
+      <nav style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '24px 64px',
+        position: 'relative',
+        zIndex: 10,
+      }}>
         <GleaumLogo variant="light" size="sm" />
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="flex items-center gap-2 px-6 py-3 rounded-full text-[14px] font-bold transition-all hover:shadow-lg active:scale-[0.97]"
           style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 28px',
+            borderRadius: '999px',
+            fontSize: '14px',
+            fontWeight: 700,
             background: 'var(--color-ink)',
             color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
           }}
         >
-          {loading ? '연결 중...' : '시작하기'}
+          {loading ? '연결 중...' : '무료로 시작하기'}
         </button>
       </nav>
 
       {/* ── 히어로 섹션 ── */}
-      <main className="flex-1 flex items-center px-12 lg:px-20 xl:px-32 max-w-[1440px] mx-auto w-full">
-        <div className="grid grid-cols-12 gap-12 items-center w-full">
+      <main style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 64px',
+        maxWidth: '1360px',
+        margin: '0 auto',
+        width: '100%',
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '80px',
+          alignItems: 'center',
+          width: '100%',
+        }}>
 
           {/* 왼쪽: 카피 & CTA */}
-          <div className="col-span-6 space-y-8">
-            <div className="space-y-5">
-              <h1
-                className="text-[52px] xl:text-[64px] font-bold leading-[1.1] tracking-tight"
-                style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
-              >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <h1 style={{
+                fontSize: 'clamp(44px, 4.5vw, 64px)',
+                fontWeight: 800,
+                lineHeight: 1.1,
+                letterSpacing: '-1.5px',
+                color: 'var(--color-ink)',
+                fontFamily: 'var(--font-display)',
+                margin: 0,
+              }}>
                 일상을 함께<br />
                 <span style={{
                   background: 'var(--brand-gradient)',
@@ -57,61 +93,101 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                   빛나게.
                 </span>
               </h1>
-              <p
-                className="text-[18px] xl:text-[20px] leading-relaxed max-w-[440px]"
-                style={{ color: 'var(--color-ink-muted-80)' }}
-              >
+              <p style={{
+                fontSize: '18px',
+                lineHeight: 1.7,
+                color: 'var(--color-ink-muted-80)',
+                maxWidth: '420px',
+                margin: 0,
+              }}>
                 개인 일정부터 연인, 가족, 친구와의 공유 일정까지.
                 글리움으로 모든 관계의 일상을 스마트하게 관리하세요.
               </p>
             </div>
 
             {/* CTA 버튼 */}
-            <button
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="flex items-center gap-3 h-[60px] px-8 rounded-[20px] font-bold text-[16px] transition-all hover:shadow-xl active:scale-[0.97] disabled:opacity-70"
-              style={{
-                background: 'var(--color-ink)',
-                color: 'white',
-                boxShadow: '0 12px 32px rgba(26,27,46,0.25)',
-              }}
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(255,255,255,0.5)', borderTopColor: 'transparent' }} />
-                  연결 중...
-                </>
-              ) : (
-                <>
-                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                  </div>
-                  구글 계정으로 시작하기
-                </>
-              )}
-            </button>
-            <p className="text-[13px]" style={{ color: 'var(--color-ink-muted-48)' }}>
-              무료로 시작 · 신용카드 불필요
-            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  height: '60px',
+                  padding: '0 32px',
+                  borderRadius: '20px',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  background: 'var(--color-ink)',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 12px 32px rgba(26,27,46,0.2)',
+                  transition: 'all 0.2s',
+                  width: 'fit-content',
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? (
+                  <span>연결 중...</span>
+                ) : (
+                  <>
+                    <span style={{
+                      width: '32px',
+                      height: '32px',
+                      background: 'white',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      </svg>
+                    </span>
+                    구글 계정으로 시작하기
+                  </>
+                )}
+              </button>
+              <p style={{ fontSize: '13px', color: 'var(--color-ink-muted-48)', margin: 0 }}>
+                무료로 시작 · 신용카드 불필요
+              </p>
+            </div>
 
             {/* 사용자 후기 */}
-            <div className="flex items-start gap-4 mt-4 p-5 rounded-[20px]"
-              style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,132,204,0.06)' }}>
-              <div className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center text-2xl"
-                style={{ background: 'rgba(0,132,204,0.08)' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '16px',
+              padding: '20px 24px',
+              borderRadius: '20px',
+              background: 'rgba(255,255,255,0.6)',
+              border: '1px solid rgba(0,132,204,0.06)',
+              maxWidth: '440px',
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                background: 'rgba(0,132,204,0.08)',
+              }}>
                 👩‍👧‍👦
               </div>
               <div>
-                <p className="text-[14px] leading-relaxed" style={{ color: 'var(--color-ink-muted-80)' }}>
+                <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--color-ink-muted-80)', margin: 0 }}>
                   &ldquo;아이들 학원 일정부터 정기지출까지 한눈에 보여서 정말 편해요.&rdquo;
                 </p>
-                <p className="text-[13px] font-bold mt-2" style={{ color: 'var(--color-ink)' }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-ink)', margin: '8px 0 0' }}>
                   김지수, 워킹맘
                 </p>
               </div>
@@ -119,27 +195,55 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
           </div>
 
           {/* 오른쪽: 앱 프리뷰 목업 */}
-          <div className="col-span-6 flex justify-center items-center relative">
-            {/* 배경 장식 */}
-            <div className="absolute -top-20 -right-10 w-[400px] h-[500px] rounded-[60px] -rotate-6 opacity-40"
-              style={{ background: 'linear-gradient(180deg, rgba(12,201,181,0.15) 0%, rgba(0,132,204,0.1) 100%)' }} />
-            <div className="absolute -bottom-10 -left-10 w-[300px] h-[400px] rounded-[60px] rotate-6 opacity-30"
-              style={{ background: 'linear-gradient(180deg, rgba(46,232,149,0.12) 0%, rgba(12,201,181,0.08) 100%)' }} />
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+            {/* 배경 장식 블롭 */}
+            <div style={{
+              position: 'absolute',
+              top: '-60px',
+              right: '-40px',
+              width: '360px',
+              height: '460px',
+              borderRadius: '60px',
+              transform: 'rotate(-6deg)',
+              background: 'linear-gradient(180deg, rgba(12,201,181,0.12) 0%, rgba(0,132,204,0.06) 100%)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '-40px',
+              left: '0px',
+              width: '260px',
+              height: '340px',
+              borderRadius: '60px',
+              transform: 'rotate(6deg)',
+              background: 'linear-gradient(180deg, rgba(46,232,149,0.08) 0%, rgba(12,201,181,0.04) 100%)',
+              pointerEvents: 'none',
+            }} />
 
-            {/* 폰 목업 */}
-            <div className="relative z-10 w-[320px] xl:w-[360px]">
-              {/* 폰 프레임 */}
-              <div className="rounded-[44px] overflow-hidden shadow-2xl"
-                style={{
-                  background: '#000',
-                  padding: '12px',
-                  boxShadow: '0 40px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1)',
-                }}>
+            {/* 폰 프레임 */}
+            <div style={{
+              position: 'relative',
+              zIndex: 2,
+              width: '340px',
+            }}>
+              <div style={{
+                borderRadius: '44px',
+                overflow: 'hidden',
+                background: '#000',
+                padding: '12px',
+                boxShadow: '0 40px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.08)',
+              }}>
                 {/* 상태바 */}
-                <div className="flex items-center justify-between px-6 pt-3 pb-2 rounded-t-[32px]"
-                  style={{ background: 'var(--color-canvas-parchment)' }}>
-                  <span className="text-[13px] font-semibold" style={{ color: 'var(--color-ink)' }}>9:41</span>
-                  <div className="flex items-center gap-1">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 24px 8px',
+                  borderRadius: '32px 32px 0 0',
+                  background: 'var(--color-canvas-parchment)',
+                }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-ink)' }}>9:41</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
                       <rect x="0" y="4" width="3" height="8" rx="1" fill="#1A1B2E"/>
                       <rect x="4.5" y="2.5" width="3" height="9.5" rx="1" fill="#1A1B2E"/>
@@ -149,75 +253,94 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                     <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
                       <rect x="0.5" y="0.5" width="21" height="11" rx="2" stroke="#1A1B2E" opacity="0.3"/>
                       <rect x="2" y="2" width="16" height="8" rx="1" fill="#1A1B2E"/>
-                      <rect x="22.5" y="3.5" width="1.5" height="5" rx="0.5" fill="#1A1B2E" opacity="0.3"/>
                     </svg>
                   </div>
                 </div>
 
-                {/* 앱 콘텐츠 미리보기 */}
-                <div className="rounded-b-[32px] px-5 pb-6 pt-2 space-y-4"
-                  style={{ background: 'var(--color-canvas-parchment)' }}>
-
-                  {/* 로고 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                {/* 앱 콘텐츠 */}
+                <div style={{
+                  borderRadius: '0 0 32px 32px',
+                  padding: '8px 20px 24px',
+                  background: 'var(--color-canvas-parchment)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                }}>
+                  {/* 앱 헤더 */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <GleaumAppIcon size={28} radius={8} />
-                      <span className="text-[16px] font-bold" style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>gleaum</span>
+                      <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>gleaum</span>
                     </div>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg"
-                      style={{ background: 'rgba(0,132,204,0.08)' }}>
-                      👤
-                    </div>
+                    <div style={{
+                      width: '32px', height: '32px', borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '16px', background: 'rgba(0,132,204,0.08)',
+                    }}>👤</div>
                   </div>
 
                   {/* 미니 캘린더 */}
-                  <div className="rounded-[16px] p-3" style={{ background: 'white', border: '1px solid rgba(0,132,204,0.06)' }}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[12px] font-bold" style={{ color: 'var(--color-ink)' }}>2026년 5월</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,132,204,0.08)', color: 'var(--brand-blue)' }}>오늘</span>
+                  <div style={{
+                    borderRadius: '16px',
+                    padding: '12px',
+                    background: 'white',
+                    border: '1px solid rgba(0,132,204,0.06)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-ink)' }}>2026년 5월</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px', background: 'rgba(0,132,204,0.08)', color: 'var(--brand-blue)' }}>오늘</span>
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center' }}>
                       {['일','월','화','수','목','금','토'].map((d) => (
-                        <span key={d} className="text-[9px] font-bold" style={{ color: 'var(--color-ink-muted-48)' }}>{d}</span>
+                        <span key={d} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-ink-muted-48)' }}>{d}</span>
                       ))}
-                      {Array.from({ length: 31 }, (_, i) => i + 1).slice(0, 14).map((d) => (
-                        <span
-                          key={d}
-                          className="text-[10px] font-semibold w-6 h-6 flex items-center justify-center rounded-full"
-                          style={{
-                            background: d === 4 ? 'var(--brand-gradient)' : 'transparent',
-                            color: d === 4 ? 'white' : 'var(--color-ink)',
-                          }}
-                        >
-                          {d}
-                        </span>
+                      {Array.from({ length: 14 }, (_, i) => i + 1).map((d) => (
+                        <span key={d} style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '50%',
+                          margin: '0 auto',
+                          background: d === 4 ? 'var(--brand-gradient)' : 'transparent',
+                          color: d === 4 ? 'white' : 'var(--color-ink)',
+                        }}>{d}</span>
                       ))}
                     </div>
                   </div>
 
-                  {/* 일정 카드 미리보기 */}
-                  <div className="space-y-2">
+                  {/* 일정 카드 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[
-                      { emoji: '📅', title: '팀 미팅', time: '오전 10:00', color: 'var(--brand-blue)' },
-                      { emoji: '💪', title: '운동 루틴', time: '오후 6:30', color: 'var(--brand-green)' },
-                      { emoji: '💳', title: '넷플릭스 결제', time: '자동이체', color: 'var(--brand-teal)' },
+                      { emoji: '📅', title: '팀 미팅', time: '오전 10:00', color: '#0084CC' },
+                      { emoji: '💪', title: '운동 루틴', time: '오후 6:30', color: '#2EE895' },
+                      { emoji: '💳', title: '넷플릭스 결제', time: '자동이체', color: '#0CC9B5' },
                     ].map((item) => (
-                      <div key={item.title} className="flex items-center gap-2.5 p-2.5 rounded-[12px]"
-                        style={{ background: 'white', border: '1px solid rgba(0,132,204,0.06)' }}>
-                        <div className="w-8 h-8 rounded-[8px] flex items-center justify-center text-sm flex-shrink-0"
-                          style={{ background: `${item.color}12` }}>
-                          {item.emoji}
+                      <div key={item.title} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        background: 'white',
+                        border: '1px solid rgba(0,132,204,0.06)',
+                      }}>
+                        <div style={{
+                          width: '32px', height: '32px', borderRadius: '8px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '14px', flexShrink: 0,
+                          background: `${item.color}12`,
+                        }}>{item.emoji}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>{item.title}</p>
+                          <p style={{ fontSize: '10px', color: 'var(--color-ink-muted-80)', margin: 0 }}>{item.time}</p>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-bold truncate" style={{ color: 'var(--color-ink)' }}>{item.title}</p>
-                          <p className="text-[9px]" style={{ color: 'var(--color-ink-muted-80)' }}>{item.time}</p>
-                        </div>
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                          style={{ background: `${item.color}15`, color: item.color }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="3">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
                       </div>
                     ))}
                   </div>
@@ -225,8 +348,8 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
               </div>
 
               {/* 홈 인디케이터 */}
-              <div className="flex justify-center mt-2">
-                <div className="w-[120px] h-[5px] rounded-full bg-black/20" />
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+                <div style={{ width: '120px', height: '5px', borderRadius: '999px', background: 'rgba(0,0,0,0.15)' }} />
               </div>
             </div>
           </div>
@@ -234,8 +357,17 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
       </main>
 
       {/* ── 기능 소개 섹션 ── */}
-      <section className="px-12 lg:px-20 xl:px-32 py-20 max-w-[1440px] mx-auto w-full">
-        <div className="grid grid-cols-3 gap-8">
+      <section style={{
+        padding: '80px 64px',
+        maxWidth: '1360px',
+        margin: '0 auto',
+        width: '100%',
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '32px',
+        }}>
           {[
             {
               icon: (
@@ -245,7 +377,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
               ),
               title: '스마트 일정 관리',
               desc: '개인, 공유, 케어 일정을 한곳에서. 자동 리마인더와 상태 추적까지.',
-              color: 'var(--brand-blue)',
+              color: '#0084CC',
             },
             {
               icon: (
@@ -255,7 +387,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
               ),
               title: 'Space 공유',
               desc: '친구, 연인, 가족과 자유롭게 Space를 만들어 일정과 지출을 함께 관리.',
-              color: 'var(--brand-teal)',
+              color: '#0CC9B5',
             },
             {
               icon: (
@@ -265,25 +397,39 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
               ),
               title: '자금 흐름 관리',
               desc: '정기 결제, 공동 비용을 자동 추적. 놓치는 결제 없이.',
-              color: 'var(--brand-green)',
+              color: '#2EE895',
             },
           ].map((feature) => (
-            <div key={feature.title} className="p-6 rounded-[24px] space-y-4"
-              style={{ background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,132,204,0.06)' }}>
-              <div className="w-14 h-14 rounded-[16px] flex items-center justify-center"
-                style={{ background: `${feature.color}10` }}>
+            <div key={feature.title} style={{
+              padding: '32px',
+              borderRadius: '24px',
+              background: 'rgba(255,255,255,0.5)',
+              border: '1px solid rgba(0,132,204,0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: `${feature.color}10`,
+              }}>
                 {feature.icon}
               </div>
-              <h3 className="text-[18px] font-bold" style={{ color: 'var(--color-ink)' }}>{feature.title}</h3>
-              <p className="text-[14px] leading-relaxed" style={{ color: 'var(--color-ink-muted-80)' }}>{feature.desc}</p>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>{feature.title}</h3>
+              <p style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--color-ink-muted-80)', margin: 0 }}>{feature.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── 푸터 ── */}
-      <footer className="px-12 py-8 text-center" style={{ borderTop: '1px solid rgba(0,132,204,0.06)' }}>
-        <p className="text-[13px]" style={{ color: 'var(--color-ink-muted-48)' }}>
+      <footer style={{
+        padding: '32px 64px',
+        textAlign: 'center',
+        borderTop: '1px solid rgba(0,132,204,0.06)',
+      }}>
+        <p style={{ fontSize: '13px', color: 'var(--color-ink-muted-48)', margin: 0 }}>
           © 2026 Gleaum. 나, 그리고 연인/가족의 일상 네트워크.
         </p>
       </footer>
