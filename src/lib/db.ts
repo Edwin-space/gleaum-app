@@ -558,3 +558,34 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .eq('user_id', userId)
     .eq('read', false);
 }
+
+// ── FCM ─────────────────────────────────────────────────────
+
+/** FCM 토큰을 현재 사용자 프로필에 저장 */
+export async function saveFCMToken(token: string): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from('profiles')
+    .update({ fcm_token: token })
+    .eq('id', user.id);
+}
+
+/** 알림 레코드 생성 (DB 기록용) */
+export async function createNotification(params: {
+  userId: string;
+  scheduleId?: string;
+  title: string;
+  body: string;
+  type: Notification['type'];
+}): Promise<void> {
+  const supabase = createClient();
+  await supabase.from('notifications').insert({
+    user_id:     params.userId,
+    schedule_id: params.scheduleId ?? null,
+    title:       params.title,
+    body:        params.body,
+    type:        params.type,
+  });
+}

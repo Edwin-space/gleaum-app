@@ -9,6 +9,26 @@ import { useSchedules } from '@/hooks/useSchedules';
 import { formatTime, formatDateShort } from '@/lib/utils';
 import type { Schedule, ScheduleStatus } from '@/types';
 
+/** 가족 구성원의 FCM 토큰을 조회하여 재알림 발송 */
+async function sendReNotify(schedule: Schedule, memberNames: string) {
+  try {
+    // 서버 API를 통해 FCM 발송 (토큰은 서버에서 DB 조회)
+    const res = await fetch('/api/notifications/renotify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scheduleId: schedule.id,
+        title: `🔔 재알림: ${schedule.title}`,
+        body: `${memberNames ? memberNames + ' · ' : ''}놓친 일정을 확인해주세요`,
+        url: `/schedules/${schedule.id}`,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 const steps: { key: ScheduleStatus; label: string }[] = [
   { key: 'pending',     label: '대기' },
   { key: 'in_progress', label: '진행중' },
@@ -18,6 +38,7 @@ const steps: { key: ScheduleStatus; label: string }[] = [
 export default function ChildrenSchedulePage() {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [completionModal, setCompletionModal] = useState<Schedule | null>(null);
+  const [reNotifyingId, setReNotifyingId] = useState<string | null>(null);
 
   const { familyGroupId, loading: userLoading } = useCurrentUser();
   const { members, loading: familyLoading } = useFamily(familyGroupId);
@@ -288,14 +309,21 @@ export default function ChildrenSchedulePage() {
                     )}
                     {(schedule.status === 'pending' || schedule.status === 'missed') && (
                       <button
-                        onClick={() => alert(`${schedule.title} 재알림 발송!`)}
-                        className="flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all active:scale-95"
+                        disabled={reNotifyingId === schedule.id}
+                        onClick={async () => {
+                          setReNotifyingId(schedule.id);
+                          const memberNames = participantChildren.map(c => c.name).join(', ');
+                          const ok = await sendReNotify(schedule, memberNames);
+                          setReNotifyingId(null);
+                          alert(ok ? `✅ ${schedule.title} 재알림 발송 완료!` : '❌ 재알림 발송에 실패했습니다.');
+                        }}
+                        className="flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
                         style={{
                           background: 'rgba(0,132,204,0.08)',
                           color: '#0084CC',
                         }}
                       >
-                        🔔 재알림 보내기
+                        {reNotifyingId === schedule.id ? '발송 중...' : '🔔 재알림 보내기'}
                       </button>
                     )}
                   </div>

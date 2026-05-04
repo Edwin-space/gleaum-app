@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { FCMProvider } from '@/components/FCMProvider';
 
 export const metadata: Metadata = {
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mesh-blob mesh-blob-3" />
         </div>
         <div id="app-shell">
-          {children}
+          <FCMProvider>
+            {children}
+          </FCMProvider>
         </div>
       </body>
     </html>
