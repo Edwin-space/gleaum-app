@@ -4,8 +4,10 @@ import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { DesktopLanding } from '@/components/landing/DesktopLanding';
 
-function LoginContent() {
+function MobileLogin() {
   const { signInWithGoogle } = useAuth();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? undefined;
@@ -26,7 +28,7 @@ function LoginContent() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-8 relative z-10 w-full max-w-[430px] mx-auto">
-        
+
         {/* 앱 아이콘 (Glow 효과 추가) */}
         <div className="relative mb-10">
           <div className="absolute inset-0 bg-[#0084CC] blur-[32px] opacity-20 rounded-full" />
@@ -66,20 +68,20 @@ function LoginContent() {
         {/* 프리미엄 기능 소개 카드 */}
         <div className="w-full space-y-3 mb-8">
           {[
-            { 
-              icon: <path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />, 
-              text: '모든 일정 한눈에 관리', 
-              color: 'var(--brand-blue)' 
+            {
+              icon: <path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />,
+              text: '모든 일정 한눈에 관리',
+              color: 'var(--brand-blue)'
             },
-            { 
-              icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" /></>, 
-              text: '실시간 일정 완료 확인', 
-              color: 'var(--brand-teal)' 
+            {
+              icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" /></>,
+              text: '실시간 일정 완료 확인',
+              color: 'var(--brand-teal)'
             },
-            { 
-              icon: <><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></>, 
-              text: '정기지출 자동 리포트', 
-              color: 'var(--brand-green)' 
+            {
+              icon: <><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></>,
+              text: '정기지출 자동 리포트',
+              color: 'var(--brand-green)'
             },
           ].map((item, idx) => (
             <div
@@ -117,7 +119,6 @@ function LoginContent() {
             </>
           ) : (
             <>
-              {/* Google G 로고 (화이트 배경 컨테이너) */}
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-1">
                 <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -138,6 +139,18 @@ function LoginContent() {
       </div>
     </div>
   );
+}
+
+function LoginContent() {
+  const isDesktop = useIsDesktop();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') ?? undefined;
+
+  if (isDesktop) {
+    return <DesktopLanding next={next} />;
+  }
+
+  return <MobileLogin />;
 }
 
 export default function LoginPage() {

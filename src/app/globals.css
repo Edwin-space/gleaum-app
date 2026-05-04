@@ -72,6 +72,11 @@ body {
     z-index: 1;
   }
 
+  /* 랜딩/로그인 등 전체 화면 페이지에서 패딩 제거 */
+  .pc-content-area:has(.landing-fullscreen) {
+    padding: 0;
+  }
+
   /* PC 그리드 시스템 */
   .pc-grid {
     display: grid;
