@@ -172,6 +172,7 @@
   - `display_name`, `real_name`, `name_display_mode`
   - `onboarding_completed_at`, `timezone`, `locale`
   - `preferences`, `notification_settings`
+- [x] 운영 Supabase DB에 `supabase/onboarding-personalization.sql` 적용 완료 및 컬럼 확인
 - [x] `src/lib/db.ts`에 `completeOnboarding()` 추가
 - [x] 로그인 콜백에서 온보딩 미완료 사용자는 `/onboarding`으로 분기
 - [x] 홈 화면에 온보딩 기반 개인화 카드 1차 반영

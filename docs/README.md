@@ -29,7 +29,7 @@
 
 - **서비스명**: 글리움 (Gleaum)
 - **성격**: 개인 중심 + 친구/연인/가족 Space 확장형 토털 라이프 관리 서비스 (iOS/Android/Web PWA)
-- **현재 단계**: Day 6 완료 (FCM 푸시 알림 + Supabase Cron 리마인더 완료, 개인 중심 + Space 확장형 모델 재정의 진행)
+- **현재 단계**: Day 6+ 완료 (FCM/Supabase Cron 완료, 개인 중심 모델 재정의, 단계형 온보딩 1차 완료)
 - **배포 URL**: https://gleaum-app.vercel.app
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
 - **Supabase 프로젝트 ID**: tyvjdsescukaeorcuaga
