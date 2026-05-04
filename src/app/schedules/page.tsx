@@ -79,7 +79,6 @@ export default function SchedulesPage() {
             className="flex-1 bg-transparent text-[15px] lg:text-[16px] placeholder:text-[var(--color-ink-muted-48)] outline-none"
           />
         </div>
-      </div>
 
       {/* 필터 탭 */}
       <div className="flex gap-2 px-4 pb-3 overflow-x-auto lg:px-0 lg:pb-0 lg:flex-nowrap">

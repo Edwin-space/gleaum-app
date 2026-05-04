@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import type {
   Schedule,
   ScheduleType,
+  ScheduleCategory,
+  ScheduleVisibility,
+  AutomationPolicy,
   ScheduleStatus,
   RepeatType,
   ExpenseCategory,
@@ -52,6 +55,10 @@ export interface ScheduleRow {
   id: string;
   title: string;
   type: ScheduleType;
+  // Phase 2: 다축 분류
+  category: ScheduleCategory | null;
+  visibility: ScheduleVisibility | null;
+  automation_policy: AutomationPolicy | null;
   start_time: string;
   end_time: string | null;
   all_day: boolean;
@@ -93,6 +100,9 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
     id: row.id,
     title: row.title,
     type: row.type,
+    category: row.category ?? undefined,
+    visibility: row.visibility ?? undefined,
+    automationPolicy: row.automation_policy ?? undefined,
     startTime: new Date(row.start_time),
     endTime: row.end_time ? new Date(row.end_time) : undefined,
     allDay: row.all_day,
@@ -432,10 +442,38 @@ export async function getScheduleById(id: string): Promise<Schedule | null> {
   return rowToSchedule(data as ScheduleRow);
 }
 
+// ── Phase 2: type → 다축 자동 매핑 헬퍼 ────────────────────
+
+function inferCategory(type: ScheduleType): ScheduleCategory {
+  switch (type) {
+    case 'child':    return 'care';
+    case 'expense':  return 'expense';
+    case 'personal':
+    case 'shared':
+    default:         return 'event';
+  }
+}
+
+function inferVisibility(type: ScheduleType): ScheduleVisibility {
+  return type === 'personal' ? 'private' : 'space';
+}
+
+function inferAutomationPolicy(type: ScheduleType): AutomationPolicy {
+  switch (type) {
+    case 'child':   return 'completion_required';
+    case 'expense': return 'payment_due';
+    default:        return 'reminder_only';
+  }
+}
+
 /** 일정 생성 */
 export interface CreateScheduleInput {
   title: string;
   type: ScheduleType;
+  // Phase 2: 다축 분류
+  category?: ScheduleCategory;
+  visibility?: ScheduleVisibility;
+  automationPolicy?: AutomationPolicy;
   startTime: Date;
   endTime?: Date;
   allDay?: boolean;
@@ -492,29 +530,37 @@ export async function createSchedule(
     }
   }
 
+  // Phase 2: type → category/visibility/automation_policy 자동 매핑
+  const autoCategory = input.category ?? inferCategory(input.type);
+  const autoVisibility = input.visibility ?? inferVisibility(input.type);
+  const autoPolicy = input.automationPolicy ?? inferAutomationPolicy(input.type);
+
   const { data: schedule, error } = await supabase
     .from('schedules')
     .insert({
-      title:            input.title,
-      type:             input.type,
-      start_time:       input.startTime.toISOString(),
-      end_time:         input.endTime?.toISOString() ?? null,
-      all_day:          input.allDay ?? false,
-      status:           input.status ?? 'pending',
-      location_address: input.locationAddress ?? null,
-      location_lat:     input.locationLat ?? null,
-      location_lng:     input.locationLng ?? null,
-      reference_url:    input.referenceUrl ?? null,
-      reminder:         input.reminder ?? 0,
-      repeat:           input.repeat ?? 'none',
-      repeat_end_date:  input.repeatEndDate?.toISOString() ?? null,
-      memo:             input.memo ?? null,
-      family_group_id:  familyGroupId,
-      created_by:       user.id,
-      amount:           input.amount ?? null,
-      expense_category: input.expenseCategory ?? null,
-      payment_method:   input.paymentMethod ?? null,
-      google_event_id:  googleEventId,
+      title:             input.title,
+      type:              input.type,
+      category:          autoCategory,
+      visibility:        autoVisibility,
+      automation_policy: autoPolicy,
+      start_time:        input.startTime.toISOString(),
+      end_time:          input.endTime?.toISOString() ?? null,
+      all_day:           input.allDay ?? false,
+      status:            input.status ?? 'pending',
+      location_address:  input.locationAddress ?? null,
+      location_lat:      input.locationLat ?? null,
+      location_lng:      input.locationLng ?? null,
+      reference_url:     input.referenceUrl ?? null,
+      reminder:          input.reminder ?? 0,
+      repeat:            input.repeat ?? 'none',
+      repeat_end_date:   input.repeatEndDate?.toISOString() ?? null,
+      memo:              input.memo ?? null,
+      family_group_id:   familyGroupId,
+      created_by:        user.id,
+      amount:            input.amount ?? null,
+      expense_category:  input.expenseCategory ?? null,
+      payment_method:    input.paymentMethod ?? null,
+      google_event_id:   googleEventId,
     })
     .select()
     .single();
@@ -558,23 +604,26 @@ export async function updateSchedule(
   const supabase = createClient();
 
   const dbUpdates: Record<string, unknown> = {};
-  if (updates.title !== undefined)             dbUpdates.title            = updates.title;
-  if (updates.type !== undefined)              dbUpdates.type             = updates.type;
-  if (updates.startTime !== undefined)         dbUpdates.start_time       = updates.startTime.toISOString();
-  if (updates.endTime !== undefined)           dbUpdates.end_time         = updates.endTime?.toISOString() ?? null;
-  if (updates.allDay !== undefined)            dbUpdates.all_day          = updates.allDay;
-  if (updates.status !== undefined)            dbUpdates.status           = updates.status;
-  if (updates.locationAddress !== undefined)   dbUpdates.location_address = updates.locationAddress ?? null;
-  if (updates.locationLat !== undefined)       dbUpdates.location_lat     = updates.locationLat ?? null;
-  if (updates.locationLng !== undefined)       dbUpdates.location_lng     = updates.locationLng ?? null;
-  if (updates.referenceUrl !== undefined)      dbUpdates.reference_url    = updates.referenceUrl ?? null;
-  if (updates.reminder !== undefined)          dbUpdates.reminder         = updates.reminder;
-  if (updates.repeat !== undefined)            dbUpdates.repeat           = updates.repeat;
-  if (updates.repeatEndDate !== undefined)     dbUpdates.repeat_end_date  = updates.repeatEndDate?.toISOString() ?? null;
-  if (updates.memo !== undefined)              dbUpdates.memo             = updates.memo ?? null;
-  if (updates.amount !== undefined)            dbUpdates.amount           = updates.amount ?? null;
-  if (updates.expenseCategory !== undefined)   dbUpdates.expense_category = updates.expenseCategory ?? null;
-  if (updates.paymentMethod !== undefined)     dbUpdates.payment_method   = updates.paymentMethod ?? null;
+  if (updates.title !== undefined)             dbUpdates.title             = updates.title;
+  if (updates.type !== undefined)              dbUpdates.type              = updates.type;
+  if (updates.category !== undefined)          dbUpdates.category          = updates.category;
+  if (updates.visibility !== undefined)        dbUpdates.visibility        = updates.visibility;
+  if (updates.automationPolicy !== undefined)  dbUpdates.automation_policy = updates.automationPolicy;
+  if (updates.startTime !== undefined)         dbUpdates.start_time        = updates.startTime.toISOString();
+  if (updates.endTime !== undefined)           dbUpdates.end_time          = updates.endTime?.toISOString() ?? null;
+  if (updates.allDay !== undefined)            dbUpdates.all_day           = updates.allDay;
+  if (updates.status !== undefined)            dbUpdates.status            = updates.status;
+  if (updates.locationAddress !== undefined)   dbUpdates.location_address  = updates.locationAddress ?? null;
+  if (updates.locationLat !== undefined)       dbUpdates.location_lat      = updates.locationLat ?? null;
+  if (updates.locationLng !== undefined)       dbUpdates.location_lng      = updates.locationLng ?? null;
+  if (updates.referenceUrl !== undefined)      dbUpdates.reference_url     = updates.referenceUrl ?? null;
+  if (updates.reminder !== undefined)          dbUpdates.reminder          = updates.reminder;
+  if (updates.repeat !== undefined)            dbUpdates.repeat            = updates.repeat;
+  if (updates.repeatEndDate !== undefined)     dbUpdates.repeat_end_date   = updates.repeatEndDate?.toISOString() ?? null;
+  if (updates.memo !== undefined)              dbUpdates.memo              = updates.memo ?? null;
+  if (updates.amount !== undefined)            dbUpdates.amount            = updates.amount ?? null;
+  if (updates.expenseCategory !== undefined)   dbUpdates.expense_category  = updates.expenseCategory ?? null;
+  if (updates.paymentMethod !== undefined)     dbUpdates.payment_method    = updates.paymentMethod ?? null;
 
   const { data: existing, error: fetchErr } = await supabase.from('schedules').select('*').eq('id', id).single();
 
