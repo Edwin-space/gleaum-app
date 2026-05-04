@@ -147,9 +147,9 @@
 
 ---
 
-## 제품 모델 재정의 — Space 기반 확장 방향 (완료 - 2026-05-04)
+## 제품 모델 재정의 — 개인 중심 + Space 확장형 방향 (완료 - 2026-05-04)
 
-- [x] 초기 가족 관리 서비스 방향을 개인/연인/가족을 포괄하는 Space 기반 일상 네트워크로 재정의
+- [x] 초기 가족 관리 서비스 방향을 개인 중심 + Space 확장형 토털 라이프 관리 서비스로 재정의
 - [x] `docs/12-product-model.md` 신규 작성
 - [x] `family_groups`를 단기적으로 legacy Space 테이블로 해석하는 방향 정리
 - [x] `schedule.type`에 섞여 있던 개념을 Space / Category / Visibility / Automation Policy 축으로 분리

@@ -21,15 +21,15 @@
 | `09-deployment.md`         | 배포 환경, 환경변수, CI/CD |
 | `10-ai-handoff-guide.md`   | ⭐ AI 인수인계 핵심 가이드 |
 | `11-improvement-audit.md`  | 개선/추가 기능 종합 진단 |
-| `12-product-model.md`      | ⭐ Space 기반 제품 모델 재정의 |
+| `12-product-model.md`      | ⭐ 개인 중심 + Space 확장형 제품 모델 재정의 |
 
 ---
 
 ## ⚡ 빠른 컨텍스트
 
 - **서비스명**: 글리움 (Gleaum)
-- **성격**: 개인, 연인, 가족을 포괄하는 Space 기반 일상 네트워크 서비스 (iOS/Android/Web PWA)
-- **현재 단계**: Day 6 완료 (FCM 푸시 알림 + Supabase Cron 리마인더 완료, Space 모델 재정의 진행)
+- **성격**: 개인 중심 + 친구/연인/가족 Space 확장형 토털 라이프 관리 서비스 (iOS/Android/Web PWA)
+- **현재 단계**: Day 6 완료 (FCM 푸시 알림 + Supabase Cron 리마인더 완료, 개인 중심 + Space 확장형 모델 재정의 진행)
 - **배포 URL**: https://gleaum-app.vercel.app
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
 - **Supabase 프로젝트 ID**: tyvjdsescukaeorcuaga
@@ -39,7 +39,7 @@
 
 ## 🚨 작업 시 절대 규칙
 
-1. **제품 모델 우선 확인** — 신규 기능은 반드시 `12-product-model.md`의 Space / Category / Automation Policy 기준으로 설계
+1. **제품 모델 우선 확인** — 신규 기능은 반드시 `12-product-model.md`의 개인 기본 구간 + Space / Category / Automation Policy 기준으로 설계
 2. **`src/lib/db.ts`** — 모든 DB 접근의 단일 진입점, 구조 변경 금지
 3. **Purple(`#5A32FA`) 사용 금지** — 브랜드 컬러는 Green/Teal/Blue (`#2EE895`, `#0CC9B5`, `#0084CC`)
 4. **폰트** `Pretendard` + `Outfit` 조합 유지

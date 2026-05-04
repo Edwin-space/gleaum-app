@@ -53,7 +53,7 @@
 - Supabase에서 `pg_net` 호출 결과 확인 및 실행 완료
 
 ### 🔴 자동화 정책 기반 상태 전이
-- 제품 방향이 개인/연인/가족 Space 기반 서비스로 확장됨에 따라 `child` 전용 자동화 구현은 금지
+- 제품 방향이 개인 중심 + Space 확장형 서비스로 보정됨에 따라 `child` 전용 자동화 구현은 금지
 - `docs/12-product-model.md` 기준으로 `automation_policy` 기반 상태 전이 구현 필요
 - `completion_required`: 개인 루틴, 가족 케어, 자녀 일정, 심부름 등 완료 확인 일정 처리
 - `payment_due`: 개인/연인/가족 정기지출의 결제 예정/미납 알림 처리
@@ -82,7 +82,7 @@
 
 ## Day 8 — 품질 및 완성도
 
-### 🔴 Space 기반 모델 마이그레이션
+### 🔴 개인 중심 + Space 확장형 모델 마이그레이션
 - [ ] `family_groups.type` 추가로 기존 가족 그룹을 Space로 확장
 - [ ] `schedules.category`, `schedules.visibility`, `schedules.automation_policy` 추가
 - [ ] 기존 `schedule.type` 값을 신규 축으로 매핑

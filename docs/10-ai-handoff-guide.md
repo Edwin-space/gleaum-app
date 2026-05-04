@@ -14,14 +14,14 @@
 6. **배포 자동화** — `main` 브랜치에 push하면 Vercel이 자동 배포. 작업 후 반드시 commit + push.
 7. **AI 간 작업 동기화 (문서 업데이트 필수)** — 서로 다른 AI가 협업하므로, 본인의 작업이 에러 없이 완료되면 **반드시 `docs/` 폴더 내 관련 문서(완료된 기능 등)를 업데이트**하여 다른 AI가 최신 상태를 알 수 있게 할 것.
 8. **디자인 일관성 절대 유지** — 작업된 디자인 결과물(특히 `DESIGN_PREVIEW.html` 및 `tokens.css` 기준)의 시각적 형태와 UX를 모든 페이지와 컴포넌트에서 완벽하게 일관성을 유지할 것.
-9. **제품 모델 방향 유지** — 글리움은 가족 전용 앱이 아니라 **개인/연인/가족 Space 기반 일상 네트워크**입니다. 신규 기능은 반드시 `docs/12-product-model.md`의 Space / Category / Automation Policy 기준으로 설계할 것.
+9. **제품 모델 방향 유지** — 글리움은 가족 전용 앱이 아니라 **개인 중심 + Space 확장형 토털 라이프 관리 서비스**입니다. 신규 기능은 개인 단독 사용을 기본값으로 두고, 필요할 때 Space / Category / Automation Policy 기준으로 확장 설계할 것.
 
 ---
 
 ## 현재 앱 상태 (2026-05-04 기준)
 
 > **디자인 히스토리 요약**: Claude(세션1)가 Vibrant Purple(`#5A32FA`)로 구현 → Antigravity AI가 오리지널 브랜드 컬러(Blue/Teal/Green)로 복구 + Glassmorphism + 메쉬 그라디언트 + 프리미엄 폰트(`Outfit`+`Pretendard`) 추가 적용. **현재 코드는 Blue/Teal/Green 기반이며 보라색(`#5A32FA`)은 사용 금지.**
-> **제품 방향 요약**: 초기 가족 관리 서비스에서 개인/연인/가족을 포괄하는 Space 기반 토털 서비스로 확장 중입니다. `family_groups`는 단기적으로 유지하지만 신규 설계에서는 legacy Space로 해석합니다.
+> **제품 방향 요약**: 초기 가족 관리 서비스에서 개인 중심 + Space 확장형 토털 서비스로 보정했습니다. 개인 구간이 기본이며, 친구/연인/가족 Space는 선택적 관계 확장 레이어입니다. `family_groups`는 단기적으로 유지하지만 신규 설계에서는 legacy shared Space로 해석합니다.
 
 ### ✅ 작동하는 기능
 
@@ -112,7 +112,7 @@
 ### 5단계: 자동화 정책 기반 상태 전이 (🔴 필수, Day 6 후속)
 
 **필요 작업**:
-- `docs/12-product-model.md` 기준으로 Space / Category / Automation Policy 모델 유지
+- `docs/12-product-model.md` 기준으로 개인 기본 구간 + Space / Category / Automation Policy 모델 유지
 - `schedule.type === 'child'` 하드코딩 금지
 - `completion_required`: 시작 시 `pending` → `in_progress`, 종료 후 미완료면 `missed`
 - `payment_due`: 결제일 도래/초과 상태 및 알림 처리
@@ -261,7 +261,7 @@ git push origin main
 3. `docs/04-file-structure.md` — 파일 구조 파악
 4. `docs/05-database-schema.md` — DB 구조 이해
 5. `docs/08-features-pending.md` — 다음 할 일 확인
-6. `docs/12-product-model.md` — Space 기반 확장 방향 확인
+6. `docs/12-product-model.md` — 개인 중심 + Space 확장형 제품 모델 확인
 7. `DESIGN.md` — 디자인 작업 시 필독
 8. 이 파일 (`10-ai-handoff-guide.md`) — 작업 시작
 
