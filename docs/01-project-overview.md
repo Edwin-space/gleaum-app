@@ -6,7 +6,7 @@
 |------|------|
 | **서비스명** | 글리움 (Gleaum) |
 | **슬로건** | 나, 그리고 연인/가족의 일상 네트워크 |
-| **플랫폼** | iOS / Android / Web (PWA) |
+| **플랫폼** | **PC Web / Mobile Web / PWA** (iOS, Android 앱 전환 가능) |
 | **타겟** | 개인, 연인, 가족 모두를 아우르는 일상 네트워크 관리자 |
 | **런타임** | 실서비스 목표 |
 
@@ -93,3 +93,19 @@
 | Supabase | Free | 무료 |
 | Google APIs | 무료 할당량 내 | 무료 |
 | GitHub | Free | 무료 |
+
+---
+
+## 현재 구현 현황 (2026-05-04 기준)
+
+| 분류 | 내용 |
+|------|------|
+| 배포 URL | https://gleaum-app.vercel.app |
+| 인증 | Google OAuth 2.0 ✅ |
+| 데이터 | Supabase 실 DB 연동 ✅ |
+| 일정 CRUD | 생성 / 조회 / 수정 / 삭제 / 상태변경 ✅ |
+| 캘린더 뷰 | 월간 / 주간(타임라인) / 일간 ✅ |
+| 알림 | FCM 푸시 + Supabase pg_cron 리마인더 ✅ |
+| PWA | Service Worker + 설치 배너 (iOS/Android) ✅ |
+| 토스트 시스템 | sonner 기반 전체 적용 ✅ |
+| **PC 대시보드** | **1024px 이상 → 사이드바 + 멀티컬럼 그리드 자동 전환 ✅** |

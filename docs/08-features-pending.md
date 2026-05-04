@@ -103,13 +103,16 @@
 - 현재 자녀는 이메일 없이 프로필에만 존재
 - 자녀가 직접 로그인할 수 있는 계정 연동 플로우 필요
 
-### 🟢 일정 수정 기능
-- `/schedules/[id]/edit` 페이지 미구현
-- 현재는 삭제만 가능
-
 ### 🟢 통계 및 분석 페이지
 - 월간 자녀 일정 완료율
 - 카테고리별 지출 트렌드 차트
+
+### 🟡 마이페이지 PC UI 최적화
+- 마이페이지 설정 및 프로필 수정 영역 PC 대시보드 구조화
+
+### 🔴 PWA 스플래시 스크린 완전 신규 구현
+- `_document.tsx` 또는 인라인 `<script>` 방식으로 초기 흰 화면 완전 차단
+- 스플래시 `#0F1A2E` → 로그인 화면 `#FAFAFD` 자연스러운 색상 전환
 
 ---
 
@@ -118,6 +121,5 @@
 | 항목 | 내용 | 파일 |
 |------|------|------|
 | `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
-| 일정 수정 페이지 없음 | `/schedules/[id]`의 "수정" 버튼 미연결 | `src/app/schedules/[id]/page.tsx` |
 | 자동화 정책 기반 상태 전이 미구현 | `child` 하드코딩 대신 `automation_policy` 기반 처리 필요 | cron/API |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |
