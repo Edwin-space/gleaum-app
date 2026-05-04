@@ -87,7 +87,10 @@ export default function HomePage() {
         </Link>
       </header>
 
-      <div className="px-5 space-y-5">
+      <div className="px-5 space-y-5 lg:grid lg:grid-cols-12 lg:gap-8 lg:space-y-0 lg:max-w-[1400px] lg:mx-auto">
+        
+        {/* PC: 왼쪽 컬럼 (캘린더 영역) */}
+        <div className="lg:col-span-7 space-y-5">
 
         {/* ── 뷰 토글 Pill ── */}
         <div className="glass-card flex rounded-full p-1.5">
@@ -117,6 +120,10 @@ export default function HomePage() {
             view={view}
           />
         </div>
+        </div>
+
+        {/* PC: 오른쪽 컬럼 (메시지 및 리스트 영역) */}
+        <div className="lg:col-span-5 space-y-5">
 
         {!loading && profile?.onboarding_completed_at && (
           <div className="glass-card rounded-[24px] p-5">
@@ -215,6 +222,7 @@ export default function HomePage() {
             )}
           </div>
         )}
+        </div>
       </div>
 
       <BottomNav />

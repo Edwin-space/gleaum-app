@@ -61,7 +61,7 @@ export function BottomNav() {
 
   return (
     /* 전체 고정 영역 — pointer-events none으로 클릭 통과 */
-    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-40 pointer-events-none">
+    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-40 pointer-events-none lg:hidden">
       <div
         className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto glass-card"
         style={{

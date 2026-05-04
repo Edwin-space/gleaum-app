@@ -35,15 +35,49 @@ body {
   letter-spacing: -0.374px;
 }
 
-/* ── 모바일 앱 쉘 ── */
+/* ── 모바일 앱 셸 ── */
 #app-shell {
-  max-width: 430px;
+  width: 100%;
   min-height: 100dvh;
   margin: 0 auto;
   background: transparent;
   position: relative;
   overflow-x: hidden;
-  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+}
+
+/* 모바일/앱 환경 (기존 스타일 유지) */
+@media (max-width: 1023px) {
+  #app-shell {
+    max-width: 430px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  }
+}
+
+/* 🖥️ PC 대시보드 레이아웃 (1024px 이상) */
+@media (min-width: 1024px) {
+  #app-shell {
+    max-width: 100%; /* 전체 가로 사용 */
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+
+  /* 사이드바가 있는 구조에서 콘텐츠 영역 */
+  .pc-content-area {
+    flex: 1;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 40px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* PC 그리드 시스템 */
+  .pc-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 32px;
+  }
 }
 
 /* 메쉬 그라디언트가 앱 셸 내부에도 적용되도록 body 배경 설정 */
