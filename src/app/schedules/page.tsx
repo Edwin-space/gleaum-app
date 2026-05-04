@@ -31,7 +31,12 @@ export default function SchedulesPage() {
 
   const filtered = schedules.filter((s) => {
     const matchType   = filter === 'all' || s.type === filter;
-    const matchSearch = !search || s.title.includes(search);
+    const q = search.toLowerCase();
+    const matchSearch = !search || (
+      s.title.toLowerCase().includes(q) ||
+      (s.memo?.toLowerCase().includes(q) ?? false) ||
+      (s.location?.address.toLowerCase().includes(q) ?? false)
+    );
     return matchType && matchSearch;
   });
 

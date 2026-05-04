@@ -8,6 +8,7 @@ import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
 import { updateMyProfile, updateNotificationSettings } from '@/lib/db';
+import { profileToast } from '@/lib/toast';
 import type { NotificationSettings } from '@/types';
 
 // ── 기본 알림 설정 ──
@@ -137,7 +138,7 @@ export default function MyPage() {
       // 페이지 새로고침으로 반영
       window.location.reload();
     } catch {
-      alert('저장 중 오류가 발생했습니다.');
+      profileToast.error();
     } finally {
       setSavingProfile(false);
     }

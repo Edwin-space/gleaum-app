@@ -3,6 +3,7 @@ import './globals.css';
 import { FCMProvider } from '@/components/FCMProvider';
 import { PWARegister } from '@/components/PWARegister';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
@@ -52,6 +53,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <FCMProvider>
             {children}
           </FCMProvider>
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                borderRadius: '16px',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                border: '1px solid rgba(255,255,255,0.8)',
+              },
+            }}
+            offset={96}
+            richColors
+          />
         </div>
       </body>
     </html>
