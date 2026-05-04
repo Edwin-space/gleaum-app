@@ -1,10 +1,7 @@
 /**
- * 글리움 — Firebase / FCM 클라이언트
- * FCM 토큰 발급, 포그라운드 메시지 수신 담당
+ * 글리움 — Firebase / FCM 클라이언트 (브라우저 전용)
+ * 동적 임포트를 사용하여 서버 빌드 환경에서 firebase/messaging 오류 방지
  */
-
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, isSupported, type Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -15,37 +12,28 @@ const firebaseConfig = {
   appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-// 앱 중복 초기화 방지
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
-let messagingInstance: Messaging | null = null;
-
-async function getMessagingInstance(): Promise<Messaging | null> {
-  if (messagingInstance) return messagingInstance;
-  const supported = await isSupported();
-  if (!supported) return null;
-  messagingInstance = getMessaging(app);
-  return messagingInstance;
-}
-
 /**
- * 브라우저에 알림 권한 요청 후 FCM 토큰 반환
- * 권한 거부 또는 미지원 환경이면 null 반환
+ * 브라우저 알림 권한 요청 후 FCM 토큰 반환
+ * 서버 환경 / 권한 거부 / 미지원 시 null 반환
  */
 export async function requestFCMToken(): Promise<string | null> {
-  try {
-    if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') return null;
+  if (!('Notification' in window)) return null;
 
-    const messaging = await getMessagingInstance();
-    if (!messaging) return null;
+  try {
+    // 동적 임포트 — 서버 번들에 firebase/messaging 포함되지 않도록 처리
+    const { initializeApp, getApps, getApp } = await import('firebase/app');
+    const { getMessaging, getToken, isSupported } = await import('firebase/messaging');
+
+    const supported = await isSupported();
+    if (!supported) return null;
+
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const messaging = getMessaging(app);
 
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.info('[FCM] 알림 권한 거부됨');
-      return null;
-    }
+    if (permission !== 'granted') return null;
 
-    // 서비스워커 등록
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
       scope: '/',
     });
@@ -63,13 +51,26 @@ export async function requestFCMToken(): Promise<string | null> {
 }
 
 /**
- * 앱 포그라운드 상태에서 수신되는 FCM 메시지 리스너
- * 반환값: unsubscribe 함수
+ * 앱 포그라운드 상태에서 FCM 메시지 수신 리스너
+ * 반환: unsubscribe 함수
  */
 export async function onForegroundMessage(
   callback: (payload: { notification?: { title?: string; body?: string }; data?: Record<string, string> }) => void
 ): Promise<() => void> {
-  const messaging = await getMessagingInstance();
-  if (!messaging) return () => {};
-  return onMessage(messaging, callback);
+  if (typeof window === 'undefined') return () => {};
+
+  try {
+    const { initializeApp, getApps, getApp } = await import('firebase/app');
+    const { getMessaging, onMessage, isSupported } = await import('firebase/messaging');
+
+    const supported = await isSupported();
+    if (!supported) return () => {};
+
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const messaging = getMessaging(app);
+
+    return onMessage(messaging, callback);
+  } catch {
+    return () => {};
+  }
 }
