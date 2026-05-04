@@ -42,7 +42,7 @@
 | 알림 목록 | `/notifications` | ✅ 실 DB 연동 |
 | FCM 푸시 알림 토큰 등록 | `useFCM`, `FCMProvider` | ✅ 구현 완료 |
 | 일정 리마인더 자동 발송 | Supabase `pg_cron` + `pg_net` → `/api/cron/reminders` | ✅ 등록/실행 확인 완료 |
-| 개인화 온보딩 | `/onboarding`, `completeOnboarding()` | ✅ 1차 구현 완료 |
+| 개인화 온보딩 | `/onboarding`, `completeOnboarding()` | ✅ 단계형 1차 구현 완료 |
 | 홈 개인화 카드 | `/home` | ✅ 온보딩 preferences 기반 1차 반영 |
 | Glassmorphism + Blue/Teal/Green 디자인 | **전 페이지 (DESIGN.md 기준)** | ✅ 프리미엄 리뉴얼 완료 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
