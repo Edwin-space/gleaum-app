@@ -40,11 +40,30 @@ export default function BudgetPage() {
   const isCurrentMonth = viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth();
 
   return (
-    <div className="min-h-dvh pb-28">
-      <AppHeader title="가계부" showLogo={false} />
+    <div className="min-h-dvh pb-28 lg:max-w-[1440px] lg:mx-auto lg:px-8 lg:pt-10">
+      <div className="lg:hidden">
+        <AppHeader title="가계부" showLogo={false} />
+      </div>
 
-      {/* 월 네비게이터 */}
-      <div className="flex items-center justify-between px-5 py-3">
+      {/* PC 전용 타이틀 */}
+      <div className="hidden lg:flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-[32px] font-bold text-[#1A1B2E]">가계부</h1>
+          <p className="text-[15px] text-[#8E8E93] mt-1">이번 달 자금 흐름을 스마트하게 관리하세요</p>
+        </div>
+        <div className="flex items-center gap-4 glass-card p-2 rounded-full">
+          <button onClick={prevMonth} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" strokeWidth="2.5"><path d="M15 18L9 12L15 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <span className="text-[18px] font-bold px-4">{formatMonthYear(viewDate)}</span>
+          <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" strokeWidth="2.5"><path d="M9 18L15 12L9 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      {/* 모바일 월 네비게이터 */}
+      <div className="flex items-center justify-between px-5 py-3 lg:hidden">
         <button onClick={prevMonth}
           className="w-10 h-10 glass-card flex items-center justify-center rounded-full transition-all active:scale-90">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -76,7 +95,7 @@ export default function BudgetPage() {
         <>
           {/* 월간 합계 히어로 카드 */}
           <div
-            className="mx-4 mb-4 rounded-[28px] overflow-hidden relative"
+            className="mx-4 mb-8 lg:mx-0 rounded-[28px] lg:rounded-[40px] overflow-hidden relative"
             style={{
               background: 'var(--brand-gradient)',
               boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
@@ -119,7 +138,9 @@ export default function BudgetPage() {
             </div>
           </div>
 
-          {/* 카테고리별 현황 */}
+          <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+            {/* 왼쪽: 카테고리별 현황 (lg:4단) */}
+            <div className="lg:col-span-5">
           {categories.length > 0 && (
             <div className="glass-card mx-4 mb-4 rounded-[24px] p-5">
               <h3 className="text-[14px] font-bold mb-4" style={{ color: 'var(--color-ink)' }}>
@@ -165,9 +186,11 @@ export default function BudgetPage() {
               </div>
             </div>
           )}
+          </div>
 
-          {/* 지출 목록 */}
-          <div className="px-4">
+          {/* 오른쪽: 지출 목록 (lg:7단) */}
+          <div className="lg:col-span-7">
+            <div className="px-4 lg:px-0">
             <h3 className="text-[11px] font-bold mb-3 tracking-widest uppercase"
               style={{ color: 'var(--color-ink-muted-80)' }}>
               지출 내역
@@ -222,6 +245,8 @@ export default function BudgetPage() {
                 <p style={{ fontSize: '13px', color: 'var(--color-ink-muted-80)' }}>일정 추가에서 정기지출을 등록하세요</p>
               </div>
             )}
+            </div>
+          </div>
           </div>
         </>
       )}

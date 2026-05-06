@@ -7,13 +7,18 @@ import { createClient } from '@/lib/supabase/client';
 import type {
   Schedule,
   ScheduleType,
+  ScheduleCategory,
+  ScheduleVisibility,
+  AutomationPolicy,
   ScheduleStatus,
   RepeatType,
   ExpenseCategory,
   PaymentMethod,
   User,
-  FamilyGroup,
   Notification,
+  NameDisplayMode,
+  OnboardingPreferences,
+  NotificationSettings,
 } from '@/types';
 import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googleCalendar';
 
@@ -22,11 +27,19 @@ import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googl
 export interface ProfileRow {
   id: string;
   name: string | null;
+  display_name?: string | null;
+  real_name?: string | null;
+  name_display_mode?: NameDisplayMode | null;
   email: string | null;
   avatar: string | null;
   role: 'parent' | 'child' | 'guest';
   family_group_id: string | null;
   google_id: string | null;
+  onboarding_completed_at?: string | null;
+  timezone?: string | null;
+  locale?: string | null;
+  preferences?: Partial<OnboardingPreferences> | null;
+  notification_settings?: Partial<NotificationSettings> | null;
   updated_at: string;
 }
 
@@ -42,6 +55,10 @@ export interface ScheduleRow {
   id: string;
   title: string;
   type: ScheduleType;
+  // Phase 2: 다축 분류
+  category: ScheduleCategory | null;
+  visibility: ScheduleVisibility | null;
+  automation_policy: AutomationPolicy | null;
   start_time: string;
   end_time: string | null;
   all_day: boolean;
@@ -83,6 +100,9 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
     id: row.id,
     title: row.title,
     type: row.type,
+    category: row.category ?? undefined,
+    visibility: row.visibility ?? undefined,
+    automationPolicy: row.automation_policy ?? undefined,
     startTime: new Date(row.start_time),
     endTime: row.end_time ? new Date(row.end_time) : undefined,
     allDay: row.all_day,
@@ -110,9 +130,13 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
 }
 
 export function rowToUser(row: ProfileRow): User {
+  const displayName = row.display_name ?? row.name ?? '사용자';
   return {
     id: row.id,
-    name: row.name ?? '이름 없음',
+    name: displayName,
+    displayName,
+    realName: row.real_name ?? undefined,
+    nameDisplayMode: row.name_display_mode ?? 'nickname',
     email: row.email ?? '',
     avatar: row.avatar ?? '👤',
     role: row.role,
@@ -156,7 +180,7 @@ export async function getMyProfile(): Promise<ProfileRow | null> {
 }
 
 /** 프로필 업데이트 */
-export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' | 'avatar' | 'role'>>) {
+export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' | 'display_name' | 'avatar' | 'role' | 'notification_settings'>>) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('로그인 필요');
@@ -167,6 +191,75 @@ export async function updateMyProfile(updates: Partial<Pick<ProfileRow, 'name' |
     .eq('id', user.id);
 
   if (error) throw new Error(error.message);
+}
+
+/** 알림 설정 업데이트 */
+export async function updateNotificationSettings(settings: Partial<NotificationSettings>): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ notification_settings: settings })
+    .eq('id', user.id);
+
+  return !error;
+}
+
+
+export interface CompleteOnboardingInput {
+  displayName: string;
+  realName?: string;
+  nameDisplayMode: NameDisplayMode;
+  primaryGoal: OnboardingPreferences['primaryGoal'];
+  homeLayout: OnboardingPreferences['homeLayout'];
+  enabledModules: OnboardingPreferences['enabledModules'];
+  defaultReminderMinutes: number;
+  spaceIntent: OnboardingPreferences['spaceIntent'];
+  notificationSettings: NotificationSettings;
+  timezone?: string;
+  locale?: string;
+}
+
+/** 최초 온보딩 완료 및 개인화 기본값 저장 */
+export async function completeOnboarding(input: CompleteOnboardingInput): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const displayName = input.displayName.trim();
+  if (!displayName) return false;
+
+  const preferences: OnboardingPreferences = {
+    primaryGoal: input.primaryGoal,
+    homeLayout: input.homeLayout,
+    enabledModules: input.enabledModules,
+    defaultReminderMinutes: input.defaultReminderMinutes,
+    spaceIntent: input.spaceIntent,
+  };
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      name: displayName,
+      display_name: displayName,
+      real_name: input.realName?.trim() || null,
+      name_display_mode: input.nameDisplayMode,
+      onboarding_completed_at: new Date().toISOString(),
+      timezone: input.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Asia/Seoul',
+      locale: input.locale ?? navigator.language ?? 'ko-KR',
+      preferences,
+      notification_settings: input.notificationSettings,
+    })
+    .eq('id', user.id);
+
+  if (error) {
+    console.error('온보딩 저장 오류:', error.message);
+    return false;
+  }
+
+  return true;
 }
 
 /** 가족 그룹 및 멤버 조회 */
@@ -299,8 +392,7 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
 
   // 가족 그룹 없으면 자동 생성
   if (!profile.family_group_id) {
-    const userName = profile.name ?? '사용자';
-    const familyName = `${userName.charAt(0)}씨 가족`;
+    const familyName = '나의 공간';
     const groupId = await createFamilyGroup(familyName);
     if (groupId) {
       profile.family_group_id = groupId;
@@ -350,10 +442,38 @@ export async function getScheduleById(id: string): Promise<Schedule | null> {
   return rowToSchedule(data as ScheduleRow);
 }
 
+// ── Phase 2: type → 다축 자동 매핑 헬퍼 ────────────────────
+
+function inferCategory(type: ScheduleType): ScheduleCategory {
+  switch (type) {
+    case 'child':    return 'care';
+    case 'expense':  return 'expense';
+    case 'personal':
+    case 'shared':
+    default:         return 'event';
+  }
+}
+
+function inferVisibility(type: ScheduleType): ScheduleVisibility {
+  return type === 'personal' ? 'private' : 'space';
+}
+
+function inferAutomationPolicy(type: ScheduleType): AutomationPolicy {
+  switch (type) {
+    case 'child':   return 'completion_required';
+    case 'expense': return 'payment_due';
+    default:        return 'reminder_only';
+  }
+}
+
 /** 일정 생성 */
 export interface CreateScheduleInput {
   title: string;
   type: ScheduleType;
+  // Phase 2: 다축 분류
+  category?: ScheduleCategory;
+  visibility?: ScheduleVisibility;
+  automationPolicy?: AutomationPolicy;
   startTime: Date;
   endTime?: Date;
   allDay?: boolean;
@@ -410,29 +530,37 @@ export async function createSchedule(
     }
   }
 
+  // Phase 2: type → category/visibility/automation_policy 자동 매핑
+  const autoCategory = input.category ?? inferCategory(input.type);
+  const autoVisibility = input.visibility ?? inferVisibility(input.type);
+  const autoPolicy = input.automationPolicy ?? inferAutomationPolicy(input.type);
+
   const { data: schedule, error } = await supabase
     .from('schedules')
     .insert({
-      title:            input.title,
-      type:             input.type,
-      start_time:       input.startTime.toISOString(),
-      end_time:         input.endTime?.toISOString() ?? null,
-      all_day:          input.allDay ?? false,
-      status:           input.status ?? 'pending',
-      location_address: input.locationAddress ?? null,
-      location_lat:     input.locationLat ?? null,
-      location_lng:     input.locationLng ?? null,
-      reference_url:    input.referenceUrl ?? null,
-      reminder:         input.reminder ?? 0,
-      repeat:           input.repeat ?? 'none',
-      repeat_end_date:  input.repeatEndDate?.toISOString() ?? null,
-      memo:             input.memo ?? null,
-      family_group_id:  familyGroupId,
-      created_by:       user.id,
-      amount:           input.amount ?? null,
-      expense_category: input.expenseCategory ?? null,
-      payment_method:   input.paymentMethod ?? null,
-      google_event_id:  googleEventId,
+      title:             input.title,
+      type:              input.type,
+      category:          autoCategory,
+      visibility:        autoVisibility,
+      automation_policy: autoPolicy,
+      start_time:        input.startTime.toISOString(),
+      end_time:          input.endTime?.toISOString() ?? null,
+      all_day:           input.allDay ?? false,
+      status:            input.status ?? 'pending',
+      location_address:  input.locationAddress ?? null,
+      location_lat:      input.locationLat ?? null,
+      location_lng:      input.locationLng ?? null,
+      reference_url:     input.referenceUrl ?? null,
+      reminder:          input.reminder ?? 0,
+      repeat:            input.repeat ?? 'none',
+      repeat_end_date:   input.repeatEndDate?.toISOString() ?? null,
+      memo:              input.memo ?? null,
+      family_group_id:   familyGroupId,
+      created_by:        user.id,
+      amount:            input.amount ?? null,
+      expense_category:  input.expenseCategory ?? null,
+      payment_method:    input.paymentMethod ?? null,
+      google_event_id:   googleEventId,
     })
     .select()
     .single();
@@ -476,18 +604,29 @@ export async function updateSchedule(
   const supabase = createClient();
 
   const dbUpdates: Record<string, unknown> = {};
-  if (updates.title !== undefined)          dbUpdates.title            = updates.title;
-  if (updates.startTime !== undefined)      dbUpdates.start_time       = updates.startTime.toISOString();
-  if (updates.endTime !== undefined)        dbUpdates.end_time         = updates.endTime.toISOString();
-  if (updates.status !== undefined)         dbUpdates.status           = updates.status;
-  if (updates.locationAddress !== undefined) dbUpdates.location_address = updates.locationAddress;
-  if (updates.memo !== undefined)           dbUpdates.memo             = updates.memo;
-  if (updates.reminder !== undefined)       dbUpdates.reminder         = updates.reminder;
-  if (updates.repeat !== undefined)         dbUpdates.repeat           = updates.repeat;
-  if (updates.amount !== undefined)         dbUpdates.amount           = updates.amount;
+  if (updates.title !== undefined)             dbUpdates.title             = updates.title;
+  if (updates.type !== undefined)              dbUpdates.type              = updates.type;
+  if (updates.category !== undefined)          dbUpdates.category          = updates.category;
+  if (updates.visibility !== undefined)        dbUpdates.visibility        = updates.visibility;
+  if (updates.automationPolicy !== undefined)  dbUpdates.automation_policy = updates.automationPolicy;
+  if (updates.startTime !== undefined)         dbUpdates.start_time        = updates.startTime.toISOString();
+  if (updates.endTime !== undefined)           dbUpdates.end_time          = updates.endTime?.toISOString() ?? null;
+  if (updates.allDay !== undefined)            dbUpdates.all_day           = updates.allDay;
+  if (updates.status !== undefined)            dbUpdates.status            = updates.status;
+  if (updates.locationAddress !== undefined)   dbUpdates.location_address  = updates.locationAddress ?? null;
+  if (updates.locationLat !== undefined)       dbUpdates.location_lat      = updates.locationLat ?? null;
+  if (updates.locationLng !== undefined)       dbUpdates.location_lng      = updates.locationLng ?? null;
+  if (updates.referenceUrl !== undefined)      dbUpdates.reference_url     = updates.referenceUrl ?? null;
+  if (updates.reminder !== undefined)          dbUpdates.reminder          = updates.reminder;
+  if (updates.repeat !== undefined)            dbUpdates.repeat            = updates.repeat;
+  if (updates.repeatEndDate !== undefined)     dbUpdates.repeat_end_date   = updates.repeatEndDate?.toISOString() ?? null;
+  if (updates.memo !== undefined)              dbUpdates.memo              = updates.memo ?? null;
+  if (updates.amount !== undefined)            dbUpdates.amount            = updates.amount ?? null;
+  if (updates.expenseCategory !== undefined)   dbUpdates.expense_category  = updates.expenseCategory ?? null;
+  if (updates.paymentMethod !== undefined)     dbUpdates.payment_method    = updates.paymentMethod ?? null;
 
   const { data: existing, error: fetchErr } = await supabase.from('schedules').select('*').eq('id', id).single();
-  
+
   if (!fetchErr && existing && existing.google_event_id) {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.provider_token) {
@@ -501,7 +640,19 @@ export async function updateSchedule(
   }
 
   const { error } = await supabase.from('schedules').update(dbUpdates).eq('id', id);
-  return !error;
+  if (error) return false;
+
+  // 참여자 업데이트 (participantIds가 전달된 경우)
+  if (updates.participantIds !== undefined) {
+    await supabase.from('schedule_participants').delete().eq('schedule_id', id);
+    if (updates.participantIds.length > 0) {
+      await supabase.from('schedule_participants').insert(
+        updates.participantIds.map((uid) => ({ schedule_id: id, user_id: uid }))
+      );
+    }
+  }
+
+  return true;
 }
 
 /** 일정 삭제 */
@@ -557,4 +708,35 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .update({ read: true })
     .eq('user_id', userId)
     .eq('read', false);
+}
+
+// ── FCM ─────────────────────────────────────────────────────
+
+/** FCM 토큰을 현재 사용자 프로필에 저장 */
+export async function saveFCMToken(token: string): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from('profiles')
+    .update({ fcm_token: token })
+    .eq('id', user.id);
+}
+
+/** 알림 레코드 생성 (DB 기록용) */
+export async function createNotification(params: {
+  userId: string;
+  scheduleId?: string;
+  title: string;
+  body: string;
+  type: Notification['type'];
+}): Promise<void> {
+  const supabase = createClient();
+  await supabase.from('notifications').insert({
+    user_id:     params.userId,
+    schedule_id: params.scheduleId ?? null,
+    title:       params.title,
+    body:        params.body,
+    type:        params.type,
+  });
 }

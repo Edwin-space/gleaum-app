@@ -16,17 +16,22 @@
 `src/app/invite/[code]/page.tsx` 구현 완료.
 비로그인 → `/login?next=` 파라미터로 OAuth 후 자동 복귀 → `joinFamilyByCode()` 자동 처리.
 
+### ✅ Google Calendar 양방향 동기화 — 코드 완료 (수동 설정 대기)
+
+**코드 작업 완료** (`src/lib/googleCalendar.ts` 구현됨):
+- `createGoogleEvent` / `updateGoogleEvent` / `deleteGoogleEvent` 구현 완료
+- `src/lib/db.ts`: 일정 CUD 시점에 Google Calendar와 동기화 로직 연결
+- `src/types/index.ts`: `googleEventId` 필드 추가 완료
+
+**🔧 사용자가 직접 수행해야 하는 작업 (미완료)**:
+1. Google Cloud Console → Calendar API 활성화
+2. Supabase SQL Editor → `schedules.google_event_id` 컬럼 존재 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
+
 ### 🟡 1회성 일정 단건 공유 (지인 초대용)
 **목적**: 그룹(가족/연인)에 가입시키지 않고, 특정 일정(친구 모임 등) 단 1건만 외부 지인에게 공유
 **구현 계획**:
 - 특정 `scheduleId` 기반의 외부 공개용 읽기 전용 뷰 페이지 (`/share/[scheduleId]`) 생성
 - 해당 링크를 받은 Guest 사용자는 로그인 없이(또는 간편 로그인 후) 해당 일정 정보만 열람 가능
-
-### ✅ Google Calendar 양방향 동기화 (코드 완료)
-> **중요**: 5월 4일 수동 인프라 설정(GCP API 활성화, DB 마이그레이션) 후 최종 테스트 예정
-**사전 조건**: Google Cloud Console에서 Calendar API 활성화 필요
-- `schedules` 테이블에 `google_event_id` 컬럼 추가 필요 (수동 작업 대기)
-- `src/lib/googleCalendar.ts` 구현 완료
 
 ### 🔴 스마트폰 기본 캘린더(OS Native Calendar) 동기화
 **목적**: 사용자의 iOS/Android 기기에 기본 내장된 캘린더 앱과 직접 연동
@@ -44,29 +49,55 @@
 
 ## Day 6 — 관계 유지 솔루션 & 푸시 알림
 
-### 🔴 Firebase Cloud Messaging (FCM) 설정
-**필요 작업**:
-1. Firebase 프로젝트 생성 및 FCM 서버 키 발급
-2. Vercel 환경변수 추가: `NEXT_PUBLIC_FIREBASE_*`
+### ✅ Firebase Cloud Messaging (FCM) 설정 — 완료
+- Firebase 프로젝트 생성 및 FCM v1 발송 구조 구현 완료
+- `public/firebase-messaging-sw.js` 서비스워커 생성 완료
+- `src/lib/firebase.ts`, `src/hooks/useFCM.ts`, `src/components/FCMProvider.tsx` 구현 완료
+- 로그인 사용자의 FCM 토큰을 `profiles.fcm_token`에 저장
 
-### 🔴 일정 상태 기반 실시간 알림
-- 일정 생성/수정 시 실시간 알림 발송 (커뮤니케이션 오차 제로화)
-- 설정된 `reminder` 시간 전 FCM 발송
+### ✅ 일정 리마인더 알림 시스템 — 완료
+- `src/app/api/cron/reminders/route.ts` 구현 완료
+- Supabase `pg_cron` + `pg_net`으로 5분마다 `/api/cron/reminders` 호출하도록 등록 완료
+- Vercel Hobby 플랜 제한 때문에 `vercel.json`의 Vercel Cron 설정은 제거됨
+- 설정된 `reminder` 분 전에 FCM 발송 + `notifications` 테이블 기록
+- Supabase에서 `pg_net` 호출 결과 확인 및 실행 완료
 
-### 🟡 자동 기념일/D-Day 리마인더 (관계 유지 특화)
-- 연인의 기념일, 가족 생일 등 특정 이벤트를 앱이 자동으로 계산하여 N일 전에 미리 알려주는 기능 추가 (Care without asking)
+### 🔴 자동화 정책 기반 상태 전이
+- 제품 방향이 개인 중심 + Space 확장형 서비스로 보정됨에 따라 `child` 전용 자동화 구현은 금지
+- `docs/12-product-model.md` 기준으로 `automation_policy` 기반 상태 전이 구현 필요
+- `completion_required`: 개인 루틴, 가족 케어, 자녀 일정, 심부름 등 완료 확인 일정 처리
+- `payment_due`: 개인/연인/가족 정기지출의 결제 예정/미납 알림 처리
+- 재알림 수동 발송 API는 구현됐으나, 자동 미완료/미납 판정과 대상자 규칙은 다음 단계
 
 ---
 
-## Day 7 — 나머지 화면 디자인 리뉴얼
+## Day 7 — 전 페이지 프리미엄 UI 리뉴얼
 
-### ✅ 전 페이지 Green/Teal/Blue 글래스모피즘 리뉴얼 — 완료
-- 폐기된 보라색 테마를 완전히 걷어내고, 브랜드 아이덴티티에 맞는 신규 토큰 적용 완료
-- `DESIGN_PREVIEW.html` 시연용 프로토타입에 8개 화면 적용 검증 완료
+### ✅ 전 페이지 프리미엄 UI 리뉴얼 — 완료
+
+모든 페이지에 Glassmorphism + Blue/Teal/Green 브랜드 컬러 통일 적용됨:
+
+| 페이지 | 완료 내용 |
+|--------|----------|
+| `/schedules/new` | 이모지 유형 칩, 블루 포커스 테두리, 브랜드 그라디언트 저장 버튼 |
+| `/schedules/[id]` | 유형별 그라디언트 히어로 헤더, 24px 둥근 카드, 블루 버튼 |
+| `/schedules/children` | SVG 원형 완료율 프로그레스, 블루 탭/스텝퍼 |
+| `/family` | 브랜드 그라디언트 히어로 카드, glass-card |
+| `/budget` | 브랜드 그라디언트 요약 카드, 카테고리 아이콘 칩+진행률 바 |
+| `/mypage` | 브랜드 그라디언트 프로필 히어로, SVG 아이콘 설정 행 |
+| `/notifications` | SVG 타입별 원형 아이콘, 미읽음 컬러 테두리 |
+| `/login` | 메쉬 그라디언트 배경, glass-card, 다크 버튼 + Google G 로고 |
 
 ---
 
 ## Day 8 — 품질 및 완성도
+
+### 🔴 개인 중심 + Space 확장형 모델 마이그레이션
+- [ ] `family_groups.type` 추가로 기존 가족 그룹을 Space로 확장
+- [ ] `schedules.category`, `schedules.visibility`, `schedules.automation_policy` 추가
+- [ ] 기존 `schedule.type` 값을 신규 축으로 매핑
+- [ ] 중기적으로 `spaces`, `space_members`, `schedule_assignees`, `schedule_observers`, `notification_rules` 설계
+- [ ] 첫 로그인 시 `"나의 공간"` 대신 개인 Space 또는 선택형 온보딩으로 전환 검토
 
 ### ✅ PWA 완성 (완료)
 - `public/manifest.json` 생성 및 `standalone` 디스플레이 모드 적용 완료
@@ -77,13 +108,16 @@
 - Google Cloud Console → OAuth 동의화면 → **앱 게시**
 - 현재는 테스트 사용자만 로그인 가능
 
-### 🟢 일정 수정 기능
-- `/schedules/[id]/edit` 페이지 미구현
-- 현재는 삭제만 가능
-
-### 🟢 통계 및 분석 페이지 (관계 밀도 시각화)
-- 특정 기간 동안 연인/가족과 함께 보낸 시간 통계 제공
+### 🟢 통계 및 분석 페이지
+- 월간 자녀 일정 완료율
 - 카테고리별 지출 트렌드 차트
+
+### 🟡 마이페이지 PC UI 최적화
+- 마이페이지 설정 및 프로필 수정 영역 PC 대시보드 구조화
+
+### 🔴 PWA 스플래시 스크린 완전 신규 구현
+- `_document.tsx` 또는 인라인 `<script>` 방식으로 초기 흰 화면 완전 차단
+- 스플래시 `#0F1A2E` → 로그인 화면 `#FAFAFD` 자연스러운 색상 전환
 
 ---
 
@@ -92,6 +126,5 @@
 | 항목 | 내용 | 파일 |
 |------|------|------|
 | `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
-| 일정 수정 페이지 없음 | `/schedules/[id]`의 "수정" 버튼 미연결 | `src/app/schedules/[id]/page.tsx` |
-| 재알림 기능 미구현 | UI는 있으나 실제 발송 로직 없음 | 전반 |
+| 자동화 정책 기반 상태 전이 미구현 | `child` 하드코딩 대신 `automation_policy` 기반 처리 필요 | cron/API |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |

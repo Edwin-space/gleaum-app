@@ -14,6 +14,7 @@ import {
   PAYMENT_METHOD_LABELS, REPEAT_LABELS,
 } from '@/types';
 import type { Schedule, ScheduleStatus } from '@/types';
+import { notifToast } from '@/lib/toast';
 
 // 유형별 설정
 const typeConfig = {
@@ -119,7 +120,8 @@ export default function ScheduleDetailPage() {
             일정 상세
           </span>
           <button
-            className="px-3 py-1.5 rounded-full text-[13px] font-semibold"
+            onClick={() => router.push(`/schedules/${id}/edit`)}
+            className="px-3 py-1.5 rounded-full text-[13px] font-semibold active:scale-95 transition-transform"
             style={{ background: 'rgba(255,255,255,0.20)', color: 'white' }}
           >
             수정
@@ -307,7 +309,7 @@ export default function ScheduleDetailPage() {
           )}
           {schedule.type === 'child' && (schedule.status === 'pending' || schedule.status === 'missed') && (
             <button
-              onClick={() => alert(`📣 ${schedule?.title} 재알림을 발송했습니다.`)}
+              onClick={() => notifToast.sent(schedule?.title ?? '')}
               className="w-full py-4 rounded-[20px] text-[15px] font-bold active:scale-[0.98] transition-transform"
               style={{
                 background: 'rgba(0,132,204,0.08)',

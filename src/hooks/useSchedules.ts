@@ -38,7 +38,7 @@ export function useSchedules(familyGroupId: string | null): SchedulesState {
   }, [familyGroupId]);
 
   useEffect(() => {
-    load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   const create = useCallback(async (input: CreateScheduleInput): Promise<Schedule | null> => {

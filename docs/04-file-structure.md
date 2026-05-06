@@ -30,7 +30,8 @@
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── AppHeader.tsx      # 공통 헤더 (뒤로가기, 알림, 타이틀)
-│   │   │   └── BottomNav.tsx      # 플로팅 하단 네비 + FAB
+│   │   │   ├── BottomNav.tsx      # 모바일 플로팅 하단 네비 + FAB
+│   │   │   └── DesktopSidebar.tsx # PC 전용 좌측 사이드바 (1024px 이상)
 │   │   ├── calendar/
 │   │   │   └── CalendarView.tsx   # 월간/주간/일간 캘린더 컴포넌트
 │   │   └── ui/

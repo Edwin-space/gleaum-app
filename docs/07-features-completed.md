@@ -27,14 +27,6 @@
 - [x] `/notifications` — 알림 목록
 - [x] `/settings/calendar` — 캘린더 연동 설정 페이지
 
-### 구현된 컴포넌트
-- [x] `AppHeader` — 공통 헤더
-- [x] `BottomNav` — 하단 네비게이션
-- [x] `CalendarView` — 월간/주간/일간 캘린더
-- [x] `ScheduleCard` — 일정 카드
-- [x] `TypeBadge`, `StatusBadge` — 배지
-- [x] `GleaumLogo`, `GleaumAppIcon` — SVG 로고
-
 ---
 
 ## Day 3 — 구글 로그인 + 배포 (완료)
@@ -52,7 +44,6 @@
 ## Day 4 — Supabase DB 실데이터 연동 (완료)
 
 - [x] DB 스키마 생성 (`supabase/schema.sql`)
-  - `family_groups`, `profiles`, `schedules`, `schedule_participants`, `notifications`
 - [x] RLS 정책 설정 (가족 그룹 단위 보안)
 - [x] 자동 트리거 (신규 사용자 프로필 자동 생성, updated_at 자동 갱신)
 - [x] `src/lib/db.ts` — 모든 DB 쿼리 함수 구현
@@ -65,24 +56,6 @@
 - [x] 일정 상태 변경 → 실 DB 업데이트
 - [x] 일정 삭제 → 실 DB 삭제
 - [x] 가족 초대 코드 생성 및 합류 기능
-
----
-
-## 디자인 리뉴얼 (완료)
-
-- [x] 오리지널 디자인 시스템 기반 Green/Teal/Blue 테마 전면 적용
-- [x] 배경 블롭 그라디언트 3개 (Green/Teal/Blue)
-- [x] BottomNav → 플로팅 pill + 보라 FAB 중앙 돌출
-- [x] ScheduleCard → 좌측 바 제거, 아이콘 원형 파스텔 배경
-- [x] 홈 대시보드 → 인사 헤더 + pill 뷰 토글 + 원형 프로그레스 바
-- [x] AppHeader → 반투명 블러
-- [x] 애니메이션 추가 (`fadeInUp`, `slideUp`)
-- [x] 로그인 페이지 전면 교체 (블롭 + Brand Blue 버튼)
-- [x] 그림자 시스템 (`shadow-card`, `shadow-fab`, `shadow-modal`)
-- [x] DESIGN_HANDOFF_TO_CLAUDE.md 작성
-- [x] DESIGN_PREVIEW.html 인터랙티브 프로토타입
-
----
 
 ---
 
@@ -110,36 +83,68 @@
 
 ---
 
-## 현재 앱 상태
+## Day 6 — FCM 푸시 알림 + Supabase Cron 리마인더 (완료 - 2026-05-04)
 
-- **배포 URL**: https://gleaum-app.vercel.app
-- **로그인**: 구글 OAuth ✅
-- **데이터**: 실 Supabase DB ✅
-- **일정 CRUD**: 생성/조회/상태변경/삭제 ✅
-- **가족 관리**: 그룹 생성, 초대코드 생성, 합류 ✅
-- **초대 링크**: `/invite/[code]` 완전 작동 ✅
-- **디자인**: 전 페이지 Green/Teal/Blue (글래스모피즘) 통일 완료 ✅
+- [x] Firebase Cloud Messaging 클라이언트 연동
+- [x] 로그인 사용자 FCM 토큰 저장 (`profiles.fcm_token`)
+- [x] FCM HTTP v1 서버 발송 구현 (`src/lib/fcm.ts`)
+- [x] 수동 재알림 API (`/api/notifications/renotify`)
+- [x] 일정 리마인더 크론 API (`/api/cron/reminders`)
+- [x] Supabase `pg_cron` + `pg_net` 연동 완료
 
 ---
 
-## 오리지널 브랜드 일관성 통합 (완료)
+## 제품 모델 재정의 — 개인 중심 + Space 확장형 (완료 - 2026-05-04)
 
-- [x] **브랜드 컬러 롤백**: `#5A32FA` (Vibrant Purple) → 오리지널 `gleaum_design_system.html` 기반 Green/Teal/Blue (`#0084CC`, `#0CC9B5`, `#2EE895`)로 100% 복구 완료
-- [x] **로고 적용**: `AppHeader` 및 홈 화면 최상단에 `GleaumLogo` SVG 다이아몬드 로고 및 "나, 그리고 연인/가족의 일상 네트워크" 슬로건 적용 완료
-- [x] **UI/UX 구조 유지**: 피그마의 둥근 카드 (`radius: 24px`), 블롭(Blob) 배경, 모던 그림자 효과 등 형태적 구조는 유지하되 컬러만 브랜드 오리지널 컬러로 완벽 치환
-- [x] `BottomNav` FAB 버튼 및 아이콘 컬러 → Brand Blue 및 Brand Gradient로 치환
-- [x] **빌드 테스트 통과**: 타입 및 린트 오류 없이 `npm run build` 통과 확인
+- [x] 개인 중심 + Space 확장형 토털 라이프 관리 서비스로 비전 재정의
+- [x] `docs/12-product-model.md` 작성 및 적용
+- [x] `schedule.type`을 Space / Category / Visibility / Automation Policy 축으로 분리 설계
+
+---
+
+## 개인화 온보딩 1차 (완료 - 2026-05-04)
+
+- [x] `/onboarding` 단계형 플로우 구현
+- [x] 시작 목적/관심사 기반 개인화 설정 저장
+- [x] `profiles` 테이블 개인화 컬럼 확장 및 SQL 적용
+- [x] 신규 사용자 기본 그룹 이름을 `"나의 공간"`으로 전환
+
+---
+
+## 프리미엄 UI/UX 리뉴얼 (완료 - 2026-04-30)
+
+- [x] **Glassmorphism 도입**: `.glass-card` (반투명 유리 질감) 전면 적용
+- [x] **Mesh Gradient 배경**: 애니메이션 기반 유동적인 메쉬 그라디언트 교체
+- [x] **하이엔드 타이포그래피**: `Outfit` (영문) + `Pretendard` (국문) 조합 개편
+- [x] **아이콘 시스템 정교화**: 정교한 SVG 라인 아이콘 통일
+
+---
+
+## Sprint 2 + 적응형(Adaptive) UI 구현 (2026-05-04)
+
+### 토스트(Toast) 시스템
+- [x] `sonner` 라이브러리 기반 전역 토스트 시스템 구축
+- [x] 기존 `alert()` 전체 토스트 대체 완료
+
+### 캘린더 뷰 확장
+- [x] 주간(타임라인) / 일간 뷰 추가 및 월간 뷰 연동
+- [x] 현재 시간 표시 및 일정 블록 자동 배치 로직 강화
+
+### 적응형(Adaptive) UI
+- [x] `DesktopSidebar.tsx` 및 PC 전용 2컬럼/3컬럼 레이아웃 적용
+- [x] 1024px 이상 환경에서 사이드바 자동 전환 및 그리드 최적화
 
 ---
 
 ## 앱 설치 및 접근성 (PWA) (완료)
 
-- [x] **매니페스트 구성**: `public/manifest.json` 생성 (`standalone` 모드 지원)
-- [x] **동적 앱 로고**: `src/app/icon.tsx` 를 사용한 고화질 다이아몬드 로고 자동 생성
-- [x] **오프라인/설치 지원**: `public/sw.js` (서비스 워커) 생성 및 `PwaRegistry.tsx`를 통한 글로벌 등록 완료
+- [x] **매니페스트 구성**: `public/manifest.json` 생성 (`standalone` 모드)
+- [x] **서비스 워커**: `public/sw.js` 및 `PwaRegistry.tsx`를 통한 설치 지원
+- [x] **아이콘**: Next.js `app/icon.tsx` 및 정적 아이콘 세트 구성 완료
 
 ---
 
 ## 인프라 및 인증 (완료)
 
-- [x] **OAuth 도메인 리다이렉트 수정**: Vercel 배포 도메인이 아닌 실제 접속 도메인(`host`)으로 리다이렉트되도록 `auth/callback` 로직 수정 완료 (도메인 불일치로 인한 세션 유실 문제 해결)
+- [x] **OAuth 도메인 리다이렉트 수정**: 실제 접속 도메인(`host`) 기반 리다이렉트 보장
+- [x] **Supabase RLS 보안 정책** 강화

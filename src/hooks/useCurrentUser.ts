@@ -30,7 +30,7 @@ export function useCurrentUser(): CurrentUserState {
   }, []);
 
   useEffect(() => {
-    load();
+    void Promise.resolve().then(load);
 
     // 세션 변경 시 재로드
     const supabase = createClient();
@@ -43,7 +43,10 @@ export function useCurrentUser(): CurrentUserState {
   const user: User | null = profile
     ? {
         id:            profile.id,
-        name:          profile.name ?? '사용자',
+        name:          profile.display_name ?? profile.name ?? '사용자',
+        displayName:   profile.display_name ?? profile.name ?? undefined,
+        realName:      profile.real_name ?? undefined,
+        nameDisplayMode: profile.name_display_mode ?? 'nickname',
         email:         profile.email ?? '',
         avatar:        profile.avatar ?? '👤',
         role:          profile.role,

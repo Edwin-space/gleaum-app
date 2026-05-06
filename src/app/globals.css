@@ -35,15 +35,54 @@ body {
   letter-spacing: -0.374px;
 }
 
-/* ── 모바일 앱 쉘 ── */
+/* ── 모바일 앱 셸 ── */
 #app-shell {
-  max-width: 430px;
+  width: 100%;
   min-height: 100dvh;
   margin: 0 auto;
   background: transparent;
   position: relative;
   overflow-x: hidden;
-  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+}
+
+/* 모바일/앱 환경 (기존 스타일 유지) */
+@media (max-width: 1023px) {
+  #app-shell {
+    max-width: 430px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  }
+}
+
+/* 🖥️ PC 대시보드 레이아웃 (1024px 이상) */
+@media (min-width: 1024px) {
+  #app-shell {
+    max-width: 100%; /* 전체 가로 사용 */
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+
+  /* 사이드바가 있는 구조에서 콘텐츠 영역 */
+  .pc-content-area {
+    flex: 1;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 40px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 랜딩/로그인 등 전체 화면 페이지에서 패딩 제거 */
+  .pc-content-area:has(.landing-fullscreen) {
+    padding: 0;
+  }
+
+  /* PC 그리드 시스템 */
+  .pc-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 32px;
+  }
 }
 
 /* 메쉬 그라디언트가 앱 셸 내부에도 적용되도록 body 배경 설정 */
@@ -191,3 +230,51 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
 
 /* ── 앱 셸 위 콘텐츠가 z-index 1 이상이어야 블롭 위에 뜸 ── */
 #app-shell > * { position: relative; z-index: 1; }
+
+/* ── PWA 스플래시 스크린 ─────────────────────────────────────
+   JS 로드 전 흰 화면 구간을 브랜드 배경으로 채웁니다.
+   body::before 가상 요소로 구현하여 별도 DOM 없이 동작합니다.
+   #app-shell 첫 자식이 렌더되면 덮어씌워집니다.
+──────────────────────────────────────────────────────────── */
+
+/* PWA 독립실행 모드에서만 스플래시 표시 */
+@media all and (display-mode: standalone) {
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #0F1A2E;
+    /* 로고 SVG를 인라인 data URI로 중앙 표시 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232EE895'/%3E%3Cstop offset='50%25' stop-color='%230CC9B5'/%3E%3Cstop offset='100%25' stop-color='%230084CC'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='72' height='72' rx='18' fill='url(%23g)'/%3E%3Ctext x='36' y='50' text-anchor='middle' font-size='38' font-family='Arial' fill='white'%3E✦%3C/text%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    /* 앱 로드 후 페이드아웃 */
+    animation: splashFadeOut 0.4s ease 0.8s forwards;
+    pointer-events: none;
+  }
+}
+
+@keyframes splashFadeOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+/* 스플래시 로고 펄스 (별도 pseudo-element 불가, ::before로만) */
+@media all and (display-mode: standalone) {
+  body::after {
+    content: '글리움';
+    position: fixed;
+    bottom: calc(50% - 80px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    animation: splashFadeOut 0.4s ease 0.8s forwards;
+    pointer-events: none;
+  }
+}
+

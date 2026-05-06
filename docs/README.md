@@ -2,7 +2,7 @@
 
 > **모든 AI 어시스턴트에게**: 이 `docs/` 폴더는 글리움 프로젝트의 완전한 인수인계 문서입니다.
 > 작업을 시작하기 전에 반드시 **모든 문서를 순서대로 읽어주세요.**
-> 특히 `10-ai-handoff-guide.md`를 가장 먼저 확인하세요.
+> 특히 `10-ai-handoff-guide.md`와 `12-product-model.md`를 가장 먼저 확인하세요.
 
 ---
 
@@ -20,14 +20,16 @@
 | `08-features-pending.md`   | 미완료/예정 기능 및 우선순위 |
 | `09-deployment.md`         | 배포 환경, 환경변수, CI/CD |
 | `10-ai-handoff-guide.md`   | ⭐ AI 인수인계 핵심 가이드 |
+| `11-improvement-audit.md`  | 개선/추가 기능 종합 진단 |
+| `12-product-model.md`      | ⭐ 개인 중심 + Space 확장형 제품 모델 재정의 |
 
 ---
 
 ## ⚡ 빠른 컨텍스트
 
-- **서비스명**: 글리움 (gleaum)
-- **성격**: 개인/가족/연인 공유 일상 네트워크 앱 (iOS/Android/Web PWA)
-- **현재 단계**: Day 4 완료 (DB 실데이터 연동 + 신규 디자인 리뉴얼)
+- **서비스명**: 글리움 (Gleaum)
+- **성격**: 개인 중심 + 친구/연인/가족 Space 확장형 토털 라이프 관리 서비스 (iOS/Android/Web PWA)
+- **현재 단계**: Day 6+ 완료 (FCM/Supabase Cron 완료, 개인 중심 모델 재정의, 단계형 온보딩 1차 완료)
 - **배포 URL**: https://gleaum-app.vercel.app
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
 
@@ -35,10 +37,10 @@
 
 ## 🚨 작업 시 절대 규칙
 
-1. **비즈니스 로직 (Supabase 연동, 훅, 타입) 절대 건드리지 말 것** — 사전 상의 필수
+1. **제품 모델 우선 확인** — 신규 기능은 반드시 `12-product-model.md`의 개인 기본 구간 + Space / Category / Automation Policy 기준으로 설계
 2. **`src/lib/db.ts`** — 모든 DB 접근의 단일 진입점, 구조 변경 금지
-3. **디자인 시스템** — 구버전 보라색 테마는 폐기되었으며, 반드시 `DESIGN.md` 명세(Brand Green/Teal/Blue) 준수
-4. **한국어 폰트** `var(--font-kr)` — 반드시 적용 (Pretendard)
+3. **Purple(`#5A32FA`) 사용 금지** — 브랜드 컬러는 Green/Teal/Blue (`#2EE895`, `#0CC9B5`, `#0084CC`)
+4. **폰트** `Pretendard` + `Outfit` 조합 유지
 5. **빌드 확인 필수** — `npm run build` 후 에러 없을 때만 push
 
-마지막 업데이트: 2026-04-30
+마지막 업데이트: 2026-05-04

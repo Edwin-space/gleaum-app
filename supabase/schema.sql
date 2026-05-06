@@ -16,11 +16,20 @@ create table if not exists family_groups (
 create table if not exists profiles (
   id              uuid primary key references auth.users(id) on delete cascade,
   name            text,
+  display_name    text,
+  real_name       text,
+  name_display_mode text check (name_display_mode in ('nickname','real_name')) default 'nickname',
   email           text,
   avatar          text default '👤',
   role            text check (role in ('parent', 'child', 'guest')) default 'parent',
   family_group_id uuid references family_groups(id),
   google_id       text,
+  fcm_token       text,
+  onboarding_completed_at timestamptz,
+  timezone        text default 'Asia/Seoul',
+  locale          text default 'ko-KR',
+  preferences     jsonb default '{}'::jsonb,
+  notification_settings jsonb default '{}'::jsonb,
   updated_at      timestamptz default now()
 );
 
@@ -47,6 +56,7 @@ create table if not exists schedules (
   amount           int,
   expense_category text check (expense_category in ('education','housing','utility','insurance','subscription','other')),
   payment_method   text check (payment_method in ('auto','card','cash','other')),
+  google_event_id  text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );
@@ -91,13 +101,18 @@ create or replace trigger profiles_updated_at
 create or replace function handle_new_user()
 returns trigger as $$
 begin
-  insert into profiles (id, name, email, avatar, role)
+  insert into profiles (id, name, display_name, email, avatar, role, timezone, locale, preferences, notification_settings)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1), '사용자'),
     new.email,
     '👤',
-    'parent'
+    'parent',
+    'Asia/Seoul',
+    'ko-KR',
+    '{}'::jsonb,
+    '{}'::jsonb
   )
   on conflict (id) do nothing;
   return new;

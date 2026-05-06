@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import PwaRegistry from '@/components/PwaRegistry';
 import './globals.css';
+import { FCMProvider } from '@/components/FCMProvider';
+import { PWARegister } from '@/components/PWARegister';
+import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { Toaster } from 'sonner';
+import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 
 export const metadata: Metadata = {
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
@@ -32,6 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
           rel="stylesheet"
         />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="h-full">
         {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
@@ -41,7 +50,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mesh-blob mesh-blob-3" />
         </div>
         <div id="app-shell">
-          {children}
+          <DesktopSidebar />
+          <div className="pc-content-area w-full">
+            <PWARegister />
+            <PWAInstallBanner />
+            <FCMProvider>
+              {children}
+            </FCMProvider>
+          </div>
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                borderRadius: '16px',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                border: '1px solid rgba(255,255,255,0.8)',
+              },
+            }}
+            offset={96}
+            richColors
+          />
         </div>
         <PwaRegistry />
       </body>

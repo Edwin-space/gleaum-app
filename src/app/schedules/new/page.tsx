@@ -14,6 +14,8 @@ import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useFamily } from '@/hooks/useFamily';
 import { useSchedules } from '@/hooks/useSchedules';
+import { createSchedule } from '@/lib/db';
+import { scheduleToast, toastError } from '@/lib/toast';
 
 // 입력 공통 스타일
 const inputBase = 'w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-white border-2 outline-none transition-all';
@@ -67,8 +69,8 @@ export default function NewSchedulePage() {
   };
 
   const handleSave = async () => {
-    if (!title.trim()) { alert('제목을 입력해주세요'); return; }
-    if (!date) { alert('날짜를 선택해주세요'); return; }
+    if (!title.trim()) { toastError('제목을 입력해주세요'); return; }
+    if (!date) { toastError('날짜를 선택해주세요'); return; }
     setSaving(true);
     try {
       const startDateTime = new Date(`${date}T${startTime || '00:00'}:00`);
@@ -91,7 +93,7 @@ export default function NewSchedulePage() {
       router.back();
     } catch (e) {
       console.error('저장 오류:', e);
-      alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+      scheduleToast.error('저장');
     } finally {
       setSaving(false);
     }
