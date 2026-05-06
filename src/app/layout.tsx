@@ -8,6 +8,8 @@ import { Toaster } from 'sonner';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 
 import { BottomNav } from '@/components/layout/BottomNav';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
@@ -80,6 +82,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           richColors
         />
         <PwaRegistry />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
