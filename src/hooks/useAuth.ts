@@ -54,6 +54,34 @@ export function useAuth() {
     if (error) console.error('Google 로그인 오류:', error.message);
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+  };
+
+  const updatePassword = async (password: string) => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+    if (error) throw error;
+  };
+
+  const linkProvider = async (provider: 'google' | 'apple' | 'naver') => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.linkIdentity({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) throw error;
+  };
+
   const signOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -63,5 +91,16 @@ export function useAuth() {
   // 구글 토큰 (Calendar/Drive API 용)
   const getGoogleToken = () => session?.provider_token ?? null;
 
-  return { user, session, loading, signInWithGoogle, signOut, getGoogleToken };
+  return { 
+    user, 
+    session, 
+    loading, 
+    signInWithGoogle, 
+    signInWithEmail,
+    updatePassword,
+    linkProvider,
+    signOut, 
+    getGoogleToken 
+  };
 }
+

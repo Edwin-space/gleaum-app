@@ -112,6 +112,16 @@ export default function MyPage() {
   // 회원탈퇴 확인 모달
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // 비밀번호 설정 모달
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  const { updatePassword, linkProvider } = useAuth();
+
+
   // profile 로드 후 알림 설정 + 프로필 편집 기본값 세팅
   useEffect(() => {
     if (!profile) return;
@@ -144,7 +154,37 @@ export default function MyPage() {
     }
   };
 
+  const handleSavePassword = async () => {
+    if (newPassword.length < 6) {
+      setPasswordError('비밀번호는 6자 이상이어야 합니다.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    setSavingPassword(true);
+    setPasswordError('');
+    try {
+      await updatePassword(newPassword);
+      profileToast.success();
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordError('비밀번호 설정에 실패했습니다.');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleLinkProvider = async (provider: 'apple' | 'naver') => {
+    profileToast.info(`${provider === 'apple' ? 'Apple' : 'Naver'} 연동 기능은 준비 중입니다.`);
+    // 추후 활성화: await linkProvider(provider);
+  };
+
   const handleDeleteAccount = async () => {
+
     await signOut();
     // 실제 탈퇴 처리는 서버 액션 필요 (현재는 로그아웃 처리)
     setShowDeleteModal(false);
@@ -240,12 +280,42 @@ export default function MyPage() {
         />
       </div>
 
+      {/* 계정 보안 */}
+      <div className="glass-card mx-4 mt-3 rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]">
+        <SectionHeader title="계정 보안" />
+        <SettingRow 
+          icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />} 
+          label="비밀번호 설정" 
+          value="이메일 로그인용"
+          onClick={() => setShowPasswordModal(true)} 
+        />
+      </div>
+
       {/* 연동 서비스 */}
       <div className="glass-card mx-4 mt-3 rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]">
-        <SectionHeader title="연동 서비스" />
-        <SettingRow icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />} label="구글 캘린더 연동" value="연동됨" href="/settings/calendar" />
-        <SettingRow icon={<Icon d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75" />} label="나의 그룹 관리" href="/family" />
+        <SectionHeader title="소셜 계정 연동" />
+        <SettingRow 
+          icon={<Icon d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />} 
+          label="Apple로 로그인" 
+          isToggle 
+          toggled={false} 
+          onToggle={() => handleLinkProvider('apple')} 
+        />
+        <SettingRow 
+          icon={<Icon d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />} 
+          label="Naver로 로그인" 
+          isToggle 
+          toggled={false} 
+          onToggle={() => handleLinkProvider('naver')} 
+        />
       </div>
+
+      {/* 외부 연동 */}
+      <div className="glass-card mx-4 mt-3 rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]">
+        <SectionHeader title="외부 캘린더 연동" />
+        <SettingRow icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" />} label="구글 캘린더" value="연동됨" href="/settings/calendar" />
+      </div>
+
 
       {/* 앱 정보 */}
       <div className="glass-card mx-4 mt-3 rounded-[20px] overflow-hidden divide-y divide-[rgba(0,132,204,0.06)]">
@@ -343,8 +413,72 @@ export default function MyPage() {
         </div>
       )}
 
+      {/* ── 비밀번호 설정 모달 ── */}
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowPasswordModal(false)}
+        >
+          <div
+            className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-12 animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
+            <p className="text-[20px] font-bold mb-1" style={{ color: '#1A1B2E' }}>비밀번호 설정</p>
+            <p className="text-[13px] text-[#8E8E93] mb-6">이제 이메일과 비밀번호로도 로그인할 수 있습니다.</p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-[11px] font-bold tracking-widest uppercase mb-2 block" style={{ color: '#8E8E93' }}>새 비밀번호</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="6자 이상 입력"
+                  className="w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-[#F5F5F7] border-2 outline-none transition-all"
+                  style={{ borderColor: newPassword ? 'var(--brand-blue)' : 'transparent' }}
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold tracking-widest uppercase mb-2 block" style={{ color: '#8E8E93' }}>비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="다시 한번 입력"
+                  className="w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-[#F5F5F7] border-2 outline-none transition-all"
+                  style={{ borderColor: confirmPassword === newPassword && confirmPassword ? 'var(--brand-blue)' : 'transparent' }}
+                />
+              </div>
+            </div>
+
+            {passwordError && <p className="text-[13px] text-red-500 font-bold mb-4 ml-1">{passwordError}</p>}
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="h-[52px] rounded-[16px] text-[15px] font-bold"
+                style={{ border: '2px solid rgba(0,132,204,0.15)', color: '#8E8E93' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSavePassword}
+                disabled={savingPassword || !newPassword || !confirmPassword}
+                className="h-[52px] rounded-[16px] text-[15px] font-bold text-white disabled:opacity-60 active:scale-95 transition-all"
+                style={{ background: 'var(--brand-gradient)' }}
+              >
+                {savingPassword ? '설정 중...' : '설정 완료'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 회원탈퇴 확인 모달 ── */}
       {showDeleteModal && (
+
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
           style={{ background: 'rgba(0,0,0,0.5)' }}
