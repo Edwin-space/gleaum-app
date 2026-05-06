@@ -354,9 +354,10 @@ export async function createSpace(name: string): Promise<string | null> {
     .single();
 
   if (groupError || !group) {
-    console.error('Space creation error:', groupError?.message);
+    console.error('Space creation error (Check RLS Policies):', groupError?.message);
     return null;
   }
+
 
   await supabase
     .from('profiles')
@@ -410,9 +411,10 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
       if (spaceId) {
         profile.family_group_id = spaceId;
       }
-    } catch (err) {
-      console.warn('Space auto-creation skipped:', err);
+    } catch (err: any) {
+      console.warn('Space auto-creation skipped. This is usually due to Supabase RLS policies:', err.message);
     }
+
   }
 
 

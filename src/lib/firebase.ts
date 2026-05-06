@@ -4,13 +4,16 @@
  */
 
 const firebaseConfig = {
-  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
 };
+
+const isFirebaseValid = !!firebaseConfig.projectId && !!firebaseConfig.apiKey;
+
 
 /**
  * 브라우저 알림 권한 요청 후 FCM 토큰 반환
@@ -26,7 +29,8 @@ export async function requestFCMToken(): Promise<string | null> {
     const { getMessaging, getToken, isSupported } = await import('firebase/messaging');
 
     const supported = await isSupported();
-    if (!supported) return null;
+    if (!supported || !isFirebaseValid) return null;
+
 
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const messaging = getMessaging(app);
@@ -64,7 +68,8 @@ export async function onForegroundMessage(
     const { getMessaging, onMessage, isSupported } = await import('firebase/messaging');
 
     const supported = await isSupported();
-    if (!supported) return () => {};
+    if (!supported || !isFirebaseValid) return () => {};
+
 
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const messaging = getMessaging(app);
