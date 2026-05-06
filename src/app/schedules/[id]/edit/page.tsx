@@ -40,10 +40,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function EditSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { spaceId } = useCurrentUser();
+  const { user, spaceId } = useCurrentUser();
   const { space: group, members } = useSpace(spaceId);
 
   const { refresh } = useSchedules(spaceId);
+
 
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);

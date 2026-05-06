@@ -42,7 +42,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function NewSchedulePage() {
   const router = useRouter();
-  const { spaceId } = useCurrentUser();
+  const { user, spaceId } = useCurrentUser();
   const { space: group, members } = useSpace(spaceId);
   const { create } = useSchedules(spaceId);
 
