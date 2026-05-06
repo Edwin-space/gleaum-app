@@ -121,7 +121,7 @@ export default function MyPage() {
     if (familyGroupId) {
       getMyPageInsights(familyGroupId).then(setInsights);
     }
-    
+
     // [강제 조치] 혹시 모를 스크롤 락 및 터치 차단 해제
     document.body.classList.remove('antigravity-scroll-lock');
     document.body.style.overflow = '';
@@ -182,28 +182,30 @@ export default function MyPage() {
 
   return (
     <div className="min-h-dvh pb-32 bg-transparent lg:max-w-[1440px] lg:mx-auto">
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 40,
-        padding: '48px 20px 16px',
-        background: 'rgba(250,250,253,0.7)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-ink)', letterSpacing: '-0.5px', margin: 0 }}>
-            마이페이지
-          </h1>
-        </div>
-      </header>
 
-      {/* ── [HERO] 프리미엄 대시보드 ── */}
-      <div className="px-6 mt-6 mb-8">
-        <div className="relative p-8 rounded-[48px] overflow-hidden text-white shadow-2xl animate-fade-in" style={{ background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)' }}>
+      {/* ── [HERO] 프리미엄 대시보드 — starts at very top ── */}
+      <div className="mb-8">
+        <div
+          className="relative overflow-hidden text-white shadow-2xl animate-fade-in"
+          style={{
+            background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+            borderRadius: '0 0 48px 48px',
+            paddingTop: 'calc(env(safe-area-inset-top) + 48px)',
+            paddingBottom: '32px',
+            paddingLeft: '32px',
+            paddingRight: '32px',
+          }}
+        >
           {/* 장식용 메쉬 */}
           <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-brand-blue/20 blur-[80px] rounded-full" />
           <div className="absolute bottom-[-30px] left-[-30px] w-48 h-48 bg-brand-teal/10 blur-[60px] rounded-full" />
 
           <div className="relative z-10">
+            {/* Page label */}
+            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '20px' }}>
+              마이페이지
+            </p>
+
             <div className="flex items-center gap-5 mb-8">
               <div className="w-20 h-20 rounded-[32px] bg-white/10 backdrop-blur-md flex items-center justify-center text-[40px] border border-white/20 shadow-inner">
                 {user?.avatar ?? '👤'}
@@ -246,7 +248,7 @@ export default function MyPage() {
           <div>
             <h3 className="text-[15px] font-black text-[#1A1B2E] mb-1">오늘의 한 줄 리포트</h3>
             <p className="text-[13px] text-[#8E8E93] leading-relaxed font-bold">
-              {insights && insights.upcomingCount > 0 
+              {insights && insights.upcomingCount > 0
                 ? `이번 주에는 ${insights.upcomingCount}개의 소중한 공간 일정이 기다리고 있어요. 미리 준비해볼까요?`
                 : "공간이 한산한 편이네요. 멤버들과 여유로운 시간을 계획해 보는 건 어떨까요?"}
 
@@ -259,16 +261,16 @@ export default function MyPage() {
       <div className="px-6 mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
         <div className="glass-card rounded-[40px] overflow-hidden shadow-sm border border-white/60 divide-y divide-gray-50">
           <SectionHeader title="계정 및 보안" />
-          <SettingRow 
-            icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#0084CC" />} 
-            label="비밀번호 설정" 
+          <SettingRow
+            icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#0084CC" />}
+            label="비밀번호 설정"
             value="이메일 로그인 전용"
-            onClick={() => setShowPasswordModal(true)} 
+            onClick={() => setShowPasswordModal(true)}
           />
-          <SettingRow 
-            icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />} 
-            label="공간 관리 및 초대" 
-            href="/family" 
+          <SettingRow
+            icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />}
+            label="공간 관리 및 초대"
+            href="/family"
           />
 
         </div>
@@ -278,25 +280,25 @@ export default function MyPage() {
       <div className="px-6 mb-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
         <div className="glass-card rounded-[40px] overflow-hidden shadow-sm border border-white/60 divide-y divide-gray-50">
           <SectionHeader title="서비스 연동" />
-          <SettingRow 
-            icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0CC9B5" />} 
-            label="구글 캘린더" 
-            value="연동됨" 
-            href="/settings/calendar" 
+          <SettingRow
+            icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0CC9B5" />}
+            label="구글 캘린더"
+            value="연동됨"
+            href="/settings/calendar"
           />
-          <SettingRow 
-            icon={<Icon d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="#0CC9B5" />} 
-            label="Apple 로그인 연동" 
-            isToggle 
-            toggled={false} 
-            onToggle={() => toastInfo('Apple 연동 기능은 준비 중입니다.')} 
+          <SettingRow
+            icon={<Icon d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="#0CC9B5" />}
+            label="Apple 로그인 연동"
+            isToggle
+            toggled={false}
+            onToggle={() => toastInfo('Apple 연동 기능은 준비 중입니다.')}
           />
-          <SettingRow 
-            icon={<Icon d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="#0CC9B5" />} 
-            label="Naver 로그인 연동" 
-            isToggle 
-            toggled={false} 
-            onToggle={() => toastInfo('Naver 연동 기능은 준비 중입니다.')} 
+          <SettingRow
+            icon={<Icon d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="#0CC9B5" />}
+            label="Naver 로그인 연동"
+            isToggle
+            toggled={false}
+            onToggle={() => toastInfo('Naver 연동 기능은 준비 중입니다.')}
           />
         </div>
       </div>
@@ -313,11 +315,11 @@ export default function MyPage() {
       {/* ── 섹션 4: 계정 ── */}
       <div className="px-6 mb-10 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
         <div className="glass-card rounded-[40px] overflow-hidden shadow-sm border border-white/60">
-          <SettingRow 
-            icon={<Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" stroke="#EF4444" />} 
-            label="로그아웃" 
-            danger 
-            onClick={signOut} 
+          <SettingRow
+            icon={<Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" stroke="#EF4444" />}
+            label="로그아웃"
+            danger
+            onClick={signOut}
           />
         </div>
       </div>

@@ -64,19 +64,138 @@ export default function BudgetPage() {
 
   return (
     <div className="min-h-dvh pb-28 lg:max-w-[1440px] lg:mx-auto lg:px-8 lg:pt-10">
-      <header className="lg:hidden" style={{
-        position: 'sticky', top: 0, zIndex: 40,
-        padding: '48px 20px 16px',
-        background: 'rgba(250,250,253,0.7)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-ink)', letterSpacing: '-0.5px', margin: 0 }}>
-            가계부
-          </h1>
+
+      {/* ── [MOBILE] 통합 프리미엄 히어로 헤더 ── */}
+      <div
+        className="lg:hidden"
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #0F1A2E 0%, #0D2A22 50%, #1A3A2E 100%)',
+          padding: '56px 20px 32px',
+        }}
+      >
+        {/* Glow blobs */}
+        <div style={{
+          position: 'absolute', top: '-30px', right: '-30px',
+          width: '180px', height: '180px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(46,232,149,0.22) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-20px', left: '-20px',
+          width: '140px', height: '140px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(12,201,181,0.18) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', top: '40%', left: '50%',
+          width: '120px', height: '120px', borderRadius: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle, rgba(46,232,149,0.08) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* 페이지 레이블 */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: '12px',
+          fontWeight: 700,
+          color: 'rgba(255,255,255,0.50)',
+          letterSpacing: '1.4px',
+          textTransform: 'uppercase',
+          marginBottom: '16px',
+          position: 'relative',
+          zIndex: 10,
+        }}>
+          글리움 가계부
+        </p>
+
+        {/* 월 네비게이터 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '20px',
+          position: 'relative',
+          zIndex: 10,
+        }}>
+          <button
+            onClick={prevMonth}
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'transform 0.15s',
+            }}
+            onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.90)')}
+            onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: 800,
+              color: 'white',
+              letterSpacing: '-0.8px',
+              margin: 0,
+              lineHeight: 1.1,
+            }}>
+              {formatMonthYear(viewDate)}
+            </h2>
+            <div style={{ minHeight: '22px', marginTop: '6px' }}>
+              {isCurrentMonth && (
+                <span style={{
+                  display: 'inline-block',
+                  padding: '3px 12px',
+                  borderRadius: '999px',
+                  background: 'rgba(46,232,149,0.20)',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#2EE895',
+                  border: '1px solid rgba(46,232,149,0.30)',
+                }}>
+                  이번 달
+                </span>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={nextMonth}
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'transform 0.15s',
+            }}
+            onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.90)')}
+            onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18L15 12L9 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
-      </header>
+      </div>
 
       {/* PC 전용 타이틀 */}
       <div className="hidden lg:flex items-center justify-between mb-8">
@@ -93,30 +212,6 @@ export default function BudgetPage() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" strokeWidth="2.5"><path d="M9 18L15 12L9 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
-      </div>
-
-      {/* 모바일 월 네비게이터 */}
-      <div className="flex items-center justify-between px-5 py-3 lg:hidden">
-        <button onClick={prevMonth}
-          className="w-10 h-10 glass-card flex items-center justify-center rounded-full transition-all active:scale-90">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="var(--brand-blue)" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-        </button>
-        <div className="text-center">
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-ink)', letterSpacing: '-0.5px' }}>
-            {formatMonthYear(viewDate)}
-          </h2>
-          {isCurrentMonth && (
-            <span className="text-[11px] font-semibold" style={{ color: 'var(--brand-blue)' }}>이번 달</span>
-          )}
-        </div>
-        <button onClick={nextMonth}
-          className="w-10 h-10 glass-card flex items-center justify-center rounded-full transition-all active:scale-90">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18L15 12L9 6" stroke="var(--brand-blue)" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-        </button>
       </div>
 
       {loading ? (
@@ -294,13 +389,13 @@ export default function BudgetPage() {
                           {e.status === 'completed' ? '결제완료' : '결제예정'}
                         </span>
                       </div>
-                      
+
                       {/* 퀵 체크 버튼 */}
-                      <button 
+                      <button
                         onClick={() => handleToggleStatus(e.id, e.status)}
                         className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                          e.status === 'completed' 
-                            ? 'bg-green-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]' 
+                          e.status === 'completed'
+                            ? 'bg-green-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]'
                             : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                         }`}
                       >
@@ -330,7 +425,7 @@ export default function BudgetPage() {
         </>
       )}
 
-      
+
     </div>
 
   );
