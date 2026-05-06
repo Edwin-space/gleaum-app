@@ -212,9 +212,10 @@ export default function MyPage() {
             {/* 3열 요약 위젯 */}
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-4 rounded-[28px] text-center">
-                <p className="text-[10px] uppercase font-black tracking-widest text-white/40 mb-1">가족</p>
+                <p className="text-[10px] uppercase font-black tracking-widest text-white/40 mb-1">공간 멤버</p>
                 <p className="text-[18px] font-black">{insights?.memberCount ?? 0}<span className="text-[12px] font-bold opacity-60 ml-0.5">명</span></p>
               </div>
+
               <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-4 rounded-[28px] text-center">
                 <p className="text-[10px] uppercase font-black tracking-widest text-white/40 mb-1">이번달 지출</p>
                 <p className="text-[18px] font-black">{(insights?.totalExpense ?? 0).toLocaleString()}<span className="text-[12px] font-bold opacity-60 ml-0.5">원</span></p>
@@ -236,8 +237,9 @@ export default function MyPage() {
             <h3 className="text-[15px] font-black text-[#1A1B2E] mb-1">오늘의 한 줄 리포트</h3>
             <p className="text-[13px] text-[#8E8E93] leading-relaxed font-bold">
               {insights && insights.upcomingCount > 0 
-                ? `이번 주에는 ${insights.upcomingCount}개의 소중한 가족 일정이 기다리고 있어요. 미리 준비해볼까요?`
-                : "이번 주는 한산한 편이네요. 가족들과 여유로운 시간을 계획해 보는 건 어떨까요?"}
+                ? `이번 주에는 ${insights.upcomingCount}개의 소중한 공간 일정이 기다리고 있어요. 미리 준비해볼까요?`
+                : "공간이 한산한 편이네요. 멤버들과 여유로운 시간을 계획해 보는 건 어떨까요?"}
+
             </p>
           </div>
         </div>
@@ -255,9 +257,10 @@ export default function MyPage() {
           />
           <SettingRow 
             icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />} 
-            label="나의 그룹 관리" 
+            label="공간 관리 및 초대" 
             href="/family" 
           />
+
         </div>
       </div>
 
