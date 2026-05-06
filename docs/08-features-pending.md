@@ -10,9 +10,9 @@
 
 ---
 
-## Day 5 — Google 연동 심화
+## Day 5 — 확장된 캘린더 연동 및 공유
 
-### ✅ 초대 링크 페이지 (`/invite/[code]`) — 완료
+### ✅ 초대 링크 페이지 (`/invite/[code]`) — 완료 (그룹용)
 `src/app/invite/[code]/page.tsx` 구현 완료.
 비로그인 → `/login?next=` 파라미터로 OAuth 후 자동 복귀 → `joinFamilyByCode()` 자동 처리.
 
@@ -27,17 +27,27 @@
 1. Google Cloud Console → Calendar API 활성화
 2. Supabase SQL Editor → `schedules.google_event_id` 컬럼 존재 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
 
+### 🟡 1회성 일정 단건 공유 (지인 초대용)
+**목적**: 그룹(가족/연인)에 가입시키지 않고, 특정 일정(친구 모임 등) 단 1건만 외부 지인에게 공유
+**구현 계획**:
+- 특정 `scheduleId` 기반의 외부 공개용 읽기 전용 뷰 페이지 (`/share/[scheduleId]`) 생성
+- 해당 링크를 받은 Guest 사용자는 로그인 없이(또는 간편 로그인 후) 해당 일정 정보만 열람 가능
+
+### 🔴 스마트폰 기본 캘린더(OS Native Calendar) 동기화
+**목적**: 사용자의 iOS/Android 기기에 기본 내장된 캘린더 앱과 직접 연동
+**구현 방안 (검토 필요)**:
+1. 향후 Capacitor 또는 React Native로 패키징 시 모바일 기기 권한 획득 플러그인 연동
+2. 웹 환경(PWA) 유지 시, `Web Share API` 또는 `.ics` 파일 포맷 제공을 통한 수동 캘린더 등록 지원
+3. 사용자가 앱에서 일정을 등록하면 디바이스의 Native 캘린더에도 즉시 기록되도록 설계
+
 ### 🟡 Google Drive 사진 첨부
 **사전 조건**: Google Cloud Console에서 Drive API 활성화 필요
-
-**구현 계획**:
 - Google Picker API 사용 (파일 선택 UI)
-- 선택한 파일 → Supabase Storage 또는 Drive URL 저장
 - `schedule_attachments` 테이블 추가 필요
 
 ---
 
-## Day 6 — 푸시 알림
+## Day 6 — 관계 유지 솔루션 & 푸시 알림
 
 ### ✅ Firebase Cloud Messaging (FCM) 설정 — 완료
 - Firebase 프로젝트 생성 및 FCM v1 발송 구조 구현 완료
@@ -59,7 +69,7 @@
 
 ---
 
-## Day 7 — 나머지 화면 디자인 리뉴얼
+## Day 7 — 전 페이지 프리미엄 UI 리뉴얼
 
 ### ✅ 전 페이지 프리미엄 UI 리뉴얼 — 완료
 
@@ -86,39 +96,16 @@
 - [x] 첫 로그인 시 `"나의 공간"` 자동 생성으로 전환 완료
 - [ ] `family_groups.type` 추가로 기존 가족 그룹을 Space로 확장
 - [ ] 중기적으로 `spaces`, `space_members`, `schedule_assignees`, `schedule_observers`, `notification_rules` 설계
+- [ ] 첫 로그인 시 `"나의 공간"` 대신 개인 Space 또는 선택형 온보딩으로 전환 검토
 
-### ✅ 일정 상태 변경 UX 완성 (2026-05-06 완료)
-- `shared`, `personal` 타입 일정에도 상태 변경 버튼 추가
-- `pending` → 시작하기 → `in_progress` → 완료 확인 → `completed` / `missed`
-- 대기 상태로 되돌리기 버튼 추가 (진행중 → 대기)
-- 완료 확인 모달을 모든 타입 공통 적용
-
-### ✅ 파일 첨부 실제 구현 (2026-05-06 완료)
-- `src/app/schedules/new/page.tsx`: `<input type="file">` 연결, 이미지 미리보기 구현
-- `src/lib/db.ts`: `uploadScheduleAttachment()` 함수 추가 (Supabase Storage `schedule-attachments` 버킷)
-- 업로드 실패 시에도 일정 저장은 계속 진행 (첨부는 선택 사항)
-
-> ⚠️ **Supabase에서 사전 설정 필요**: Storage 버킷 `schedule-attachments` 생성 + public 접근 정책 설정 필요
-
-### ✅ PWA manifest 완성 (2026-05-06 완료)
-- `shortcuts` 추가: 일정 추가, 오늘 일정, 가계부 바로가기
-- `display_override`: `["standalone", "minimal-ui", "browser"]`
-- `scope`, `dir`, `prefer_related_applications` 명시
-- 아이콘 `purpose` 분리: `any` / `maskable` 각각 등록
-
-### 🟡 PWA 완성
-- [ ] `public/manifest.json` 아이콘 세트 추가
-- [ ] 스플래시 스크린 설정
-- [ ] 오프라인 대응 (Service Worker)
+### ✅ PWA 완성 (완료)
+- `public/manifest.json` 생성 및 `standalone` 디스플레이 모드 적용 완료
+- `src/app/icon.tsx` 를 통한 고화질 다이아몬드 로고 아이콘 동적 생성 완료
+- `public/sw.js` 및 `PwaRegistry.tsx` 를 통한 오프라인 지원/설치 가능 요건 충족 완료
 
 ### 🟢 Google OAuth 앱 게시 (프로덕션)
 - Google Cloud Console → OAuth 동의화면 → **앱 게시**
 - 현재는 테스트 사용자만 로그인 가능
-- 게시 후 누구나 로그인 가능
-
-### 🟢 자녀 계정 연동
-- 현재 자녀는 이메일 없이 프로필에만 존재
-- 자녀가 직접 로그인할 수 있는 계정 연동 플로우 필요
 
 ### 🟢 통계 및 분석 페이지
 - 월간 자녀 일정 완료율

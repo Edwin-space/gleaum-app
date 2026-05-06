@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import PwaRegistry from '@/components/PwaRegistry';
 import './globals.css';
 import { FCMProvider } from '@/components/FCMProvider';
 import { PWARegister } from '@/components/PWARegister';
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             richColors
           />
         </div>
+        <PwaRegistry />
       </body>
     </html>
   );

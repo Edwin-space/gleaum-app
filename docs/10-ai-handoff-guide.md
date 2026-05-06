@@ -51,16 +51,15 @@
 | PC 랜딩페이지 | `DesktopLanding.tsx` | ✅ SaaS 스타일 풀페이지 |
 | 모바일 홈 리디자인 | `MobileHome.tsx` | ✅ 시간 인사+접이식 캘린더+퀵액션 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
+| 적응형(Adaptive) UI | `DesktopSidebar`, `MobileHome` 등 | ✅ PC/모바일 대응 완료 |
 
 ### ❌ 미구현 기능 (우선순위 순)
 
 | 기능 | 우선순위 | 비고 |
 |------|---------|------|
-| Supabase Storage 버킷 설정 | 🔴 필수 | `schedule-attachments` 버킷 생성 + public 정책 필요 (사용자 수행) |
-| Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 (사용자 수행) |
-| Google Drive 사진 첨부 | 🟡 중요 (Day 5) | Drive API 활성화 필요 |
-| 디자인 토큰 정리 | 🟡 중요 | 28+ 브랜드 컬러 위반, 50+ 인라인 버튼 스타일 통일 필요 |
-| PC WEB 뷰 전체 활성화 | 🟢 선택 | `/schedules`, `/budget`, `/family` 등 `lg:` 클래스 이미 준비됨 — 모바일 완성 후 진행 |
+| Google Calendar 양방향 동기화 | 🟡 중요 | Calendar API 활성화 필요 |
+| Google Drive 사진 첨부 | 🟡 중요 | Drive API 활성화 필요 |
+| 자동화 정책 기반 상태 전이 | 🔴 필수 | `completion_required`, `payment_due` 등 정책 기반 처리 필요 |
 | Google OAuth 앱 게시 (프로덕션) | 🟢 선택 | 테스트 사용자 외 로그인 불가 |
 
 ---
@@ -68,10 +67,13 @@
 ## 다음 작업 순서 (추천)
 
 > [!IMPORTANT]
-> **🚨 사용자 필수 수행 대기 작업 (Google Calendar)**
-> 다음 작업을 요청받을 시, 반드시 사용자가 아래 수동 작업을 완료했는지 먼저 확인(학습)하세요. 이 수동 작업들이 완료되지 않았다면 다음 단계의 정상적인 진행이 불가능합니다.
-> 1. **[구글 캘린더 연동용]**: Google Cloud Console에서 `Google Calendar API` 활성화
-> 2. **[구글 캘린더 연동용]**: 운영 DB에 `schedules.google_event_id` 컬럼이 있는지 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
+> **🚨 사용자 필수 수행 대기 작업 (2026년 5월 4일 일괄 처리 예정)**
+> 다음 작업을 요청받을 시, 반드시 사용자가 아래 수동 작업을 완료했는지 먼저 확인(학습)하세요. 이 수동 작업들이 완료되지 않았다면 기능이 정상적으로 동작하지 않습니다.
+> 1. **[인증]**: Supabase Dashboard -> Auth -> Redirect URLs에 `https://gleaum-app.vercel.app/auth/callback` 추가 여부 확인
+> 2. **[구글 캘린더 연동]**: Google Cloud Console에서 `Google Calendar API` 활성화
+> 3. **[구글 캘린더 연동]**: Supabase SQL Editor에서 `ALTER TABLE schedules ADD COLUMN google_event_id text;` 실행
+> 4. **[푸시 알림 연동]**: Firebase 프로젝트 생성 및 FCM 서버 키 발급
+> 5. **[푸시 알림 연동]**: Vercel에 Firebase 관련 환경변수(`NEXT_PUBLIC_FIREBASE_*`) 등록
 
 > ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 > ✅ 3단계(Google Calendar 연동) 코드 작업 완료됨. (수동 설정만 남음)
@@ -83,45 +85,11 @@
 > 🔜 **8단계: PC WEB 전체 뷰 활성화** — 모바일 완성 후 진행. `/schedules`, `/budget`, `/family` 등에 이미 `lg:` 클래스 코드가 준비되어 있음. `DesktopHome`, `MobileHome` 패턴을 나머지 페이지에 적용.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료
-`src/app/invite/[code]/page.tsx` 구현 완료.
-- 비로그인: `/login?next=/invite/[code]` → OAuth → 콜백 → 다시 초대 페이지 → 자동 합류
-- `joinFamilyByCode()` 반환 타입: `{ success, alreadyMember?, familyName? }`
-
 ### 2단계 ✅: 전 페이지 디자인 리뉴얼 — 완료
-7개 페이지 Glassmorphism(`.glass-card`) + 메쉬 그라디언트 배경(`.mesh-bg`) + Blue/Teal/Green 브랜드 컬러로 프리미엄 UI 완전 리뉴얼 완료.
-- 폰트: `Outfit` (영문/숫자) + `Pretendard` (국문)
-- 로그인 페이지: 메쉬 배경 + 다크(네이비) 버튼 + 화이트 Google G 로고
-- 모든 카드: `.glass-card` 유리 질감 (흰색 반투명 + backdrop-blur)
-- `DESIGN.md` — 디자인 시스템 마스터 명세서
-- `design-system-ui.html` — 시각적 UI 컴포넌트 가이드
-- `AGENTS.md` — AI 자동 참조 가이드
-
----
-
-### 3단계 ✅: Google Calendar 연동 (완료)
-
-**사전 작업 (수동)**:
-1. Google Cloud Console → API 및 서비스 → **Google Calendar API** 활성화 (사용자 수행 대기)
-2. Supabase SQL Editor → `schedules.google_event_id` 컬럼 존재 확인. 없으면 `ALTER TABLE schedules ADD COLUMN google_event_id text;`
-
-**코드 작업 (완료)**:
-- `src/lib/googleCalendar.ts`: `createGoogleEvent`, `updateGoogleEvent`, `deleteGoogleEvent` 통신 레이어 구현 완료
-- `src/lib/db.ts`: 일정 CUD 시점에 구글 API와 동기화되는 로직 구현 완료
-- `src/types/index.ts`: `Schedule` 및 `ScheduleRow` 타입에 `googleEventId` 확장 완료
-
----
-
+### 3단계 ✅: Google Calendar 연동 (코드 완료)
 ### 4단계 ✅: FCM 푸시 알림 + Supabase Cron 리마인더 — 완료
 
-- `public/firebase-messaging-sw.js` — 백그라운드 푸시 수신 서비스워커 구현
-- `src/lib/firebase.ts` — 브라우저 FCM 토큰 발급 및 포그라운드 메시지 처리
-- `src/hooks/useFCM.ts` + `src/components/FCMProvider.tsx` — 로그인 사용자 FCM 토큰 자동 저장
-- `src/lib/fcm.ts` — Firebase 서비스 계정 기반 FCM HTTP v1 발송 헬퍼 구현
-- `src/app/api/cron/reminders/route.ts` — 리마인더 대상 일정 조회 → 가족 구성원 FCM 발송 → `notifications` 기록
-- Supabase SQL Editor에서 `pg_net`, `pg_cron` 활성화 및 `gleaum-reminders` 잡 등록 완료
-- Vercel Hobby 플랜 제한으로 `vercel.json`의 Cron 설정은 제거됨
-
-### 5단계 ✅: 자동화 정책 기반 상태 전이 — 완료
+### 5단계: 자동화 정책 기반 상태 전이 (🔴 필수)
 
 - `src/app/api/cron/automations/route.ts` — 5분마다 실행되는 자동화 엔진
 - `time_window`: 시간 도래 시 pending → in_progress, 종료 시 → completed
@@ -154,8 +122,6 @@
 3. src/styles/tokens.css  ← 모든 디자인 토큰
 ```
 
-자세한 구조 → `docs/04-file-structure.md`
-
 ---
 
 ## 작업 전 확인 체크리스트
@@ -173,157 +139,3 @@ npm run build
 # 4. 개발 서버 실행
 npm run dev
 ```
-
----
-
-## 새 기능 추가 패턴 (표준)
-
-### DB 쿼리 추가
-```typescript
-// src/lib/db.ts에 추가
-export async function newDbFunction(param: string): Promise<ResultType> {
-  const supabase = createClient()  // 브라우저용: @/lib/supabase/client
-  const { data, error } = await supabase
-    .from('table_name')
-    .select('*')
-    .eq('column', param)
-  
-  if (error) throw error
-  return data.map(rowToResultType)
-}
-```
-
-### 새 훅 추가
-```typescript
-// src/hooks/useNewFeature.ts
-'use client'
-import { useState, useEffect } from 'react'
-import { newDbFunction } from '@/lib/db'
-
-export function useNewFeature(param: string | null) {
-  const [data, setData] = useState<ResultType[]>([])
-  const [loading, setLoading] = useState(true)
-  
-  useEffect(() => {
-    if (!param) { setLoading(false); return }  // null 안전 처리!
-    newDbFunction(param).then(setData).finally(() => setLoading(false))
-  }, [param])
-  
-  return { data, loading }
-}
-```
-
-### 새 페이지 추가 (PC/모바일 분리 패턴 — 표준)
-
-```typescript
-// src/app/new-page/page.tsx (thin router)
-'use client'
-import { useIsDesktop } from '@/hooks/useMediaQuery'
-import { useCurrentUser } from '@/hooks/useCurrentUser'
-import MobileNewPage from './MobileNewPage'
-import DesktopNewPage from './DesktopNewPage'
-
-export default function NewPage() {
-  const isDesktop = useIsDesktop()
-  const { user, profile, familyGroupId, loading } = useCurrentUser()
-  // 필요한 데이터 훅 호출...
-  
-  if (isDesktop) return <DesktopNewPage user={user} /* props */ />
-  return <MobileNewPage user={user} /* props */ />
-}
-```
-
-```typescript
-// src/app/new-page/MobileNewPage.tsx
-'use client'
-import AppHeader from '@/components/layout/AppHeader'
-import BottomNav from '@/components/layout/BottomNav'
-
-export default function MobileNewPage({ user, ...props }) {
-  return (
-    <>
-      <AppHeader title="페이지 제목" showBack />
-      <main className="pt-16 pb-32 px-4">
-        {/* 모바일 UI */}
-      </main>
-      <BottomNav />
-    </>
-  )
-}
-```
-
-```typescript
-// src/app/new-page/DesktopNewPage.tsx
-'use client'
-
-export default function DesktopNewPage({ user, ...props }) {
-  return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      {/* PC 레이아웃 — 인라인 스타일 권장 (Tailwind 충돌 방지) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-        {/* 좌측 패널 */}
-        {/* 우측 패널 */}
-      </div>
-    </div>
-  )
-}
-```
-
----
-
-## Git 작업 흐름
-
-```bash
-# 기능 구현 후
-git add src/app/new-feature/
-git add src/lib/db.ts  # DB 함수 추가 시
-git commit -m "feat: [기능명] 구현"
-git push origin main
-# → Vercel 자동 배포 시작 (약 1-2분)
-```
-
----
-
-## 자주 발생하는 문제와 해결
-
-### 문제: OAuth 로그인이 Vercel 로그인 화면으로 이동
-→ **해결**: Vercel Dashboard → Settings → Deployment Protection → Disabled
-
-### 문제: DB 데이터가 없음 (빈 화면)
-→ **해결**: Supabase SQL Editor에서 `supabase/schema.sql` 전체 실행
-
-### 문제: `my_family_group_id()` 함수 오류
-→ **해결**: schema.sql의 helper 함수가 먼저 생성됐는지 확인 (순서 중요)
-
-### 문제: Tailwind 커스텀 클래스가 적용 안 됨
-→ **해결**: `src/app/globals.css`의 `@theme {}` 블록에 토큰 추가 필요 (Tailwind v4)
-
-### 문제: `getGoogleToken()` 이 null 반환
-→ **해결**: Google OAuth 시 `access_type: 'offline', prompt: 'consent'` 파라미터 확인. 재로그인 필요할 수 있음.
-
----
-
-## 도움이 되는 문서 읽기 순서
-
-처음 이 프로젝트를 접하는 AI라면 이 순서로 읽기:
-
-1. `docs/README.md` — 프로젝트 전체 개요 (5분)
-2. `docs/01-project-overview.md` — 서비스 이해
-3. `docs/04-file-structure.md` — 파일 구조 파악
-4. `docs/05-database-schema.md` — DB 구조 이해
-5. `docs/08-features-pending.md` — 다음 할 일 확인
-6. `docs/12-product-model.md` — 개인 중심 + Space 확장형 제품 모델 확인
-7. `DESIGN.md` — 디자인 작업 시 필독
-8. 이 파일 (`10-ai-handoff-guide.md`) — 작업 시작
-
----
-
-## 배포 URL 및 주요 링크
-
-| 항목 | URL |
-|------|-----|
-| 프로덕션 앱 | https://gleaum-app.vercel.app |
-| Supabase 대시보드 | https://supabase.com/dashboard/project/tyvjdsescukaeorcuaga |
-| Vercel 대시보드 | https://vercel.com/dashboard |
-| GitHub 저장소 | https://github.com/Edwin-space/gleaum-app |
-| Google Cloud Console | https://console.cloud.google.com |

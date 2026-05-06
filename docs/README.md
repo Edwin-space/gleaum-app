@@ -32,8 +32,6 @@
 - **현재 단계**: Day 6+ 완료 (FCM/Supabase Cron 완료, 개인 중심 모델 재정의, 단계형 온보딩 1차 완료)
 - **배포 URL**: https://gleaum-app.vercel.app
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **Supabase 프로젝트 ID**: tyvjdsescukaeorcuaga
-- **개발 환경**: macOS, `/Volumes/WD_BLACK/Ai Works/gleaum/`
 
 ---
 
