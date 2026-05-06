@@ -61,24 +61,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </FCMProvider>
           </div>
         </div>
-        {/* 최상위 루트 네비게이션 (z-index: 9999) — 모든 페이지 간섭 차단 */}
+        {/* 최상위 루트 네비게이션 (z-index: 9999) */}
         <BottomNav />
-          <Toaster
-            position="bottom-center"
-            toastOptions={{
-              style: {
-                borderRadius: '16px',
-                fontFamily: 'var(--font-body)',
-                fontSize: '14px',
-                fontWeight: '600',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-                border: '1px solid rgba(255,255,255,0.8)',
-              },
-            }}
-            offset={96}
-            richColors
-          />
-        </div>
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              borderRadius: '16px',
+              fontFamily: 'var(--font-body)',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+              border: '1px solid rgba(255,255,255,0.8)',
+            },
+          }}
+          offset={96}
+          richColors
+        />
         <PwaRegistry />
       </body>
     </html>
