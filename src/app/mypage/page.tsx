@@ -179,7 +179,7 @@ export default function MyPage() {
   }
 
   return (
-    <div className="min-h-dvh pb-32 lg:max-w-[1440px] lg:mx-auto relative">
+    <div className="min-h-dvh pb-32 lg:max-w-[1440px] lg:mx-auto">
       <AppHeader title="마이페이지" showLogo={false} showNotification={false} />
 
       {/* ── [HERO] 프리미엄 대시보드 ── */}

@@ -59,9 +59,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <FCMProvider>
               {children}
             </FCMProvider>
-            {/* 전역 하단 네비게이션 (z-index: 100) */}
-            <BottomNav />
           </div>
+          {/* 전역 하단 네비게이션 (z-index: 100) — 콘텐츠 영역 외부로 격리 */}
+          <BottomNav />
+        </div>
           <Toaster
             position="bottom-center"
             toastOptions={{

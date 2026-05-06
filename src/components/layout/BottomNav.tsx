@@ -99,7 +99,11 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(item.href);
+              }}
+              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
             >
               {item.icon(active)}
               <span
@@ -123,7 +127,11 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(item.href);
+              }}
+              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
             >
               {item.icon(active)}
               <span
