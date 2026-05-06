@@ -74,7 +74,8 @@ export function useAuth() {
   const linkProvider = async (provider: 'google' | 'apple' | 'naver') => {
     const supabase = createClient();
     const { error } = await supabase.auth.linkIdentity({
-      provider,
+      provider: provider as any,
+
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },

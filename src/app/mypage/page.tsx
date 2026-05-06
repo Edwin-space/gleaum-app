@@ -8,7 +8,7 @@ import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
 import { updateMyProfile, updateNotificationSettings } from '@/lib/db';
-import { profileToast } from '@/lib/toast';
+import { profileToast, toastInfo } from '@/lib/toast';
 import type { NotificationSettings } from '@/types';
 
 // ── 기본 알림 설정 ──
@@ -167,11 +167,12 @@ export default function MyPage() {
     setPasswordError('');
     try {
       await updatePassword(newPassword);
-      profileToast.success();
+      profileToast.updated();
       setShowPasswordModal(false);
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
+
       setPasswordError('비밀번호 설정에 실패했습니다.');
     } finally {
       setSavingPassword(false);
@@ -179,9 +180,10 @@ export default function MyPage() {
   };
 
   const handleLinkProvider = async (provider: 'apple' | 'naver') => {
-    profileToast.info(`${provider === 'apple' ? 'Apple' : 'Naver'} 연동 기능은 준비 중입니다.`);
+    toastInfo(`${provider === 'apple' ? 'Apple' : 'Naver'} 연동 기능은 준비 중입니다.`);
     // 추후 활성화: await linkProvider(provider);
   };
+
 
   const handleDeleteAccount = async () => {
 
