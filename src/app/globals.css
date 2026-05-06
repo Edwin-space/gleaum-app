@@ -223,6 +223,13 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
 .animate-slide-up   { animation: slideUp  0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
 .animate-fade-in    { animation: fadeIn   0.2s ease forwards; }
 
+@keyframes floating {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+.animate-floating { animation: floating 4s ease-in-out infinite; }
+
 /* ── 카드 그림자 (Figma 리뉴얼) ── */
 .shadow-card  { box-shadow: 0 8px 30px rgba(0,132,204,0.06); }
 .shadow-fab   { box-shadow: 0 8px 24px rgba(12,201,181,0.40); }

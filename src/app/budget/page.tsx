@@ -7,22 +7,37 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS } from '@/types';
-import type { ExpenseCategory } from '@/types';
+import type { ExpenseCategory, ScheduleStatus } from '@/types';
+import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
+import { toast } from 'sonner';
 
 export default function BudgetPage() {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
   const { familyGroupId } = useCurrentUser();
-  const { schedules, loading } = useSchedules(familyGroupId);
+  const { schedules, loading, updateStatus } = useSchedules(familyGroupId);
 
+  // 현재 선택된 달의 지출
   const expenses = schedules.filter(
     (s) => s.type === 'expense' &&
       s.startTime.getFullYear() === viewDate.getFullYear() &&
       s.startTime.getMonth()    === viewDate.getMonth()
   );
 
-  const total        = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  // 지난달 지출 (비교용)
+  const lastMonthDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+  const lastMonthExpenses = schedules.filter(
+    (s) => s.type === 'expense' &&
+      s.startTime.getFullYear() === lastMonthDate.getFullYear() &&
+      s.startTime.getMonth()    === lastMonthDate.getMonth()
+  );
+
+  const total          = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const lastMonthTotal = lastMonthExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const diff           = total - lastMonthTotal;
+  const isLess         = diff < 0;
+
   const completed    = expenses.filter((e) => e.status === 'completed').reduce((sum, e) => sum + (e.amount ?? 0), 0);
   const completedCnt = expenses.filter((e) => e.status === 'completed').length;
   const pendingCnt   = expenses.filter((e) => e.status === 'pending').length;
@@ -38,6 +53,15 @@ export default function BudgetPage() {
   const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
   const isCurrentMonth = viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth();
+
+  const handleToggleStatus = async (id: string, currentStatus: ScheduleStatus) => {
+    const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    await updateStatus(id, nextStatus);
+    toast.success(nextStatus === 'completed' ? '납부 완료로 변경되었습니다' : '결제 예정으로 변경되었습니다', {
+      position: 'top-center',
+      duration: 1500,
+    });
+  };
 
   return (
     <div className="min-h-dvh pb-28 lg:max-w-[1440px] lg:mx-auto lg:px-8 lg:pt-10">
@@ -138,55 +162,91 @@ export default function BudgetPage() {
             </div>
           </div>
 
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-            {/* 왼쪽: 카테고리별 현황 (lg:4단) */}
-            <div className="lg:col-span-5">
-          {categories.length > 0 && (
-            <div className="glass-card mx-4 mb-4 rounded-[24px] p-5">
-              <h3 className="text-[14px] font-bold mb-4" style={{ color: 'var(--color-ink)' }}>
-                카테고리별 지출
+          {/* 지출 리포트 섹션: 차트 + 브리핑 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mx-4 mb-8 lg:mx-0">
+            {/* 데이터 브리핑 (Premium Briefing) */}
+            <div className="lg:col-span-12 glass-card p-6 rounded-[28px] mb-2 flex items-center justify-between overflow-hidden relative">
+              <div className="relative z-10">
+                <h3 className="text-[14px] font-bold text-[#8E8E93] mb-1">Monthly Briefing</h3>
+                <p className="text-[18px] font-bold text-[#1A1B2E]">
+                  지난달보다 {formatAmount(Math.abs(diff))} {isLess ? '덜 썼어요' : '더 썼어요'}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isLess ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {isLess ? '↓' : '↑'} {lastMonthTotal > 0 ? Math.round((Math.abs(diff) / lastMonthTotal) * 100) : 0}%
+                  </div>
+                  <span className="text-[11px] text-[#8E8E93]">전월 {formatAmount(lastMonthTotal)} 기준</span>
+                </div>
+              </div>
+              <div className="opacity-10 absolute right-[-10px] top-[-10px]">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="var(--brand-blue)">
+                  <path d="M21 21H3V3h2v16h16v2zM5 15l4.5-4.5 3 3L19 7l1.4 1.4L12.5 16.3l-3-3L5 17.8V15z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* 도넛 차트 (lg:5단) */}
+            <div className="lg:col-span-5 glass-card p-6 rounded-[28px] flex flex-col items-center justify-center">
+              <h3 className="text-[14px] font-bold mb-6 w-full text-left" style={{ color: 'var(--color-ink)' }}>
+                카테고리별 지출 비율
               </h3>
-              <div className="space-y-4">
-                {categories.map(([cat, amt]) => {
+              {categories.length > 0 ? (
+                <ExpenseDoughnut categories={categories} total={total} />
+              ) : (
+                <div className="py-10 text-[13px] text-[#8E8E93]">표시할 데이터가 없습니다</div>
+              )}
+            </div>
+
+            {/* 카테고리 상세 리스트 (lg:7단) */}
+            <div className="lg:col-span-7 glass-card p-6 rounded-[28px]">
+              <h3 className="text-[14px] font-bold mb-6" style={{ color: 'var(--color-ink)' }}>
+                항목별 현황
+              </h3>
+              <div className="space-y-5">
+                {categories.length > 0 ? categories.map(([cat, amt]) => {
                   const category = cat as ExpenseCategory;
                   const pct = total > 0 ? (amt / total) * 100 : 0;
                   const catColor = getCategoryColor(category);
                   return (
-                    <div key={cat}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
+                    <div key={cat} className="group">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
                           <div
-                            className="w-7 h-7 rounded-[8px] flex items-center justify-center text-sm flex-shrink-0"
-                            style={{ background: `${catColor}18` }}
+                            className="w-8 h-8 rounded-[10px] flex items-center justify-center text-lg flex-shrink-0"
+                            style={{ background: `${catColor}15` }}
                           >
                             {EXPENSE_CATEGORY_ICONS[category]}
                           </div>
-                          <span className="text-[13px] font-medium" style={{ color: 'var(--color-ink)' }}>
+                          <span className="text-[14px] font-bold text-[#1A1B2E]">
                             {EXPENSE_CATEGORY_LABELS[category]}
                           </span>
                         </div>
-                        <div className="text-right">
-                          <span className="text-[13px] font-bold" style={{ color: 'var(--color-ink)' }}>
+                        <div className="text-right flex flex-col">
+                          <span className="text-[14px] font-bold text-[#1A1B2E]">
                             {formatAmount(amt)}
                           </span>
-                          <span className="text-[11px] ml-1.5" style={{ color: 'var(--color-ink-muted-80)' }}>
-                            {Math.round(pct)}%
+                          <span className="text-[11px] font-medium text-[#8E8E93]">
+                            전체의 {Math.round(pct)}%
                           </span>
                         </div>
                       </div>
-                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,132,204,0.08)' }}>
+                      <div className="h-1.5 rounded-full bg-gray-50 overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-700"
+                          className="h-full rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${pct}%`, background: catColor }}
                         />
                       </div>
                     </div>
                   );
-                })}
+                }) : (
+                  <div className="py-10 text-center text-[13px] text-[#8E8E93]">내역이 없습니다</div>
+                )}
               </div>
             </div>
-          )}
           </div>
+
+          <div className="lg:grid lg:grid-cols-1 gap-8 items-start">
+
 
           {/* 오른쪽: 지출 목록 (lg:7단) */}
           <div className="lg:col-span-7">
@@ -200,35 +260,45 @@ export default function BudgetPage() {
                 {expenses.map((e) => (
                   <div
                     key={e.id}
-                    className="glass-card flex items-center gap-3 px-4 py-3.5 rounded-[20px]"
+                    className="glass-card flex items-center gap-3 px-4 py-3.5 rounded-[20px] transition-all active:scale-[0.98]"
                   >
                     <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-shrink-0"
+                      className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-shrink-0 shadow-sm"
                       style={{ background: `${getCategoryColor(e.expenseCategory ?? 'other')}15` }}
                     >
                       {EXPENSE_CATEGORY_ICONS[e.expenseCategory ?? 'other']}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-semibold truncate" style={{ color: 'var(--color-ink)' }}>
+                      <p className="text-[14px] font-bold truncate text-[#1A1B2E]">
                         {e.title}
                       </p>
-                      <p className="text-[12px]" style={{ color: 'var(--color-ink-muted-80)' }}>
-                        매월 {e.startTime.getDate()}일 · {e.paymentMethod === 'auto' ? '자동이체' : e.paymentMethod === 'card' ? '카드' : '현금'}
+                      <p className="text-[12px] text-[#8E8E93]">
+                        {e.startTime.getDate()}일 · {e.paymentMethod === 'auto' ? '자동이체' : e.paymentMethod === 'card' ? '카드' : '현금'}
                       </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className="text-[15px] font-bold" style={{ color: 'var(--color-ink)' }}>
-                        {formatAmount(e.amount ?? 0)}
-                      </span>
-                      <span
-                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                        style={{
-                          background: e.status === 'completed' ? 'rgba(16,185,129,0.10)' : 'rgba(0,132,204,0.08)',
-                          color:      e.status === 'completed' ? '#059669' : 'var(--brand-blue)',
-                        }}
+                    <div className="flex items-center gap-4">
+                      <div className="text-right flex flex-col items-end">
+                        <span className="text-[15px] font-bold text-[#1A1B2E]">
+                          {formatAmount(e.amount ?? 0)}
+                        </span>
+                        <span className={`text-[10px] font-bold ${e.status === 'completed' ? 'text-green-600' : 'text-blue-500'}`}>
+                          {e.status === 'completed' ? '결제완료' : '결제예정'}
+                        </span>
+                      </div>
+                      
+                      {/* 퀵 체크 버튼 */}
+                      <button 
+                        onClick={() => handleToggleStatus(e.id, e.status)}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                          e.status === 'completed' 
+                            ? 'bg-green-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]' 
+                            : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                        }`}
                       >
-                        {e.status === 'completed' ? '완료' : '예정'}
-                      </span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 ))}
