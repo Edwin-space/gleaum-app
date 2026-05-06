@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+
 import { useSchedules } from '@/hooks/useSchedules';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS } from '@/types';
@@ -321,7 +321,8 @@ export default function BudgetPage() {
         </>
       )}
 
-      <BottomNav />
+      
     </div>
+
   );
 }

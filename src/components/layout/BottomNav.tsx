@@ -59,11 +59,17 @@ export function BottomNav() {
   const pathname = usePathname();
   const router   = useRouter();
 
+  // 네비게이션 바를 숨길 경로 목록
+  const hideOnPaths = ['/login', '/onboarding', '/auth/callback', '/invite'];
+  const shouldHide = hideOnPaths.some(path => pathname.startsWith(path));
+
+  if (shouldHide) return null;
+
   return (
     /* 전체 고정 영역 — pointer-events none으로 클릭 통과 */
-    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-40 pointer-events-none lg:hidden">
+    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-[100] pointer-events-none lg:hidden">
       <div
-        className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto glass-card"
+        className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto glass-card shadow-2xl"
         style={{
           borderRadius: '32px',
           border: '1px solid rgba(255, 255, 255, 0.4)',

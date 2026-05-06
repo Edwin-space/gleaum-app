@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+
 import { useFamily } from '@/hooks/useFamily';
 import { joinFamilyByCode } from '@/lib/db';
 
@@ -260,7 +260,8 @@ export default function FamilyPage() {
         </div>
       )}
 
-      <BottomNav />
+      
     </div>
+
   );
 }

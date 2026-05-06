@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { ScheduleCard } from '@/components/ui/Card';
+
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import type { ScheduleType } from '@/types';
@@ -191,7 +191,8 @@ export default function SchedulesPage() {
           )}
         </div>
       )}
-      <BottomNav />
+      
     </div>
+
   );
 }

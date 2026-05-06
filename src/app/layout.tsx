@@ -7,6 +7,8 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { Toaster } from 'sonner';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 
+import { BottomNav } from '@/components/layout/BottomNav';
+
 export const metadata: Metadata = {
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
   description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
@@ -57,6 +59,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <FCMProvider>
               {children}
             </FCMProvider>
+            {/* 전역 하단 네비게이션 (z-index: 100) */}
+            <BottomNav />
           </div>
           <Toaster
             position="bottom-center"

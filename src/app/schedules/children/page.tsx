@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+
 import { useFamily } from '@/hooks/useFamily';
 import { useSchedules } from '@/hooks/useSchedules';
 import { formatTime, formatDateShort } from '@/lib/utils';
@@ -362,7 +362,8 @@ export default function ChildrenSchedulePage() {
         </div>
       )}
 
-      <BottomNav />
+      
     </div>
+
   );
 }

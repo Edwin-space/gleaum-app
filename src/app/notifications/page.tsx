@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { BottomNav } from '@/components/layout/BottomNav';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/db';
+
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Notification } from '@/types';
@@ -153,7 +153,8 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      <BottomNav />
+      
     </div>
+
   );
 }

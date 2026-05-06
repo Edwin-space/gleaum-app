@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { BottomNav } from '@/components/layout/BottomNav';
+
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
@@ -311,9 +311,8 @@ export default function MyPage() {
         <button onClick={() => setShowDeleteModal(true)} className="mt-4 text-[11px] underline font-bold text-[#8E8E93]">회원탈퇴</button>
       </div>
 
-      <BottomNav />
-
       {/* ── 프로필 수정 모달 ── */}
+
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center lg:items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }} onClick={() => setShowEditModal(false)}>
           <div className="w-full max-w-[430px] glass-card rounded-[40px] p-8 animate-slide-up shadow-2xl" onClick={(e) => e.stopPropagation()}>
