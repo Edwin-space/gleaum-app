@@ -286,7 +286,70 @@ background: linear-gradient(135deg, #2EE895 0%, #0CC9B5 50%, #0084CC 100%);
 
 ---
 
-## 12. Mesh Gradient Backgrounds (Blobs)
+## 12. Mobile Page Patterns (모바일 페이지 패턴)
+
+> 2025년 5월 확립된 기준. 모바일(`lg:hidden` 구간)에만 적용. PC 구간은 별도.
+
+### 12.1. Split Panel (로그인 페이지)
+상단 다크 히어로 + 하단 화이트 바텀시트 구조.
+```
+┌─────────────────────────┐
+│  Dark hero (flex:1)     │ ← linear-gradient(160deg, #0F1A2E, #1A2E3A, #0C2340)
+│  - Glow blobs 3개       │    Brand glow: teal top-right, blue bottom-left, green center
+│  - Logo + headline      │    로고, 42px 제목, 피처 칩
+└─────────────────────────┘
+│  White bottom sheet     │ ← background:white, borderRadius:32px 32px 0 0
+│  - Drag handle          │    40px gray pill
+│  - CTA buttons          │    Google 버튼(dark) + OR + Email 버튼
+└─────────────────────────┘
+```
+
+### 12.2. Dark Hero Header (서브 페이지 공통)
+각 서브 페이지 최상단에 다크 그라디언트 히어로 카드를 배치. 별도 sticky 헤더 불필요.
+
+| 페이지 | 히어로 그라디언트 | 특이사항 |
+| :--- | :--- | :--- |
+| 일정 (`/schedules`) | `#1A1B2E → #2D2E4A` | 오늘 일정 수/완료 수 항상 표시 |
+| 가계부 (`/budget`) | `#0F1A2E → #0D2A22 → #1A3A2E` | 월 네비게이터 통합 |
+| 마이페이지 (`/mypage`) | `#1A1B2E → #2D2E4A` | full-bleed (radius `0 0 48px 48px`), safe-area padding |
+
+**Glow Blob 배치 (공통 패턴):**
+```jsx
+// 우상단 teal
+{ top:'-60px', right:'-60px', width:'280px', background:'radial-gradient(circle, rgba(12,201,181,0.25) 0%, transparent 70%)' }
+// 좌하단 blue
+{ bottom:'20px', left:'-80px', width:'240px', background:'radial-gradient(circle, rgba(0,132,204,0.20) 0%, transparent 70%)' }
+// 중앙 green (선택)
+{ top:'30%', left:'60%', width:'160px', background:'radial-gradient(circle, rgba(46,232,149,0.15) 0%, transparent 70%)' }
+```
+
+### 12.3. Mobile Sticky Header (서브 페이지)
+히어로가 없는 서브 페이지(일정추가, 상세 등)에 사용:
+```css
+position: sticky; top: 0; z-index: 40;
+background: rgba(245,245,249,0.90);
+backdrop-filter: blur(20px);
+border-bottom: 1px solid rgba(0,132,204,0.06);
+padding: calc(env(safe-area-inset-top) + 12px) 20px 12px;
+```
+
+### 12.4. Form Page (일정추가 `/schedules/new`)
+- 배경: `#F5F5F9`
+- 폼 필드를 **주제별 White 카드**로 그룹화:
+  `background:white; borderRadius:24px; padding:20px; boxShadow:0 2px 16px rgba(0,0,0,0.05); marginBottom:12px`
+- 타입 칩: `height:72px`, 선택 시 solid 컬러 배경 + 흰 텍스트
+- Input: `background:#F7F7FA; border:1.5px solid #EBEBF0; borderRadius:14px; height:52px`
+
+### 12.5. 앱 배경 기준
+| 상황 | 배경값 |
+| :--- | :--- |
+| 일반 서브 페이지 (글래스모피즘 배경 위) | `bg-transparent` |
+| 폼/입력 전용 페이지 | `#F5F5F9` |
+| 로그인 페이지 | 다크 히어로 + 화이트 바텀시트 |
+
+---
+
+## 13. Mesh Gradient Backgrounds (Blobs)
 
 앱 배경에 배치되는 3개의 애니메이션 Blob:
 ```css
