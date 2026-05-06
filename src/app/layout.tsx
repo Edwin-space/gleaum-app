@@ -10,6 +10,7 @@ import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://gleaum.com'),
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
   description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
   manifest: '/manifest.json',

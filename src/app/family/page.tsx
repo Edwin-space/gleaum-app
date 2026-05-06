@@ -18,7 +18,7 @@ export default function FamilyPage() {
   const { group, members, loading, refresh } = useFamily(familyGroupId);
 
   const inviteLink = group?.inviteCode
-    ? `https://gleaum.the-ifs.com/invite/${group.inviteCode}`
+    ? `https://gleaum.com/invite/${group.inviteCode}`
     : '';
 
   const copyInviteLink = () => {
