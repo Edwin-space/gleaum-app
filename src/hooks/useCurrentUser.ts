@@ -64,8 +64,8 @@ export function useCurrentUser(): CurrentUserState {
       if (event === 'SIGNED_OUT') {
         cachedProfile = null;
         setProfile(null);
-      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        void load(true); // 중요한 변경 시에만 서버 데이터 강제 동기화
+      } else if (event === 'SIGNED_IN') {
+        void load(true); 
       }
     });
 

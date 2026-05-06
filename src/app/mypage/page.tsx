@@ -114,7 +114,7 @@ export default function MyPage() {
   const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
-    if (!profile) return;
+    if (!profile?.id) return;
     const ns = (profile as any).notification_settings;
     if (ns) setNotifSettings({ ...DEFAULT_NOTIF, ...ns });
     setEditName(user?.name ?? '');
@@ -123,7 +123,10 @@ export default function MyPage() {
     if (familyGroupId) {
       getMyPageInsights(familyGroupId).then(setInsights);
     }
-    // 객체 참조 대신 실제 값이 바뀔 때만 실행되도록 최적화
+    
+    // [강제 조치] 혹시 모를 스크롤 락 및 터치 차단 해제
+    document.body.classList.remove('antigravity-scroll-lock');
+    document.body.style.overflow = '';
   }, [profile?.id, user?.id, familyGroupId]);
 
   const handleToggle = async (key: keyof NotificationSettings) => {

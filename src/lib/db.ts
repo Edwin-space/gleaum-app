@@ -22,6 +22,9 @@ import type {
 } from '@/types';
 import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googleCalendar';
 
+// [전역 상태] 세션 내 무한 루프 방지용
+let hasTriedAutoCreateGroup = false;
+
 // ── Row types (DB → TypeScript 변환용) ─────────────────────
 
 export interface ProfileRow {
@@ -390,12 +393,17 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
     profile = newProfile;
   }
 
-  // 가족 그룹 없으면 자동 생성
-  if (!profile.family_group_id) {
+  // 가족 그룹 없으면 자동 생성 시도
+  if (!profile.family_group_id && !hasTriedAutoCreateGroup) {
+    hasTriedAutoCreateGroup = true; // 시도 기록 (성공 여부 상관없이 중복 시도 방지)
     const familyName = '나의 공간';
-    const groupId = await createFamilyGroup(familyName);
-    if (groupId) {
-      profile.family_group_id = groupId;
+    try {
+      const groupId = await createFamilyGroup(familyName);
+      if (groupId) {
+        profile.family_group_id = groupId;
+      }
+    } catch (err) {
+      console.warn('가족 그룹 자동 생성 건너뜀 (권한 부족 등):', err);
     }
   }
 
