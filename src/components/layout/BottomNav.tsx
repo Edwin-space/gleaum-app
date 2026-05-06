@@ -67,7 +67,7 @@ export function BottomNav() {
 
   return (
     /* 전체 고정 영역 — pointer-events none으로 클릭 통과 */
-    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-[100] pointer-events-none lg:hidden">
+    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-[9999] pointer-events-none lg:hidden">
       <div
         className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto glass-card shadow-2xl"
         style={{
@@ -77,7 +77,14 @@ export function BottomNav() {
       >
         {/* FAB — 중앙 상단 돌출 */}
         <button
-          onClick={() => router.push('/schedules/new')}
+          onClick={() => {
+            router.push('/schedules/new');
+            setTimeout(() => {
+              if (window.location.pathname !== '/schedules/new') {
+                window.location.href = '/schedules/new';
+              }
+            }, 100);
+          }}
           className="absolute -top-7 left-1/2 -translate-x-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center text-white transition-transform active:scale-90 hover:-translate-y-0.5 pointer-events-auto shadow-fab"
           style={{
             background: 'var(--brand-gradient)',
@@ -99,12 +106,21 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={(e) => {
-                e.preventDefault();
+              onClickCapture={(e) => {
+                e.stopPropagation();
+                // 1. Next.js 라우팅 시도
                 router.push(item.href);
+                // 2. 만약 라우팅이 막혔을 경우를 대비한 최후의 수단 (잠시 후 실행)
+                setTimeout(() => {
+                  if (window.location.pathname !== item.href) {
+                    window.location.href = item.href;
+                  }
+                }, 100);
               }}
+
               className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
             >
+
               {item.icon(active)}
               <span
                 className="text-[10px] font-semibold"
@@ -127,12 +143,21 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={(e) => {
-                e.preventDefault();
+              onClickCapture={(e) => {
+                e.stopPropagation();
+                // 1. Next.js 라우팅 시도
                 router.push(item.href);
+                // 2. 만약 라우팅이 막혔을 경우를 대비한 최후의 수단 (잠시 후 실행)
+                setTimeout(() => {
+                  if (window.location.pathname !== item.href) {
+                    window.location.href = item.href;
+                  }
+                }, 100);
               }}
+
               className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
             >
+
               {item.icon(active)}
               <span
                 className="text-[10px] font-semibold"
