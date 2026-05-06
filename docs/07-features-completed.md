@@ -235,3 +235,62 @@
 - [x] **일정**: PC 타이틀 + 새 일정 버튼 + 와이드 검색바 + 3컬럼 일정 그리드
 - [x] **가계부**: 히어로 카드 확장 + 카테고리 통계 / 상세 내역 2컬럼 배치
 - [x] **가족**: 멤버 3컬럼 그리드 + PC 중앙정렬 모달
+
+---
+
+## 자동화 정책 기반 상태 전이 엔진 (완료 - 2026-05-04)
+
+- [x] `src/types/index.ts` — Phase 2 다축 분류 타입 추가
+  - `ScheduleCategory`, `ScheduleVisibility`, `AutomationPolicy`, `SpaceType`
+  - `SCHEDULE_CATEGORY_LABELS`, `AUTOMATION_POLICY_LABELS` 라벨 레코드
+- [x] `src/lib/db.ts` — 추론 헬퍼 및 DB 매핑
+  - `inferCategory(type)`, `inferVisibility(type)`, `inferAutomationPolicy(type)`
+  - `createSchedule` → 자동 `category/visibility/automation_policy` 매핑
+  - `updateSchedule` → 신규 필드 지원
+  - `ScheduleRow`에 `category`, `visibility`, `automation_policy` 추가
+- [x] `src/app/api/cron/automations/route.ts` — 자동화 엔진 신규 생성
+  - `CRON_SECRET` Bearer 인증
+  - `time_window`: pending → in_progress → completed (시간 기반)
+  - `completion_required`: pending → in_progress → missed + FCM 알림
+  - `payment_due`: pending → in_progress → missed + FCM 알림
+  - `sendFCMToMultiple` 멀티 유저 알림 발송
+  - `notifications` 테이블 기록
+- [x] Supabase `pg_cron` — `gleaum-automations` 잡 등록 (5분 간격)
+  - `net.http_post` 사용 (⚠️ `extensions.http_post` 아님!)
+- [x] 운영 DB SQL 적용 완료 (schedules 테이블 컬럼 추가)
+
+---
+
+## PC/모바일 뷰 분리 아키텍처 + 랜딩페이지 + 모바일 홈 리디자인 (완료 - 2026-05-04)
+
+### 뷰 분리 기반 인프라
+- [x] `src/hooks/useMediaQuery.ts` — `useMediaQuery(query)` + `useIsDesktop()` 훅 신규 생성
+  - 1024px 브레이크포인트 기준 PC/모바일 판별
+  - SSR 안전 (`useState(false)` → `useEffect`에서 media query 체크)
+- [x] 컴포넌트 레벨 뷰 분리 패턴 확립
+  - `page.tsx` (thin router) → `MobileX.tsx` / `DesktopX.tsx` 분기
+
+### PC 랜딩페이지 (`/login` PC 뷰)
+- [x] `src/components/landing/DesktopLanding.tsx` — SaaS 스타일 풀페이지 랜딩
+  - 네비게이션 바 (로고 + CTA 버튼)
+  - 히어로 섹션 (2컬럼: 카피+CTA 좌측, 폰 목업 우측)
+  - 폰 목업 내 미니 캘린더 + 일정 카드 프리뷰
+  - 3컬럼 기능 소개 그리드
+  - 푸터
+  - 전체 인라인 스타일 (Tailwind 우선순위 충돌 방지)
+- [x] `src/app/login/page.tsx` — `useIsDesktop()` 기반 분기 (MobileLogin / DesktopLanding)
+- [x] `globals.css` — `.pc-content-area:has(.landing-fullscreen) { padding: 0; }` 추가
+
+### 모바일 홈 리디자인
+- [x] `src/app/home/MobileHome.tsx` — 모던 모바일 홈 신규 생성
+  - 시간 기반 인사 카드 (아침/점심/저녁/밤) + 오늘 통계 (전체/완료/남은)
+  - 접이식 캘린더 (토글 버튼으로 펼침/접기)
+  - 오늘 일정 목록 (ScheduleCard)
+  - 다가올 일정 미리보기 (다음 3건)
+  - 퀵 액션 그리드 (새 일정 + 가계부 바로가기)
+- [x] `src/app/home/DesktopHome.tsx` — 기존 PC 2컬럼 레이아웃 분리
+- [x] `src/app/home/page.tsx` — thin router 패턴으로 리팩토링
+
+### 버그 수정
+- [x] `src/app/schedules/page.tsx` — 여분 `</div>` 제거 (JSX 파싱 에러)
+- [x] `src/app/budget/page.tsx` — 누락 `</div>` 추가 (JSX 네스팅 에러)

@@ -295,7 +295,9 @@ export default function ScheduleDetailPage() {
 
         {/* 액션 버튼 */}
         <div className="space-y-2.5 pb-8 pt-1">
-          {schedule.type === 'child' && schedule.status === 'in_progress' && (
+
+          {/* ── 완료 확인 버튼 (in_progress 상태) — 모든 타입 공통 ── */}
+          {schedule.status === 'in_progress' && (
             <button
               onClick={() => setShowCompletionModal(true)}
               className="w-full py-4 rounded-[20px] text-[15px] font-bold text-white active:scale-[0.98] transition-transform"
@@ -307,6 +309,22 @@ export default function ScheduleDetailPage() {
               ✓ 완료 확인하기
             </button>
           )}
+
+          {/* ── 시작하기 버튼 (pending 상태, child 제외) ── */}
+          {schedule.status === 'pending' && schedule.type !== 'child' && (
+            <button
+              onClick={() => handleUpdateStatus('in_progress')}
+              className="w-full py-4 rounded-[20px] text-[15px] font-bold text-white active:scale-[0.98] transition-transform"
+              style={{
+                background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+                boxShadow: '0 8px 24px rgba(0,132,204,0.30)',
+              }}
+            >
+              ▶ 시작하기
+            </button>
+          )}
+
+          {/* ── 재알림 버튼 (자녀 일정 전용) ── */}
           {schedule.type === 'child' && (schedule.status === 'pending' || schedule.status === 'missed') && (
             <button
               onClick={() => notifToast.sent(schedule?.title ?? '')}
@@ -319,6 +337,18 @@ export default function ScheduleDetailPage() {
               🔔 재알림 보내기
             </button>
           )}
+
+          {/* ── 대기 상태로 되돌리기 (진행중 → 취소) ── */}
+          {schedule.status === 'in_progress' && schedule.type !== 'child' && (
+            <button
+              onClick={() => handleUpdateStatus('pending')}
+              className="w-full py-3 rounded-[20px] text-[13px] font-semibold active:scale-[0.98] transition-transform"
+              style={{ background: 'rgba(0,0,0,0.04)', color: '#8E8E93' }}
+            >
+              ↩ 대기 상태로
+            </button>
+          )}
+
           <button
             onClick={() => setShowDeleteModal(true)}
             className="w-full py-3.5 rounded-[20px] text-[14px] font-semibold active:scale-[0.98] transition-transform"
@@ -329,7 +359,7 @@ export default function ScheduleDetailPage() {
         </div>
       </div>
 
-      {/* 완료 확인 모달 */}
+      {/* 완료 확인 모달 (모든 타입 공통) */}
       {showCompletionModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}
           onClick={() => setShowCompletionModal(false)}>

@@ -740,3 +740,34 @@ export async function createNotification(params: {
     type:        params.type,
   });
 }
+
+// ── 파일 첨부 ──────────────────────────────────────────────
+
+/** 일정 첨부 파일 업로드 → 공개 URL 반환 */
+export async function uploadScheduleAttachment(file: File): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // 고유 파일명 생성: userId/timestamp_originalName
+  const ext = file.name.split('.').pop() ?? 'bin';
+  const fileName = `${user.id}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('schedule-attachments')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+  if (error) {
+    console.error('파일 업로드 오류:', error.message);
+    return null;
+  }
+
+  const { data: urlData } = supabase.storage
+    .from('schedule-attachments')
+    .getPublicUrl(fileName);
+
+  return urlData?.publicUrl ?? null;
+}

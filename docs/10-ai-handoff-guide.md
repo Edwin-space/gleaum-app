@@ -18,10 +18,11 @@
 
 ---
 
-## 현재 앱 상태 (2026-05-04 기준)
+## 현재 앱 상태 (2026-05-06 기준)
 
 > **디자인 히스토리 요약**: Claude(세션1)가 Vibrant Purple(`#5A32FA`)로 구현 → Antigravity AI가 오리지널 브랜드 컬러(Blue/Teal/Green)로 복구 + Glassmorphism + 메쉬 그라디언트 + 프리미엄 폰트(`Outfit`+`Pretendard`) 추가 적용. **현재 코드는 Blue/Teal/Green 기반이며 보라색(`#5A32FA`)은 사용 금지.**
 > **제품 방향 요약**: 초기 가족 관리 서비스에서 개인 중심 + Space 확장형 토털 서비스로 보정했습니다. 개인 구간이 기본이며, 친구/연인/가족 Space는 선택적 관계 확장 레이어입니다. `family_groups`는 단기적으로 유지하지만 신규 설계에서는 legacy shared Space로 해석합니다.
+> **서비스 전략**: **모바일 우선 완성 후 PC WEB 확장** 방향으로 진행 중. `/login`, `/home`은 PC/모바일 분리 완료. 나머지 페이지는 `lg:` Tailwind 클래스로 PC 레이아웃이 이미 준비되어 있음 (코드 유지, 추후 활성화). 모바일 서비스를 먼저 완전히 완성한 뒤 PC WEB 작업 진행 예정.
 
 ### ✅ 작동하는 기능
 
@@ -45,16 +46,21 @@
 | 개인화 온보딩 | `/onboarding`, `completeOnboarding()` | ✅ 단계형 1차 구현 완료 |
 | 홈 개인화 카드 | `/home` | ✅ 온보딩 preferences 기반 1차 반영 |
 | Glassmorphism + Blue/Teal/Green 디자인 | **전 페이지 (DESIGN.md 기준)** | ✅ 프리미엄 리뉴얼 완료 |
+| 자동화 정책 엔진 | `/api/cron/automations` + pg_cron | ✅ time_window/completion/payment 처리 |
+| PC/모바일 뷰 분리 | `/login`, `/home` | ✅ useIsDesktop() 기반 분기 |
+| PC 랜딩페이지 | `DesktopLanding.tsx` | ✅ SaaS 스타일 풀페이지 |
+| 모바일 홈 리디자인 | `MobileHome.tsx` | ✅ 시간 인사+접이식 캘린더+퀵액션 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 
 ### ❌ 미구현 기능 (우선순위 순)
 
 | 기능 | 우선순위 | 비고 |
 |------|---------|------|
-| Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 |
+| Supabase Storage 버킷 설정 | 🔴 필수 | `schedule-attachments` 버킷 생성 + public 정책 필요 (사용자 수행) |
+| Google Calendar 양방향 동기화 | 🟡 중요 (Day 5) | Calendar API 활성화 필요 (사용자 수행) |
 | Google Drive 사진 첨부 | 🟡 중요 (Day 5) | Drive API 활성화 필요 |
-| 자동화 정책 기반 상태 전이 | 🔴 필수 (Day 6 후속) | `completion_required`, `payment_due` 등 정책 기반 처리 필요 |
-| 일정 수정 페이지 `/schedules/[id]/edit` | 🟢 선택 | UI만 없음, DB 함수는 있음 |
+| 디자인 토큰 정리 | 🟡 중요 | 28+ 브랜드 컬러 위반, 50+ 인라인 버튼 스타일 통일 필요 |
+| PC WEB 뷰 전체 활성화 | 🟢 선택 | `/schedules`, `/budget`, `/family` 등 `lg:` 클래스 이미 준비됨 — 모바일 완성 후 진행 |
 | Google OAuth 앱 게시 (프로덕션) | 🟢 선택 | 테스트 사용자 외 로그인 불가 |
 
 ---
@@ -70,8 +76,11 @@
 > ✅ 1단계(초대 링크)와 2단계(전 페이지 디자인 리뉴얼)는 완료됨.
 > ✅ 3단계(Google Calendar 연동) 코드 작업 완료됨. (수동 설정만 남음)
 > ✅ 4단계(FCM 푸시 알림 + Supabase Cron 리마인더)는 완료됨. Supabase `pg_net` 실행 결과까지 확인 완료.
-> ✅ 5단계 전 제품 모델 재정의 완료. 자동 상태 전이는 `child` 전용이 아니라 `automation_policy` 기반으로 구현해야 함.
+> ✅ 5단계(자동화 정책 엔진) 완료됨. `automation_policy` 기반 `time_window/completion_required/payment_due` 처리 + FCM 알림.
+> ✅ 6단계(PC/모바일 뷰 분리 + 랜딩 + 홈 리디자인) 완료됨. `/login`, `/home` 분리 완료.
 > ✅ 개인화 온보딩 1차 구현 및 운영 DB SQL 적용 완료. 로그인 후 온보딩 미완료 사용자는 `/onboarding`으로 이동.
+> ✅ **7단계(모바일 서비스 완성)**: 일정 상태변경 UX 완성(shared/personal 포함), 파일 첨부 실제 업로드 구현, PWA manifest 완성, docs 업데이트.
+> 🔜 **8단계: PC WEB 전체 뷰 활성화** — 모바일 완성 후 진행. `/schedules`, `/budget`, `/family` 등에 이미 `lg:` 클래스 코드가 준비되어 있음. `DesktopHome`, `MobileHome` 패턴을 나머지 페이지에 적용.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료
 `src/app/invite/[code]/page.tsx` 구현 완료.
@@ -112,15 +121,26 @@
 - Supabase SQL Editor에서 `pg_net`, `pg_cron` 활성화 및 `gleaum-reminders` 잡 등록 완료
 - Vercel Hobby 플랜 제한으로 `vercel.json`의 Cron 설정은 제거됨
 
-### 5단계: 자동화 정책 기반 상태 전이 (🔴 필수, Day 6 후속)
+### 5단계 ✅: 자동화 정책 기반 상태 전이 — 완료
 
-**필요 작업**:
-- `docs/12-product-model.md` 기준으로 개인 기본 구간 + Space / Category / Automation Policy 모델 유지
-- `schedule.type === 'child'` 하드코딩 금지
-- `completion_required`: 시작 시 `pending` → `in_progress`, 종료 후 미완료면 `missed`
-- `payment_due`: 결제일 도래/초과 상태 및 알림 처리
-- `missed` 또는 `overdue` 전환 시 assignee/observer/Space 멤버 규칙에 따라 FCM 재알림
-- 기존 Supabase cron 구조에 `/api/cron/automations` 또는 통합 cron 로직 추가
+- `src/app/api/cron/automations/route.ts` — 5분마다 실행되는 자동화 엔진
+- `time_window`: 시간 도래 시 pending → in_progress, 종료 시 → completed
+- `completion_required`: 시작 시 pending → in_progress, 종료 후 미완료 → missed + FCM
+- `payment_due`: 결제일 도래 시 pending → in_progress, 초과 시 → missed + FCM
+- Supabase `pg_cron` `gleaum-automations` 잡 등록 완료 (5분 간격, `net.http_post`)
+- `src/lib/db.ts`: `inferCategory`, `inferVisibility`, `inferAutomationPolicy` 헬퍼로 type→policy 자동 매핑
+
+### 6단계 ✅: PC/모바일 뷰 분리 + 랜딩페이지 + 모바일 홈 리디자인 — 완료
+
+- `src/hooks/useMediaQuery.ts` — `useIsDesktop()` 훅 (1024px 기준)
+- `/login`: `MobileLogin` / `DesktopLanding` 분기
+- `/home`: `MobileHome` / `DesktopHome` 분기
+- `src/components/landing/DesktopLanding.tsx` — SaaS 풀페이지 랜딩 (인라인 스타일)
+- `src/app/home/MobileHome.tsx` — 모던 모바일 홈 (시간 인사 + 접이식 캘린더 + 퀵 액션)
+
+### 7단계: 서브 페이지 PC/모바일 뷰 분리 (🔴 필수, 다음 작업)
+
+나머지 모든 서브 페이지를 동일 패턴으로 분리해야 합니다. 상세 계획은 `docs/08-features-pending.md`의 "서브 페이지 PC/모바일 뷰 분리 계획" 섹션 참조.
 
 ---
 
@@ -193,30 +213,58 @@ export function useNewFeature(param: string | null) {
 }
 ```
 
-### 새 페이지 추가
+### 새 페이지 추가 (PC/모바일 분리 패턴 — 표준)
+
 ```typescript
-// src/app/new-page/page.tsx
+// src/app/new-page/page.tsx (thin router)
+'use client'
+import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import MobileNewPage from './MobileNewPage'
+import DesktopNewPage from './DesktopNewPage'
+
+export default function NewPage() {
+  const isDesktop = useIsDesktop()
+  const { user, profile, familyGroupId, loading } = useCurrentUser()
+  // 필요한 데이터 훅 호출...
+  
+  if (isDesktop) return <DesktopNewPage user={user} /* props */ />
+  return <MobileNewPage user={user} /* props */ />
+}
+```
+
+```typescript
+// src/app/new-page/MobileNewPage.tsx
 'use client'
 import AppHeader from '@/components/layout/AppHeader'
 import BottomNav from '@/components/layout/BottomNav'
-import { useCurrentUser } from '@/hooks/useCurrentUser'
 
-export default function NewPage() {
-  const { user, familyGroupId, loading } = useCurrentUser()
-  
-  if (loading) return <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full"
-      style={{ borderColor: 'rgba(0,132,204,0.3)', borderTopColor: 'var(--brand-blue)' }}/>
-  </div>
-  
+export default function MobileNewPage({ user, ...props }) {
   return (
     <>
       <AppHeader title="페이지 제목" showBack />
       <main className="pt-16 pb-32 px-4">
-        {/* 컨텐츠 */}
+        {/* 모바일 UI */}
       </main>
       <BottomNav />
     </>
+  )
+}
+```
+
+```typescript
+// src/app/new-page/DesktopNewPage.tsx
+'use client'
+
+export default function DesktopNewPage({ user, ...props }) {
+  return (
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      {/* PC 레이아웃 — 인라인 스타일 권장 (Tailwind 충돌 방지) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+        {/* 좌측 패널 */}
+        {/* 우측 패널 */}
+      </div>
+    </div>
   )
 }
 ```

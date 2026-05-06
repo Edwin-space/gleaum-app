@@ -52,12 +52,10 @@
 - 설정된 `reminder` 분 전에 FCM 발송 + `notifications` 테이블 기록
 - Supabase에서 `pg_net` 호출 결과 확인 및 실행 완료
 
-### 🔴 자동화 정책 기반 상태 전이
-- 제품 방향이 개인 중심 + Space 확장형 서비스로 보정됨에 따라 `child` 전용 자동화 구현은 금지
-- `docs/12-product-model.md` 기준으로 `automation_policy` 기반 상태 전이 구현 필요
-- `completion_required`: 개인 루틴, 가족 케어, 자녀 일정, 심부름 등 완료 확인 일정 처리
-- `payment_due`: 개인/연인/가족 정기지출의 결제 예정/미납 알림 처리
-- 재알림 수동 발송 API는 구현됐으나, 자동 미완료/미납 판정과 대상자 규칙은 다음 단계
+### ✅ 자동화 정책 기반 상태 전이 — 완료
+- `src/app/api/cron/automations/route.ts` 구현 및 Supabase pg_cron 등록 완료
+- `time_window`, `completion_required`, `payment_due` 정책 처리 + FCM 알림
+- `src/lib/db.ts`에 inference 헬퍼 추가, `createSchedule`에서 type→policy 자동 매핑
 
 ---
 
@@ -82,12 +80,31 @@
 
 ## Day 8 — 품질 및 완성도
 
-### 🔴 개인 중심 + Space 확장형 모델 마이그레이션
+### 🔴 개인 중심 + Space 확장형 모델 마이그레이션 (일부 완료)
+- [x] `schedules.category`, `schedules.visibility`, `schedules.automation_policy` DB 컬럼 추가 완료
+- [x] 기존 `schedule.type` → 신규 축으로 자동 매핑 (`inferCategory`, `inferVisibility`, `inferAutomationPolicy`)
+- [x] 첫 로그인 시 `"나의 공간"` 자동 생성으로 전환 완료
 - [ ] `family_groups.type` 추가로 기존 가족 그룹을 Space로 확장
-- [ ] `schedules.category`, `schedules.visibility`, `schedules.automation_policy` 추가
-- [ ] 기존 `schedule.type` 값을 신규 축으로 매핑
 - [ ] 중기적으로 `spaces`, `space_members`, `schedule_assignees`, `schedule_observers`, `notification_rules` 설계
-- [ ] 첫 로그인 시 `"X씨 가족"` 대신 개인 Space 또는 선택형 온보딩으로 전환 검토
+
+### ✅ 일정 상태 변경 UX 완성 (2026-05-06 완료)
+- `shared`, `personal` 타입 일정에도 상태 변경 버튼 추가
+- `pending` → 시작하기 → `in_progress` → 완료 확인 → `completed` / `missed`
+- 대기 상태로 되돌리기 버튼 추가 (진행중 → 대기)
+- 완료 확인 모달을 모든 타입 공통 적용
+
+### ✅ 파일 첨부 실제 구현 (2026-05-06 완료)
+- `src/app/schedules/new/page.tsx`: `<input type="file">` 연결, 이미지 미리보기 구현
+- `src/lib/db.ts`: `uploadScheduleAttachment()` 함수 추가 (Supabase Storage `schedule-attachments` 버킷)
+- 업로드 실패 시에도 일정 저장은 계속 진행 (첨부는 선택 사항)
+
+> ⚠️ **Supabase에서 사전 설정 필요**: Storage 버킷 `schedule-attachments` 생성 + public 접근 정책 설정 필요
+
+### ✅ PWA manifest 완성 (2026-05-06 완료)
+- `shortcuts` 추가: 일정 추가, 오늘 일정, 가계부 바로가기
+- `display_override`: `["standalone", "minimal-ui", "browser"]`
+- `scope`, `dir`, `prefer_related_applications` 명시
+- 아이콘 `purpose` 분리: `any` / `maskable` 각각 등록
 
 ### 🟡 PWA 완성
 - [ ] `public/manifest.json` 아이콘 세트 추가
@@ -116,10 +133,52 @@
 
 ---
 
+## 🔴 서브 페이지 PC/모바일 뷰 분리 계획
+
+> 아키텍처: `page.tsx` (thin router, `useIsDesktop()` 분기) → `MobileX.tsx` / `DesktopX.tsx`
+> 참고: `/login`과 `/home`은 이미 완료됨.
+
+### Phase 1 — 핵심 CRUD 페이지 (최우선)
+
+| 페이지 | PC 레이아웃 방향 |
+|--------|-----------------|
+| `/schedules` | 좌측 필터 패널 + 우측 3컬럼 카드 그리드, 상단 검색바 풀 와이드 |
+| `/budget` | 좌측 월별 요약 + 우측 카테고리별 상세 2컬럼, 히어로 카드 와이드 |
+| `/schedules/new` | 중앙 정렬 폼 카드 (max-width 640px), 좌우 여백 활용 |
+| `/schedules/[id]` | 좌측 상세 정보 카드 + 우측 참여자/액션 패널 2컬럼 |
+
+### Phase 2 — 보조 페이지
+
+| 페이지 | PC 레이아웃 방향 |
+|--------|-----------------|
+| `/family` | 좌측 멤버 리스트 + 우측 초대/설정 패널 |
+| `/mypage` | 좌측 프로필 카드 + 우측 설정 항목 리스트 |
+| `/notifications` | 중앙 정렬 알림 리스트 (max-width 720px) |
+| `/schedules/children` | 좌측 자녀 선택 + 우측 일정/진행률 대시보드 |
+
+### Phase 3 — 기타 페이지
+
+| 페이지 | PC 레이아웃 방향 |
+|--------|-----------------|
+| `/schedules/[id]/edit` | `/schedules/new`와 동일 패턴 (중앙 폼 카드) |
+| `/onboarding` | 중앙 정렬 스텝 카드 + 좌우 일러스트/브랜딩 |
+| `/invite/[code]` | 중앙 정렬 초대 카드 (max-width 480px) |
+| `/settings/calendar` | 중앙 설정 패널 (max-width 640px) |
+
+### 구현 시 주의사항
+- PC 레이아웃은 **인라인 스타일** 권장 (Tailwind CSS 우선순위 충돌 방지)
+- `landing-fullscreen` 클래스 → `globals.css`의 `:has()` 규칙으로 패딩 제거 (풀페이지 필요 시)
+- 모바일 컴포넌트는 기존 코드 그대로 추출 (리디자인 필요 시 별도 진행)
+- `glass-card`, `brand-gradient` 등 디자인 토큰 일관 사용
+
+---
+
 ## 기술 부채
 
 | 항목 | 내용 | 파일 |
 |------|------|------|
 | `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
-| 자동화 정책 기반 상태 전이 미구현 | `child` 하드코딩 대신 `automation_policy` 기반 처리 필요 | cron/API |
+| ~~자동화 정책 기반 상태 전이 미구현~~ | ✅ 완료 (`automation_policy` 기반 처리) | `src/app/api/cron/automations/route.ts` |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |
+| 디자인 토큰 위반 | 28+ 하드코딩 컬러, 50+ 인라인 버튼 스타일 → 토큰/클래스 통일 필요 | 전역 |
+| 서브 페이지 뷰 미분리 | `/login`, `/home` 외 나머지 페이지 PC/모바일 분리 필요 | Phase 1/2/3 계획 참조 |

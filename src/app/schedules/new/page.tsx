@@ -15,7 +15,9 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useFamily } from '@/hooks/useFamily';
 import { useSchedules } from '@/hooks/useSchedules';
 import { createSchedule } from '@/lib/db';
+import { uploadScheduleAttachment } from '@/lib/db';
 import { scheduleToast, toastError } from '@/lib/toast';
+import { useRef } from 'react';
 
 // 입력 공통 스타일
 const inputBase = 'w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-white border-2 outline-none transition-all';
@@ -58,7 +60,8 @@ export default function NewSchedulePage() {
   const [amount, setAmount]               = useState('');
   const [category, setCategory]           = useState<ExpenseCategory>('education');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('auto');
-  const [attachments, setAttachments] = useState<{ id: string; name: string; source: string }[]>([]);
+  const [attachments, setAttachments] = useState<{ id: string; name: string; url: string; file?: File; uploading?: boolean }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
 
@@ -77,6 +80,18 @@ export default function NewSchedulePage() {
       const endDateTime   = endTime ? new Date(`${date}T${endTime}:00`) : undefined;
       const participantIds = participants.length > 0 ? participants : (user ? [user.id] : []);
 
+      // 첨부 파일 업로드 (미완료 항목만 처리)
+      const attachmentUrls: string[] = [];
+      for (const att of attachments) {
+        if (att.url && !att.file) {
+          // 이미 업로드된 항목
+          attachmentUrls.push(att.url);
+        } else if (att.file) {
+          const url = await uploadScheduleAttachment(att.file);
+          if (url) attachmentUrls.push(url);
+        }
+      }
+
       await create({
         title: title.trim(), type,
         startTime: startDateTime, endTime: endDateTime,
@@ -84,7 +99,9 @@ export default function NewSchedulePage() {
         locationAddress: address || undefined,
         referenceUrl: refUrl || undefined,
         reminder, repeat,
-        memo: memo || undefined,
+        memo: attachmentUrls.length > 0
+          ? `${memo || ''}${memo ? '\n' : ''}[첨부: ${attachmentUrls.join(', ')}]`
+          : memo || undefined,
         participantIds,
         amount: type === 'expense' && amount ? parseInt(amount) : undefined,
         expenseCategory: type === 'expense' ? category : undefined,
@@ -97,6 +114,24 @@ export default function NewSchedulePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // 파일 선택 핸들러
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (attachments.length + files.length > 10) {
+      toastError('최대 10개까지 첨부할 수 있습니다');
+      return;
+    }
+    const newItems = files.map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      name: file.name,
+      url: URL.createObjectURL(file),
+      file,
+    }));
+    setAttachments((prev) => [...prev, ...newItems]);
+    // input 초기화 (같은 파일 재선택 가능하도록)
+    e.target.value = '';
   };
 
   const activeType = typeConfig[type];
@@ -391,33 +426,51 @@ export default function NewSchedulePage() {
         {/* ── 사진 첨부 ── */}
         <div>
           <SectionLabel>사진 및 파일 첨부</SectionLabel>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <button
-              onClick={() => setAttachments((prev) => [...prev, { id: Date.now().toString(), name: `사진_${prev.length + 1}.jpg`, source: 'local' }])}
-              className="flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all active:scale-95"
-              style={{ background: 'white', border: '2px dashed rgba(0,132,204,0.25)', color: '#0084CC' }}
-            >
-              <span>📱</span> 내 휴대폰
-            </button>
-            <button
-              onClick={() => setAttachments((prev) => [...prev, { id: Date.now().toString(), name: `드라이브_${prev.length + 1}.jpg`, source: 'google_drive' }])}
-              className="flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all active:scale-95"
-              style={{ background: 'white', border: '2px dashed rgba(6,182,212,0.30)', color: '#0891B2' }}
-            >
-              <span>☁️</span> 구글 드라이브
-            </button>
-          </div>
+
+          {/* 숨겨진 파일 인풋 */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            multiple
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={attachments.length >= 10}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50"
+            style={{ background: 'white', border: '2px dashed rgba(0,132,204,0.25)', color: '#0084CC' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            사진 / 파일 선택하기 ({attachments.length}/10)
+          </button>
 
           {attachments.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 mt-3">
               {attachments.map((a) => (
                 <div key={a.id}
-                  className="relative flex-shrink-0 w-20 h-20 rounded-[14px] flex items-center justify-center"
+                  className="relative flex-shrink-0 w-20 h-20 rounded-[14px] overflow-hidden"
                   style={{ background: 'rgba(0,132,204,0.06)', border: '1.5px solid rgba(0,132,204,0.12)' }}>
-                  <span className="text-2xl">{a.source === 'local' ? '🖼️' : '📄'}</span>
-                  <button onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: '#EF4444' }}>✕</button>
+                  {a.url && a.file?.type.startsWith('image/') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.url} alt={a.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                      <span className="text-xl">📄</span>
+                      <span className="text-[9px] px-1 text-center truncate w-full" style={{ color: '#8E8E93' }}>{a.name}</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                    style={{ background: 'rgba(0,0,0,0.55)' }}
+                  >✕</button>
                 </div>
               ))}
             </div>
