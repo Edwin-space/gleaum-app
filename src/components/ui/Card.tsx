@@ -101,57 +101,89 @@ const TYPE_ICON_CONFIG = {
 export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCardProps) {
   const cfg = TYPE_ICON_CONFIG[schedule.type];
 
+  if (compact) {
+    return (
+      <div
+        onClick={onClick}
+        className="glass-card rounded-[22px] p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-all border border-white/40 shadow-sm"
+      >
+        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: cfg.bg, color: cfg.color }}>
+          {cfg.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-[14px] text-[#1A1B2E] truncate">{schedule.title}</p>
+          <p className="text-[11px] font-semibold text-[#8E8E93]">{formatTime(schedule.startTime)}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={onClick}
-      className="glass-card rounded-[24px] p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform"
+      className="group relative glass-card rounded-[30px] p-0 overflow-hidden cursor-pointer active:scale-[0.99] transition-all border border-white/60 shadow-[0_12px_32px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_40px_rgba(0,132,204,0.12)]"
     >
-      {/* 아이콘 원형 */}
-      <div
-        className="w-[48px] h-[48px] rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: cfg.bg, color: cfg.color }}
-      >
-        {cfg.icon}
-      </div>
+      {/* 배경 글로우 효과 (유형별 컬러) */}
+      <div className="absolute top-0 right-0 w-32 h-32 blur-[60px] opacity-10 pointer-events-none"
+        style={{ background: cfg.color }} />
 
-      {/* 내용 */}
-      <div className="flex-1 min-w-0">
-        <h4
-          className="font-bold text-[16px] leading-snug truncate mb-0.5"
-          style={{ color: 'var(--color-ink)' }}
-        >
-          {schedule.title}
-        </h4>
-        {!compact && (
-          <p className="text-[13px] font-semibold" style={{ color: '#8E8E93' }}>
-            {formatTime(schedule.startTime)}
-            {schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}
+      <div className="flex">
+        {/* 왼쪽: 시간 표시부 (타임라인 인디케이터) */}
+        <div className="w-[72px] flex flex-col items-center justify-center py-5 border-r border-gray-100/50">
+          <p className="text-[11px] font-black text-[#8E8E93] uppercase tracking-tighter mb-1">
+            {new Date(schedule.startTime).toLocaleTimeString('ko-KR', { hour: 'numeric', hour12: true }).split(' ')[0]}
           </p>
-        )}
-        {schedule.location && !compact && (
-          <p className="text-[12px] flex items-center gap-1 mt-0.5" style={{ color: '#8E8E93' }}>
-            <span>📍</span>
-            <span className="truncate">{schedule.location.address}</span>
+          <p className="text-[18px] font-black text-[#1A1B2E] leading-none mb-2">
+            {new Date(schedule.startTime).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: false }).split(':')[0]}
+            <span className="text-[13px] align-top ml-0.5">:</span>
+            {new Date(schedule.startTime).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: false }).split(':')[1]}
           </p>
-        )}
-        {schedule.amount !== undefined && (
-          <p className="text-[13px] font-bold mt-0.5" style={{ color: cfg.color }}>
-            {schedule.amount.toLocaleString('ko-KR')}원
-          </p>
-        )}
-      </div>
-
-      {/* 우측 배지 */}
-      {schedule.type === 'child' && (
-        <div className="flex-shrink-0">
-          <StatusBadge status={schedule.status} />
+          <div className="w-1 flex-1 rounded-full" style={{ background: `linear-gradient(to bottom, ${cfg.color}, transparent)` }} />
         </div>
-      )}
-      {compact && (
-        <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: '#8E8E93' }}>
-          {formatTime(schedule.startTime)}
-        </span>
-      )}
+
+        {/* 오른쪽: 상세 내용부 */}
+        <div className="flex-1 p-5 pl-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: cfg.bg, color: cfg.color }}>
+                {cfg.icon}
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: cfg.color }}>
+                {schedule.type}
+              </span>
+            </div>
+            <StatusBadge status={schedule.status} />
+          </div>
+
+          <h4 className="text-[17px] font-bold text-[#1A1B2E] leading-tight mb-2 group-hover:text-brand-blue transition-colors">
+            {schedule.title}
+          </h4>
+
+          <div className="space-y-1.5">
+            {schedule.location && (
+              <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#8E8E93]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span className="truncate">{schedule.location.address}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[12px] font-medium text-[#8E8E93]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>{formatTime(schedule.startTime)} - {schedule.endTime ? formatTime(schedule.endTime) : '계속'}</span>
+              </div>
+              {schedule.amount !== undefined && (
+                <div className="px-2 py-0.5 rounded-md bg-[#F59E0B]/10 text-[11px] font-bold text-[#F59E0B]">
+                  ₩{schedule.amount.toLocaleString()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
