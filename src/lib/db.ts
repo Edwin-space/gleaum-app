@@ -771,3 +771,53 @@ export async function uploadScheduleAttachment(file: File): Promise<string | nul
 
   return urlData?.publicUrl ?? null;
 }
+
+/** 마이페이지 대시보드용 인사이트 데이터 추출 */
+export async function getMyPageInsights(familyGroupId: string | undefined) {
+  if (!familyGroupId) return null;
+  const supabase = createClient();
+  const now = new Date();
+  
+  // 1. 이번 달 시작일/종료일
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+  // 2. 이번 주(향후 7일) 종료일
+  const endOfWeek = new Date(now);
+  endOfWeek.setDate(now.getDate() + 7);
+  const endOfWeekIso = endOfWeek.toISOString();
+
+  // ── [지출 요약] 이번 달 총 지출 ──
+  const { data: expenses } = await supabase
+    .from('schedules')
+    .select('amount')
+    .eq('family_group_id', familyGroupId)
+    .eq('type', 'expense')
+    .gte('start_time', startOfMonth)
+    .lte('start_time', endOfMonth);
+
+  const totalExpense = expenses?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+
+  // ── [일정 요약] 향후 7일간 일정 개수 ──
+  const { count: upcomingCount } = await supabase
+    .from('schedules')
+    .select('*', { count: 'exact', head: true })
+    .eq('family_group_id', familyGroupId)
+    .neq('type', 'expense') // 지출 제외 순수 일정
+    .gte('start_time', now.toISOString())
+    .lte('start_time', endOfWeekIso);
+
+  // ── [가족 요약] 멤버 수 ──
+  const { count: memberCount } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('family_group_id', familyGroupId);
+
+  return {
+    totalExpense,
+    upcomingCount: upcomingCount || 0,
+    memberCount: memberCount || 0,
+    month: now.getMonth() + 1
+  };
+}
+
