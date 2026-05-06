@@ -297,20 +297,20 @@ export async function getFamilyByCode(inviteCode: string): Promise<{ id: string;
   return { id: data.id, name: data.name };
 }
 
-/** 초대 코드로 가족 합류 */
-export async function joinFamilyByCode(inviteCode: string): Promise<{ success: boolean; alreadyMember?: boolean; familyName?: string }> {
+/** 초대 코드로 스페이스 합류 */
+export async function joinSpaceByCode(inviteCode: string): Promise<{ success: boolean; alreadyMember?: boolean; spaceName?: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false };
 
-  // 이미 가족 그룹이 있는지 확인
+  // 이미 스페이스가 있는지 확인
   const { data: profile } = await supabase
     .from('profiles')
     .select('family_group_id')
     .eq('id', user.id)
     .single();
 
-  // 초대 코드로 그룹 찾기
+  // 초대 코드로 스페이스 찾기
   const { data: group, error: groupError } = await supabase
     .from('family_groups')
     .select('id, name')
@@ -319,9 +319,9 @@ export async function joinFamilyByCode(inviteCode: string): Promise<{ success: b
 
   if (groupError || !group) return { success: false };
 
-  // 이미 같은 가족 그룹 멤버인 경우
+  // 이미 같은 스페이스 멤버인 경우
   if (profile?.family_group_id === group.id) {
-    return { success: true, alreadyMember: true, familyName: group.name };
+    return { success: true, alreadyMember: true, spaceName: group.name };
   }
 
   const { error } = await supabase
@@ -329,11 +329,12 @@ export async function joinFamilyByCode(inviteCode: string): Promise<{ success: b
     .update({ family_group_id: group.id })
     .eq('id', user.id);
 
-  return { success: !error, familyName: group.name };
+  return { success: !error, spaceName: group.name };
 }
 
-/** 신규 가족 그룹 생성 + 프로필에 연결 */
-export async function createFamilyGroup(name: string): Promise<string | null> {
+
+/** 신규 스페이스 생성 + 프로필에 연결 */
+export async function createSpace(name: string): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -347,7 +348,7 @@ export async function createFamilyGroup(name: string): Promise<string | null> {
     .single();
 
   if (groupError || !group) {
-    console.error('가족 그룹 생성 오류:', groupError?.message);
+    console.error('Space creation error:', groupError?.message);
     return null;
   }
 
@@ -358,6 +359,7 @@ export async function createFamilyGroup(name: string): Promise<string | null> {
 
   return group.id;
 }
+
 
 /** 로그인 후 프로필 초기화 (가족 그룹 없으면 자동 생성) */
 export async function ensureUserSetup(): Promise<ProfileRow | null> {
@@ -393,27 +395,29 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
     profile = newProfile;
   }
 
-  // 가족 그룹 없으면 자동 생성 시도
+  // 스페이스 정보가 없으면 자동 생성 시도
   if (!profile.family_group_id && !hasTriedAutoCreateGroup) {
-    hasTriedAutoCreateGroup = true; // 시도 기록 (성공 여부 상관없이 중복 시도 방지)
-    const familyName = '나의 공간';
+    hasTriedAutoCreateGroup = true; 
+    const spaceName = `${profile.name || '나'}의 공간`;
     try {
-      const groupId = await createFamilyGroup(familyName);
-      if (groupId) {
-        profile.family_group_id = groupId;
+      const spaceId = await createSpace(spaceName);
+      if (spaceId) {
+        profile.family_group_id = spaceId;
       }
     } catch (err) {
-      console.warn('가족 그룹 자동 생성 건너뜀 (권한 부족 등):', err);
+      console.warn('Space auto-creation skipped:', err);
     }
   }
+
 
   return profile;
 }
 
 // ── 일정 ─────────────────────────────────────────────────
 
-/** 가족 일정 전체 조회 */
-export async function getSchedules(familyGroupId: string): Promise<Schedule[]> {
+/** 스페이스 일정 전체 조회 */
+export async function getSchedules(spaceId: string): Promise<Schedule[]> {
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -422,7 +426,8 @@ export async function getSchedules(familyGroupId: string): Promise<Schedule[]> {
       *,
       schedule_participants (user_id)
     `)
-    .eq('family_group_id', familyGroupId)
+    .eq('family_group_id', spaceId)
+
     .order('start_time', { ascending: true });
 
   if (error) {

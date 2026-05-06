@@ -12,7 +12,9 @@ let isFirstLoad = true;
 export interface CurrentUserState {
   user: User | null;
   profile: ProfileRow | null;
+  /** @deprecated Use spaceId instead */
   familyGroupId: string | null;
+  spaceId: string | null;
   loading: boolean;
   refresh: () => Promise<void>;
 }
@@ -87,10 +89,13 @@ export function useCurrentUser(): CurrentUserState {
     } : null
   ), [profile]);
 
+  const spaceId = profile?.family_group_id ?? null;
+
   return {
     user,
     profile,
-    familyGroupId: profile?.family_group_id ?? null,
+    spaceId,
+    familyGroupId: spaceId,
     loading,
     refresh: () => load(true),
   };

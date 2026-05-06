@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useFamily } from '@/hooks/useFamily';
-import { joinFamilyByCode } from '@/lib/db';
+import { useSpace } from '@/hooks/useSpace';
+import { joinSpaceByCode } from '@/lib/db';
 import { AppHeader } from '@/components/layout/AppHeader';
 
 export default function FamilyPage() {
@@ -14,8 +14,8 @@ export default function FamilyPage() {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
 
-  const { familyGroupId, refresh: refreshUser } = useCurrentUser();
-  const { group, members, loading, refresh } = useFamily(familyGroupId);
+  const { spaceId, refresh: refreshUser } = useCurrentUser();
+  const { space: group, members, loading, refresh } = useSpace(spaceId);
 
   const inviteLink = group?.inviteCode
     ? `https://gleaum.com/invite/${group.inviteCode}`
@@ -32,7 +32,7 @@ export default function FamilyPage() {
     if (!joinCode.trim()) return;
     setJoining(true);
     setJoinError('');
-    const result = await joinFamilyByCode(joinCode.trim().toUpperCase());
+    const result = await joinSpaceByCode(joinCode.trim().toUpperCase());
     setJoining(false);
     if (result.success) {
       await refreshUser();
