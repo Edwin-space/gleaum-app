@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getFamilyWithMembers, type ProfileRow, type FamilyGroupRow } from '@/lib/db';
+import { getSpaceWithMembers, type ProfileRow, type FamilyGroupRow } from '@/lib/db';
 import type { User, FamilyGroup } from '@/types';
 
 export interface FamilyState {
@@ -23,7 +23,7 @@ export function useFamily(familyGroupId: string | null): FamilyState {
     }
     setLoading(true);
     try {
-      const result = await getFamilyWithMembers(familyGroupId);
+      const result = await getSpaceWithMembers(familyGroupId);
       if (result) {
         setGroup(rowsToFamilyGroup(result.group, result.members));
         setMembers(result.members.map(rowToUser));
