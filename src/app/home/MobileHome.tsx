@@ -89,86 +89,104 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ── 인사 + 오늘 요약 카드 ── */}
-        <div className="glass-card" style={{
-          borderRadius: '24px',
-          padding: '24px',
+        <div style={{
+          borderRadius: '28px',
+          padding: '28px 24px',
           position: 'relative',
           overflow: 'hidden',
+          background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+          boxShadow: '0 16px 48px rgba(26,27,46,0.25)',
         }}>
-          {/* 장식 그라디언트 */}
+          {/* 장식 글로우 */}
           <div style={{
             position: 'absolute',
-            top: '-20px',
-            right: '-20px',
-            width: '120px',
-            height: '120px',
+            top: '-30px',
+            right: '-30px',
+            width: '140px',
+            height: '140px',
             borderRadius: '50%',
-            background: 'var(--brand-gradient)',
-            opacity: 0.08,
+            background: 'rgba(0,132,204,0.25)',
+            filter: 'blur(40px)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute',
+            bottom: '-20px',
+            left: '-20px',
+            width: '100px',
+            height: '100px',
+            borderRadius: '50%',
+            background: 'rgba(12,201,181,0.15)',
+            filter: 'blur(30px)',
             pointerEvents: 'none',
           }} />
 
-          <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-teal)', marginBottom: '4px' }}>
-            {greeting}
-          </p>
-          <h1 style={{
-            fontSize: '24px',
-            fontWeight: 800,
-            color: 'var(--color-ink)',
-            letterSpacing: '-0.5px',
-            margin: '0 0 16px',
-          }}>
-            {displayName}님
-          </h1>
-
-          {/* 오늘 통계 */}
-          {!loading && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '12px',
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(12,201,181,0.9)', marginBottom: '4px' }}>
+              {greeting}
+            </p>
+            <h1 style={{
+              fontSize: '26px',
+              fontWeight: 800,
+              color: 'white',
+              letterSpacing: '-0.5px',
+              margin: '0 0 20px',
             }}>
+              {displayName}님
+            </h1>
+
+            {/* 오늘 통계 */}
+            {!loading && (
               <div style={{
-                textAlign: 'center',
-                padding: '12px 8px',
-                borderRadius: '16px',
-                background: 'rgba(0,132,204,0.06)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '10px',
               }}>
-                <p style={{ fontSize: '24px', fontWeight: 800, color: 'var(--brand-blue)', margin: 0 }}>
-                  {totalToday}
-                </p>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-ink-muted-80)', margin: '2px 0 0' }}>
-                  오늘 전체
-                </p>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '12px 8px',
+                  borderRadius: '16px',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}>
+                  <p style={{ fontSize: '24px', fontWeight: 800, color: 'white', margin: 0 }}>
+                    {totalToday}
+                  </p>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
+                    오늘 전체
+                  </p>
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '12px 8px',
+                  borderRadius: '16px',
+                  background: 'rgba(46,232,149,0.12)',
+                  border: '1px solid rgba(46,232,149,0.15)',
+                }}>
+                  <p style={{ fontSize: '24px', fontWeight: 800, color: '#2EE895', margin: 0 }}>
+                    {completedCount}
+                  </p>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
+                    완료
+                  </p>
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '12px 8px',
+                  borderRadius: '16px',
+                  background: 'rgba(12,201,181,0.12)',
+                  border: '1px solid rgba(12,201,181,0.15)',
+                }}>
+                  <p style={{ fontSize: '24px', fontWeight: 800, color: '#0CC9B5', margin: 0 }}>
+                    {pendingCount}
+                  </p>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
+                    남은 일정
+                  </p>
+                </div>
               </div>
-              <div style={{
-                textAlign: 'center',
-                padding: '12px 8px',
-                borderRadius: '16px',
-                background: 'rgba(46,232,149,0.06)',
-              }}>
-                <p style={{ fontSize: '24px', fontWeight: 800, color: 'var(--brand-green)', margin: 0 }}>
-                  {completedCount}
-                </p>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-ink-muted-80)', margin: '2px 0 0' }}>
-                  완료
-                </p>
-              </div>
-              <div style={{
-                textAlign: 'center',
-                padding: '12px 8px',
-                borderRadius: '16px',
-                background: 'rgba(12,201,181,0.06)',
-              }}>
-                <p style={{ fontSize: '24px', fontWeight: 800, color: 'var(--brand-teal)', margin: 0 }}>
-                  {pendingCount}
-                </p>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-ink-muted-80)', margin: '2px 0 0' }}>
-                  남은 일정
-                </p>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ── 캘린더 토글 ── */}

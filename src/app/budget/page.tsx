@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { AppHeader } from '@/components/layout/AppHeader';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 import { useSchedules } from '@/hooks/useSchedules';
@@ -65,9 +64,19 @@ export default function BudgetPage() {
 
   return (
     <div className="min-h-dvh pb-28 lg:max-w-[1440px] lg:mx-auto lg:px-8 lg:pt-10">
-      <div className="lg:hidden">
-        <AppHeader title="가계부" showLogo={false} />
-      </div>
+      <header className="lg:hidden" style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        padding: '48px 20px 16px',
+        background: 'rgba(250,250,253,0.7)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-ink)', letterSpacing: '-0.5px', margin: 0 }}>
+            가계부
+          </h1>
+        </div>
+      </header>
 
       {/* PC 전용 타이틀 */}
       <div className="hidden lg:flex items-center justify-between mb-8">

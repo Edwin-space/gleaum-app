@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { AppHeader } from '@/components/layout/AppHeader';
-
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
@@ -183,8 +181,20 @@ export default function MyPage() {
   }
 
   return (
-    <div className="min-h-dvh pb-32 lg:max-w-[1440px] lg:mx-auto">
-      <AppHeader title="마이페이지" showLogo={false} showNotification={false} />
+    <div className="min-h-dvh pb-32 bg-transparent lg:max-w-[1440px] lg:mx-auto">
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        padding: '48px 20px 16px',
+        background: 'rgba(250,250,253,0.7)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-ink)', letterSpacing: '-0.5px', margin: 0 }}>
+            마이페이지
+          </h1>
+        </div>
+      </header>
 
       {/* ── [HERO] 프리미엄 대시보드 ── */}
       <div className="px-6 mt-6 mb-8">

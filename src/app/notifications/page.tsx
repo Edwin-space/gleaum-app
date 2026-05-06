@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { AppHeader } from '@/components/layout/AppHeader';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { formatRelativeTime } from '@/lib/utils';
@@ -68,23 +67,34 @@ export default function NotificationsPage() {
   const grouped = useMemo(() => groupNotifications(notifications), [notifications]);
 
   return (
-    <div className="min-h-dvh pb-32 bg-[#FAFAFD] font-sans">
-      <AppHeader
-        title="알림 센터"
-        showLogo={false}
-        showNotification={false}
-        showBack
-        rightAction={
-          unreadCount > 0 ? (
+    <div className="min-h-dvh pb-32 bg-transparent font-sans">
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        padding: '48px 20px 16px',
+        background: 'rgba(250,250,253,0.7)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-ink)', letterSpacing: '-0.5px', margin: 0 }}>
+            알림 센터
+          </h1>
+          {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="text-[12px] font-black px-4 py-2 rounded-full transition-all active:scale-95 text-white shadow-lg bg-brand-gradient"
+              style={{
+                fontSize: '12px', fontWeight: 900, padding: '8px 16px',
+                borderRadius: '999px', color: 'white',
+                background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+                border: 'none', cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,132,204,0.3)',
+              }}
             >
               모두 읽음
             </button>
-          ) : undefined
-        }
-      />
+          )}
+        </div>
+      </header>
 
       {/* 프리미엄 헤더 배너 */}
       {!loading && notifications.length > 0 && (

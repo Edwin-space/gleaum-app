@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AppHeader } from '@/components/layout/AppHeader';
 import { ScheduleCard } from '@/components/ui/Card';
 
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -99,13 +98,13 @@ export default function SchedulesPage() {
             <div className="relative z-10">
               <p className="text-[13px] font-bold text-white/60 mb-1 uppercase tracking-wider">Today's Focus</p>
               <h3 className="text-[20px] font-black mb-4">오늘 {todaySchedules.length}개의 일정이 있습니다.</h3>
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#1A1B2E] bg-gray-400" />
-                ))}
-                <div className="h-8 flex items-center pl-4 text-[12px] font-bold text-white/50">
-                  {user?.name}님, 준비되셨나요?
-                </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ padding: '4px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.15)', fontSize: '12px', fontWeight: 700, color: 'white' }}>
+                  오늘 {todaySchedules.length}개
+                </span>
+                <span style={{ padding: '4px 12px', borderRadius: '999px', background: 'rgba(46,232,149,0.2)', fontSize: '12px', fontWeight: 700, color: '#2EE895' }}>
+                  완료 {todaySchedules.filter(s => s.status === 'completed').length}개
+                </span>
               </div>
             </div>
           </div>

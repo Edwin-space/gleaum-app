@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { joinSpaceByCode } from '@/lib/db';
-import { AppHeader } from '@/components/layout/AppHeader';
 
 export default function FamilyPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -44,9 +44,33 @@ export default function FamilyPage() {
     }
   };
 
+  const router = useRouter();
+
   return (
-    <div className="min-h-dvh pb-32 bg-[#FAFAFD] font-sans">
-      <AppHeader title="공간 관리" showBack showNotification={false} showLogo={false} />
+    <div className="min-h-dvh pb-32 bg-transparent font-sans">
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        padding: '48px 20px 16px',
+        background: 'rgba(250,250,253,0.7)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button onClick={() => router.back()} style={{
+              width: '40px', height: '40px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.7)', cursor: 'pointer',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18L9 12L15 6"/></svg>
+            </button>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-ink)', letterSpacing: '-0.5px', margin: 0 }}>
+              공간 관리
+            </h1>
+          </div>
+        </div>
+      </header>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 gap-4">
