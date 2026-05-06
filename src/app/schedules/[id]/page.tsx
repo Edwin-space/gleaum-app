@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { StatusBadge, TypeBadge } from '@/components/ui/Badge';
 import { getScheduleById, updateScheduleStatus, deleteSchedule } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useFamily } from '@/hooks/useFamily';
+import { useSpace } from '@/hooks/useSpace';
+
 import {
   formatDate, formatTime, formatAmount,
 } from '@/lib/utils';
@@ -34,8 +35,9 @@ export default function ScheduleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const { familyGroupId } = useCurrentUser();
-  const { members } = useFamily(familyGroupId);
+  const { spaceId } = useCurrentUser();
+  const { space: group, members } = useSpace(spaceId);
+
 
   const [schedule, setSchedule] = useState<Schedule | null | undefined>(undefined);
   const [showDeleteModal, setShowDeleteModal]     = useState(false);

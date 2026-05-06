@@ -11,7 +11,8 @@ import {
 } from '@/types';
 import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useFamily } from '@/hooks/useFamily';
+import { useSpace } from '@/hooks/useSpace';
+
 import { useSchedules } from '@/hooks/useSchedules';
 import { getScheduleById, updateSchedule } from '@/lib/db';
 import { scheduleToast, toastError } from '@/lib/toast';
@@ -39,9 +40,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function EditSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user, familyGroupId } = useCurrentUser();
-  const { members } = useFamily(familyGroupId);
-  const { refresh } = useSchedules(familyGroupId);
+  const { spaceId } = useCurrentUser();
+  const { space: group, members } = useSpace(spaceId);
+
+  const { refresh } = useSchedules(spaceId);
 
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);

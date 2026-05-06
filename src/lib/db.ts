@@ -265,23 +265,29 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
   return true;
 }
 
-/** 가족 그룹 및 멤버 조회 */
-export async function getFamilyWithMembers(familyGroupId: string): Promise<{
+/** 스페이스 정보 및 멤버 조회 */
+export async function getSpaceWithMembers(spaceId: string): Promise<{
   group: FamilyGroupRow;
   members: ProfileRow[];
 } | null> {
   const supabase = createClient();
 
-  const [groupRes, membersRes] = await Promise.all([
-    supabase.from('family_groups').select('*').eq('id', familyGroupId).single(),
-    supabase.from('profiles').select('*').eq('family_group_id', familyGroupId),
-  ]);
+  const { data: group, error: groupError } = await supabase
+    .from('family_groups')
+    .select('*')
+    .eq('id', spaceId)
+    .single();
 
-  if (groupRes.error || !groupRes.data) return null;
-  return {
-    group: groupRes.data,
-    members: membersRes.data ?? [],
-  };
+  if (groupError || !group) return null;
+
+  const { data: members, error: membersError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('family_group_id', spaceId);
+
+  if (membersError) return null;
+
+  return { group, members };
 }
 
 /** 초대 코드로 가족 그룹 정보 조회 (미가입자도 조회 가능하도록 anon key 사용) */

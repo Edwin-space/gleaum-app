@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getFamilyWithMembers, type ProfileRow, type FamilyGroupRow } from '@/lib/db';
+import { getSpaceWithMembers, type ProfileRow, type FamilyGroupRow } from '@/lib/db';
 import type { User, FamilyGroup as Space } from '@/types';
+
 
 export interface SpaceState {
   space: Space | null;
@@ -27,7 +28,7 @@ export function useSpace(spaceId: string | null): SpaceState {
     setLoading(true);
     try {
       // NOTE: DB 함수명은 점진적 교체를 위해 우선 유지
-      const result = await getFamilyWithMembers(spaceId);
+      const result = await getSpaceWithMembers(spaceId);
       if (result) {
         setSpace(rowsToSpace(result.group, result.members));
         setMembers(result.members.map(rowToUser));

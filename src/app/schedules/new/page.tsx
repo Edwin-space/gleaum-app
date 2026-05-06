@@ -12,7 +12,8 @@ import {
 } from '@/types';
 import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useFamily } from '@/hooks/useFamily';
+import { useSpace } from '@/hooks/useSpace';
+
 import { useSchedules } from '@/hooks/useSchedules';
 import { createSchedule } from '@/lib/db';
 import { uploadScheduleAttachment } from '@/lib/db';
@@ -41,9 +42,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function NewSchedulePage() {
   const router = useRouter();
-  const { user, familyGroupId } = useCurrentUser();
-  const { members } = useFamily(familyGroupId);
-  const { create } = useSchedules(familyGroupId);
+  const { spaceId } = useCurrentUser();
+  const { space: group, members } = useSpace(spaceId);
+  const { create } = useSchedules(spaceId);
 
   const [saving, setSaving] = useState(false);
   const [type, setType]         = useState<ScheduleType>('shared');

@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
-import { useFamily } from '@/hooks/useFamily';
+import { useSpace } from '@/hooks/useSpace';
+
 import { useSchedules } from '@/hooks/useSchedules';
 import { formatTime, formatDateShort } from '@/lib/utils';
 import type { Schedule, ScheduleStatus } from '@/types';
@@ -40,11 +41,11 @@ export default function ChildrenSchedulePage() {
   const [completionModal, setCompletionModal] = useState<Schedule | null>(null);
   const [reNotifyingId, setReNotifyingId] = useState<string | null>(null);
 
-  const { familyGroupId, loading: userLoading } = useCurrentUser();
-  const { members, loading: familyLoading } = useFamily(familyGroupId);
-  const { schedules, loading: schedulesLoading, updateStatus } = useSchedules(familyGroupId);
+  const { spaceId } = useCurrentUser();
+  const { members, loading: spaceLoading } = useSpace(spaceId);
+  const { schedules, loading: schedulesLoading, updateStatus } = useSchedules(spaceId);
 
-  const loading = userLoading || familyLoading || schedulesLoading;
+  const loading = spaceLoading || schedulesLoading;
 
   const children = members.filter((u) => u.role === 'child');
   const tabs = [{ id: 'all', label: '전체' }, ...children.map((c) => ({ id: c.id, label: c.name }))];

@@ -19,34 +19,34 @@ export interface SchedulesState {
   remove:  (id: string) => Promise<void>;
 }
 
-export function useSchedules(familyGroupId: string | null): SchedulesState {
+export function useSchedules(spaceId: string | null): SchedulesState {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading]     = useState(true);
 
   const load = useCallback(async () => {
-    if (!familyGroupId) {
+    if (!spaceId) {
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const data = await getSchedules(familyGroupId);
+      const data = await getSchedules(spaceId);
       setSchedules(data);
     } finally {
       setLoading(false);
     }
-  }, [familyGroupId]);
+  }, [spaceId]);
 
   useEffect(() => {
     void Promise.resolve().then(load);
   }, [load]);
 
   const create = useCallback(async (input: CreateScheduleInput): Promise<Schedule | null> => {
-    if (!familyGroupId) return null;
-    const schedule = await createSchedule(familyGroupId, input);
+    if (!spaceId) return null;
+    const schedule = await createSchedule(spaceId, input);
     if (schedule) setSchedules((prev) => [...prev, schedule].sort((a, b) => +a.startTime - +b.startTime));
     return schedule;
-  }, [familyGroupId]);
+  }, [spaceId]);
 
   const updateStatus = useCallback(async (id: string, status: ScheduleStatus) => {
     await updateScheduleStatus(id, status);
@@ -62,3 +62,4 @@ export function useSchedules(familyGroupId: string | null): SchedulesState {
 
   return { schedules, loading, refresh: load, create, updateStatus, remove };
 }
+

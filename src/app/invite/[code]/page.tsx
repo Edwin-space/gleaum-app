@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { joinFamilyByCode } from '@/lib/db';
+import { joinSpaceByCode } from '@/lib/db';
 
 type PageState = 'loading' | 'joining' | 'success' | 'already_member' | 'invalid_code' | 'error';
 
@@ -11,10 +11,10 @@ export default function InvitePage() {
   const params = useParams();
   const router = useRouter();
   const code = typeof params.code === 'string' ? params.code.toUpperCase() : '';
-  const { user, familyGroupId, loading: userLoading } = useCurrentUser();
+  const { user, spaceId, loading: userLoading } = useCurrentUser();
 
   const [pageState, setPageState] = useState<PageState>('loading');
-  const [familyName, setFamilyName] = useState<string>('');
+  const [spaceName, setSpaceName] = useState<string>('');
 
   useEffect(() => {
     // 유저 로딩 중이면 대기
@@ -30,15 +30,15 @@ export default function InvitePage() {
     const doJoin = async () => {
       setPageState('joining');
 
-      const result = await joinFamilyByCode(code);
+      const result = await joinSpaceByCode(code);
 
       if (result.alreadyMember) {
-        setFamilyName(result.familyName ?? '');
+        setSpaceName(result.spaceName ?? '');
         setPageState('already_member');
       } else if (result.success) {
-        setFamilyName(result.familyName ?? '');
+        setSpaceName(result.spaceName ?? '');
         setPageState('success');
-        // 2초 후 /family로 이동
+        // 2초 후 /family(공간관리)로 이동
         setTimeout(() => router.replace('/family'), 2000);
       } else {
         setPageState('invalid_code');
@@ -55,7 +55,6 @@ export default function InvitePage() {
         className="min-h-dvh flex flex-col items-center justify-center px-6"
         style={{ background: '#FAFAFD' }}
       >
-        {/* 블롭 */}
         <div style={{
           position: 'fixed', top: '-80px', left: '-80px',
           width: '380px', height: '380px', borderRadius: '50%',
@@ -73,7 +72,7 @@ export default function InvitePage() {
           className="w-20 h-20 rounded-[24px] flex items-center justify-center mb-6"
           style={{ background: '#0084CC', boxShadow: '0 12px 40px rgba(0,132,204,0.35)' }}
         >
-          <span className="text-4xl">👨‍👩‍👧‍👦</span>
+          <span className="text-4xl">🏠</span>
         </div>
 
         <div
@@ -82,7 +81,7 @@ export default function InvitePage() {
         />
 
         <p className="text-[16px] font-bold" style={{ color: '#1A1B2E' }}>
-          {pageState === 'joining' ? '가족에 합류하는 중...' : '확인 중...'}
+          {pageState === 'joining' ? '공간에 합류하는 중...' : '확인 중...'}
         </p>
         <p className="text-[13px] mt-2" style={{ color: '#8E8E93' }}>잠시만 기다려주세요</p>
       </div>
@@ -109,7 +108,6 @@ export default function InvitePage() {
           pointerEvents: 'none',
         }} />
 
-        {/* 성공 아이콘 */}
         <div
           className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
           style={{ background: 'rgba(16,185,129,0.12)' }}
@@ -123,17 +121,17 @@ export default function InvitePage() {
         <h1 className="text-[28px] font-bold mb-2" style={{ color: '#1A1B2E' }}>
           합류 완료!
         </h1>
-        {familyName && (
+        {spaceName && (
           <p className="text-[17px] font-semibold mb-1" style={{ color: '#0084CC' }}>
-            {familyName}
+            {spaceName}
           </p>
         )}
         <p className="text-[15px]" style={{ color: '#8E8E93' }}>
-          가족 구성원이 되었습니다 🎉
+          이제 새로운 공간의 멤버입니다 🎉
         </p>
 
         <p className="text-[13px] mt-8" style={{ color: '#C7C7CC' }}>
-          잠시 후 가족 페이지로 이동합니다...
+          잠시 후 관리 페이지로 이동합니다...
         </p>
       </div>
     );
@@ -157,19 +155,19 @@ export default function InvitePage() {
           className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
           style={{ background: 'rgba(0,132,204,0.10)' }}
         >
-          <span className="text-5xl">👨‍👩‍👧‍👦</span>
+          <span className="text-5xl">🏠</span>
         </div>
 
         <h1 className="text-[28px] font-bold mb-2" style={{ color: '#1A1B2E' }}>
-          이미 가족 멤버예요
+          이미 멤버예요
         </h1>
-        {familyName && (
+        {spaceName && (
           <p className="text-[16px] font-semibold mb-1" style={{ color: '#0084CC' }}>
-            {familyName}
+            {spaceName}
           </p>
         )}
         <p className="text-[14px] mt-2" style={{ color: '#8E8E93' }}>
-          이미 이 가족 그룹에 속해 있습니다
+          이미 이 공간에 속해 있습니다
         </p>
 
         <button
@@ -177,7 +175,7 @@ export default function InvitePage() {
           className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"
           style={{ background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)' }}
         >
-          가족 페이지로 이동
+          공간 관리로 이동
         </button>
       </div>
     );
@@ -197,7 +195,6 @@ export default function InvitePage() {
           pointerEvents: 'none',
         }} />
 
-        {/* 오류 아이콘 */}
         <div
           className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
           style={{ background: 'rgba(239,68,68,0.10)' }}
@@ -213,10 +210,9 @@ export default function InvitePage() {
         </h1>
         <p className="text-[14px] mt-2" style={{ color: '#8E8E93' }}>
           초대 링크가 만료되었거나 올바르지 않습니다.<br />
-          초대한 가족에게 새 링크를 요청해주세요.
+          새로운 링크를 요청해 주세요.
         </p>
 
-        {/* 코드 표시 */}
         <div
           className="mt-6 px-6 py-3 rounded-[16px]"
           style={{ background: 'rgba(239,68,68,0.06)' }}
