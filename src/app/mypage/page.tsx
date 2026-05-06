@@ -123,7 +123,8 @@ export default function MyPage() {
     if (familyGroupId) {
       getMyPageInsights(familyGroupId).then(setInsights);
     }
-  }, [profile, user, familyGroupId]);
+    // 객체 참조 대신 실제 값이 바뀔 때만 실행되도록 최적화
+  }, [profile?.id, user?.id, familyGroupId]);
 
   const handleToggle = async (key: keyof NotificationSettings) => {
     const updated = { ...notifSettings, [key]: !notifSettings[key] };

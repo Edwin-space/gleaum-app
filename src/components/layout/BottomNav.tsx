@@ -77,15 +77,9 @@ export function BottomNav() {
       >
         {/* FAB — 중앙 상단 돌출 */}
         <button
-          onClick={() => {
-            router.push('/schedules/new');
-            setTimeout(() => {
-              if (window.location.pathname !== '/schedules/new') {
-                window.location.href = '/schedules/new';
-              }
-            }, 100);
-          }}
+          onClick={() => router.push('/schedules/new')}
           className="absolute -top-7 left-1/2 -translate-x-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center text-white transition-transform active:scale-90 hover:-translate-y-0.5 pointer-events-auto shadow-fab"
+
           style={{
             background: 'var(--brand-gradient)',
           }}
@@ -106,20 +100,9 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              onClickCapture={(e) => {
-                e.stopPropagation();
-                // 1. Next.js 라우팅 시도
-                router.push(item.href);
-                // 2. 만약 라우팅이 막혔을 경우를 대비한 최후의 수단 (잠시 후 실행)
-                setTimeout(() => {
-                  if (window.location.pathname !== item.href) {
-                    window.location.href = item.href;
-                  }
-                }, 100);
-              }}
-
               className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
             >
+
 
               {item.icon(active)}
               <span
@@ -143,20 +126,9 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              onClickCapture={(e) => {
-                e.stopPropagation();
-                // 1. Next.js 라우팅 시도
-                router.push(item.href);
-                // 2. 만약 라우팅이 막혔을 경우를 대비한 최후의 수단 (잠시 후 실행)
-                setTimeout(() => {
-                  if (window.location.pathname !== item.href) {
-                    window.location.href = item.href;
-                  }
-                }, 100);
-              }}
-
               className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
             >
+
 
               {item.icon(active)}
               <span

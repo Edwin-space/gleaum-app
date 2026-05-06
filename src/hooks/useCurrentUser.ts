@@ -72,20 +72,20 @@ export function useCurrentUser(): CurrentUserState {
     return () => subscription.unsubscribe();
   }, [load]);
 
-  const user: User | null = profile
-    ? {
-        id:            profile.id,
-        name:          profile.display_name ?? profile.name ?? '사용자',
-        displayName:   profile.display_name ?? profile.name ?? undefined,
-        realName:      profile.real_name ?? undefined,
-        nameDisplayMode: profile.name_display_mode ?? 'nickname',
-        email:         profile.email ?? '',
-        avatar:        profile.avatar ?? '👤',
-        role:          profile.role,
-        familyGroupId: profile.family_group_id ?? undefined,
-        googleId:      profile.google_id ?? undefined,
-      }
-    : null;
+  const user: User | null = useMemo(() => (
+    profile ? {
+      id:            profile.id,
+      name:          profile.display_name ?? profile.name ?? '사용자',
+      displayName:   profile.display_name ?? profile.name ?? undefined,
+      realName:      profile.real_name ?? undefined,
+      nameDisplayMode: profile.name_display_mode ?? 'nickname',
+      email:         profile.email ?? '',
+      avatar:        profile.avatar ?? '👤',
+      role:          profile.role,
+      familyGroupId: profile.family_group_id ?? undefined,
+      googleId:      profile.google_id ?? undefined,
+    } : null
+  ), [profile]);
 
   return {
     user,
