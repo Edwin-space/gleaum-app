@@ -11,6 +11,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
 
+// Supabase pg_net은 POST로 호출 → GET과 동일하게 처리
+export async function POST(req: NextRequest) { return GET(req); }
+
 export async function GET(req: NextRequest) {
   // Supabase pg_net 호출 인증
   const authHeader = req.headers.get('authorization');
