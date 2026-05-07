@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
+import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { ScheduleCard } from '@/components/ui/Card';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { formatDateShort, isSameDay } from '@/lib/utils';
@@ -59,14 +59,8 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <GleaumAppIcon size={32} radius={10} />
-            <span style={{
-              fontSize: '20px',
-              fontWeight: 700,
-              letterSpacing: '-0.5px',
-              color: 'var(--color-ink)',
-              fontFamily: 'var(--font-display)',
-            }}>gleaum</span>
+            <GleaumLogoImg size={32} />
+            <GleaumBI variant="dark" width={88} />
           </div>
           <Link href="/notifications" style={{
             width: '40px',

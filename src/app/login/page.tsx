@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
+import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { DesktopLanding } from '@/components/landing/DesktopLanding';
@@ -72,12 +72,10 @@ function MobileLogin() {
           pointerEvents: 'none',
         }} />
 
-        {/* 로고 */}
+        {/* 로고 — 공식 BI */}
         <div style={{ position: 'absolute', top: '52px', left: '28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <GleaumAppIcon size={36} radius={10} />
-          <span style={{ fontSize: '20px', fontWeight: 700, color: 'white', letterSpacing: '-0.3px', fontFamily: 'var(--font-display)' }}>
-            gleaum
-          </span>
+          <GleaumLogoImg size={36} />
+          <GleaumBI variant="white" width={100} />
         </div>
 
         {/* 헤드라인 */}

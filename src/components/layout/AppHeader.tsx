@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GleaumLogo } from '@/components/ui/GleaumLogo';
+import { GleaumBI } from '@/components/ui/GleaumLogo';
 import { cn } from '@/lib/utils';
 
 interface AppHeaderProps {
@@ -57,7 +57,7 @@ export function AppHeader({
             </svg>
           </button>
         )}
-        {showLogo && !title && <GleaumLogo variant={dark ? 'dark' : 'light'} size="sm" />}
+        {showLogo && !title && <GleaumBI variant={dark ? 'white' : 'dark'} width={88} />}
         {title && (
           <h1
             className="text-[17px] font-bold tracking-tight"

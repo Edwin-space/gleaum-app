@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
+import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 
 const NAV_ITEMS = [
   { label: '홈', icon: '🏠', href: '/home' },
@@ -25,10 +25,10 @@ export function DesktopSidebar() {
     <aside className="hidden lg:flex flex-col w-[280px] h-100dvh border-r bg-white/80 backdrop-blur-xl sticky top-0 z-50 p-6"
       style={{ borderColor: 'rgba(0,132,204,0.08)' }}>
       
-      {/* 로고 영역 */}
+      {/* 로고 영역 — 공식 BI 워드마크 */}
       <div className="flex items-center gap-3 mb-12 px-2">
-        <GleaumAppIcon size={32} radius={8} />
-        <span className="text-[22px] font-bold tracking-tight text-[#1A1B2E]">gleaum</span>
+        <GleaumLogoImg size={32} />
+        <GleaumBI variant="dark" width={100} />
       </div>
 
       {/* 메뉴 리스트 */}

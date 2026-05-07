@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GleaumAppIcon, GleaumLogo } from '@/components/ui/GleaumLogo';
+import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 
 interface DesktopLandingProps {
@@ -50,7 +50,10 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
         position: 'relative',
         zIndex: 10,
       }}>
-        <GleaumLogo variant="light" size="sm" />
+        <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+          <GleaumLogoImg size={32} />
+          <GleaumBI variant="dark" width={100} />
+        </div>
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
@@ -421,8 +424,8 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                   {/* 앱 헤더 */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <GleaumAppIcon size={28} radius={8} />
-                      <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}>gleaum</span>
+                      <GleaumLogoImg size={28} />
+                      <GleaumBI variant="dark" width={72} />
                     </div>
                     <div style={{
                       width: '32px', height: '32px', borderRadius: '50%',
