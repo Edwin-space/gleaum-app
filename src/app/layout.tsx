@@ -15,16 +15,61 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
   description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
+  keywords: ['글리움', '가족 일정 관리', '공유 캘린더', '가족 앱', '일상 네트워크', 'gleaum'],
   manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: '글리움',
+  authors: [{ name: 'Gleaum Team' }],
+  creator: 'Gleaum',
+  publisher: 'Gleaum',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
+    description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
+    url: 'https://gleaum.com',
+    siteName: '글리움 (Gleaum)',
+    images: [
+      {
+        url: '/icons/icon-512.png',
+        width: 512,
+        height: 512,
+        alt: '글리움 로고',
+      },
+    ],
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
+    description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
+    images: ['/icons/icon-512.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   verification: {
     other: {
       'naver-site-verification': ['a11d809e520e40f6fe379b615dd1ca5ad20e4240'],
     },
+  },
+  alternates: {
+    canonical: 'https://gleaum.com',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: '글리움',
   },
 };
 
