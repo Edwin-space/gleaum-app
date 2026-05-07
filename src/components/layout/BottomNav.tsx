@@ -2,52 +2,40 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const NAV_ITEMS = [
   {
-    href: '/home',
-    label: '홈',
+    href: '/home', label: '홈',
     icon: (active: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
     ),
   },
   {
-    href: '/schedules',
-    label: '일정',
+    href: '/schedules', label: '일정',
     icon: (active: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-        <line x1="16" x2="16" y1="2" y2="6"/>
-        <line x1="8" x2="8" y1="2" y2="6"/>
-        <line x1="3" x2="21" y1="10" y2="10"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="18" height="18" x="3" y="4" rx="2"/>
+        <line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
       </svg>
     ),
   },
-  // FAB 자리 (중앙 빈칸)
-  null,
+  null, // FAB spacer
   {
-    href: '/budget',
-    label: '가계부',
+    href: '/budget', label: '가계부',
     icon: (active: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect width="20" height="14" x="2" y="5" rx="2"/>
-        <line x1="2" x2="22" y1="10" y2="10"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
       </svg>
     ),
   },
   {
-    href: '/mypage',
-    label: '마이',
+    href: '/mypage', label: '마이',
     icon: (active: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#8E8E93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
@@ -57,42 +45,82 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const router   = useRouter();
+  const router = useRouter();
+  const isDesktop = useIsDesktop();
 
-  // 네비게이션 바를 숨길 경로 목록
   const hideOnPaths = ['/login', '/onboarding', '/auth/callback', '/invite'];
   const shouldHide = hideOnPaths.some(path => pathname.startsWith(path));
 
-  if (shouldHide) return null;
+  if (shouldHide || isDesktop) return null;
 
   return (
-    /* 전체 고정 영역 — pointer-events none으로 클릭 통과 */
-    <div className="fixed bottom-0 left-0 w-full flex justify-center pb-8 px-4 z-[9999] pointer-events-none lg:hidden">
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        zIndex: 9999,
+        pointerEvents: 'none',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)',
+        paddingLeft: '16px',
+        paddingRight: '16px',
+      }}
+    >
       <div
-        className="w-full max-w-[430px] relative flex items-center justify-between px-8 h-[68px] pointer-events-auto glass-card shadow-2xl"
         style={{
-          borderRadius: '32px',
-          border: '1px solid rgba(255, 255, 255, 0.4)',
+          width: '100%',
+          maxWidth: '430px',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: '68px',
+          paddingLeft: '28px',
+          paddingRight: '28px',
+          borderRadius: '28px',
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(28px)',
+          WebkitBackdropFilter: 'blur(28px)',
+          border: '1px solid rgba(255,255,255,0.8)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+          pointerEvents: 'auto',
         }}
       >
-        {/* FAB — 중앙 상단 돌출 */}
+        {/* FAB — center floating */}
         <button
           onClick={() => router.push('/schedules/new')}
-          className="absolute -top-7 left-1/2 -translate-x-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center text-white transition-transform active:scale-90 hover:-translate-y-0.5 pointer-events-auto shadow-fab"
-
-          style={{
-            background: 'var(--brand-gradient)',
-          }}
           aria-label="일정 추가"
+          style={{
+            position: 'absolute',
+            top: '-22px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+            border: '3px solid white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(0,132,204,0.45)',
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+          }}
+          onTouchStart={e => { e.currentTarget.style.transform = 'translateX(-50%) scale(0.90)'; }}
+          onTouchEnd={e => { e.currentTarget.style.transform = 'translateX(-50%) scale(1)'; }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
-            fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
 
-        {/* 왼쪽 2개 */}
+        {/* Left nav items */}
         {NAV_ITEMS.slice(0, 2).map((item) => {
           if (!item) return null;
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -100,25 +128,45 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '3px',
+                flex: 1,
+                textDecoration: 'none',
+                transition: 'transform 0.15s',
+                position: 'relative',
+                zIndex: 110,
+              }}
             >
-
-
               {item.icon(active)}
-              <span
-                className="text-[10px] font-semibold"
-                style={{ color: active ? '#0084CC' : '#8E8E93' }}
-              >
+              <span style={{
+                fontSize: '10px',
+                fontWeight: active ? 800 : 600,
+                color: active ? '#0084CC' : '#AEAEB2',
+                letterSpacing: '-0.2px',
+              }}>
                 {item.label}
               </span>
+              {active && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-8px',
+                  width: '4px',
+                  height: '4px',
+                  borderRadius: '50%',
+                  background: '#0084CC',
+                }} />
+              )}
             </Link>
           );
         })}
 
-        {/* 중앙 FAB 자리 spacer */}
-        <div className="flex-1" />
+        {/* Center spacer for FAB */}
+        <div style={{ flex: 1 }} />
 
-        {/* 오른쪽 2개 */}
+        {/* Right nav items */}
         {NAV_ITEMS.slice(3).map((item) => {
           if (!item) return null;
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -126,17 +174,37 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 flex-1 transition-transform active:scale-90 relative z-[110] pointer-events-auto"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '3px',
+                flex: 1,
+                textDecoration: 'none',
+                transition: 'transform 0.15s',
+                position: 'relative',
+                zIndex: 110,
+              }}
             >
-
-
               {item.icon(active)}
-              <span
-                className="text-[10px] font-semibold"
-                style={{ color: active ? '#0084CC' : '#8E8E93' }}
-              >
+              <span style={{
+                fontSize: '10px',
+                fontWeight: active ? 800 : 600,
+                color: active ? '#0084CC' : '#AEAEB2',
+                letterSpacing: '-0.2px',
+              }}>
                 {item.label}
               </span>
+              {active && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-8px',
+                  width: '4px',
+                  height: '4px',
+                  borderRadius: '50%',
+                  background: '#0084CC',
+                }} />
+              )}
             </Link>
           );
         })}

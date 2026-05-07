@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { trackEvent } from '@/lib/analytics';
 
 // BeforeInstallPromptEvent 타입 (브라우저 표준에 미포함)
 interface BeforeInstallPromptEvent extends Event {
@@ -29,13 +30,12 @@ function isInStandaloneMode(): boolean {
 const DISMISSED_KEY = 'gleaum_pwa_banner_dismissed';
 
 export function PWAInstallBanner() {
-  const [platform, setPlatform]         = useState<Platform>('other');
-  const [showBanner, setShowBanner]     = useState(false);
+  const [platform, setPlatform]             = useState<Platform>('other');
+  const [showBanner, setShowBanner]         = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installing, setInstalling]     = useState(false);
+  const [installing, setInstalling]         = useState(false);
 
   useEffect(() => {
-    // 이미 설치됐거나, 닫았으면 표시 안 함
     if (isInStandaloneMode()) return;
     const dismissed = sessionStorage.getItem(DISMISSED_KEY);
     if (dismissed) return;
@@ -44,14 +44,18 @@ export function PWAInstallBanner() {
     setPlatform(plat);
 
     if (plat === 'ios') {
-      // iOS: 항상 수동 안내 배너 표시 (1초 딜레이)
-      setTimeout(() => setShowBanner(true), 1500);
+      setTimeout(() => {
+        setShowBanner(true);
+        trackEvent('pwa_banner_show', { platform: 'ios' });
+      }, 1500);
     } else if (plat === 'android') {
-      // Android: beforeinstallprompt 이벤트 캡처
       const handler = (e: Event) => {
         e.preventDefault();
         setDeferredPrompt(e as BeforeInstallPromptEvent);
-        setTimeout(() => setShowBanner(true), 1000);
+        setTimeout(() => {
+          setShowBanner(true);
+          trackEvent('pwa_banner_show', { platform: 'android' });
+        }, 1000);
       };
       window.addEventListener('beforeinstallprompt', handler);
       return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -59,6 +63,9 @@ export function PWAInstallBanner() {
   }, []);
 
   const handleDismiss = () => {
+    if (platform === 'ios' || platform === 'android') {
+      trackEvent('pwa_install_dismiss', { platform });
+    }
     setShowBanner(false);
     sessionStorage.setItem(DISMISSED_KEY, '1');
   };
@@ -66,9 +73,11 @@ export function PWAInstallBanner() {
   const handleInstallAndroid = async () => {
     if (!deferredPrompt) return;
     setInstalling(true);
+    trackEvent('pwa_install_accept', { platform: 'android' });
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
+      trackEvent('pwa_installed', { platform: 'android' });
       setShowBanner(false);
     }
     setInstalling(false);
@@ -79,160 +88,295 @@ export function PWAInstallBanner() {
 
   return (
     <>
-      {/* 배경 딤 */}
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
+      `}</style>
+
+      {/* Backdrop dim */}
       <div
-        className="fixed inset-0 z-[60] bg-black/20"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 60,
+          background: 'rgba(0,0,0,0.40)',
+        }}
         onClick={handleDismiss}
       />
 
-      {/* 배너 — 하단 슬라이드업 */}
+      {/* Bottom sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-[70] flex justify-center px-4 pb-6"
-        style={{ animation: 'slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 70,
+          display: 'flex',
+          justifyContent: 'center',
+          animation: 'slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+        }}
       >
         <div
-          className="w-full max-w-[430px] rounded-[28px] p-5 overflow-hidden"
           style={{
-            background: 'rgba(255,255,255,0.96)',
-            backdropFilter: 'blur(24px)',
-            boxShadow: '0 -4px 40px rgba(0,132,204,0.18), 0 20px 60px rgba(0,0,0,0.15)',
-            border: '1px solid rgba(255,255,255,0.9)',
+            width: '100%',
+            maxWidth: '430px',
+            background: 'white',
+            borderRadius: '32px 32px 0 0',
+            overflow: 'hidden',
+            boxShadow: '0 -8px 48px rgba(0,0,0,0.18)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* 헤더 */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              {/* 앱 아이콘 */}
-              <div
-                className="w-12 h-12 rounded-[14px] overflow-hidden flex-shrink-0"
-                style={{ boxShadow: '0 4px 12px rgba(0,132,204,0.25)' }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/icon-192.png" alt="글리움" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <p className="text-[16px] font-bold" style={{ color: '#1A1B2E' }}>
-                  글리움 앱 설치
-                </p>
-                <p className="text-[12px]" style={{ color: '#8E8E93' }}>
-                  gleaum-app.vercel.app
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleDismiss}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: '#F0F0F0' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
+          {/* Dark gradient preview header */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+              padding: '28px 24px 24px',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Decorative glow blobs */}
+            <div style={{
+              position: 'absolute',
+              top: '-30px',
+              right: '-30px',
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(0,132,204,0.40) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '-20px',
+              left: '10%',
+              width: '90px',
+              height: '90px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(12,201,181,0.30) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }} />
 
-          {/* iOS 안내 */}
-          {platform === 'ios' && (
-            <div>
-              <p className="text-[14px] font-semibold mb-3" style={{ color: '#1A1B2E' }}>
-                홈 화면에 추가하면 앱처럼 사용할 수 있어요
-              </p>
-
-              {/* 단계별 안내 */}
-              <div className="space-y-3 mb-5">
-                {[
-                  {
-                    step: '1',
-                    text: '하단의 공유 버튼을 탭하세요',
-                    icon: (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2" strokeLinecap="round">
-                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                        <polyline points="16 6 12 2 8 6"/>
-                        <line x1="12" y1="2" x2="12" y2="15"/>
-                      </svg>
-                    ),
-                  },
-                  {
-                    step: '2',
-                    text: '아래로 스크롤하여 "홈 화면에 추가" 탭',
-                    icon: (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2" strokeLinecap="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                      </svg>
-                    ),
-                  },
-                  {
-                    step: '3',
-                    text: '"추가"를 눌러 설치 완료',
-                    icon: (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2EE895" strokeWidth="2.5" strokeLinecap="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    ),
-                  },
-                ].map(({ step, text, icon }) => (
-                  <div key={step} className="flex items-center gap-3">
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[12px] font-bold"
-                      style={{ background: 'rgba(0,132,204,0.10)', color: '#0084CC' }}
-                    >
-                      {step}
-                    </div>
-                    <div className="flex-1 flex items-center justify-between">
-                      <p className="text-[13px] font-medium" style={{ color: '#3C3C43' }}>{text}</p>
-                      {icon}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* 아래 화살표 */}
-              <div className="flex justify-center">
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {/* Large app icon */}
                 <div
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-semibold"
-                  style={{ background: 'rgba(0,132,204,0.08)', color: '#0084CC' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                    <polyline points="16 6 12 2 8 6"/>
-                    <line x1="12" y1="2" x2="12" y2="15"/>
-                  </svg>
-                  Safari 하단 공유 버튼을 눌러주세요
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Android 설치 버튼 */}
-          {platform === 'android' && (
-            <div>
-              <p className="text-[14px] font-medium mb-4" style={{ color: '#3C3C43' }}>
-                앱처럼 빠르게 실행하고 오프라인에서도 사용할 수 있어요.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleDismiss}
-                  className="flex-1 h-[48px] rounded-[14px] text-[14px] font-semibold"
-                  style={{ border: '1.5px solid rgba(0,132,204,0.15)', color: '#8E8E93' }}
-                >
-                  나중에
-                </button>
-                <button
-                  onClick={handleInstallAndroid}
-                  disabled={installing}
-                  className="flex-[2] h-[48px] rounded-[14px] text-[14px] font-bold text-white disabled:opacity-70 active:scale-95 transition-all"
                   style={{
-                    background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-                    boxShadow: '0 6px 20px rgba(0,132,204,0.35)',
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '18px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.30)',
+                    border: '2px solid rgba(255,255,255,0.15)',
                   }}
                 >
-                  {installing ? '설치 중...' : '홈 화면에 추가'}
-                </button>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/icon-192.png" alt="글리움" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div>
+                  <p style={{
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    color: 'rgba(12,201,181,0.85)',
+                    letterSpacing: '1.2px',
+                    textTransform: 'uppercase',
+                    marginBottom: '4px',
+                  }}>
+                    PREMIUM APP
+                  </p>
+                  <p style={{ fontSize: '20px', fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.3px' }}>
+                    글리움
+                  </p>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)', margin: '2px 0 0' }}>
+                    가족 일정 관리 앱
+                  </p>
+                </div>
               </div>
+
+              {/* Close button */}
+              <button
+                onClick={handleDismiss}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.70)" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
-          )}
+          </div>
+
+          {/* Content area */}
+          <div style={{ padding: '24px 24px 32px' }}>
+
+            {/* iOS instructions */}
+            {platform === 'ios' && (
+              <div>
+                <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
+                  홈 화면에 추가하세요
+                </p>
+                <p style={{ fontSize: '13px', color: '#6E6E66', margin: '0 0 20px', lineHeight: 1.5 }}>
+                  앱처럼 빠르게 실행하고 오프라인에서도 사용할 수 있어요
+                </p>
+
+                {/* Numbered steps */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
+                  {[
+                    {
+                      step: '1',
+                      text: '하단의 공유 버튼을 탭하세요',
+                      icon: (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                          <polyline points="16 6 12 2 8 6"/>
+                          <line x1="12" y1="2" x2="12" y2="15"/>
+                        </svg>
+                      ),
+                    },
+                    {
+                      step: '2',
+                      text: '아래로 스크롤하여 "홈 화면에 추가" 탭',
+                      icon: (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                          <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                      ),
+                    },
+                    {
+                      step: '3',
+                      text: '"추가"를 눌러 설치 완료',
+                      icon: (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2EE895" strokeWidth="2.5" strokeLinecap="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      ),
+                    },
+                  ].map(({ step, text, icon }) => (
+                    <div key={step} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '13px',
+                          fontWeight: 800,
+                          color: '#0084CC',
+                          background: 'rgba(0,132,204,0.10)',
+                          border: '1.5px solid rgba(0,132,204,0.18)',
+                        }}
+                      >
+                        {step}
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1A1B2E', margin: 0 }}>{text}</p>
+                        <div style={{ flexShrink: 0, marginLeft: '8px' }}>{icon}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Safari share hint */}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '10px 18px',
+                      borderRadius: '999px',
+                      background: 'rgba(0,132,204,0.08)',
+                      border: '1px solid rgba(0,132,204,0.15)',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#0084CC',
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                      <polyline points="16 6 12 2 8 6"/>
+                      <line x1="12" y1="2" x2="12" y2="15"/>
+                    </svg>
+                    Safari 하단 공유 버튼을 눌러주세요 ↓
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Android install button */}
+            {platform === 'android' && (
+              <div>
+                <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
+                  홈 화면에 추가하세요
+                </p>
+                <p style={{ fontSize: '13px', color: '#6E6E66', margin: '0 0 24px', lineHeight: 1.5 }}>
+                  앱처럼 빠르게 실행하고 오프라인에서도 사용할 수 있어요.
+                </p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={handleDismiss}
+                    style={{
+                      flex: 1,
+                      height: '52px',
+                      borderRadius: '16px',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: '#8E8E93',
+                      background: '#F5F5F7',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.15s',
+                    }}
+                  >
+                    나중에
+                  </button>
+                  <button
+                    onClick={handleInstallAndroid}
+                    disabled={installing}
+                    style={{
+                      flex: 2,
+                      height: '52px',
+                      borderRadius: '16px',
+                      fontSize: '15px',
+                      fontWeight: 800,
+                      color: 'white',
+                      background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+                      border: 'none',
+                      cursor: installing ? 'not-allowed' : 'pointer',
+                      opacity: installing ? 0.70 : 1,
+                      boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
+                      transition: 'opacity 0.15s, transform 0.15s',
+                      letterSpacing: '-0.2px',
+                    }}
+                    onTouchStart={e => { if (!installing) e.currentTarget.style.transform = 'scale(0.96)'; }}
+                    onTouchEnd={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  >
+                    {installing ? '설치 중...' : '홈 화면에 추가'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

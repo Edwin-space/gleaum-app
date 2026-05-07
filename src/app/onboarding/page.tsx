@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { GleaumLogo, GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { completeOnboarding } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { trackEvent } from '@/lib/analytics';
 import type {
   HomeLayoutPreference,
   NameDisplayMode,
@@ -131,6 +132,10 @@ export default function OnboardingPage() {
     setSaving(false);
 
     if (ok) {
+      trackEvent('onboarding_complete', {
+        goal: goal ?? 'personal_schedule',
+        space_intent: (spaceIntent.length > 0 ? spaceIntent[0] : 'solo') as string,
+      });
       await refresh();
       router.replace('/home');
     } else {

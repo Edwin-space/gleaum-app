@@ -10,6 +10,7 @@ import type { Schedule, ScheduleStatus } from '@/types';
 
 import { MobileScheduleDetail } from './MobileScheduleDetail';
 import { DesktopScheduleDetail } from './DesktopScheduleDetail';
+import { trackEvent } from '@/lib/analytics';
 
 const typeConfig = {
   shared:   { icon: '👨‍👩‍👧‍👦', gradient: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)' },
@@ -38,13 +39,24 @@ export default function ScheduleDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    getScheduleById(id).then((s) => setSchedule(s ?? null));
+    getScheduleById(id).then((s) => {
+      setSchedule(s ?? null);
+      if (s) {
+        trackEvent('schedule_view', {
+          schedule_type: s.type,
+          status: s.status,
+        });
+      }
+    });
   }, [id]);
 
   const handleUpdateStatus = async (status: ScheduleStatus) => {
     if (!schedule) return;
     await updateScheduleStatus(schedule.id, status);
     setSchedule({ ...schedule, status });
+    if (status === 'completed') {
+      trackEvent('schedule_complete', { schedule_type: schedule.type });
+    }
     setShowCompletionModal(false);
   };
 

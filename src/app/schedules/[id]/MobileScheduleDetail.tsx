@@ -35,159 +35,703 @@ export function MobileScheduleDetail({
   const router = useRouter();
 
   return (
-    <div className="min-h-dvh pb-10" style={{ background: '#FAFAFD' }}>
+    <div
+      className="min-h-dvh"
+      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
+    >
       {/* ── 히어로 헤더 ── */}
-      <div className="relative overflow-hidden" style={{ background: cfg.gradient, paddingTop: 'env(safe-area-inset-top)' }}>
-        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }} />
-        <div className="flex items-center justify-between px-4 pt-4 pb-2 relative z-10">
-          <button onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.20)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
+      <div
+        style={{
+          background: cfg.gradient,
+          position: 'relative',
+          overflow: 'hidden',
+          paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
+        }}
+      >
+        {/* 장식 글로우 블롭 */}
+        <div style={{
+          position: 'absolute',
+          top: '-60px',
+          right: '-60px',
+          width: '220px',
+          height: '220px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.12)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-40px',
+          left: '-20px',
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.06)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* 상단 바 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          paddingBottom: '8px',
+          position: 'relative',
+          zIndex: 10,
+        }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.20)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </button>
-          <span className="text-[15px] font-bold text-white">일정 상세</span>
-          <button onClick={() => router.push(`/schedules/${id}/edit`)} className="px-3 py-1.5 rounded-full text-[13px] font-semibold active:scale-95 transition-transform" style={{ background: 'rgba(255,255,255,0.20)', color: 'white' }}>수정</button>
+
+          <span style={{ fontSize: '16px', fontWeight: 700, color: 'white', letterSpacing: '-0.02em' }}>
+            일정 상세
+          </span>
+
+          <button
+            onClick={() => router.push(`/schedules/${id}/edit`)}
+            style={{
+              padding: '7px 16px',
+              borderRadius: '100px',
+              background: 'rgba(255,255,255,0.20)',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: 'white',
+            }}
+          >
+            수정
+          </button>
         </div>
-        <div className="px-5 pt-2 pb-6 relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.25)' }}>
-              <span className="text-lg">{cfg.icon}</span>
+
+        {/* 히어로 본문 */}
+        <div style={{ padding: '8px 20px 32px', position: 'relative', zIndex: 10 }}>
+          {/* 유형 뱃지 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+            }}>
+              {cfg.icon}
             </div>
-            <span className="text-[12px] font-bold text-white/80 uppercase tracking-wide">
-              {schedule.type === 'shared' ? '공유 일정' : schedule.type === 'personal' ? '개인 일정' : schedule.type === 'child' ? '자녀 일정' : '정기 지출'}
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: 'rgba(255,255,255,0.80)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}>
+              {schedule.type === 'shared' ? '공유 일정'
+                : schedule.type === 'personal' ? '개인 일정'
+                : schedule.type === 'child' ? '자녀 일정'
+                : '정기 지출'}
             </span>
           </div>
-          <h1 className="text-[24px] font-bold text-white leading-tight">{schedule.title}</h1>
-          <div className="flex items-center gap-3 mt-2 text-white/80 text-[13px]">
-            <span>📅 {formatDate(schedule.startTime)}</span>
-            <span>⏰ {formatTime(schedule.startTime)}{schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}</span>
+
+          {/* 제목 */}
+          <h1 style={{
+            fontSize: '26px',
+            fontWeight: 800,
+            color: 'white',
+            lineHeight: 1.25,
+            letterSpacing: '-0.03em',
+            marginBottom: '12px',
+          }}>
+            {schedule.title}
+          </h1>
+
+          {/* 날짜/시간 행 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+              📅 {formatDate(schedule.startTime)}
+            </span>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+              ⏰ {formatTime(schedule.startTime)}
+              {schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}
+            </span>
           </div>
-          {schedule.repeat !== 'none' && <span className="inline-block mt-1.5 text-[12px] text-white/70">🔁 {REPEAT_LABELS[schedule.repeat]}</span>}
+
+          {schedule.repeat !== 'none' && (
+            <span style={{
+              display: 'inline-block',
+              marginTop: '8px',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.70)',
+            }}>
+              🔁 {REPEAT_LABELS[schedule.repeat]}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-3">
-        {/* 자녀일정 상태 스텝퍼 */}
+      {/* ── 콘텐츠 카드 영역 ── */}
+      <div style={{ padding: '16px 16px 0' }}>
+
+        {/* 자녀 일정 상태 스텝퍼 */}
         {schedule.type === 'child' && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
-            <p className="text-[12px] font-bold tracking-widest uppercase mb-4" style={{ color: '#8E8E93' }}>진행 상황</p>
-            <div className="flex items-center">
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '20px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(0,0,0,0.04)',
+            marginBottom: '12px',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#8E8E93',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}>
+              진행 상황
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               {steps.map((step, i) => {
                 const isActive = schedule.status === step.key;
                 const isPast = i < currentStepIdx;
-                const dotColor = isPast || isActive ? (step.key === 'completed' ? '#10B981' : step.key === 'in_progress' ? '#0084CC' : '#9CA3AF') : '#E5E5EA';
+                const dotColor = isPast || isActive
+                  ? (step.key === 'completed' ? '#10B981'
+                    : step.key === 'in_progress' ? '#0084CC'
+                    : '#9CA3AF')
+                  : '#E5E5EA';
+
                 return (
-                  <div key={step.key} className="flex items-center flex-1">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all" style={{ background: isPast || isActive ? dotColor : '#F0F0F0', color: isPast || isActive ? 'white' : '#C7C7CC', boxShadow: isActive ? `0 4px 14px ${dotColor}60` : 'none' }}>{isPast ? '✓' : i + 1}</div>
-                      <span className="text-[11px]" style={{ color: isActive ? dotColor : '#C7C7CC', fontWeight: isActive ? 700 : 400 }}>{step.label}</span>
+                  <div key={step.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: isPast || isActive ? dotColor : '#F0F0F0',
+                        color: isPast || isActive ? 'white' : '#C7C7CC',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        boxShadow: isActive ? `0 4px 14px ${dotColor}60` : 'none',
+                        transition: 'all 0.2s ease',
+                      }}>
+                        {isPast ? '✓' : i + 1}
+                      </div>
+                      <span style={{
+                        fontSize: '11px',
+                        color: isActive ? dotColor : '#C7C7CC',
+                        fontWeight: isActive ? 700 : 400,
+                      }}>
+                        {step.label}
+                      </span>
                     </div>
-                    {i < 2 && <div className="flex-1 h-0.5 mx-2 mb-5 rounded-full" style={{ background: isPast ? '#10B981' : '#E5E5EA' }} />}
+                    {i < steps.length - 1 && (
+                      <div style={{
+                        flex: 1,
+                        height: '2px',
+                        margin: '0 6px',
+                        marginBottom: '20px',
+                        borderRadius: '999px',
+                        background: isPast ? '#10B981' : '#E5E5EA',
+                        transition: 'background 0.3s ease',
+                      }} />
+                    )}
                   </div>
                 );
               })}
-              {schedule.status === 'missed' && <div className="flex flex-col items-center gap-1.5 ml-3"><div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold" style={{ background: '#EF4444', color: 'white' }}>!</div><span className="text-[11px] font-bold" style={{ color: '#EF4444' }}>미완료</span></div>}
+              {schedule.status === 'missed' && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginLeft: '12px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: '#EF4444',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                  }}>
+                    !
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#EF4444' }}>미완료</span>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* 정기지출 정보 */}
         {schedule.type === 'expense' && schedule.amount !== undefined && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
-            <p className="text-[12px] font-bold tracking-widest uppercase mb-3" style={{ color: '#8E8E93' }}>정기지출 정보</p>
-            <div className="flex items-center justify-between mb-3">
-              <span style={{ fontSize: '14px', color: '#8E8E93' }}>금액</span>
-              <span className="text-[24px] font-bold" style={{ color: '#1A1B2E' }}>{formatAmount(schedule.amount)}</span>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '20px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(0,0,0,0.04)',
+            marginBottom: '12px',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#8E8E93',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}>
+              정기지출 정보
+            </p>
+
+            {/* 금액 행 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '16px',
+            }}>
+              <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 500 }}>금액</span>
+              <span style={{ fontSize: '26px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.03em' }}>
+                {formatAmount(schedule.amount)}
+              </span>
             </div>
+
             {schedule.expenseCategory && (
-              <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(0,132,204,0.06)' }}>
-                <span style={{ fontSize: '14px', color: '#8E8E93' }}>카테고리</span>
-                <span className="flex items-center gap-1.5 text-[14px] font-semibold" style={{ color: '#1A1B2E' }}><span>{EXPENSE_CATEGORY_ICONS[schedule.expenseCategory]}</span>{EXPENSE_CATEGORY_LABELS[schedule.expenseCategory]}</span>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '14px',
+                paddingBottom: '14px',
+                borderTop: '1px solid rgba(0,0,0,0.05)',
+              }}>
+                <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 500 }}>카테고리</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 700, color: '#1A1B2E' }}>
+                  <span>{EXPENSE_CATEGORY_ICONS[schedule.expenseCategory]}</span>
+                  {EXPENSE_CATEGORY_LABELS[schedule.expenseCategory]}
+                </span>
               </div>
             )}
+
             {schedule.paymentMethod && (
-              <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: 'rgba(0,132,204,0.06)' }}>
-                <span style={{ fontSize: '14px', color: '#8E8E93' }}>결제 수단</span>
-                <span className="text-[14px] font-semibold" style={{ color: '#1A1B2E' }}>{PAYMENT_METHOD_LABELS[schedule.paymentMethod]}</span>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '14px',
+                borderTop: '1px solid rgba(0,0,0,0.05)',
+              }}>
+                <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 500 }}>결제 수단</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E' }}>
+                  {PAYMENT_METHOD_LABELS[schedule.paymentMethod]}
+                </span>
               </div>
             )}
           </div>
         )}
 
-        {/* 참여자 */}
+        {/* 참여자 카드 */}
         {participantUsers.length > 0 && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
-            <p className="text-[12px] font-bold tracking-widest uppercase mb-3" style={{ color: '#8E8E93' }}>참여자</p>
-            <div className="flex flex-wrap gap-2">
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '20px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(0,0,0,0.04)',
+            marginBottom: '12px',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#8E8E93',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: '14px',
+            }}>
+              참여자
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {participantUsers.map((u) => (
-                <div key={u.id} className="flex items-center gap-2 px-3 py-2 rounded-full" style={{ background: 'rgba(0,132,204,0.06)', border: '1px solid rgba(0,132,204,0.10)' }}>
-                  <span>{u.avatar}</span>
-                  <span className="text-[13px] font-semibold" style={{ color: '#1A1B2E' }}>{u.name}</span>
+                <div key={u.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '8px 14px',
+                  borderRadius: '100px',
+                  background: 'rgba(0,132,204,0.07)',
+                  border: '1px solid rgba(0,132,204,0.12)',
+                }}>
+                  <span style={{ fontSize: '16px' }}>{u.avatar}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E' }}>{u.name}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* 장소 */}
+        {/* 장소 카드 */}
         {schedule.location && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
-            <p className="text-[12px] font-bold tracking-widest uppercase mb-2" style={{ color: '#8E8E93' }}>📍 장소</p>
-            <p className="text-[14px] font-medium" style={{ color: '#1A1B2E' }}>{schedule.location.address}</p>
-            <div className="mt-3 h-36 rounded-[16px] flex items-center justify-center" style={{ background: 'rgba(0,132,204,0.04)', border: '1.5px dashed rgba(0,132,204,0.15)' }}>
-              <div className="text-center"><span className="text-4xl">🗺️</span><p className="text-[11px] mt-1" style={{ color: '#8E8E93' }}>지도 표시 영역</p></div>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '20px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(0,0,0,0.04)',
+            marginBottom: '12px',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#8E8E93',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: '12px',
+            }}>
+              📍 장소
+            </p>
+            <p style={{ fontSize: '14px', fontWeight: 600, color: '#1A1B2E', marginBottom: '14px' }}>
+              {schedule.location.address}
+            </p>
+            <div style={{
+              height: '144px',
+              borderRadius: '16px',
+              background: 'rgba(0,132,204,0.04)',
+              border: '1.5px dashed rgba(0,132,204,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}>
+              <span style={{ fontSize: '36px' }}>🗺️</span>
+              <p style={{ fontSize: '11px', color: '#8E8E93' }}>지도 표시 영역</p>
             </div>
           </div>
         )}
 
-        {/* 메모 */}
+        {/* 메모 카드 */}
         {schedule.memo && (
-          <div className="bg-white rounded-[24px] p-5" style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}>
-            <p className="text-[12px] font-bold tracking-widest uppercase mb-2" style={{ color: '#8E8E93' }}>📝 메모</p>
-            <p className="text-[14px] leading-relaxed" style={{ color: '#1A1B2E' }}>{schedule.memo}</p>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '20px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(0,0,0,0.04)',
+            marginBottom: '12px',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#8E8E93',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: '12px',
+            }}>
+              📝 메모
+            </p>
+            <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#1A1B2E' }}>{schedule.memo}</p>
           </div>
         )}
 
-        {/* 액션 버튼 */}
-        <div className="space-y-2.5 pb-8 pt-1">
+        {/* ── 액션 버튼 ── */}
+        <div style={{ paddingTop: '4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {schedule.status === 'in_progress' && (
-            <button onClick={() => setShowCompletionModal(true)} className="w-full py-4 rounded-[20px] text-[15px] font-bold text-white active:scale-[0.98] transition-transform" style={{ background: 'linear-gradient(135deg, #34D399 0%, #059669 100%)', boxShadow: '0 8px 24px rgba(16,185,129,0.35)' }}>✓ 완료 확인하기</button>
+            <button
+              onClick={() => setShowCompletionModal(true)}
+              style={{
+                width: '100%',
+                padding: '17px 0',
+                borderRadius: '20px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: 800,
+                color: 'white',
+                background: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.35)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              ✓ 완료 확인하기
+            </button>
           )}
+
           {schedule.status === 'pending' && schedule.type !== 'child' && (
-            <button onClick={() => handleUpdateStatus('in_progress')} className="w-full py-4 rounded-[20px] text-[15px] font-bold text-white active:scale-[0.98] transition-transform" style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', boxShadow: '0 8px 24px rgba(0,132,204,0.30)' }}>▶ 시작하기</button>
+            <button
+              onClick={() => handleUpdateStatus('in_progress')}
+              style={{
+                width: '100%',
+                padding: '17px 0',
+                borderRadius: '20px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: 800,
+                color: 'white',
+                background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+                boxShadow: '0 8px 24px rgba(0,132,204,0.30)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              ▶ 시작하기
+            </button>
           )}
+
           {schedule.type === 'child' && (schedule.status === 'pending' || schedule.status === 'missed') && (
-            <button onClick={() => notifToast.sent(schedule.title)} className="w-full py-4 rounded-[20px] text-[15px] font-bold active:scale-[0.98] transition-transform" style={{ background: 'rgba(0,132,204,0.08)', color: '#0084CC' }}>🔔 재알림 보내기</button>
+            <button
+              onClick={() => notifToast.sent(schedule.title)}
+              style={{
+                width: '100%',
+                padding: '17px 0',
+                borderRadius: '20px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '15px',
+                fontWeight: 700,
+                color: '#0084CC',
+                background: 'rgba(0,132,204,0.08)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              🔔 재알림 보내기
+            </button>
           )}
+
           {schedule.status === 'in_progress' && schedule.type !== 'child' && (
-            <button onClick={() => handleUpdateStatus('pending')} className="w-full py-3 rounded-[20px] text-[13px] font-semibold active:scale-[0.98] transition-transform" style={{ background: 'rgba(0,0,0,0.04)', color: '#8E8E93' }}>↩ 대기 상태로</button>
+            <button
+              onClick={() => handleUpdateStatus('pending')}
+              style={{
+                width: '100%',
+                padding: '14px 0',
+                borderRadius: '20px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#8E8E93',
+                background: 'rgba(0,0,0,0.04)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              ↩ 대기 상태로
+            </button>
           )}
-          <button onClick={() => setShowDeleteModal(true)} className="w-full py-3.5 rounded-[20px] text-[14px] font-semibold active:scale-[0.98] transition-transform" style={{ background: 'rgba(239,68,68,0.06)', color: '#EF4444' }}>일정 삭제</button>
+
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            style={{
+              width: '100%',
+              padding: '15px 0',
+              borderRadius: '20px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 700,
+              color: '#EF4444',
+              background: 'rgba(239,68,68,0.07)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            일정 삭제
+          </button>
         </div>
       </div>
 
-      {/* 모달 로직 생략 (page.tsx에서 처리 가능하나 UI는 필요) */}
+      {/* ── 완료 확인 모달 (바텀시트) ── */}
       {showCompletionModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={() => setShowCompletionModal(false)}>
-          <div className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-10" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
-            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E' }}>일정을 완료했나요?</p>
-            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93' }}>{schedule.title}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => handleUpdateStatus('missed')} className="py-3.5 rounded-[16px] text-[15px] font-bold active:scale-95" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>✗ 미완료</button>
-              <button onClick={() => handleUpdateStatus('completed')} className="py-3.5 rounded-[16px] text-[15px] font-bold text-white active:scale-95" style={{ background: 'linear-gradient(135deg, #34D399 0%, #059669 100%)', boxShadow: '0 4px 16px rgba(16,185,129,0.30)' }}>✓ 완료</button>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.50)',
+          }}
+          onClick={() => setShowCompletionModal(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '430px',
+              background: 'white',
+              borderRadius: '32px 32px 0 0',
+              padding: '24px 24px 40px',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.12)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 드래그 핸들 */}
+            <div style={{
+              width: '40px',
+              height: '4px',
+              background: '#E5E5EA',
+              borderRadius: '999px',
+              margin: '0 auto 24px',
+            }} />
+            <p style={{
+              fontSize: '20px',
+              fontWeight: 800,
+              color: '#1A1B2E',
+              textAlign: 'center',
+              marginBottom: '6px',
+              letterSpacing: '-0.03em',
+            }}>
+              일정을 완료했나요?
+            </p>
+            <p style={{
+              fontSize: '14px',
+              color: '#8E8E93',
+              textAlign: 'center',
+              marginBottom: '24px',
+              fontWeight: 500,
+            }}>
+              {schedule.title}
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button
+                onClick={() => handleUpdateStatus('missed')}
+                style={{
+                  padding: '15px 0',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: '#EF4444',
+                  background: 'rgba(239,68,68,0.08)',
+                }}
+              >
+                ✗ 미완료
+              </button>
+              <button
+                onClick={() => handleUpdateStatus('completed')}
+                style={{
+                  padding: '15px 0',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+                  boxShadow: '0 4px 16px rgba(16,185,129,0.30)',
+                }}
+              >
+                ✓ 완료
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* ── 삭제 확인 모달 (바텀시트) ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={() => setShowDeleteModal(false)}>
-          <div className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-10" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
-            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E' }}>일정을 삭제할까요?</p>
-            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93' }}>삭제된 일정은 복구할 수 없습니다</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setShowDeleteModal(false)} className="py-3.5 rounded-[16px] text-[15px] font-semibold" style={{ background: '#FAFAFD', color: '#8E8E93' }}>취소</button>
-              <button onClick={handleDelete} className="py-3.5 rounded-[16px] text-[15px] font-bold text-white active:scale-95" style={{ background: '#EF4444', boxShadow: '0 4px 16px rgba(239,68,68,0.30)' }}>삭제</button>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.50)',
+          }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '430px',
+              background: 'white',
+              borderRadius: '32px 32px 0 0',
+              padding: '24px 24px 40px',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.12)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 드래그 핸들 */}
+            <div style={{
+              width: '40px',
+              height: '4px',
+              background: '#E5E5EA',
+              borderRadius: '999px',
+              margin: '0 auto 24px',
+            }} />
+            <p style={{
+              fontSize: '20px',
+              fontWeight: 800,
+              color: '#1A1B2E',
+              textAlign: 'center',
+              marginBottom: '6px',
+              letterSpacing: '-0.03em',
+            }}>
+              일정을 삭제할까요?
+            </p>
+            <p style={{
+              fontSize: '14px',
+              color: '#8E8E93',
+              textAlign: 'center',
+              marginBottom: '24px',
+              fontWeight: 500,
+            }}>
+              삭제된 일정은 복구할 수 없습니다
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  padding: '15px 0',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#8E8E93',
+                  background: '#FAFAFD',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{
+                  padding: '15px 0',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: 'white',
+                  background: '#EF4444',
+                  boxShadow: '0 4px 16px rgba(239,68,68,0.30)',
+                }}
+              >
+                삭제
+              </button>
             </div>
           </div>
         </div>

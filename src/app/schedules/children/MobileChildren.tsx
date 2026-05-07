@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-
 import { useSpace } from '@/hooks/useSpace';
-
 import { useSchedules } from '@/hooks/useSchedules';
 import { formatTime, formatDateShort } from '@/lib/utils';
 import type { Schedule, ScheduleStatus } from '@/types';
@@ -13,7 +11,6 @@ import type { Schedule, ScheduleStatus } from '@/types';
 /** 가족 구성원의 FCM 토큰을 조회하여 재알림 발송 */
 async function sendReNotify(schedule: Schedule, memberNames: string) {
   try {
-    // 서버 API를 통해 FCM 발송 (토큰은 서버에서 DB 조회)
     const res = await fetch('/api/notifications/renotify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,18 +34,21 @@ const steps: { key: ScheduleStatus; label: string }[] = [
 ];
 
 export function MobileChildren() {
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const [activeTab, setActiveTab]           = useState<string>('all');
   const [completionModal, setCompletionModal] = useState<Schedule | null>(null);
-  const [reNotifyingId, setReNotifyingId] = useState<string | null>(null);
+  const [reNotifyingId, setReNotifyingId]   = useState<string | null>(null);
 
-  const { spaceId } = useCurrentUser();
-  const { members, loading: spaceLoading } = useSpace(spaceId);
+  const { spaceId }                                       = useCurrentUser();
+  const { members, loading: spaceLoading }                = useSpace(spaceId);
   const { schedules, loading: schedulesLoading, updateStatus } = useSchedules(spaceId);
 
   const loading = spaceLoading || schedulesLoading;
 
   const children = members.filter((u) => u.role === 'child');
-  const tabs = [{ id: 'all', label: '전체' }, ...children.map((c) => ({ id: c.id, label: c.name }))];
+  const tabs = [
+    { id: 'all', label: '전체' },
+    ...children.map((c) => ({ id: c.id, label: c.name })),
+  ];
 
   const childSchedules = schedules.filter((s) => {
     if (s.type !== 'child') return false;
@@ -56,13 +56,15 @@ export function MobileChildren() {
     return s.participants.includes(activeTab);
   });
 
-  const today = new Date();
-  const todaySchedules = childSchedules.filter(
+  const today           = new Date();
+  const todaySchedules  = childSchedules.filter(
     (s) => s.startTime.toDateString() === today.toDateString()
   );
-  const completedCount = todaySchedules.filter((s) => s.status === 'completed').length;
-  const missedCount    = todaySchedules.filter((s) => s.status === 'missed').length;
-  const completePct    = todaySchedules.length > 0 ? Math.round((completedCount / todaySchedules.length) * 100) : 0;
+  const completedCount  = todaySchedules.filter((s) => s.status === 'completed').length;
+  const missedCount     = todaySchedules.filter((s) => s.status === 'missed').length;
+  const completePct     = todaySchedules.length > 0
+    ? Math.round((completedCount / todaySchedules.length) * 100)
+    : 0;
 
   const handleStatusUpdate = async (scheduleId: string, status: ScheduleStatus) => {
     await updateStatus(scheduleId, status);
@@ -70,85 +72,167 @@ export function MobileChildren() {
   };
 
   // 원형 프로그레스 계산
-  const r = 30;
+  const r            = 30;
   const circumference = 2 * Math.PI * r;
-  const dashOffset = circumference * (1 - completePct / 100);
+  const dashOffset   = circumference * (1 - completePct / 100);
 
   return (
-    <div className="min-h-dvh pb-28" style={{ background: '#FAFAFD' }}>
+    <div
+      className="min-h-dvh"
+      style={{
+        background: '#FAFAFD',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+      }}
+    >
       <AppHeader title="자녀 일정" showLogo={false} showBack showNotification={false} />
 
-      {/* 오늘 요약 히어로 카드 */}
-      <div
-        className="mx-4 mt-4 rounded-[28px] p-5 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-          boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
-        }}
-      >
-        {/* 장식 원 */}
+      {/* ── 오늘 요약 히어로 카드 ── */}
+      <div style={{
+        margin: '16px',
+        borderRadius: '28px',
+        padding: '22px',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+        boxShadow: '0 12px 40px rgba(0,132,204,0.30)',
+      }}>
+        {/* 장식 원 1 */}
         <div style={{
-          position: 'absolute', top: '-30px', right: '-30px',
-          width: '140px', height: '140px', borderRadius: '50%',
-          background: 'rgba(255,255,255,0.08)', pointerEvents: 'none',
+          position: 'absolute',
+          top: '-40px',
+          right: '-40px',
+          width: '160px',
+          height: '160px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)',
+          pointerEvents: 'none',
+        }} />
+        {/* 장식 원 2 */}
+        <div style={{
+          position: 'absolute',
+          bottom: '-50px',
+          left: '-20px',
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.05)',
+          pointerEvents: 'none',
         }} />
 
-        <div className="flex items-center justify-between relative z-10">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative',
+          zIndex: 10,
+        }}>
           {/* 텍스트 통계 */}
           <div>
-            <p className="text-[12px] font-semibold text-white/70 mb-3" style={{  }}>
+            <p style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'rgba(255,255,255,0.70)',
+              marginBottom: '14px',
+            }}>
               오늘 자녀 일정 · {formatDateShort(today)}
             </p>
-            <div className="flex gap-5">
+            <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-end' }}>
               <div>
-                <p className="text-[30px] font-bold text-white leading-none">{todaySchedules.length}</p>
-                <p className="text-[11px] text-white/70 mt-1" style={{  }}>전체</p>
+                <p style={{ fontSize: '32px', fontWeight: 800, color: 'white', lineHeight: 1 }}>
+                  {todaySchedules.length}
+                </p>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginTop: '5px', fontWeight: 500 }}>
+                  전체
+                </p>
               </div>
               <div>
-                <p className="text-[30px] font-bold text-white leading-none">{completedCount}</p>
-                <p className="text-[11px] text-white/70 mt-1" style={{  }}>완료</p>
+                <p style={{ fontSize: '32px', fontWeight: 800, color: 'white', lineHeight: 1 }}>
+                  {completedCount}
+                </p>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginTop: '5px', fontWeight: 500 }}>
+                  완료
+                </p>
               </div>
               {missedCount > 0 && (
                 <div>
-                  <p className="text-[30px] font-bold leading-none" style={{ color: '#FFD166' }}>{missedCount}</p>
-                  <p className="text-[11px] text-white/70 mt-1" style={{  }}>미완료</p>
+                  <p style={{ fontSize: '32px', fontWeight: 800, color: '#FFD166', lineHeight: 1 }}>
+                    {missedCount}
+                  </p>
+                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginTop: '5px', fontWeight: 500 }}>
+                    미완료
+                  </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 원형 프로그레스 */}
-          <div className="relative w-[80px] h-[80px]">
-            <svg viewBox="0 0 68 68" className="w-full h-full -rotate-90">
-              <circle cx="34" cy="34" r={r} stroke="rgba(255,255,255,0.20)" strokeWidth="6" fill="none"/>
+          {/* 원형 프로그레스 SVG */}
+          <div style={{ position: 'relative', width: '84px', height: '84px', flexShrink: 0 }}>
+            <svg
+              viewBox="0 0 68 68"
+              style={{
+                width: '100%',
+                height: '100%',
+                transform: 'rotate(-90deg)',
+              }}
+            >
               <circle
                 cx="34" cy="34" r={r}
-                stroke="white" strokeWidth="6" fill="none"
+                stroke="rgba(255,255,255,0.20)"
+                strokeWidth="6"
+                fill="none"
+              />
+              <circle
+                cx="34" cy="34" r={r}
+                stroke="white"
+                strokeWidth="6"
+                fill="none"
                 strokeDasharray={circumference}
                 strokeDashoffset={todaySchedules.length === 0 ? circumference : dashOffset}
                 strokeLinecap="round"
                 style={{ transition: 'stroke-dashoffset 0.8s ease' }}
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-[16px] font-bold text-white">{completePct}%</p>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <p style={{ fontSize: '17px', fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>
+                {completePct}%
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 자녀 탭 */}
-      <div className="flex gap-2 px-4 py-3 overflow-x-auto">
+      {/* ── 자녀 탭 바 ── */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        padding: '4px 16px 12px',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+      }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-semibold transition-all active:scale-95"
             style={{
+              flexShrink: 0,
+              padding: '9px 20px',
+              borderRadius: '100px',
+              border: activeTab === tab.id ? 'none' : '1.5px solid rgba(0,132,204,0.14)',
+              cursor: 'pointer',
               background: activeTab === tab.id ? '#0084CC' : 'white',
-              color:      activeTab === tab.id ? 'white' : '#8E8E93',
-              border:     activeTab === tab.id ? 'none' : '1.5px solid rgba(0,132,204,0.12)',
-              boxShadow:  activeTab === tab.id ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
+              color: activeTab === tab.id ? 'white' : '#8E8E93',
+              fontSize: '13px',
+              fontWeight: 700,
+              boxShadow: activeTab === tab.id ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
+              transition: 'all 0.15s ease',
+              letterSpacing: '-0.01em',
             }}
           >
             {tab.label}
@@ -156,79 +240,142 @@ export function MobileChildren() {
         ))}
       </div>
 
-      {/* 로딩 */}
+      {/* ── 로딩 ── */}
       {loading && (
-        <div className="flex justify-center py-10">
-          <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '48px 0',
+        }}>
+          <div style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            border: '3px solid rgba(0,132,204,0.15)',
+            borderTopColor: '#0084CC',
+            animation: 'spin 0.75s linear infinite',
+          }} />
         </div>
       )}
 
-      {/* 일정 목록 */}
+      {/* ── 일정 목록 ── */}
       {!loading && (
-        <div className="px-4 space-y-3">
+        <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {childSchedules.length === 0 ? (
-            <div className="flex flex-col items-center py-16 gap-4">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(0,132,204,0.06)' }}>
-                <span className="text-4xl">📭</span>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '64px 0',
+              gap: '16px',
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'rgba(0,132,204,0.07)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '36px',
+              }}>
+                📭
               </div>
-              <p style={{ fontSize: '15px', fontWeight: 600, color: '#1A1B2E' }}>
+              <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1B2E' }}>
                 자녀 일정이 없어요
               </p>
-              <p style={{ fontSize: '13px', color: '#8E8E93' }}>
+              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 500 }}>
                 일정 추가에서 자녀 일정을 등록하세요
               </p>
             </div>
           ) : (
             childSchedules.map((schedule) => {
-              const currentStepIdx = steps.findIndex((s) => s.key === schedule.status);
+              const currentStepIdx      = steps.findIndex((s) => s.key === schedule.status);
               const participantChildren = children.filter((c) => schedule.participants.includes(c.id));
-              const isMissed = schedule.status === 'missed';
+              const isMissed            = schedule.status === 'missed';
+
+              const statusColor = isMissed ? '#EF4444'
+                : schedule.status === 'completed' ? '#059669'
+                : schedule.status === 'in_progress' ? '#0084CC'
+                : '#9CA3AF';
+
+              const statusBg = isMissed ? 'rgba(239,68,68,0.10)'
+                : schedule.status === 'completed' ? 'rgba(16,185,129,0.10)'
+                : schedule.status === 'in_progress' ? 'rgba(0,132,204,0.10)'
+                : 'rgba(156,163,175,0.12)';
+
+              const statusLabel = isMissed ? '미완료'
+                : schedule.status === 'completed' ? '완료'
+                : schedule.status === 'in_progress' ? '진행중'
+                : '대기';
 
               return (
                 <div
                   key={schedule.id}
-                  className="bg-white rounded-[24px] p-4"
-                  style={{ boxShadow: '0 4px 20px rgba(0,132,204,0.06)' }}
+                  style={{
+                    background: 'white',
+                    borderRadius: '20px',
+                    padding: '18px',
+                    boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+                    border: '1px solid rgba(0,0,0,0.04)',
+                  }}
                 >
-                  {/* 헤더 */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0 mr-3">
-                      <p className="text-[15px] font-bold truncate" style={{ color: '#1A1B2E' }}>
+                  {/* 카드 헤더 */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    marginBottom: '12px',
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0, marginRight: '12px' }}>
+                      <p style={{
+                        fontSize: '15px',
+                        fontWeight: 800,
+                        color: '#1A1B2E',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '-0.02em',
+                        marginBottom: '4px',
+                      }}>
                         {schedule.title}
                       </p>
-                      <p className="text-[12px] mt-0.5" style={{ color: '#8E8E93' }}>
+                      <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 500 }}>
                         {formatDateShort(schedule.startTime)} · {formatTime(schedule.startTime)}
                         {schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}
                       </p>
                     </div>
                     {/* 상태 뱃지 */}
-                    <span
-                      className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold"
-                      style={{
-                        background: isMissed ? 'rgba(239,68,68,0.10)'
-                          : schedule.status === 'completed' ? 'rgba(16,185,129,0.10)'
-                          : schedule.status === 'in_progress' ? 'rgba(0,132,204,0.10)'
-                          : 'rgba(156,163,175,0.12)',
-                        color: isMissed ? '#EF4444'
-                          : schedule.status === 'completed' ? '#059669'
-                          : schedule.status === 'in_progress' ? '#0084CC'
-                          : '#9CA3AF',
-                      }}
-                    >
-                      {isMissed ? '미완료' : schedule.status === 'completed' ? '완료' : schedule.status === 'in_progress' ? '진행중' : '대기'}
+                    <span style={{
+                      flexShrink: 0,
+                      padding: '5px 12px',
+                      borderRadius: '100px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      background: statusBg,
+                      color: statusColor,
+                      letterSpacing: '-0.01em',
+                    }}>
+                      {statusLabel}
                     </span>
                   </div>
 
-                  {/* 참여 자녀 */}
+                  {/* 참여 자녀 칩 */}
                   {participantChildren.length > 0 && (
-                    <div className="flex gap-1.5 mb-3 flex-wrap">
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '6px',
+                      marginBottom: '14px',
+                    }}>
                       {participantChildren.map((c) => (
                         <span
                           key={c.id}
-                          className="px-2.5 py-1 rounded-full text-[11px] font-semibold"
                           style={{
+                            padding: '5px 12px',
+                            borderRadius: '100px',
+                            fontSize: '11px',
+                            fontWeight: 700,
                             background: 'rgba(16,185,129,0.10)',
                             color: '#059669',
                           }}
@@ -241,7 +388,11 @@ export function MobileChildren() {
 
                   {/* 진행 스텝퍼 */}
                   {!isMissed && (
-                    <div className="flex items-center mb-3">
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginBottom: '14px',
+                    }}>
                       {steps.map((step, i) => {
                         const isActive = schedule.status === step.key;
                         const isPast   = i < currentStepIdx;
@@ -252,28 +403,42 @@ export function MobileChildren() {
                           : '#E5E5EA';
 
                         return (
-                          <div key={step.key} className="flex items-center flex-1">
-                            <div className="flex flex-col items-center gap-1">
-                              <div
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all"
-                                style={{
-                                  background: isPast || isActive ? dotColor : '#F0F0F0',
-                                  color: isPast || isActive ? 'white' : '#C7C7CC',
-                                  boxShadow: isActive ? `0 3px 10px ${dotColor}50` : 'none',
-                                }}
-                              >
+                          <div key={step.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                              <div style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: isPast || isActive ? dotColor : '#F0F0F0',
+                                color: isPast || isActive ? 'white' : '#C7C7CC',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                boxShadow: isActive ? `0 3px 10px ${dotColor}50` : 'none',
+                                transition: 'all 0.2s ease',
+                              }}>
                                 {isPast ? '✓' : i + 1}
                               </div>
-                              <span className="text-[10px]" style={{
+                              <span style={{
+                                fontSize: '10px',
                                 color: isActive ? dotColor : '#C7C7CC',
                                 fontWeight: isActive ? 700 : 400,
                               }}>
                                 {step.label}
                               </span>
                             </div>
-                            {i < 2 && (
-                              <div className="flex-1 h-0.5 mx-1 mb-5 rounded-full"
-                                style={{ background: isPast ? '#10B981' : '#E5E5EA' }} />
+                            {i < steps.length - 1 && (
+                              <div style={{
+                                flex: 1,
+                                height: '2px',
+                                margin: '0 4px',
+                                marginBottom: '18px',
+                                borderRadius: '999px',
+                                background: isPast ? '#10B981' : '#E5E5EA',
+                                transition: 'background 0.3s ease',
+                              }} />
                             )}
                           </div>
                         );
@@ -283,26 +448,39 @@ export function MobileChildren() {
 
                   {/* 미완료 배너 */}
                   {isMissed && (
-                    <div
-                      className="flex items-center gap-2 px-3 py-2 rounded-[12px] mb-3"
-                      style={{ background: 'rgba(239,68,68,0.06)' }}
-                    >
-                      <span className="text-sm">⚠️</span>
-                      <p className="text-[12px] font-semibold" style={{ color: '#EF4444' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      background: 'rgba(239,68,68,0.06)',
+                      marginBottom: '14px',
+                    }}>
+                      <span style={{ fontSize: '14px' }}>⚠️</span>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: '#EF4444' }}>
                         미완료 처리된 일정입니다
                       </p>
                     </div>
                   )}
 
-                  {/* 버튼 */}
-                  <div className="flex gap-2">
+                  {/* 액션 버튼 */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     {schedule.status === 'in_progress' && (
                       <button
                         onClick={() => setCompletionModal(schedule)}
-                        className="flex-1 py-2.5 rounded-[14px] text-[13px] font-bold text-white transition-all active:scale-95"
                         style={{
+                          flex: 1,
+                          padding: '12px 0',
+                          borderRadius: '14px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 800,
+                          color: 'white',
                           background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
                           boxShadow: '0 4px 16px rgba(16,185,129,0.30)',
+                          letterSpacing: '-0.01em',
                         }}
                       >
                         ✓ 완료 확인
@@ -313,15 +491,25 @@ export function MobileChildren() {
                         disabled={reNotifyingId === schedule.id}
                         onClick={async () => {
                           setReNotifyingId(schedule.id);
-                          const memberNames = participantChildren.map(c => c.name).join(', ');
+                          const memberNames = participantChildren.map((c) => c.name).join(', ');
                           const ok = await sendReNotify(schedule, memberNames);
                           setReNotifyingId(null);
-                          alert(ok ? `✅ ${schedule.title} 재알림 발송 완료!` : '❌ 재알림 발송에 실패했습니다.');
+                          alert(ok
+                            ? `✅ ${schedule.title} 재알림 발송 완료!`
+                            : '❌ 재알림 발송에 실패했습니다.');
                         }}
-                        className="flex-1 py-2.5 rounded-[14px] text-[13px] font-bold transition-all active:scale-95 disabled:opacity-60"
                         style={{
-                          background: 'rgba(0,132,204,0.08)',
+                          flex: 1,
+                          padding: '12px 0',
+                          borderRadius: '14px',
+                          border: 'none',
+                          cursor: reNotifyingId === schedule.id ? 'not-allowed' : 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 700,
                           color: '#0084CC',
+                          background: 'rgba(0,132,204,0.08)',
+                          opacity: reNotifyingId === schedule.id ? 0.6 : 1,
+                          letterSpacing: '-0.01em',
                         }}
                       >
                         {reNotifyingId === schedule.id ? '발송 중...' : '🔔 재알림 보내기'}
@@ -335,36 +523,96 @@ export function MobileChildren() {
         </div>
       )}
 
-      {/* 완료 확인 모달 */}
+      {/* ── 완료 확인 모달 (바텀시트) ── */}
       {completionModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}
-          onClick={() => setCompletionModal(null)}>
-          <div className="w-full max-w-[430px] bg-white rounded-t-[32px] p-6 pb-10" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-[#E5E5EA] rounded-full mx-auto mb-6" />
-            <p className="text-[20px] font-bold text-center mb-1" style={{ color: '#1A1B2E' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.50)',
+          }}
+          onClick={() => setCompletionModal(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '430px',
+              background: 'white',
+              borderRadius: '32px 32px 0 0',
+              padding: '24px 24px 40px',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.12)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 드래그 핸들 */}
+            <div style={{
+              width: '40px',
+              height: '4px',
+              background: '#E5E5EA',
+              borderRadius: '999px',
+              margin: '0 auto 24px',
+            }} />
+
+            <p style={{
+              fontSize: '20px',
+              fontWeight: 800,
+              color: '#1A1B2E',
+              textAlign: 'center',
+              marginBottom: '6px',
+              letterSpacing: '-0.03em',
+            }}>
               일정을 완료했나요?
             </p>
-            <p className="text-[14px] text-center mb-6" style={{ color: '#8E8E93' }}>
+            <p style={{
+              fontSize: '14px',
+              color: '#8E8E93',
+              textAlign: 'center',
+              marginBottom: '24px',
+              fontWeight: 500,
+            }}>
               {completionModal.title}
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => handleStatusUpdate(completionModal.id, 'missed')}
-                className="py-3.5 rounded-[16px] text-[15px] font-bold active:scale-95"
-                style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button
+                onClick={() => handleStatusUpdate(completionModal.id, 'missed')}
+                style={{
+                  padding: '15px 0',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: '#EF4444',
+                  background: 'rgba(239,68,68,0.08)',
+                }}
+              >
                 ✗ 미완료
               </button>
-              <button onClick={() => handleStatusUpdate(completionModal.id, 'completed')}
-                className="py-3.5 rounded-[16px] text-[15px] font-bold text-white active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)' }}>
+              <button
+                onClick={() => handleStatusUpdate(completionModal.id, 'completed')}
+                style={{
+                  padding: '15px 0',
+                  borderRadius: '16px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
+                  boxShadow: '0 4px 16px rgba(16,185,129,0.25)',
+                }}
+              >
                 ✓ 완료
               </button>
             </div>
           </div>
         </div>
       )}
-
-      
     </div>
-
   );
 }

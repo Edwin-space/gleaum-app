@@ -11,6 +11,7 @@ import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@
 
 import { MobileNewSchedule } from './MobileNewSchedule';
 import { DesktopNewSchedule } from './DesktopNewSchedule';
+import { trackEvent } from '@/lib/analytics';
 
 export default function NewSchedulePage() {
   const isDesktop = useIsDesktop();
@@ -101,6 +102,13 @@ export default function NewSchedulePage() {
         paymentMethod: type === 'expense' ? paymentMethod : undefined,
       });
 
+      trackEvent('schedule_create', {
+        schedule_type: type,
+        has_participants: participants.length > 0,
+        has_reminder: reminder > 0,
+        has_repeat: repeat !== 'none',
+        has_expense: type === 'expense' && !!amount,
+      });
       toast.success('일정이 등록되었습니다');
       router.push('/schedules');
     } catch (err) {

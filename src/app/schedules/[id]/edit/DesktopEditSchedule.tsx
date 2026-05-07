@@ -11,7 +11,7 @@ import {
 } from '@/types';
 import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
 
-interface DesktopNewScheduleProps {
+interface DesktopEditScheduleProps {
   saving: boolean;
   type: ScheduleType;
   setType: (t: ScheduleType) => void;
@@ -42,10 +42,6 @@ interface DesktopNewScheduleProps {
   setCategory: (c: ExpenseCategory) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (m: PaymentMethod) => void;
-  attachments: any[];
-  handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  removeAttachment: (id: string) => void;
   handleSave: () => void;
 }
 
@@ -56,8 +52,7 @@ const typeConfig: Record<ScheduleType, { icon: string; color: string; bg: string
   expense:  { icon: '💰',       color: '#D97706', bg: 'rgba(245,158,11,0.08)', label: '정기 지출', desc: '결제일 관리' },
 };
 
-// 공통 인풋 스타일
-function fieldInput(focused: boolean, hasValue: boolean, accentColor = '#0CC9B5') {
+function fieldInput(focused: boolean, hasValue: boolean, accentColor = '#0CC9B5'): React.CSSProperties {
   return {
     width: '100%',
     height: '52px',
@@ -69,7 +64,7 @@ function fieldInput(focused: boolean, hasValue: boolean, accentColor = '#0CC9B5'
     border: `1.5px solid ${focused ? accentColor : hasValue ? 'rgba(0,132,204,0.2)' : 'transparent'}`,
     outline: 'none',
     color: '#1A1B2E',
-    boxSizing: 'border-box' as const,
+    boxSizing: 'border-box',
     transition: 'all 0.2s',
     boxShadow: focused ? `0 0 0 3px ${accentColor}18` : 'none',
   };
@@ -95,13 +90,12 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
   );
 }
 
-export function DesktopNewSchedule({
+export function DesktopEditSchedule({
   saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
   participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
   reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
-  category, setCategory, paymentMethod, setPaymentMethod, attachments,
-  handleFileSelect, fileInputRef, removeAttachment, handleSave,
-}: DesktopNewScheduleProps) {
+  category, setCategory, paymentMethod, setPaymentMethod, handleSave,
+}: DesktopEditScheduleProps) {
   const router = useRouter();
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
   const selectedType = typeConfig[type];
@@ -127,19 +121,22 @@ export function DesktopNewSchedule({
 
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <button onClick={() => router.back()} style={{
-              width: '40px', height: '40px', borderRadius: '13px',
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, backdropFilter: 'blur(8px)', transition: 'all 0.2s',
-            }}>
+            <button
+              onClick={() => router.back()}
+              style={{
+                width: '40px', height: '40px', borderRadius: '13px',
+                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0, backdropFilter: 'blur(8px)',
+              }}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M15 18L9 12L15 6"/>
               </svg>
             </button>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                <h1 style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '-0.4px', margin: 0 }}>새 일정 만들기</h1>
+                <h1 style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '-0.4px', margin: 0 }}>일정 수정</h1>
                 {/* 현재 선택 유형 배지 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
                   <span style={{ fontSize: '14px' }}>{selectedType.icon}</span>
@@ -147,27 +144,36 @@ export function DesktopNewSchedule({
                 </div>
               </div>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, margin: 0 }}>
-                함께 나눌 소중한 시간을 기록하세요
+                일정 내용을 수정하고 저장하세요
               </p>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-            <button onClick={() => router.back()} style={{
-              padding: '12px 24px', height: '48px', borderRadius: '14px',
-              background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)',
-              fontSize: '14px', fontWeight: 700, border: '1px solid rgba(255,255,255,0.15)',
-              cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s',
-            }}>취소</button>
-            <button onClick={handleSave} disabled={saving} style={{
-              padding: '12px 32px', height: '48px', borderRadius: '14px',
-              background: saving ? 'rgba(255,255,255,0.15)' : 'linear-gradient(135deg, #0CC9B5, #0084CC)',
-              color: 'white', fontSize: '14px', fontWeight: 800,
-              border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-              boxShadow: saving ? 'none' : '0 8px 20px rgba(0,132,204,0.4)',
-              transition: 'all 0.2s', opacity: saving ? 0.7 : 1,
-            }}>
-              {saving ? '저장 중...' : '일정 등록하기'}
+            <button
+              onClick={() => router.back()}
+              style={{
+                padding: '12px 24px', height: '48px', borderRadius: '14px',
+                background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)',
+                fontSize: '14px', fontWeight: 700, border: '1px solid rgba(255,255,255,0.15)',
+                cursor: 'pointer', backdropFilter: 'blur(8px)',
+              }}
+            >
+              취소
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '12px 32px', height: '48px', borderRadius: '14px',
+                background: saving ? 'rgba(255,255,255,0.15)' : 'linear-gradient(135deg, #0CC9B5, #0084CC)',
+                color: 'white', fontSize: '14px', fontWeight: 800,
+                border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
+                boxShadow: saving ? 'none' : '0 8px 20px rgba(0,132,204,0.4)',
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving ? '저장 중...' : '수정 완료'}
             </button>
           </div>
         </div>
@@ -187,15 +193,19 @@ export function DesktopNewSchedule({
                 const cfg = typeConfig[t];
                 const selected = type === t;
                 return (
-                  <button key={t} onClick={() => setType(t)} style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    justifyContent: 'center', gap: '10px',
-                    padding: '20px 12px', borderRadius: '20px',
-                    background: selected ? cfg.bg : '#FAFAFA',
-                    border: `2px solid ${selected ? cfg.color + '40' : 'transparent'}`,
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    boxShadow: selected ? `0 4px 16px ${cfg.color}20` : 'none',
-                  }}>
+                  <button
+                    key={t}
+                    onClick={() => setType(t)}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      justifyContent: 'center', gap: '10px',
+                      padding: '20px 12px', borderRadius: '20px',
+                      background: selected ? cfg.bg : '#FAFAFA',
+                      border: `2px solid ${selected ? cfg.color + '40' : 'transparent'}`,
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      boxShadow: selected ? `0 4px 16px ${cfg.color}20` : 'none',
+                    }}
+                  >
                     <span style={{ fontSize: '28px' }}>{cfg.icon}</span>
                     <div style={{ textAlign: 'center' }}>
                       <p style={{ fontSize: '13px', fontWeight: 800, color: selected ? cfg.color : '#6E6E66', margin: '0 0 2px' }}>{cfg.label}</p>
@@ -303,14 +313,18 @@ export function DesktopNewSchedule({
                   <FieldLabel>카테고리</FieldLabel>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                     {(Object.keys(EXPENSE_CATEGORY_LABELS) as ExpenseCategory[]).map(cat => (
-                      <button key={cat} onClick={() => setCategory(cat)} style={{
-                        padding: '10px 8px', borderRadius: '12px',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                        background: category === cat ? 'rgba(245,158,11,0.1)' : '#FAFAFA',
-                        border: `1.5px solid ${category === cat ? 'rgba(245,158,11,0.35)' : 'transparent'}`,
-                        color: category === cat ? '#D97706' : '#8E8E93',
-                        fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                      }}>
+                      <button
+                        key={cat}
+                        onClick={() => setCategory(cat)}
+                        style={{
+                          padding: '10px 8px', borderRadius: '12px',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                          background: category === cat ? 'rgba(245,158,11,0.1)' : '#FAFAFA',
+                          border: `1.5px solid ${category === cat ? 'rgba(245,158,11,0.35)' : 'transparent'}`,
+                          color: category === cat ? '#D97706' : '#8E8E93',
+                          fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                        }}
+                      >
                         <span style={{ fontSize: '18px' }}>{EXPENSE_CATEGORY_ICONS[cat]}</span>
                         <span style={{ textAlign: 'center', lineHeight: 1.2 }}>{EXPENSE_CATEGORY_LABELS[cat]}</span>
                       </button>
@@ -323,13 +337,17 @@ export function DesktopNewSchedule({
                   <FieldLabel>결제 수단</FieldLabel>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map(m => (
-                      <button key={m} onClick={() => setPaymentMethod(m)} style={{
-                        padding: '9px 16px', borderRadius: '12px',
-                        background: paymentMethod === m ? 'rgba(245,158,11,0.1)' : '#FAFAFA',
-                        border: `1.5px solid ${paymentMethod === m ? 'rgba(245,158,11,0.4)' : 'transparent'}`,
-                        color: paymentMethod === m ? '#D97706' : '#8E8E93',
-                        fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                      }}>
+                      <button
+                        key={m}
+                        onClick={() => setPaymentMethod(m)}
+                        style={{
+                          padding: '9px 16px', borderRadius: '12px',
+                          background: paymentMethod === m ? 'rgba(245,158,11,0.1)' : '#FAFAFA',
+                          border: `1.5px solid ${paymentMethod === m ? 'rgba(245,158,11,0.4)' : 'transparent'}`,
+                          color: paymentMethod === m ? '#D97706' : '#8E8E93',
+                          fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                        }}
+                      >
                         {PAYMENT_METHOD_LABELS[m]}
                       </button>
                     ))}
@@ -374,15 +392,19 @@ export function DesktopNewSchedule({
                 {members.map(u => {
                   const selected = participants.includes(u.id);
                   return (
-                    <button key={u.id} onClick={() => toggleParticipant(u.id)} style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '9px 16px', borderRadius: '999px',
-                      background: selected ? '#1A1B2E' : '#F5F5F9',
-                      color: selected ? 'white' : '#6E6E66',
-                      fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: selected ? '0 4px 12px rgba(26,27,46,0.2)' : 'none',
-                    }}>
+                    <button
+                      key={u.id}
+                      onClick={() => toggleParticipant(u.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '9px 16px', borderRadius: '999px',
+                        background: selected ? '#1A1B2E' : '#F5F5F9',
+                        color: selected ? 'white' : '#6E6E66',
+                        fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: selected ? '0 4px 12px rgba(26,27,46,0.2)' : 'none',
+                      }}
+                    >
                       <span style={{ fontSize: '16px' }}>{u.avatar}</span>
                       <span>{u.name}</span>
                       {selected && (
@@ -403,14 +425,18 @@ export function DesktopNewSchedule({
               <FieldLabel>알림 시간</FieldLabel>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
                 {REMINDER_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setReminder(opt.value)} style={{
-                    padding: '8px 14px', borderRadius: '12px',
-                    background: reminder === opt.value ? '#0084CC' : '#F5F5F9',
-                    color: reminder === opt.value ? 'white' : '#6E6E66',
-                    fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    boxShadow: reminder === opt.value ? '0 4px 12px rgba(0,132,204,0.3)' : 'none',
-                  }}>
+                  <button
+                    key={opt.value}
+                    onClick={() => setReminder(opt.value)}
+                    style={{
+                      padding: '8px 14px', borderRadius: '12px',
+                      background: reminder === opt.value ? '#0084CC' : '#F5F5F9',
+                      color: reminder === opt.value ? 'white' : '#6E6E66',
+                      fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      boxShadow: reminder === opt.value ? '0 4px 12px rgba(0,132,204,0.3)' : 'none',
+                    }}
+                  >
                     {opt.label}
                   </button>
                 ))}
@@ -424,10 +450,11 @@ export function DesktopNewSchedule({
                 onChange={e => setRepeat(e.target.value as RepeatType)}
                 style={{
                   ...fieldInput(false, repeat !== 'none'),
-                  cursor: 'pointer', appearance: 'auto',
+                  cursor: 'pointer',
+                  appearance: 'auto' as any,
                 }}
               >
-                {Object.entries(REPEAT_LABELS).map(([k, v]) => (
+                {(Object.entries(REPEAT_LABELS) as [RepeatType, string][]).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
               </select>
@@ -463,67 +490,20 @@ export function DesktopNewSchedule({
             </div>
           </Card>
 
-          {/* 파일 첨부 */}
-          <Card>
-            <FieldLabel>첨부 파일 ({attachments.length}/10)</FieldLabel>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,application/pdf"
-              multiple
-              style={{ display: 'none' }}
-              onChange={handleFileSelect}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={attachments.length >= 10}
-              style={{
-                width: '100%', padding: '28px', borderRadius: '16px',
-                border: '2px dashed rgba(0,132,204,0.2)',
-                background: 'rgba(0,132,204,0.02)',
-                color: '#0084CC', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                transition: 'all 0.2s', opacity: attachments.length >= 10 ? 0.5 : 1,
-              }}
-            >
-              <span style={{ fontSize: '28px' }}>📁</span>
-              <span style={{ fontSize: '13px', fontWeight: 700 }}>파일을 드래그하거나 클릭해서 업로드</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93' }}>이미지, PDF 지원 · 최대 10개</span>
-            </button>
-            {attachments.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginTop: '12px' }}>
-                {attachments.map(a => (
-                  <div key={a.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: '12px', overflow: 'hidden' }}>
-                    {a.file?.type.startsWith('image/')
-                      ? <img src={a.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', background: '#F5F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>📄</div>
-                    }
-                    <button
-                      onClick={() => removeAttachment(a.id)}
-                      style={{
-                        position: 'absolute', top: '4px', right: '4px',
-                        width: '22px', height: '22px', borderRadius: '50%',
-                        background: 'rgba(0,0,0,0.55)', color: 'white',
-                        border: 'none', cursor: 'pointer', fontSize: '12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {/* 하단 저장 버튼 (우측 패널) */}
-          <button onClick={handleSave} disabled={saving} style={{
-            width: '100%', padding: '16px', borderRadius: '18px',
-            background: saving ? '#EBEBF0' : 'linear-gradient(135deg, #0CC9B5, #0084CC)',
-            color: saving ? '#8E8E93' : 'white', fontSize: '15px', fontWeight: 800,
-            border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-            boxShadow: saving ? 'none' : '0 8px 24px rgba(0,132,204,0.3)',
-            transition: 'all 0.2s',
-          }}>
-            {saving ? '저장 중...' : '✓ 일정 등록하기'}
+          {/* 하단 저장 버튼 */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              width: '100%', padding: '16px', borderRadius: '18px',
+              background: saving ? '#EBEBF0' : 'linear-gradient(135deg, #0CC9B5, #0084CC)',
+              color: saving ? '#8E8E93' : 'white', fontSize: '15px', fontWeight: 800,
+              border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
+              boxShadow: saving ? 'none' : '0 8px 24px rgba(0,132,204,0.3)',
+              transition: 'all 0.2s',
+            }}
+          >
+            {saving ? '저장 중...' : '✓ 수정 완료'}
           </button>
         </div>
       </div>

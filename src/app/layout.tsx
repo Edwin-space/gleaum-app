@@ -3,13 +3,13 @@ import PwaRegistry from '@/components/PwaRegistry';
 import './globals.css';
 import { FCMProvider } from '@/components/FCMProvider';
 import { PWARegister } from '@/components/PWARegister';
-import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { LazyPWABanner } from '@/components/LazyPWABanner';
 import { Toaster } from 'sonner';
 import { DesktopSidebar } from '@/components/layout/DesktopSidebar';
-
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
@@ -84,12 +84,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className="h-full">
       <head>
+        {/* ── 폰트 preconnect (렌더 블로킹 최소화) ── */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+
+        {/* ── 폰트 로드: Outfit (Google, display=swap) ── */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap"
           rel="stylesheet"
         />
+        {/* ── 폰트 로드: Pretendard Variable Dynamic Subset (전체 static 대비 ~70% 경량) ── */}
         <link
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
           rel="stylesheet"
         />
 
@@ -154,7 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <DesktopSidebar />
           <div className="pc-content-area w-full">
             <PWARegister />
-            <PWAInstallBanner />
+            <LazyPWABanner />
             <FCMProvider>
               {children}
             </FCMProvider>
@@ -180,6 +187,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PwaRegistry />
         <Analytics />
         <SpeedInsights />
+        <GoogleAnalytics />
       </body>
     </html>
   );

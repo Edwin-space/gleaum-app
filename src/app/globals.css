@@ -13,6 +13,18 @@
   --radius-card:       24px;
 }
 
+/* ── 폰트 display 전략: FOUT 방지 (외부 폰트 파일에 font-display 재정의) ── */
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-display: swap;
+  src: local('Pretendard Variable');
+}
+@font-face {
+  font-family: 'Outfit';
+  font-display: swap;
+  src: local('Outfit');
+}
+
 /* ── 기본 리셋 ── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -182,8 +194,14 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
   position: absolute;
   filter: blur(90px);
   opacity: 0.5;
-  animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 50%;
+  /* 모바일: GPU 부하 줄이기 위해 애니메이션 비활성화 */
+}
+
+@media (min-width: 1024px) {
+  .mesh-blob {
+    animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 .mesh-blob-1 { top: -10%; left: -10%; width: 400px; height: 400px; background: #2EE895; }
@@ -229,6 +247,8 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
   100% { transform: translateY(0px); }
 }
 .animate-floating { animation: floating 4s ease-in-out infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── 카드 그림자 (Figma 리뉴얼) ── */
 .shadow-card  { box-shadow: 0 8px 30px rgba(0,132,204,0.06); }

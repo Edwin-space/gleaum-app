@@ -12,10 +12,11 @@ import {
 import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
-
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { useSchedules } from '@/hooks/useSchedules';
 import { getScheduleById, updateSchedule } from '@/lib/db';
 import { scheduleToast, toastError } from '@/lib/toast';
+import { DesktopEditSchedule } from './DesktopEditSchedule';
 
 // 입력 공통 스타일
 const inputBase = 'w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-white border-2 outline-none transition-all';
@@ -40,6 +41,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function EditSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const { user, spaceId } = useCurrentUser();
   const { space: group, members } = useSpace(spaceId);
 
@@ -172,6 +174,31 @@ export default function EditSchedulePage() {
   }
 
   const activeType = typeConfig[type];
+
+  // ── PC WEB 뷰 ──
+  if (isDesktop) {
+    return (
+      <DesktopEditSchedule
+        saving={saving}
+        type={type} setType={setType}
+        title={title} setTitle={setTitle}
+        date={date} setDate={setDate}
+        startTime={startTime} setStart={setStart}
+        endTime={endTime} setEnd={setEnd}
+        participants={participants} toggleParticipant={toggleParticipant}
+        members={members}
+        address={address} setAddress={setAddress}
+        refUrl={refUrl} setRefUrl={setRefUrl}
+        reminder={reminder} setReminder={setReminder}
+        repeat={repeat} setRepeat={setRepeat}
+        memo={memo} setMemo={setMemo}
+        amount={amount} setAmount={setAmount}
+        category={category} setCategory={setCategory}
+        paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+        handleSave={handleSave}
+      />
+    );
+  }
 
   return (
     <div className="min-h-dvh pb-10" style={{ background: '#FAFAFD' }}>

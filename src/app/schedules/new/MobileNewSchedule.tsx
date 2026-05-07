@@ -49,32 +49,27 @@ interface MobileNewScheduleProps {
   handleSave: () => void;
 }
 
-const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; activeBg: string; label: string }> = {
-  shared:   { icon: '👨‍👩‍👧‍👦', activeColor: '#0084CC', activeBg: '#0084CC',  label: '공유' },
-  personal: { icon: '👤',       activeColor: '#0891B2', activeBg: '#0891B2',  label: '개인' },
-  child:    { icon: '🧒',       activeColor: '#059669', activeBg: '#059669', label: '자녀' },
-  expense:  { icon: '💰',       activeColor: '#D97706', activeBg: '#D97706', label: '지출' },
+const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; activeBg: string; label: string; desc: string }> = {
+  shared:   { icon: '👨‍👩‍👧‍👦', activeColor: '#0084CC', activeBg: '#EBF5FF', label: '공유', desc: '가족 전체' },
+  personal: { icon: '👤',       activeColor: '#0891B2', activeBg: '#E0F7FA', label: '개인', desc: '나만 보기' },
+  child:    { icon: '🧒',       activeColor: '#059669', activeBg: '#ECFDF5', label: '자녀', desc: '자녀 관리' },
+  expense:  { icon: '💰',       activeColor: '#D97706', activeBg: '#FFFBEB', label: '지출', desc: '정기 지출' },
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', letterSpacing: '0.05em', marginBottom: '10px', textTransform: 'uppercase' }}>
+    <p style={{
+      fontSize: '11px',
+      fontWeight: 800,
+      color: '#8E8E93',
+      letterSpacing: '0.07em',
+      marginBottom: '12px',
+      textTransform: 'uppercase',
+    }}>
       {children}
     </p>
   );
 }
-
-const cardStyle: React.CSSProperties = {
-  background: 'white', borderRadius: '24px', padding: '20px',
-  boxShadow: '0 2px 16px rgba(0,0,0,0.05)', marginBottom: '12px',
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', height: '52px', padding: '0 16px', borderRadius: '14px',
-  fontSize: '15px', background: '#F7F7FA', border: '1.5px solid #EBEBF0',
-  outline: 'none', transition: 'border-color 0.15s', boxSizing: 'border-box',
-  color: '#1A1B2E', fontWeight: 600,
-};
 
 export function MobileNewSchedule({
   saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
@@ -86,77 +81,327 @@ export function MobileNewSchedule({
   const router = useRouter();
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
 
+  const cardBase: React.CSSProperties = {
+    background: 'white',
+    borderRadius: '20px',
+    padding: '20px',
+    boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+    border: '1px solid rgba(0,0,0,0.04)',
+    marginBottom: '12px',
+  };
+
+  const inputBase: React.CSSProperties = {
+    width: '100%',
+    height: '52px',
+    padding: '0 16px',
+    borderRadius: '14px',
+    fontSize: '15px',
+    background: '#F7F7FA',
+    outline: 'none',
+    boxSizing: 'border-box',
+    color: '#1A1B2E',
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    transition: 'border-color 0.15s',
+  };
+
+  const activeCfg = typeConfig[type];
+
   return (
-    <div className="min-h-dvh pb-10" style={{ background: '#F5F5F9' }}>
-      {/* ── 상단 헤더 ── */}
-      <div
-        className="sticky top-0 z-20 flex items-center justify-between px-4 py-3"
-        style={{
-          background: 'rgba(250,250,253,0.92)', backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(0,132,204,0.06)', paddingTop: `calc(env(safe-area-inset-top) + 12px)`,
-        }}
-      >
-        <button onClick={() => router.back()} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,132,204,0.06)' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#0084CC" strokeWidth="2.2" strokeLinecap="round"/></svg>
+    <div
+      className="min-h-dvh"
+      style={{
+        background: '#FAFAFD',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+      }}
+    >
+      {/* ── 스티키 헤더 ── */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px 14px',
+        paddingTop: 'calc(env(safe-area-inset-top) + 14px)',
+        background: 'rgba(250,250,253,0.95)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+      }}>
+        <button
+          onClick={() => router.back()}
+          style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: 'rgba(0,132,204,0.07)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="#0084CC" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
-        <p className="text-[16px] font-bold">일정 추가</p>
-        <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-full text-[14px] font-bold text-white disabled:opacity-60 transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', boxShadow: '0 4px 16px rgba(0,132,204,0.35)' }}>
+
+        <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.03em' }}>
+          새 일정
+        </p>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            padding: '9px 20px',
+            borderRadius: '100px',
+            border: 'none',
+            cursor: saving ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            fontWeight: 800,
+            color: 'white',
+            background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+            boxShadow: '0 4px 16px rgba(0,132,204,0.35)',
+            opacity: saving ? 0.6 : 1,
+            letterSpacing: '-0.01em',
+          }}
+        >
           {saving ? '저장중' : '저장'}
         </button>
       </div>
 
-      <div className="px-4 pt-5">
-        <div style={cardStyle}>
+      {/* ── 콘텐츠 ── */}
+      <div style={{ padding: '16px 16px 0' }}>
+
+        {/* 일정 유형 선택 카드 */}
+        <div style={cardBase}>
           <SectionLabel>일정 유형</SectionLabel>
-          <div className="grid grid-cols-4 gap-2">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '8px',
+          }}>
             {scheduleTypes.map((t) => {
               const cfg = typeConfig[t];
               const selected = type === t;
               return (
-                <button key={t} onClick={() => setType(t)} className="flex flex-col items-center gap-1.5"
-                  style={{ height: '72px', borderRadius: '20px', background: selected ? cfg.activeBg : '#F7F7FA', border: selected ? 'none' : '1.5px solid #EBEBF0', color: selected ? 'white' : '#8E8E93', position: 'relative', justifyContent: 'center' }}>
-                  <span className="text-2xl">{cfg.icon}</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700 }}>{cfg.label}</span>
+                <button
+                  key={t}
+                  onClick={() => setType(t)}
+                  style={{
+                    height: '84px',
+                    borderRadius: '18px',
+                    background: selected ? cfg.activeBg : '#FAFAFA',
+                    border: selected ? `2px solid ${cfg.activeColor}40` : '1.5px solid #EBEBF0',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    padding: '8px 4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '28px', lineHeight: 1 }}>{cfg.icon}</span>
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: selected ? cfg.activeColor : '#6E6E66',
+                    letterSpacing: '-0.01em',
+                  }}>
+                    {cfg.label}
+                  </span>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 500,
+                    color: selected ? `${cfg.activeColor}99` : '#B0B0B0',
+                  }}>
+                    {cfg.desc}
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div style={cardStyle}>
+        {/* 제목 입력 카드 */}
+        <div style={cardBase}>
           <SectionLabel>제목 *</SectionLabel>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="일정 제목을 입력하세요" style={{ ...inputStyle, borderColor: title ? '#0084CC' : '#EBEBF0' }} />
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="일정 제목을 입력하세요"
+            style={{
+              ...inputBase,
+              height: '56px',
+              fontSize: '17px',
+              border: `1.5px solid ${title ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
+            }}
+          />
         </div>
 
-        <div style={cardStyle}>
+        {/* 날짜 & 시간 카드 */}
+        <div style={cardBase}>
           <SectionLabel>날짜 & 시간</SectionLabel>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputStyle, borderColor: date ? '#0084CC' : '#EBEBF0', marginBottom: '10px' }} />
-          <div className="grid grid-cols-2 gap-3">
-            <input type="time" value={startTime} onChange={(e) => setStart(e.target.value)} style={{ ...inputStyle, borderColor: startTime ? '#0084CC' : '#EBEBF0' }} />
-            <input type="time" value={endTime} onChange={(e) => setEnd(e.target.value)} style={{ ...inputStyle, borderColor: endTime ? '#0084CC' : '#EBEBF0' }} />
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '10px',
+          }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                style={{
+                  ...inputBase,
+                  height: '52px',
+                  border: `1.5px solid ${date ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
+                }}
+              />
+            </div>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStart(e.target.value)}
+              style={{
+                ...inputBase,
+                height: '52px',
+                border: `1.5px solid ${startTime ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
+                gridColumn: '1 / 2',
+              }}
+            />
+            <div style={{
+              gridColumn: '2 / 3',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span style={{ fontSize: '13px', color: '#C7C7CC', fontWeight: 600 }}>~</span>
+            </div>
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => setEnd(e.target.value)}
+              style={{
+                ...inputBase,
+                height: '52px',
+                border: `1.5px solid ${endTime ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
+                gridColumn: '3 / 4',
+              }}
+            />
           </div>
         </div>
 
+        {/* 정기지출 섹션 (조건부) */}
         {type === 'expense' && (
-          <div style={{ ...cardStyle, background: 'rgba(254,252,248,1)', border: '1.5px solid rgba(245,158,11,0.18)' }}>
-            <p style={{ fontSize: '13px', fontWeight: 800, color: '#D97706', marginBottom: '14px' }}>💰 정기지출 정보</p>
-            <div className="relative mb-4">
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" style={{ ...inputStyle, borderColor: amount ? '#D97706' : 'rgba(245,158,11,0.25)', paddingRight: '40px' }} />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[14px] font-semibold" style={{ color: '#D97706' }}>원</span>
+          <div style={{
+            ...cardBase,
+            background: 'rgba(255,252,248,1)',
+            border: '1.5px solid rgba(217,119,6,0.18)',
+          }}>
+            <p style={{
+              fontSize: '13px',
+              fontWeight: 800,
+              color: '#D97706',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              💰 정기지출 정보
+            </p>
+
+            {/* 금액 입력 */}
+            <div style={{ position: 'relative', marginBottom: '16px' }}>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0"
+                style={{
+                  ...inputBase,
+                  border: `1.5px solid ${amount ? 'rgba(217,119,6,0.60)' : 'rgba(217,119,6,0.25)'}`,
+                  paddingRight: '44px',
+                }}
+              />
+              <span style={{
+                position: 'absolute',
+                right: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#D97706',
+              }}>
+                원
+              </span>
             </div>
-            <div className="grid grid-cols-3 gap-2 mb-4">
+
+            {/* 카테고리 그리드 */}
+            <SectionLabel>카테고리</SectionLabel>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '8px',
+              marginBottom: '16px',
+            }}>
               {(Object.keys(EXPENSE_CATEGORY_LABELS) as ExpenseCategory[]).map((cat) => (
-                <button key={cat} onClick={() => setCategory(cat)} className="py-2 rounded-[12px] text-[12px] font-semibold flex items-center gap-1.5"
-                  style={{ background: category === cat ? 'rgba(245,158,11,0.12)' : 'white', border: '2px solid rgba(245,158,11,0.12)', color: category === cat ? '#D97706' : '#8E8E93' }}>
-                  <span>{EXPENSE_CATEGORY_ICONS[cat]}</span><span className="truncate">{EXPENSE_CATEGORY_LABELS[cat]}</span>
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  style={{
+                    padding: '10px 6px',
+                    borderRadius: '12px',
+                    border: `2px solid ${category === cat ? 'rgba(217,119,6,0.35)' : 'rgba(217,119,6,0.12)'}`,
+                    cursor: 'pointer',
+                    background: category === cat ? 'rgba(217,119,6,0.10)' : 'white',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>{EXPENSE_CATEGORY_ICONS[cat]}</span>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: category === cat ? '#D97706' : '#8E8E93',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '100%',
+                  }}>
+                    {EXPENSE_CATEGORY_LABELS[cat]}
+                  </span>
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-4 gap-2">
+
+            {/* 결제 수단 필 */}
+            <SectionLabel>결제 수단</SectionLabel>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map((m) => (
-                <button key={m} onClick={() => setPaymentMethod(m)} className="py-2 rounded-[12px] text-[12px] font-semibold"
-                  style={{ background: paymentMethod === m ? 'rgba(245,158,11,0.12)' : 'white', border: '2px solid rgba(245,158,11,0.12)', color: paymentMethod === m ? '#D97706' : '#8E8E93' }}>
+                <button
+                  key={m}
+                  onClick={() => setPaymentMethod(m)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '100px',
+                    border: `2px solid ${paymentMethod === m ? 'rgba(217,119,6,0.40)' : 'rgba(217,119,6,0.15)'}`,
+                    cursor: 'pointer',
+                    background: paymentMethod === m ? 'rgba(217,119,6,0.10)' : 'white',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: paymentMethod === m ? '#D97706' : '#8E8E93',
+                  }}
+                >
                   {PAYMENT_METHOD_LABELS[m]}
                 </button>
               ))}
@@ -164,69 +409,319 @@ export function MobileNewSchedule({
           </div>
         )}
 
-        <div style={cardStyle}>
+        {/* 참여자 카드 */}
+        <div style={cardBase}>
           <SectionLabel>참여자</SectionLabel>
-          <div className="flex gap-2 flex-wrap">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {members.map((u) => {
               const selected = participants.includes(u.id);
               return (
-                <button key={u.id} onClick={() => toggleParticipant(u.id)} className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-semibold"
-                  style={{ background: selected ? '#0084CC' : 'white', color: selected ? 'white' : '#8E8E93', border: '1.5px solid #EBEBF0' }}>
-                  <span>{u.avatar}</span><span>{u.name}</span>
+                <button
+                  key={u.id}
+                  onClick={() => toggleParticipant(u.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 16px',
+                    borderRadius: '100px',
+                    border: `1.5px solid ${selected ? 'transparent' : '#EBEBF0'}`,
+                    cursor: 'pointer',
+                    background: selected ? '#1A1B2E' : 'white',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: selected ? 'white' : '#6E6E66',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>{u.avatar}</span>
+                  <span>{u.name}</span>
+                  {selected && (
+                    <span style={{ fontSize: '12px', opacity: 0.8 }}>✓</span>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div style={cardStyle}>
-          <SectionLabel>장소</SectionLabel>
-          <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="장소를 입력하세요" style={{ ...inputStyle, borderColor: address ? '#0084CC' : '#EBEBF0', marginBottom: '14px' }} />
-          <SectionLabel>참고 URL</SectionLabel>
-          <input value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder="참고 웹사이트 (선택)" style={{ ...inputStyle, borderColor: refUrl ? '#0084CC' : '#EBEBF0' }} />
+        {/* 장소 + URL 카드 */}
+        <div style={cardBase}>
+          <SectionLabel>장소 & 참고 URL</SectionLabel>
+
+          {/* 주소 입력 */}
+          <div style={{ position: 'relative', marginBottom: '10px' }}>
+            <span style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '16px',
+              lineHeight: 1,
+              pointerEvents: 'none',
+            }}>
+              📍
+            </span>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="장소를 입력하세요"
+              style={{
+                ...inputBase,
+                border: `1.5px solid ${address ? '#0084CC80' : '#EBEBF0'}`,
+                paddingLeft: '42px',
+              }}
+            />
+          </div>
+
+          {/* URL 입력 */}
+          <div style={{ position: 'relative' }}>
+            <span style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '16px',
+              lineHeight: 1,
+              pointerEvents: 'none',
+            }}>
+              🔗
+            </span>
+            <input
+              value={refUrl}
+              onChange={(e) => setRefUrl(e.target.value)}
+              placeholder="참고 웹사이트 (선택)"
+              style={{
+                ...inputBase,
+                border: `1.5px solid ${refUrl ? '#0084CC80' : '#EBEBF0'}`,
+                paddingLeft: '42px',
+              }}
+            />
+          </div>
         </div>
 
-        <div style={cardStyle}>
+        {/* 알림 + 반복 카드 */}
+        <div style={cardBase}>
           <SectionLabel>알림 설정</SectionLabel>
-          <div className="flex gap-2 flex-wrap mb-4">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '18px' }}>
             {REMINDER_OPTIONS.map((opt) => (
-              <button key={opt.value} onClick={() => setReminder(opt.value)} className="px-3.5 py-2 rounded-full text-[12px] font-semibold"
-                style={{ background: reminder === opt.value ? '#0084CC' : '#F7F7FA', color: reminder === opt.value ? 'white' : '#8E8E93', border: '1.5px solid #EBEBF0' }}>{opt.label}</button>
+              <button
+                key={opt.value}
+                onClick={() => setReminder(opt.value)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '100px',
+                  border: `1.5px solid ${reminder === opt.value ? 'transparent' : '#EBEBF0'}`,
+                  cursor: 'pointer',
+                  background: reminder === opt.value ? '#0084CC' : '#F7F7FA',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: reminder === opt.value ? 'white' : '#6E6E66',
+                  transition: 'all 0.15s ease',
+                  boxShadow: reminder === opt.value ? '0 3px 12px rgba(0,132,204,0.30)' : 'none',
+                }}
+              >
+                {opt.label}
+              </button>
             ))}
           </div>
+
           <SectionLabel>반복 설정</SectionLabel>
-          <select value={repeat} onChange={(e) => setRepeat(e.target.value as RepeatType)} style={inputStyle}>
-            {Object.entries(REPEAT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          <select
+            value={repeat}
+            onChange={(e) => setRepeat(e.target.value as RepeatType)}
+            style={{
+              ...inputBase,
+              border: '1.5px solid #EBEBF0',
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9L12 15L18 9' stroke='%238E8E93' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 14px center',
+              paddingRight: '40px',
+              cursor: 'pointer',
+            }}
+          >
+            {Object.entries(REPEAT_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
           </select>
         </div>
 
-        <div style={cardStyle}>
+        {/* 첨부파일 카드 */}
+        <div style={cardBase}>
           <SectionLabel>사진 및 파일 첨부</SectionLabel>
-          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleFileSelect} />
-          <button onClick={() => fileInputRef.current?.click()} disabled={attachments.length >= 10} className="w-full py-3.5 rounded-[16px] text-[13px] font-semibold flex items-center justify-center gap-2"
-            style={{ background: '#F7F7FA', border: '1.5px dashed rgba(0,132,204,0.25)', color: '#0084CC' }}>
-            <span>📁</span> 사진 / 파일 선택하기 ({attachments.length}/10)
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            multiple
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={attachments.length >= 10}
+            style={{
+              width: '100%',
+              padding: '18px 0',
+              borderRadius: '16px',
+              border: '1.5px dashed rgba(0,132,204,0.28)',
+              cursor: attachments.length >= 10 ? 'not-allowed' : 'pointer',
+              background: 'rgba(0,132,204,0.03)',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#0084CC',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              opacity: attachments.length >= 10 ? 0.5 : 1,
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📁</span>
+            사진 / 파일 선택하기 ({attachments.length}/10)
           </button>
+
           {attachments.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pt-3">
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              overflowX: 'auto',
+              paddingTop: '12px',
+              paddingBottom: '4px',
+            }}>
               {attachments.map((a) => (
-                <div key={a.id} className="relative w-20 h-20 rounded-[14px] overflow-hidden flex-shrink-0" style={{ border: '1px solid #eee' }}>
-                  {a.file?.type.startsWith('image/') ? <img src={a.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">📄</div>}
-                  <button onClick={() => removeAttachment(a.id)} className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-[10px]">✕</button>
+                <div
+                  key={a.id}
+                  style={{
+                    position: 'relative',
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: '1px solid rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {a.file?.type.startsWith('image/') ? (
+                    <img
+                      src={a.url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#F7F7FA',
+                      fontSize: '28px',
+                    }}>
+                      📄
+                    </div>
+                  )}
+                  <button
+                    onClick={() => removeAttachment(a.id)}
+                    style={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '4px',
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '50%',
+                      background: 'rgba(0,0,0,0.55)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'white',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div style={cardStyle}>
+        {/* 메모 카드 */}
+        <div style={cardBase}>
           <SectionLabel>메모</SectionLabel>
-          <textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모를 입력하세요" rows={3} style={{ ...inputStyle, height: 'auto', padding: '12px 16px' }} />
+          <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="메모를 입력하세요"
+            rows={4}
+            style={{
+              width: '100%',
+              padding: '14px 16px',
+              borderRadius: '14px',
+              fontSize: '15px',
+              background: '#F7F7FA',
+              border: `1.5px solid ${memo ? '#0084CC80' : '#EBEBF0'}`,
+              outline: 'none',
+              boxSizing: 'border-box',
+              color: '#1A1B2E',
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              lineHeight: 1.6,
+              resize: 'none',
+            }}
+          />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-2 pb-8">
-          <button onClick={() => router.back()} className="h-[56px] rounded-[20px] font-bold border border-gray-200">취소</button>
-          <button onClick={handleSave} disabled={saving} className="h-[56px] rounded-[20px] font-bold text-white bg-brand-gradient">{saving ? '저장 중...' : '일정 저장'}</button>
+        {/* 하단 버튼 */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '12px',
+          paddingTop: '8px',
+          paddingBottom: '32px',
+        }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              height: '56px',
+              borderRadius: '20px',
+              border: '1.5px solid #E0E0E5',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#6E6E66',
+              background: 'white',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            취소
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              height: '56px',
+              borderRadius: '20px',
+              border: 'none',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              fontSize: '15px',
+              fontWeight: 800,
+              color: 'white',
+              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              boxShadow: '0 6px 20px rgba(0,132,204,0.35)',
+              opacity: saving ? 0.7 : 1,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {saving ? '저장 중...' : '일정 저장'}
+          </button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 
 const NAV_ITEMS = [
   {
@@ -65,6 +66,9 @@ const NAV_ITEMS = [
 
 export function DesktopSidebar() {
   const pathname = usePathname();
+  const isDesktop = useIsDesktop();
+
+  if (!isDesktop) return null;
 
   if (pathname === '/login' || pathname === '/onboarding' || pathname === '/') {
     return null;
