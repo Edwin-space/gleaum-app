@@ -5,7 +5,7 @@
 
 import { GoogleAuth } from 'google-auth-library';
 
-const PROJECT_ID = 'gleaum-app-e8edf';
+const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gleaum-firebase';
 const FCM_URL = `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`;
 
 /** 서비스 계정 JSON(base64)으로 FCM OAuth 액세스 토큰 발급 */

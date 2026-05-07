@@ -5,12 +5,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey:            'AIzaSyAWCSlTzNnXAGXRyu0kEulMuJwlovvOXhU',
-  authDomain:        'gleaum-app-e8edf.firebaseapp.com',
-  projectId:         'gleaum-app-e8edf',
-  storageBucket:     'gleaum-app-e8edf.firebasestorage.app',
-  messagingSenderId: '892011944168',
-  appId:             '1:892011944168:web:88451fac143fa68bbf515d',
+  apiKey:            'AIzaSyBwFWcS5HC-ugCcvg5zlsB0h-Dwi9HJFM0',
+  authDomain:        'gleaum-firebase.firebaseapp.com',
+  projectId:         'gleaum-firebase',
+  storageBucket:     'gleaum-firebase.firebasestorage.app',
+  messagingSenderId: '913127709928',
+  appId:             '1:913127709928:web:6e9ab707d7150b59febd5d',
 });
 
 const messaging = firebase.messaging();
