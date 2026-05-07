@@ -36,7 +36,7 @@
 - [x] `/auth/callback` 서버 라우트 구현
 - [x] 로그인 후 `/home` 리다이렉트
 - [x] 미들웨어 인증 보호
-- [x] Vercel 프로덕션 배포 (https://gleaum-app.vercel.app)
+- [x] Vercel 프로덕션 배포 (`https://gleaum-app.vercel.app`)
 - [x] 실제 구글 계정으로 로그인 테스트 완료
 
 ---
@@ -63,28 +63,17 @@
 
 ### 초대 링크 페이지 (`/invite/[code]`)
 - [x] `src/app/invite/[code]/page.tsx` 신규 생성
-  - 비로그인 시 `/login?next=/invite/[code]` 리다이렉트
-  - 로그인 시 `joinFamilyByCode()` 자동 호출
-  - 성공 / 이미멤버 / 유효하지않은코드 3가지 상태 UI
-  - 성공 후 2초 뒤 `/family`로 자동 이동
 - [x] `src/middleware.ts` — `/invite` 공개 경로 추가
 - [x] `src/hooks/useAuth.ts` — `signInWithGoogle(next?)` 파라미터 추가
 - [x] `src/app/login/page.tsx` — `?next=` 파라미터 읽어서 OAuth에 전달 + 초대 배너 표시
-- [x] `src/lib/db.ts` — `joinFamilyByCode` 반환 타입 강화 (`{ success, alreadyMember, familyName }`) + `getFamilyByCode` 추가
+- [x] `src/lib/db.ts` — `joinFamilyByCode` 반환 타입 강화
 
 ### 나머지 7개 페이지 디자인 리뉴얼 (Green/Teal/Blue 통일)
-- [x] `/notifications` — 타입별 원형 컬러 아이콘, 미읽음 테두리 강조
-- [x] `/mypage` — 그라디언트 프로필 히어로 카드, 아이콘 칩 설정 행
-- [x] `/family` — 다크 헤더 → 그라디언트 카드, `joinFamilyByCode` 버그 수정
-- [x] `/budget` — 그라디언트 요약 카드, 카테고리 아이콘 칩, 진행률 바
-- [x] `/schedules/children` — SVG 원형 완료율 프로그레스, 탭, 스텝퍼+그림자
-- [x] `/schedules/[id]` — 유형별 그라디언트 히어로 헤더, 둥근 카드(24px), 버튼
-- [x] `/schedules/new` — 이모지 유형 칩, 포커스 테두리, 그라디언트 저장 버튼
-- [x] `/schedules` — 오늘 요약 히어로 카드, 검색바/필터 칩 프리미엄 리뉴얼
+- [x] `/notifications`, `/mypage`, `/family`, `/budget`, `/schedules/children`, `/schedules/[id]`, `/schedules/new`, `/schedules` 전체 리뉴얼
 
 ---
 
-## Day 6 — FCM 푸시 알림 + Supabase Cron 리마인더 (완료 - 2026-05-04)
+## Day 6 — FCM 푸시 알림 + Supabase Cron 리마인더 (완료)
 
 - [x] Firebase Cloud Messaging 클라이언트 연동
 - [x] 로그인 사용자 FCM 토큰 저장 (`profiles.fcm_token`)
@@ -95,7 +84,7 @@
 
 ---
 
-## 제품 모델 재정의 — 개인 중심 + Space 확장형 (완료 - 2026-05-04)
+## 제품 모델 재정의 — 개인 중심 + Space 확장형 (완료)
 
 - [x] 개인 중심 + Space 확장형 토털 라이프 관리 서비스로 비전 재정의
 - [x] `docs/12-product-model.md` 작성 및 적용
@@ -103,7 +92,7 @@
 
 ---
 
-## 개인화 온보딩 1차 (완료 - 2026-05-04)
+## 개인화 온보딩 1차 (완료)
 
 - [x] `/onboarding` 단계형 플로우 구현
 - [x] 시작 목적/관심사 기반 개인화 설정 저장
@@ -112,50 +101,162 @@
 
 ---
 
-## 프리미엄 UI/UX 리뉴얼 (완료 - 2026-05-06)
+## 프리미엄 UI/UX 리뉴얼 1차 (완료)
 
-- [x] **Glassmorphism 도입**: `.glass-card` (반투명 유리 질감) 전면 적용
-- [x] **Mesh Gradient 배경**: 애니메이션 기반 유동적인 메쉬 그라디언트 교체
-- [x] **하이엔드 타이포그래피**: `Outfit` (영문) + `Pretendard` (국문) 조합 개편
-- [x] **아이콘 시스템 정교화**: 정교한 SVG 라인 아이콘 통일
-- [x] **모바일 전 페이지 디자인 통일**: Hero Gradient, Glow blobs, Sticky Header 패턴 전체 적용
+- [x] Glassmorphism 도입: `.glass-card` 전면 적용
+- [x] Mesh Gradient 배경: 애니메이션 기반 메쉬 그라디언트
+- [x] 하이엔드 타이포그래피: `Outfit` (영문) + `Pretendard` (국문)
+- [x] 아이콘 시스템 정교화: SVG 라인 아이콘 통일
 
 ---
 
-## Sprint 2 + 적응형(Adaptive) UI 구현 (2026-05-04)
+## Sprint 2 + 적응형(Adaptive) UI 구현 (완료)
 
-### 토스트(Toast) 시스템
-- [x] `sonner` 라이브러리 기반 전역 토스트 시스템 구축
-- [x] 기존 `alert()` 전체 토스트 대체 완료
-
-### 캘린더 뷰 확장
-- [x] 주간(타임라인) / 일간 뷰 추가 및 월간 뷰 연동
-- [x] 현재 시간 표시 및 일정 블록 자동 배치 로직 강화
-
-### 적응형(Adaptive) UI
+- [x] `sonner` 라이브러리 기반 전역 토스트 시스템
+- [x] 주간/일간/월간 캘린더 뷰 확장
 - [x] `DesktopSidebar.tsx` 및 PC 전용 2컬럼/3컬럼 레이아웃 적용
-- [x] 1024px 이상 환경에서 사이드바 자동 전환 및 그리드 최적화
+- [x] 1024px 이상 환경에서 사이드바 자동 전환
 
 ---
 
-## Day 9 — SEO 및 품질 안정화 (완료 - 2026-05-07)
+## Day 9 — SEO 및 품질 안정화 (완료)
 
-- [x] **네이버 서치어드바이저 인증**: `src/app/layout.tsx`에 메타 태그 적용 및 기존 HTML 인증 파일 제거
-- [x] **SEO 고도화**: Open Graph, Twitter Cards, robots, keywords 등 웹 표준 메타데이터 전체 적용
-- [x] **일정 등록 페이지 오류 수정**: Space 아키텍처 전환에 따른 `useSpace` 훅 적용 및 API 시그니처 정합성 확보
-- [x] **빌드 안정화**: Ref 타입 오류 및 미사용/삭제된 카테고리(`living`) 타입 수정 완료
-
----
-
-## 앱 설치 및 접근성 (PWA) (완료)
-
-- [x] **매니페스트 구성**: `public/manifest.json` 생성 (`standalone` 모드)
-- [x] **서비스 워커**: `public/sw.js` 및 `PwaRegistry.tsx`를 통한 설치 지원
-- [x] **아이콘**: Next.js `app/icon.tsx` 및 정적 아이콘 세트 구성 완료
+- [x] 네이버 서치어드바이저 인증 메타 태그 적용
+- [x] Open Graph, Twitter Cards, robots, keywords 웹 표준 메타데이터 전체 적용
+- [x] 일정 등록 페이지 오류 수정
+- [x] 빌드 안정화: Ref 타입 오류 및 미사용 카테고리 타입 수정
 
 ---
 
-## 인프라 및 인증 (완료)
+## PC WEB 전 구간 프리미엄 인라인 스타일 리디자인 (완료 — 2026-05-08)
 
-- [x] **OAuth 도메인 리다이렉트 수정**: 실제 접속 도메인(`host`) 기반 리다이렉트 보장
-- [x] **Supabase RLS 보안 정책** 강화
+> **핵심 결정**: Tailwind CSS v4의 클래스 신뢰성 문제로 인해 **모든 PC/모바일 컴포넌트를 100% 인라인 스타일로 재작성**. `glass-card`, `animate-*`, `var()` CSS 변수 등 Tailwind 유틸리티 클래스 완전 제거.
+
+### 신규 생성 파일 (PC 전용 컴포넌트)
+- [x] `src/app/schedules/new/DesktopNewSchedule.tsx` — 2컬럼 프리미엄 일정 등록 폼
+- [x] `src/app/schedules/[id]/edit/DesktopEditSchedule.tsx` — 일정 수정 PC 전용 컴포넌트
+- [x] `src/app/schedules/[id]/DesktopScheduleDetail.tsx` — 일정 상세 2컬럼 PC 레이아웃
+
+### 수정된 PC 페이지
+- [x] `src/app/schedules/[id]/edit/page.tsx` — `useIsDesktop()` 분기 추가, DesktopEditSchedule 연결
+- [x] 모든 Desktop* 컴포넌트에서 내부 padding 제거 (pc-content-area와 충돌 방지)
+
+### 디자인 패턴 (PC)
+- 다크 히어로 헤더: `linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)` + glow blob
+- 2컬럼 그리드: 좌측 메인 콘텐츠 `1fr` + 우측 액션 패널 `360px`
+- 카드 스타일: `background:'white', borderRadius:'20px', boxShadow:'0 2px 16px rgba(0,0,0,0.06)', border:'1px solid rgba(0,0,0,0.04)'`
+- 타입별 컬러 시스템: shared(teal), personal(cyan), child(green), expense(amber)
+
+---
+
+## 모바일 웹 전 구간 프리미엄 인라인 스타일 리디자인 (완료 — 2026-05-08)
+
+> 아래 모든 파일에서 Tailwind 유틸리티 클래스, `glass-card`, `animate-*`, `var()` CSS 변수 완전 제거 → 100% 인라인 스타일로 대체.
+
+| 파일 | 주요 변경 내용 |
+|------|--------------|
+| `src/app/home/MobileHome.tsx` | 다크 인사 히어로 카드, 접이식 캘린더, 퀵 액션, useMemo 최적화 |
+| `src/app/schedules/MobileSchedules.tsx` | 검색/필터 칩, 일정 카드 인라인 스타일 전체 교체 |
+| `src/app/schedules/new/MobileNewSchedule.tsx` | 프리미엄 타입 타일(soft bg + 컬러 border), 3컬럼 날짜/시간 그리드 |
+| `src/app/schedules/[id]/MobileScheduleDetail.tsx` | 풀블리드 히어로, 바텀시트 모달, child stepper, 참여자 카드 |
+| `src/app/schedules/children/MobileChildren.tsx` | SVG 원형 진행률, 탭, 완료 바텀시트 모달 |
+| `src/app/budget/MobileBudget.tsx` | 다크 그린 그라디언트 히어로, -24px 겹침 요약 카드 |
+| `src/app/family/MobileFamily.tsx` | 바텀시트 모달 스타일 (borderRadius: '32px 32px 0 0') |
+| `src/app/notifications/MobileNotifications.tsx` | 타입별 컬러 좌측 보더, 미읽음/읽음 투명도 구분 |
+| `src/app/mypage/MobileMyPage.tsx` | GleaumAppIcon→GleaumBI 교체, 인라인 토글 컴포넌트 |
+| `src/components/PWAInstallBanner.tsx` | 다크 그라디언트 프리뷰 헤더, 번호 원형 스텝, 그라디언트 설치 버튼 |
+| `src/components/layout/BottomNav.tsx` | glass-card → 명시적 frosted glass 인라인 스타일, FAB 중앙 플로팅 |
+
+### 모바일 Safe Area 패턴
+```
+paddingTop: 'calc(env(safe-area-inset-top) + 48px)'
+paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)'
+```
+
+---
+
+## 사이드바 모바일 노출 버그 수정 (완료 — 2026-05-08)
+
+- [x] `src/components/layout/DesktopSidebar.tsx` — `useIsDesktop()` 추가, 모바일에서 `return null`
+- [x] `src/components/layout/BottomNav.tsx` — `useIsDesktop()` 추가, 데스크탑에서 `return null`
+  - 기존 `className="lg:hidden"` Tailwind 클래스가 Tailwind v4에서 동작 안 하던 문제 해결
+
+---
+
+## 모바일 로그인 화면 리디자인 (완료 — 2026-05-08)
+
+- [x] `src/app/login/page.tsx` — `var(--font-display)` 제거
+- [x] 플로팅 앱 아이콘 카드 (72px, 그라디언트 bg, glow shadow)
+- [x] 점 배경 텍스처 (radial-gradient 패턴)
+- [x] safe-area-inset 패딩 적용 (노치/홈바 안전 영역)
+- [x] 이메일/비밀번호 인풋 — 왼쪽 아이콘 삽입
+- [x] 에러 메시지 → 아이콘 포함 박스 UI로 개선
+- [x] 로그인 버튼 — 그라디언트 (`#0084CC → #0CC9B5`)
+- [x] Suspense fallback도 다크 배경으로 통일
+
+---
+
+## 모바일 /home 성능 최적화 (완료 — 2026-05-08)
+
+> Vercel Speed Insights에서 `/home` poor 판정 → 7가지 최적화 적용
+
+| 최적화 항목 | 수정 파일 | 효과 |
+|------------|---------|------|
+| 중복 BottomNav 제거 | `MobileHome.tsx` | DOM 절감, GPU 컴포지팅 레이어 1개 제거 |
+| `useMediaQuery` 초기값 즉시 평가 | `src/hooks/useMediaQuery.ts` | hydration 후 재렌더 방지 |
+| 폰트 `preconnect` 추가 | `src/app/layout.tsx` | DNS/TLS 핸드셰이크 선제 해소 |
+| Pretendard full static → Variable Dynamic Subset | `src/app/layout.tsx` | 폰트 CSS ~70% 경량화 |
+| `PWAInstallBanner` → `LazyPWABanner` dynamic import | `src/components/LazyPWABanner.tsx` | 초기 렌더에서 1.5초 setTimeout 재렌더 제거 |
+| schedule 필터 `useMemo` 래핑 | `MobileHome.tsx` | 무관한 state 변경 시 재연산 방지 |
+| mesh-blob 애니메이션 모바일 비활성화 | `src/app/globals.css` | 모바일 GPU 부하 감소 |
+| `@keyframes spin` globals.css 이동 | `src/app/globals.css` | loading 토글마다 style DOM 추가/삭제 방지 |
+
+---
+
+## Google Analytics 4 (GA4) 세팅 (완료 — 2026-05-08)
+
+- [x] Measurement ID: `G-BK5RQTGVNT` (기존 Firebase 프로젝트 연결)
+- [x] `src/lib/analytics.ts` — 타입 안전 이벤트 트래킹 유틸리티
+  - `GleaumEventParams` 타입으로 이벤트별 파라미터 강제
+  - `KEY_EVENTS` 배열로 GA4 콘솔에서 Key Event 지정할 이벤트 목록 관리
+- [x] `src/components/GoogleAnalytics.tsx` — `next/script afterInteractive` 전략으로 렌더 블로킹 없이 로드
+  - SPA 라우트 전환 시 `page_view` 자동 전송 (`usePathname` + `useSearchParams`)
+- [x] Vercel 환경변수 `NEXT_PUBLIC_GA_ID` 등록
+
+### 트래킹 이벤트 목록
+
+| 이벤트 | 발생 위치 | Key Event |
+|--------|---------|-----------|
+| `login` | `src/app/login/page.tsx` | ✅ |
+| `onboarding_complete` | `src/app/onboarding/page.tsx` | ✅ |
+| `schedule_create` | `src/app/schedules/new/page.tsx` | ✅ |
+| `schedule_view` | `src/app/schedules/[id]/page.tsx` | |
+| `schedule_complete` | `src/app/schedules/[id]/page.tsx` | ✅ |
+| `pwa_banner_show` | `src/components/PWAInstallBanner.tsx` | |
+| `pwa_install_accept` | `src/components/PWAInstallBanner.tsx` | |
+| `pwa_installed` | `src/components/PWAInstallBanner.tsx` | ✅ |
+| `pwa_install_dismiss` | `src/components/PWAInstallBanner.tsx` | |
+| `calendar_toggle` | `src/app/home/MobileHome.tsx` | |
+
+### GA4 콘솔 후속 작업 (사용자 직접 수행)
+1. [관리] → [이벤트] → Key Events에서 위 ✅ 이벤트 지정
+2. [탐색] → 새 보고서 → **유입경로 탐색**: `page_view(/login)` → `login` → `onboarding_complete` → `schedule_create` 퍼널 설정
+
+---
+
+## PWA 완성 (완료)
+
+- [x] `public/manifest.json` — `standalone` 디스플레이 모드
+- [x] `src/app/icon.tsx` — 고화질 다이아몬드 로고 아이콘 동적 생성
+- [x] `public/sw.js` + `PwaRegistry.tsx` — 오프라인 지원/설치 가능
+- [x] iOS 스플래시 스크린 20종 (`apple-touch-startup-image`) 적용
+- [x] Android/iOS PWA 홈 화면 추가 배너 (`PWAInstallBanner.tsx`)
+
+---
+
+## 인프라 및 배포 (현재 상태)
+
+- **프로덕션 URL**: `https://www.gleaum.com`
+- **GitHub**: `Edwin-space/gleaum-app` (`main` 브랜치 push → Vercel 자동 배포)
+- **Vercel CLI 직접 배포도 가능**: `npx vercel --prod`
+- **최신 커밋**: `f304a95` (2026-05-08)
