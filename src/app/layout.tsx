@@ -21,6 +21,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: '글리움',
   },
+  verification: {
+    other: {
+      'naver-site-verification': ['a11d809e520e40f6fe379b615dd1ca5ad20e4240'],
+    },
+  },
 };
 
 export const viewport: Viewport = {

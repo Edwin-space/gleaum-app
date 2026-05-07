@@ -81,7 +81,7 @@
 > ✅ 5단계(자동화 정책 엔진) 완료됨. `automation_policy` 기반 `time_window/completion_required/payment_due` 처리 + FCM 알림.
 > ✅ 6단계(PC/모바일 뷰 분리 + 랜딩 + 홈 리디자인) 완료됨. `/login`, `/home` 분리 완료.
 > ✅ 개인화 온보딩 1차 구현 및 운영 DB SQL 적용 완료. 로그인 후 온보딩 미완료 사용자는 `/onboarding`으로 이동.
-> ✅ **7단계(모바일 서비스 완성)**: 일정 상태변경 UX 완성(shared/personal 포함), 파일 첨부 실제 업로드 구현, PWA manifest 완성, docs 업데이트.
+> ✅ **7단계(모바일 서비스 완성)**: 전 페이지 프리미엄 디자인 리뉴얼 완료. (남은 과제: 일정 상태변경 UX 상세 완성, 파일 첨부 실제 업로드 보강, PWA manifest 완성).
 > 🔜 **8단계: PC WEB 전체 뷰 활성화** — 모바일 완성 후 진행. `/schedules`, `/budget`, `/family` 등에 이미 `lg:` 클래스 코드가 준비되어 있음. `DesktopHome`, `MobileHome` 패턴을 나머지 페이지에 적용.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료

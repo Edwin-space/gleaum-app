@@ -125,21 +125,19 @@
 > 아키텍처: `page.tsx` (thin router, `useIsDesktop()` 분기) → `MobileX.tsx` / `DesktopX.tsx`
 > 참고: `/login`과 `/home`은 이미 완료됨.
 
-### Phase 1 — 핵심 CRUD 페이지 (최우선)
+### Phase 1 — 핵심 CRUD 페이지 (완료 ✅)
 
-| 페이지 | PC 레이아웃 방향 |
-|--------|-----------------|
-| `/schedules` | 좌측 필터 패널 + 우측 3컬럼 카드 그리드, 상단 검색바 풀 와이드 |
-| `/budget` | 좌측 월별 요약 + 우측 카테고리별 상세 2컬럼, 히어로 카드 와이드 |
-| `/schedules/new` | 중앙 정렬 폼 카드 (max-width 640px), 좌우 여백 활용 |
-| `/schedules/[id]` | 좌측 상세 정보 카드 + 우측 참여자/액션 패널 2컬럼 |
+- [x] `/schedules`: 좌측 필터 패널 + 우측 3컬럼 카드 그리드, 상단 검색바 풀 와이드
+- [x] `/budget`: 좌측 월별 요약 + 우측 카테고리별 상세 2컬럼, 히어로 카드 와이드
+- [x] `/mypage`: 좌측 프로필 카드 + 우측 설정 항목 리스트
+- [x] `/schedules/new`: 중앙 정렬 폼 카드 + 우측 부가 설정 (PC 최적화)
+- [x] `/schedules/[id]`: 좌측 상세 정보 카드 + 우측 참여자/액션 패널 2컬럼
 
-### Phase 2 — 보조 페이지
+### Phase 2 — 보조 페이지 (진행 중 🔜)
 
 | 페이지 | PC 레이아웃 방향 |
 |--------|-----------------|
 | `/family` | 좌측 멤버 리스트 + 우측 초대/설정 패널 |
-| `/mypage` | 좌측 프로필 카드 + 우측 설정 항목 리스트 |
 | `/notifications` | 중앙 정렬 알림 리스트 (max-width 720px) |
 | `/schedules/children` | 좌측 자녀 선택 + 우측 일정/진행률 대시보드 |
 
@@ -167,5 +165,3 @@
 | `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
 | ~~자동화 정책 기반 상태 전이 미구현~~ | ✅ 완료 (`automation_policy` 기반 처리) | `src/app/api/cron/automations/route.ts` |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |
-| 디자인 토큰 위반 | 28+ 하드코딩 컬러, 50+ 인라인 버튼 스타일 → 토큰/클래스 통일 필요 | 전역 |
-| 서브 페이지 뷰 미분리 | `/login`, `/home` 외 나머지 페이지 PC/모바일 분리 필요 | Phase 1/2/3 계획 참조 |
