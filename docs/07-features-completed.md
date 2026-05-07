@@ -138,6 +138,15 @@
 
 ---
 
+## Day 9 — SEO 및 품질 안정화 (완료 - 2026-05-07)
+
+- [x] **네이버 서치어드바이저 인증**: `src/app/layout.tsx`에 메타 태그 적용 및 기존 HTML 인증 파일 제거
+- [x] **SEO 고도화**: Open Graph, Twitter Cards, robots, keywords 등 웹 표준 메타데이터 전체 적용
+- [x] **일정 등록 페이지 오류 수정**: Space 아키텍처 전환에 따른 `useSpace` 훅 적용 및 API 시그니처 정합성 확보
+- [x] **빌드 안정화**: Ref 타입 오류 및 미사용/삭제된 카테고리(`living`) 타입 수정 완료
+
+---
+
 ## 앱 설치 및 접근성 (PWA) (완료)
 
 - [x] **매니페스트 구성**: `public/manifest.json` 생성 (`standalone` 모드)

@@ -18,7 +18,7 @@
 
 ---
 
-## 현재 앱 상태 (2026-05-06 기준)
+## 현재 앱 상태 (2026-05-07 기준)
 
 > **디자인 히스토리 요약**: Claude(세션1)가 Vibrant Purple(`#5A32FA`)로 구현 → Antigravity AI가 오리지널 브랜드 컬러(Blue/Teal/Green)로 복구 + Glassmorphism + 메쉬 그라디언트 + 프리미엄 폰트(`Outfit`+`Pretendard`) 추가 적용. **현재 코드는 Blue/Teal/Green 기반이며 보라색(`#5A32FA`)은 사용 금지.**
 > **제품 방향 요약**: 초기 가족 관리 서비스에서 개인 중심 + Space 확장형 토털 서비스로 보정했습니다. 개인 구간이 기본이며, 친구/연인/가족 Space는 선택적 관계 확장 레이어입니다. `family_groups`는 단기적으로 유지하지만 신규 설계에서는 legacy shared Space로 해석합니다.
@@ -52,6 +52,7 @@
 | 모바일 홈 리디자인 | `MobileHome.tsx` | ✅ 시간 인사+접이식 캘린더+퀵액션 |
 | Vercel 프로덕션 배포 | gleaum-app.vercel.app | ✅ 자동 배포 중 |
 | 적응형(Adaptive) UI | `DesktopSidebar`, `MobileHome` 등 | ✅ PC/모바일 대응 완료 |
+| 네이버/SEO 최적화 | `layout.tsx`, 메타데이터 API | ✅ 인증 및 표준화 완료 |
 
 ### ❌ 미구현 기능 (우선순위 순)
 
@@ -82,7 +83,8 @@
 > ✅ 6단계(PC/모바일 뷰 분리 + 랜딩 + 홈 리디자인) 완료됨. `/login`, `/home` 분리 완료.
 > ✅ 개인화 온보딩 1차 구현 및 운영 DB SQL 적용 완료. 로그인 후 온보딩 미완료 사용자는 `/onboarding`으로 이동.
 > ✅ **7단계(모바일 서비스 완성)**: 전 페이지 프리미엄 디자인 리뉴얼 완료. (남은 과제: 일정 상태변경 UX 상세 완성, 파일 첨부 실제 업로드 보강, PWA manifest 완성).
-> 🔜 **8단계: PC WEB 전체 뷰 활성화** — 모바일 완성 후 진행. `/schedules`, `/budget`, `/family` 등에 이미 `lg:` 클래스 코드가 준비되어 있음. `DesktopHome`, `MobileHome` 패턴을 나머지 페이지에 적용.
+> ✅ 8단계: PC WEB 전체 뷰 활성화 — 모바일 완성 후 진행. `/schedules`, `/budget`, `/family` 등에 이미 `lg:` 클래스 코드가 준비되어 있음. `DesktopHome`, `MobileHome` 패턴을 나머지 페이지에 적용.
+> ✅ 9단계: SEO 및 웹 표준화 — 네이버 서치어드바이저 인증, OG/Twitter 태그 적용, 빌드 에러 수정 완료.
 
 ### 1단계 ✅: 초대 링크 페이지 — 완료
 ### 2단계 ✅: 전 페이지 디자인 리뉴얼 — 완료
