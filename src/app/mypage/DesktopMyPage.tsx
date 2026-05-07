@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
+import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import type { NotificationSettings } from '@/types';
 
 // ── 아이콘 헬퍼 ──
@@ -13,7 +13,7 @@ const Icon = ({ d, stroke, size = 18 }: { d: string; stroke?: string; size?: num
   </svg>
 );
 
-// ── 설정 행 컴포넌트 (Desktop) ──
+// ── 설정 행 컴포넌트 ──
 interface SettingRowProps {
   icon: React.ReactNode;
   label: string;
@@ -30,44 +30,38 @@ interface SettingRowProps {
 function SettingRow({ icon, label, description, value, isToggle, toggled, onToggle, danger, href, onClick }: SettingRowProps) {
   const content = (
     <div
-      className="flex items-center gap-6 px-8 py-6 hover:bg-gray-50/50 transition-colors cursor-pointer"
+      style={{
+        display: 'flex', alignItems: 'center', gap: '16px',
+        padding: '18px 24px', cursor: 'pointer', transition: 'background 0.15s',
+      }}
       onClick={isToggle ? onToggle : onClick}
     >
-      <div
-        className="w-12 h-12 rounded-[16px] flex items-center justify-center flex-shrink-0 shadow-sm"
-        style={{ background: danger ? 'rgba(239,68,68,0.08)' : 'rgba(0,132,204,0.08)' }}
-      >
+      <div style={{
+        width: '44px', height: '44px', borderRadius: '15px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        background: danger ? 'rgba(239,68,68,0.08)' : 'rgba(0,132,204,0.07)',
+      }}>
         {icon}
       </div>
-      <div className="flex-1">
-        <h4 className="text-[17px] font-bold" style={{ color: danger ? '#EF4444' : '#1A1B2E' }}>
-          {label}
-        </h4>
-        {description && <p className="text-[13px] text-[#8E8E93] mt-0.5">{description}</p>}
+      <div style={{ flex: 1 }}>
+        <h4 style={{ fontSize: '15px', fontWeight: 800, color: danger ? '#EF4444' : '#1A1B2E', margin: '0 0 2px' }}>{label}</h4>
+        {description && <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{description}</p>}
       </div>
       {isToggle ? (
-        <div
-          className="w-14 h-8 rounded-full relative transition-all duration-300"
-          style={{ background: toggled ? 'var(--brand-blue)' : '#E5E5EA' }}
-        >
-          <div
-            className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300"
-            style={{ left: toggled ? '24px' : '4px' }}
-          />
+        <div style={{ width: '50px', height: '28px', borderRadius: '999px', position: 'relative', background: toggled ? '#0084CC' : '#E5E5EA', transition: 'background 0.3s', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: '3px', width: '22px', height: '22px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left 0.3s', left: toggled ? '25px' : '3px' }} />
         </div>
       ) : value ? (
-        <span className="text-[15px] font-bold text-[#8E8E93] bg-gray-100 px-4 py-1.5 rounded-full">
-          {value}
-        </span>
+        <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', background: '#F5F5F9', padding: '5px 12px', borderRadius: '999px', flexShrink: 0 }}>{value}</span>
       ) : (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M9 18L15 12L9 6" stroke="#C7C7CC" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          <path d="M9 18L15 12L9 6" stroke="#D0D0D0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       )}
     </div>
   );
 
-  return href ? <Link href={href} className="block">{content}</Link> : content;
+  return href ? <Link href={href} style={{ display: 'block', textDecoration: 'none' }}>{content}</Link> : content;
 }
 
 interface DesktopMyPageProps {
@@ -89,84 +83,189 @@ export function DesktopMyPage({
   signOut,
   setShowEditModal,
   setShowPasswordModal,
-  setShowDeleteModal
+  setShowDeleteModal,
 }: DesktopMyPageProps) {
   return (
-    <div className="max-w-[1440px] mx-auto px-10 pt-12 pb-20 animate-fade-in">
-      <div className="flex items-center justify-between mb-12">
-        <h1 className="text-[36px] font-black text-[#1A1B2E] tracking-tight">설정 및 프로필</h1>
-        <div className="flex items-center gap-2 opacity-50">
-          <GleaumAppIcon size={24} />
-          <span className="text-[14px] font-black uppercase tracking-widest text-[#1A1B2E]">Gleaum Premium</span>
+    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+      {/* ── 페이지 헤더 ── */}
+      <div style={{
+        position: 'relative',
+        padding: '36px 44px',
+        borderRadius: '28px',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+        color: 'white',
+        marginBottom: '28px',
+        boxShadow: '0 14px 44px rgba(26,27,46,0.2)',
+      }}>
+        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', background: 'rgba(46,232,149,0.12)', filter: 'blur(60px)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-20px', left: '40%', width: '150px', height: '150px', background: 'rgba(12,201,181,0.1)', filter: 'blur(48px)', borderRadius: '50%', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', margin: '0 0 6px' }}>설정 및 프로필</h1>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, margin: 0 }}>
+              계정 정보와 알림 설정을 관리하세요
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 18px', borderRadius: '14px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
+            <GleaumLogoImg size={22} />
+            <GleaumBI variant="white" width={72} />
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-10 items-start">
-        {/* ── 좌측 프로필 카드 ── */}
-        <div className="col-span-4 space-y-6">
-          <div className="rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl" style={{ background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)' }}>
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-blue/20 blur-[40px] rounded-full" />
-            <div className="relative z-10">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative mb-6">
-                  <div className="w-28 h-28 rounded-[40px] bg-white/10 backdrop-blur-md flex items-center justify-center text-[56px] border border-white/20 shadow-inner">
+      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
+
+        {/* ── 왼쪽: 프로필 카드 ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* 프로필 다크 카드 */}
+          <div style={{
+            borderRadius: '28px', padding: '32px', color: 'white',
+            background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+            position: 'relative', overflow: 'hidden',
+            boxShadow: '0 12px 36px rgba(26,27,46,0.25)',
+          }}>
+            <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', background: 'rgba(0,132,204,0.2)', filter: 'blur(35px)', borderRadius: '50%', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '96px', height: '96px', borderRadius: '32px',
+                    background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '48px', border: '1.5px solid rgba(255,255,255,0.15)',
+                  }}>
                     {user?.avatar ?? '👤'}
                   </div>
-                  <button onClick={() => setShowEditModal(true)} className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-white text-[#1A1B2E] flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                    <Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" size={16} />
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    style={{
+                      position: 'absolute', bottom: '-6px', right: '-6px',
+                      width: '32px', height: '32px', borderRadius: '50%',
+                      background: 'white', color: '#1A1B2E', border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)', transition: 'transform 0.2s',
+                    }}
+                  >
+                    <Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" size={13} />
                   </button>
                 </div>
-                <h2 className="text-[28px] font-black">{user?.name ?? '사용자'}</h2>
-                <p className="text-[15px] text-white/50 font-medium mt-1">{user?.email}</p>
+                <h2 style={{ fontSize: '22px', fontWeight: 900, margin: '0 0 4px' }}>{user?.name ?? '사용자'}</h2>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, margin: 0 }}>{user?.email}</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mt-10">
-                <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-4 rounded-[24px] text-center">
-                  <p className="text-[10px] uppercase font-black text-white/40 mb-1">멤버</p>
-                  <p className="text-[20px] font-black">{insights?.memberCount ?? 0}</p>
-                </div>
-                <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-4 rounded-[24px] text-center">
-                  <p className="text-[10px] uppercase font-black text-white/40 mb-1">지출</p>
-                  <p className="text-[20px] font-black">{(insights?.totalExpense ?? 0).toLocaleString()}</p>
-                </div>
-                <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-4 rounded-[24px] text-center">
-                  <p className="text-[10px] uppercase font-black text-white/40 mb-1">일정</p>
-                  <p className="text-[20px] font-black">{insights?.upcomingCount ?? 0}</p>
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '24px' }}>
+                {[
+                  { label: '멤버', value: insights?.memberCount ?? 0 },
+                  { label: '지출', value: (insights?.totalExpense ?? 0).toLocaleString() },
+                  { label: '일정', value: insights?.upcomingCount ?? 0 },
+                ].map(item => (
+                  <div key={item.label} style={{
+                    background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '18px', padding: '14px 10px', textAlign: 'center',
+                    backdropFilter: 'blur(8px)',
+                  }}>
+                    <p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>{item.label}</p>
+                    <p style={{ fontSize: '18px', fontWeight: 900, margin: 0, lineHeight: 1 }}>{item.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-8 rounded-[40px] border-white/60">
-            <h3 className="text-[15px] font-black text-[#1A1B2E] mb-4">💡 프리미엄 혜택</h3>
-            <p className="text-[14px] text-[#8E8E93] leading-relaxed font-medium">
-              글리움 프리미엄을 사용 중입니다. 무제한 공간 생성과 고화질 파일 첨부 기능을 이용할 수 있습니다.
+          {/* 프리미엄 혜택 카드 */}
+          <div style={{
+            background: 'white', borderRadius: '24px', padding: '22px',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '20px' }}>💎</span>
+              <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>프리미엄 혜택</p>
+            </div>
+            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.65, margin: 0 }}>
+              글리움 프리미엄 사용 중입니다. 무제한 공간 생성과 고화질 파일 첨부 기능을 이용할 수 있습니다.
             </p>
           </div>
         </div>
 
-        {/* ── 우측 설정 리스트 ── */}
-        <div className="col-span-8 space-y-8">
-          <div className="glass-card rounded-[40px] overflow-hidden border-white/60 divide-y divide-gray-50">
-            <div className="px-8 py-6 bg-gray-50/30">
-              <h3 className="text-[13px] font-black text-[#8E8E93] uppercase tracking-widest">계정 및 보안</h3>
+        {/* ── 오른쪽: 설정 섹션 ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* 계정 및 보안 */}
+          <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>계정 및 보안</p>
             </div>
-            <SettingRow icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#0084CC" />} label="비밀번호 재설정" description="이메일 로그인을 위한 보안 비밀번호를 설정하거나 변경합니다." onClick={() => setShowPasswordModal(true)} />
-            <SettingRow icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />} label="공간(Space) 관리" description="가족, 연인, 친구와의 공간을 관리하고 새로운 멤버를 초대합니다." href="/family" />
+            <div style={{ divideY: '1px solid #F7F7FA' } as any}>
+              <SettingRow
+                icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#0084CC" />}
+                label="비밀번호 재설정"
+                description="이메일 로그인을 위한 보안 비밀번호를 설정하거나 변경합니다."
+                onClick={() => setShowPasswordModal(true)}
+              />
+              <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+              <SettingRow
+                icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />}
+                label="공간(Space) 관리"
+                description="가족, 연인, 친구와의 공간을 관리하고 새로운 멤버를 초대합니다."
+                href="/family"
+              />
+            </div>
           </div>
 
-          <div className="glass-card rounded-[40px] overflow-hidden border-white/60 divide-y divide-gray-50">
-            <div className="px-8 py-6 bg-gray-50/30">
-              <h3 className="text-[13px] font-black text-[#8E8E93] uppercase tracking-widest">서비스 연동 및 알림</h3>
+          {/* 알림 설정 */}
+          <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>서비스 연동 및 알림</p>
             </div>
-            <SettingRow icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0CC9B5" />} label="구글 캘린더 동기화" value="동기화 중" href="/settings/calendar" />
-            <SettingRow icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" stroke="#1A1B2E" />} label="푸시 알림 리마인더" description="일정 시작 전 및 결제일 도래 시 알림을 받습니다." isToggle toggled={notifSettings.scheduleReminders} onToggle={() => handleToggle('scheduleReminders')} />
-            <SettingRow icon={<Icon d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" stroke="#1A1B2E" />} label="가계부 스마트 리포트" description="매월 말 지출 내역 요약 리포트를 푸시로 전송합니다." isToggle toggled={notifSettings.expenseReminders} onToggle={() => handleToggle('expenseReminders')} />
+            <SettingRow
+              icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0CC9B5" />}
+              label="구글 캘린더 동기화"
+              value="동기화 중"
+              href="/settings/calendar"
+            />
+            <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+            <SettingRow
+              icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" stroke="#1A1B2E" />}
+              label="푸시 알림 리마인더"
+              description="일정 시작 전 및 결제일 도래 시 알림을 받습니다."
+              isToggle
+              toggled={notifSettings.scheduleReminders}
+              onToggle={() => handleToggle('scheduleReminders')}
+            />
+            <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+            <SettingRow
+              icon={<Icon d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M21 21l-4.35-4.35" stroke="#1A1B2E" />}
+              label="가계부 스마트 리포트"
+              description="매월 말 지출 내역 요약 리포트를 푸시로 전송합니다."
+              isToggle
+              toggled={notifSettings.expenseReminders}
+              onToggle={() => handleToggle('expenseReminders')}
+            />
           </div>
 
-          <div className="flex items-center justify-between px-4">
-            <button onClick={() => setShowDeleteModal(true)} className="text-[14px] font-bold text-[#8E8E93] hover:text-red-500 transition-colors">회원탈퇴</button>
-            <button onClick={signOut} className="px-8 py-4 rounded-[20px] bg-red-50 text-red-600 text-[15px] font-black hover:bg-red-100 transition-colors">로그아웃</button>
+          {/* 계정 액션 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              style={{ fontSize: '13px', fontWeight: 700, color: '#AEAEA8', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+            >
+              회원탈퇴
+            </button>
+            <button
+              onClick={signOut}
+              style={{
+                padding: '12px 28px', borderRadius: '16px',
+                background: 'rgba(239,68,68,0.07)', color: '#EF4444',
+                fontSize: '14px', fontWeight: 800, border: '1px solid rgba(239,68,68,0.12)',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}
+            >
+              로그아웃
+            </button>
           </div>
         </div>
       </div>

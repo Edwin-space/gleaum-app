@@ -36,170 +36,237 @@ export function DesktopBudget({
   lastMonthTotal,
   categories,
   expenses,
-  handleToggleStatus
+  handleToggleStatus,
 }: DesktopBudgetProps) {
   return (
-    <div className="max-w-[1440px] mx-auto px-10 pt-12 pb-20 animate-fade-in">
-      {/* ── PC 헤더 ── */}
-      <div className="flex items-center justify-between mb-12">
-        <div>
-          <h1 className="text-[36px] font-black text-[#1A1B2E] tracking-tight">가계부 리포트</h1>
-          <p className="text-[16px] text-[#8E8E93] mt-2">이번 달 자금 흐름과 소비 패턴을 분석합니다</p>
-        </div>
-        
-        <div className="flex items-center gap-6 glass-card p-2 rounded-[28px] border-white/60">
-          <button onClick={prevMonth} className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-50 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.5"><path d="M15 18L9 12L15 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          <span className="text-[20px] font-black px-4">{formatMonthYear(viewDate)}</span>
-          <button onClick={nextMonth} className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-gray-50 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.5"><path d="M9 18L15 12L9 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+
+      {/* ── 페이지 헤더 ── */}
+      <div style={{
+        position: 'relative',
+        padding: '36px 44px',
+        borderRadius: '28px',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+        color: 'white',
+        marginBottom: '28px',
+        boxShadow: '0 14px 44px rgba(26,27,46,0.2)',
+      }}>
+        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', background: 'rgba(245,158,11,0.15)', filter: 'blur(60px)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-20px', left: '20%', width: '150px', height: '150px', background: 'rgba(0,132,204,0.12)', filter: 'blur(48px)', borderRadius: '50%', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', margin: '0 0 6px' }}>가계부 리포트</h1>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, margin: 0 }}>
+              이번 달 자금 흐름과 소비 패턴을 분석합니다
+            </p>
+          </div>
+
+          {/* 월 네비게이션 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '18px', padding: '6px', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
+            <button onClick={prevMonth} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18L9 12L15 6"/></svg>
+            </button>
+            <span style={{ fontSize: '17px', fontWeight: 900, padding: '0 16px', letterSpacing: '-0.3px' }}>{formatMonthYear(viewDate)}</span>
+            <button onClick={nextMonth} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18L15 12L9 6"/></svg>
+            </button>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-40">
-          <div className="w-12 h-12 rounded-full border-4 border-[#0CC9B5] border-t-transparent animate-spin" />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '120px 0' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid rgba(12,201,181,0.2)', borderTopColor: '#0CC9B5', animation: 'spin 0.8s linear infinite' }} />
         </div>
       ) : (
-        <div className="grid grid-cols-12 gap-8 items-start">
-          
-          {/* ── 좌측 패널 (요약 카드) ── */}
-          <div className="col-span-12 lg:col-span-4 space-y-6">
-            <div className="rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl" style={{ background: 'var(--brand-gradient)' }}>
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 blur-[40px] rounded-full" />
-              <div className="relative z-10">
-                <p className="text-white/70 text-[14px] font-bold mb-2 uppercase tracking-widest">Monthly Total</p>
-                <h2 className="text-[42px] font-black leading-tight mb-8 tracking-tighter">
+        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
+
+          {/* ── 왼쪽 요약 패널 ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* 이번 달 총액 카드 */}
+            <div style={{
+              borderRadius: '28px', padding: '32px', color: 'white',
+              position: 'relative', overflow: 'hidden',
+              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              boxShadow: '0 12px 36px rgba(0,132,204,0.3)',
+            }}>
+              <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', background: 'rgba(255,255,255,0.12)', filter: 'blur(30px)', borderRadius: '50%', pointerEvents: 'none' }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <p style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 10px' }}>Monthly Total</p>
+                <h2 style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '-1px', margin: '0 0 24px', lineHeight: 1 }}>
                   {formatAmount(total)}
                 </h2>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-[13px] font-bold mb-2">
-                      <span>납부 진행률</span>
-                      <span>{Math.round(completePct)}%</span>
-                    </div>
-                    <div className="h-2.5 rounded-full bg-white/20 overflow-hidden">
-                      <div className="h-full rounded-full bg-white transition-all duration-1000" style={{ width: `${completePct}%` }} />
-                    </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, marginBottom: '8px' }}>
+                    <span>납부 진행률</span>
+                    <span>{Math.round(completePct)}%</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                    <div>
-                      <p className="text-[11px] text-white/50 uppercase font-bold mb-1">완료</p>
-                      <p className="text-[18px] font-black">{completedCnt}건</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-white/50 uppercase font-bold mb-1">예정</p>
-                      <p className="text-[18px] font-black">{pendingCnt}건</p>
-                    </div>
+                  <div style={{ height: '6px', borderRadius: '999px', background: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: '999px', background: 'white', transition: 'width 1s ease', width: `${completePct}%` }} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                  <div>
+                    <p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>완료</p>
+                    <p style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{completedCnt}건</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>예정</p>
+                    <p style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{pendingCnt}건</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card p-8 rounded-[40px]">
-              <h3 className="text-[14px] font-black text-[#8E8E93] uppercase tracking-widest mb-6">Briefing</h3>
-              <div className="flex items-center gap-6">
-                <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl ${isLess ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+            {/* 전월 비교 카드 */}
+            <div style={{
+              background: 'white', borderRadius: '24px', padding: '24px',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+            }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: '#C7C7CC', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 16px' }}>전월 비교</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', background: isLess ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)' }}>
                   {isLess ? '📉' : '📈'}
                 </div>
                 <div>
-                  <p className="text-[15px] font-bold text-[#6E6E66]">전월 대비</p>
-                  <p className={`text-[20px] font-black mt-0.5 ${isLess ? 'text-green-600' : 'text-red-600'}`}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93', margin: '0 0 4px' }}>전월 대비</p>
+                  <p style={{ fontSize: '20px', fontWeight: 900, color: isLess ? '#10B981' : '#EF4444', margin: 0 }}>
                     {formatAmount(Math.abs(diff))} {isLess ? '절약' : '증가'}
                   </p>
                 </div>
               </div>
-              <p className="mt-6 text-[13px] leading-relaxed text-[#8E8E93] font-medium">
-                지난달 지출({formatAmount(lastMonthTotal)}) 기준으로 이번 달은 <span className="font-bold text-[#1A1B2E]">{lastMonthTotal > 0 ? Math.round((Math.abs(diff) / lastMonthTotal) * 100) : 0}%</span> 변화하였습니다.
+              <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#8E8E93', fontWeight: 600, margin: 0 }}>
+                지난달({formatAmount(lastMonthTotal)}) 대비{' '}
+                <span style={{ fontWeight: 800, color: '#1A1B2E' }}>
+                  {lastMonthTotal > 0 ? Math.round((Math.abs(diff) / lastMonthTotal) * 100) : 0}%
+                </span>{' '}
+                {isLess ? '줄었습니다' : '늘었습니다'}.
               </p>
             </div>
           </div>
 
-          {/* ── 중앙/우측 패널 (차트 + 목록) ── */}
-          <div className="col-span-12 lg:col-span-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="glass-card p-8 rounded-[40px] flex flex-col items-center justify-center min-h-[360px]">
-                <h3 className="text-[16px] font-black mb-8 w-full">지출 카테고리 분석</h3>
+          {/* ── 오른쪽: 차트 + 목록 ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* 차트 2-컬럼 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+
+              {/* 도넛 차트 */}
+              <div style={{
+                background: 'white', borderRadius: '24px', padding: '28px',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '320px',
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 20px', width: '100%' }}>카테고리 분석</h3>
                 {categories.length > 0 ? (
                   <ExpenseDoughnut categories={categories} total={total} />
                 ) : (
-                  <div className="text-[#8E8E93] text-[15px]">분석할 데이터가 없습니다</div>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#8E8E93', fontWeight: 600 }}>
+                    분석 데이터 없음
+                  </div>
                 )}
               </div>
 
-              <div className="glass-card p-8 rounded-[40px]">
-                <h3 className="text-[16px] font-black mb-8">상세 항목별 비율</h3>
-                <div className="space-y-6">
+              {/* 카테고리 바 */}
+              <div style={{
+                background: 'white', borderRadius: '24px', padding: '28px',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+              }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 20px' }}>항목별 비율</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {categories.length > 0 ? categories.map(([cat, amt]) => {
                     const category = cat as ExpenseCategory;
                     const pct = total > 0 ? (amt / total) * 100 : 0;
                     const catColor = getCategoryColor(category);
                     return (
-                      <div key={cat} className="group">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-xl" style={{ background: `${catColor}15` }}>
+                      <div key={cat}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', background: `${catColor}15` }}>
                               {EXPENSE_CATEGORY_ICONS[category]}
                             </div>
-                            <span className="text-[15px] font-bold">{EXPENSE_CATEGORY_LABELS[category]}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E' }}>{EXPENSE_CATEGORY_LABELS[category]}</span>
                           </div>
-                          <div className="text-right">
-                            <p className="text-[15px] font-black">{formatAmount(amt)}</p>
-                            <p className="text-[11px] font-bold text-[#8E8E93]">{Math.round(pct)}%</p>
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>{formatAmount(amt)}</p>
+                            <p style={{ fontSize: '10px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>{Math.round(pct)}%</p>
                           </div>
                         </div>
-                        <div className="h-2 rounded-full bg-gray-50 overflow-hidden">
-                          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: catColor }} />
+                        <div style={{ height: '5px', borderRadius: '999px', background: '#F5F5F9', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', borderRadius: '999px', background: catColor, width: `${pct}%`, transition: 'width 1s ease' }} />
                         </div>
                       </div>
                     );
-                  }) : <div className="py-20 text-center text-[#8E8E93]">내역 없음</div>}
+                  }) : (
+                    <div style={{ padding: '40px 0', textAlign: 'center', color: '#8E8E93', fontSize: '14px', fontWeight: 600 }}>내역 없음</div>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-[40px] overflow-hidden">
-              <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
-                <h3 className="text-[16px] font-black">정기지출 내역</h3>
-                <span className="text-[13px] font-bold text-[#8E8E93]">{expenses.length}건의 항목</span>
+            {/* 정기지출 목록 */}
+            <div style={{
+              background: 'white', borderRadius: '24px', overflow: 'hidden',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+            }}>
+              <div style={{ padding: '20px 28px', borderBottom: '1px solid #F5F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>정기지출 내역</h3>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>{expenses.length}건</span>
               </div>
-              <div className="divide-y divide-gray-50">
-                {expenses.length > 0 ? expenses.map((e) => (
-                  <div key={e.id} className="px-8 py-5 flex items-center gap-6 hover:bg-gray-50/50 transition-colors">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm" style={{ background: `${getCategoryColor(e.expenseCategory ?? 'other')}15` }}>
-                      {EXPENSE_CATEGORY_ICONS[e.expenseCategory ?? 'other']}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[16px] font-bold text-[#1A1B2E]">{e.title}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[13px] font-medium text-[#8E8E93]">{e.startTime.getDate()}일 결제</span>
-                        <div className="w-1 h-1 rounded-full bg-gray-300" />
-                        <span className="text-[13px] font-medium text-[#8E8E93]">{e.paymentMethod === 'auto' ? '자동이체' : '카드 결제'}</span>
+              {expenses.length > 0 ? (
+                <div>
+                  {expenses.map((e, idx) => (
+                    <div key={e.id} style={{
+                      padding: '18px 28px',
+                      display: 'flex', alignItems: 'center', gap: '16px',
+                      borderBottom: idx < expenses.length - 1 ? '1px solid #F7F7FA' : 'none',
+                      transition: 'background 0.15s',
+                    }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', background: `${getCategoryColor(e.expenseCategory ?? 'other')}15`, flexShrink: 0 }}>
+                        {EXPENSE_CATEGORY_ICONS[e.expenseCategory ?? 'other']}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93' }}>{e.startTime.getDate()}일 결제</span>
+                          <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#D0D0D0' }} />
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93' }}>{e.paymentMethod === 'auto' ? '자동이체' : '카드 결제'}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ fontSize: '16px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 2px' }}>{formatAmount(e.amount ?? 0)}</p>
+                          <p style={{ fontSize: '11px', fontWeight: 700, margin: 0, color: e.status === 'completed' ? '#10B981' : '#0084CC' }}>
+                            {e.status === 'completed' ? '결제완료' : '결제예정'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleToggleStatus(e.id, e.status)}
+                          style={{
+                            width: '40px', height: '40px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                            background: e.status === 'completed' ? '#10B981' : '#F0F0F5',
+                            color: e.status === 'completed' ? 'white' : '#D0D0D0',
+                            boxShadow: e.status === 'completed' ? '0 4px 12px rgba(16,185,129,0.3)' : 'none',
+                          }}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-8">
-                      <div className="text-right">
-                        <p className="text-[18px] font-black text-[#1A1B2E]">{formatAmount(e.amount ?? 0)}</p>
-                        <p className={`text-[11px] font-bold ${e.status === 'completed' ? 'text-green-600' : 'text-blue-500'}`}>
-                          {e.status === 'completed' ? '결제완료' : '결제예정'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleToggleStatus(e.id, e.status)}
-                        className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${e.status === 'completed' ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-100 text-gray-300 hover:bg-gray-200'}`}
-                      >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="py-32 text-center text-[#8E8E93]">
-                    등록된 지출 내역이 없습니다.
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '60px 20px', textAlign: 'center', color: '#8E8E93', fontSize: '14px', fontWeight: 600 }}>
+                  등록된 지출 내역이 없습니다
+                </div>
+              )}
             </div>
           </div>
         </div>
