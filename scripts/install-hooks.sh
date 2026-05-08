@@ -2,53 +2,60 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # 글리움 git hooks 설치 스크립트
 #
-# 새 환경에서 clone 후, 또는 훅이 사라진 경우 실행:
+# 새 환경(집 MacBook 등)에서 clone 후 실행:
 #   bash scripts/install-hooks.sh
 # ──────────────────────────────────────────────────────────────────────────────
 
 HOOKS_DIR="$(git rev-parse --git-dir)/hooks"
+PROJECT_DIR="$(git rev-parse --show-toplevel)"
+
+# NAS 경로: 기기별로 Synology Drive 마운트 위치가 다를 수 있으므로 자동 감지
+detect_nas_env_dir() {
+  local candidates=(
+    "/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum-env"
+    "$HOME/Sync-NAS/#1. Personal/Project/Gleaum-env"
+    "$HOME/SynologyDrive/#1. Personal/Project/Gleaum-env"
+  )
+  for path in "${candidates[@]}"; do
+    if [ -d "$(dirname "$path")" ]; then
+      echo "$path"
+      return
+    fi
+  done
+  echo ""
+}
+
+NAS_ENV_DIR=$(detect_nas_env_dir)
 
 echo "🔧 git hooks 설치 중..."
 
-# ── post-push: NAS 동기화 ───────────────────────────────────────────────────
-cat > "$HOOKS_DIR/post-push" << 'HOOK'
+# ── post-push 훅 생성 ────────────────────────────────────────────────────────
+cat > "$HOOKS_DIR/post-push" << HOOK
 #!/bin/bash
-SRC="/Volumes/WD_BLACK/Ai Works/gleaum/"
-DEST="/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/"
-
-if [ ! -d "$DEST" ]; then
-  echo "⚠️  [post-push] NAS 경로 없음: $DEST (NAS 연결 확인 필요)"
-  exit 0
-fi
+PROJECT_DIR="$PROJECT_DIR"
+NAS_ENV_DIR="$NAS_ENV_DIR"
 
 echo ""
-echo "🔄 [post-push] NAS 동기화 중..."
+if [ -n "\$NAS_ENV_DIR" ] && [ -d "\$(dirname "\$NAS_ENV_DIR")" ]; then
+  mkdir -p "\$NAS_ENV_DIR"
+  if [ -f "\$PROJECT_DIR/.env.local" ]; then
+    cp "\$PROJECT_DIR/.env.local" "\$NAS_ENV_DIR/.env.local"
+    cp "\$PROJECT_DIR/.env.local" "\$NAS_ENV_DIR/.env.local.\$(date +%Y%m%d)"
+    echo "🔑 [post-push] .env.local → NAS 백업 완료"
+  fi
+else
+  echo "ℹ️  [post-push] NAS 미연결 — .env.local 백업 건너뜀"
+fi
 
-rsync -a --delete \
-  --exclude='.git/' \
-  --exclude='node_modules/' \
-  --exclude='.next/' \
-  --exclude='out/' \
-  --exclude='.env*' \
-  --exclude='*.local' \
-  --exclude='.DS_Store' \
-  --exclude='*.log' \
-  --exclude='android/.gradle/' \
-  --exclude='android/app/build/' \
-  --exclude='android/build/' \
-  --exclude='android/local.properties' \
-  --exclude='ios/App/Pods/' \
-  --exclude='ios/.xcode.env.local' \
-  --exclude='*.keystore' \
-  --exclude='*.jks' \
-  "$SRC" "$DEST"
-
-[ $? -eq 0 ] && echo "✅ [post-push] NAS 동기화 완료" || echo "❌ [post-push] NAS 동기화 실패"
+echo "✅ [post-push] push 완료 — 다른 기기에서 이어 작업: git pull && npm install"
 exit 0
 HOOK
 
 chmod +x "$HOOKS_DIR/post-push"
-echo "✅ post-push 훅 설치 완료 → $HOOKS_DIR/post-push"
-echo ""
-echo "📋 설치된 훅:"
-ls -la "$HOOKS_DIR" | grep -v sample | grep -v "^total" | grep -v "^d"
+echo "✅ post-push 훅 설치 완료"
+
+if [ -n "$NAS_ENV_DIR" ]; then
+  echo "   NAS 경로: $NAS_ENV_DIR"
+else
+  echo "   ⚠️  NAS 경로 자동 감지 실패 — Synology Drive 연결 후 재실행하세요"
+fi
