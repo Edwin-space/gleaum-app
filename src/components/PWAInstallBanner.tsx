@@ -36,6 +36,10 @@ export function PWAInstallBanner() {
   const [installing, setInstalling]         = useState(false);
 
   useEffect(() => {
+    // 네이티브 앱(Capacitor)에서는 PWA 설치 배너 완전 비활성
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    if (cap?.isNativePlatform?.()) return;
+
     if (isInStandaloneMode()) return;
     const dismissed = sessionStorage.getItem(DISMISSED_KEY);
     if (dismissed) return;
