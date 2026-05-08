@@ -51,8 +51,10 @@
 ✅ 2026-05-08 GA4 세팅 + 핵심 이벤트 트래킹
 ✅ 2026-05-08 사이드바/BottomNav 모바일 노출 버그 수정
 ✅ 2026-05-08 네이티브 앱 계획서 수립 (14-native-app-plan.md)
+✅ 2026-05-08 Capacitor 네이티브 앱 기반 구축 (iOS + Android 플랫폼 추가)
+✅ 2026-05-08 native.ts 유틸리티 레이어, NativeAppProvider, Info.plist, AndroidManifest 설정 완료
 
-🔜 다음 단계  macOS 네이티브 앱 개발 (Capacitor)
+🔜 다음 단계  Xcode 설치 → iOS 시뮬레이터 테스트 → Apple Developer 연결 → TestFlight 배포
 ```
 
 ---

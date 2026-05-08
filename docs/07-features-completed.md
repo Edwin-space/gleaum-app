@@ -254,9 +254,59 @@ paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)'
 
 ---
 
+---
+
+## Capacitor 네이티브 앱 기반 구축 (완료 — 2026-05-08)
+
+> `docs/14-native-app-plan.md` 계획서에 따른 1단계 작업 완료
+
+### 설치된 Capacitor 패키지 (v8.3.2)
+- `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android`
+- `@capacitor/splash-screen`, `@capacitor/status-bar`, `@capacitor/keyboard`
+- `@capacitor/haptics`, `@capacitor/browser`, `@capacitor/local-notifications`
+- `@capacitor/app`, `@capacitor/preferences` (보안 스토리지)
+
+### 신규/수정 파일
+| 파일 | 내용 |
+|------|------|
+| `capacitor.config.ts` | 프로덕션 URL 방식(server.url) 설정, 플러그인 설정 |
+| `ios/` | iOS Xcode 프로젝트 (npx cap add ios) |
+| `android/` | Android Gradle 프로젝트 (npx cap add android) |
+| `ios/App/App/Info.plist` | URL 스킴(gleaum://), WKAppBoundDomains, ATT, 권한 요청 메시지 전체 설정 |
+| `android/app/src/main/AndroidManifest.xml` | Deep Link, App Links, 권한, Edge-to-Edge 설정 |
+| `android/app/src/main/res/xml/network_security_config.xml` | HTTPS 강제, 개발 환경 로컬 IP HTTP 허용 |
+| `src/lib/native.ts` | 네이티브 유틸리티 레이어 (isNativeApp, secureStorage, haptic, hideSplash, setStatusBar, openBrowser, onAppResume, onAndroidBackButton) |
+| `src/components/NativeAppProvider.tsx` | 앱 마운트 시 스플래시 숨기기 + 상태바 설정 + 뒤로가기 처리 |
+| `src/app/layout.tsx` | NativeAppProvider 추가 |
+| `.gitignore` | iOS Pods, Android Gradle 빌드 아티팩트 제외 |
+
+### 배포 전략: 서버 URL 방식
+- `output: 'export'` 불사용 (API Routes, /auth/callback 유지 필요)
+- Capacitor `server.url = 'https://www.gleaum.com'` 설정
+- Vercel 배포 후 `npx cap sync` → Xcode/Android Studio에서 제출
+- 개발 시: `CAP_DEV_SERVER_URL=http://192.168.x.x:3000 npx cap run ios`
+
+### npm 스크립트 추가
+```bash
+npm run cap:sync         # 양쪽 동기화
+npm run cap:sync:ios     # iOS 동기화
+npm run cap:sync:android # Android 동기화
+npm run cap:open:ios     # Xcode 열기
+npm run cap:open:android # Android Studio 열기
+```
+
+### 다음 단계 (Xcode 설치 후 진행)
+- [ ] Xcode 설치 (Mac App Store — 약 15GB, 1시간 소요)
+- [ ] `npm run cap:open:ios` → 번들 ID `com.gleaum.app` 확인
+- [ ] Apple Developer 계정 연결 → 프로비저닝 프로파일 생성
+- [ ] Simulator 실행 테스트
+- [ ] CocoaPods 설치: `sudo gem install cocoapods && npx cap update ios`
+
+---
+
 ## 인프라 및 배포 (현재 상태)
 
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app` (`main` 브랜치 push → Vercel 자동 배포)
 - **Vercel CLI 직접 배포도 가능**: `npx vercel --prod`
-- **최신 커밋**: `f304a95` (2026-05-08)
+- **최신 커밋**: `b68ab5e` (2026-05-08)
