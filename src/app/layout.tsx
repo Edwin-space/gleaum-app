@@ -10,6 +10,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { NativeAppProvider } from '@/components/NativeAppProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
@@ -157,16 +158,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mesh-blob mesh-blob-2" />
           <div className="mesh-blob mesh-blob-3" />
         </div>
-        <div id="app-shell">
-          <DesktopSidebar />
-          <div className="pc-content-area w-full">
-            <PWARegister />
-            <LazyPWABanner />
-            <FCMProvider>
-              {children}
-            </FCMProvider>
+        <NativeAppProvider>
+          <div id="app-shell">
+            <DesktopSidebar />
+            <div className="pc-content-area w-full">
+              <PWARegister />
+              <LazyPWABanner />
+              <FCMProvider>
+                {children}
+              </FCMProvider>
+            </div>
           </div>
-        </div>
+        </NativeAppProvider>
         {/* 최상위 루트 네비게이션 (z-index: 9999) */}
         <BottomNav />
         <Toaster

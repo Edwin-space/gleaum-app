@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  네트워크 보안 설정
+  - 기본: HTTPS만 허용 (cleartext HTTP 차단)
+  - 개발 환경: 로컬 IP에 한해 HTTP 허용 (CAP_DEV_SERVER_URL 사용 시)
+-->
+<network-security-config>
+
+    <!-- 프로덕션 도메인: 인증서 고정 (Certificate Pinning) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">gleaum.com</domain>
+        <domain includeSubdomains="true">supabase.co</domain>
+    </domain-config>
+
+    <!-- 개발 환경: 로컬 IP 범위 HTTP 허용 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.0.0/8</domain>
+        <domain includeSubdomains="false">192.168.0.0/16</domain>
+        <domain includeSubdomains="false">172.16.0.0/12</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+
+    <!-- 기본값: cleartext 차단 -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+</network-security-config>

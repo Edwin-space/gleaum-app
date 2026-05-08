@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CAPACITOR_DEBUG</key>
+    <string>$(CAPACITOR_DEBUG)</string>
+
+    <!-- ── 앱 기본 정보 ──────────────────────────────────────── -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>ko</string>
+    <key>CFBundleDisplayName</key>
+    <string>글리움</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <!-- ── URL Scheme (OAuth 콜백: gleaum://) ───────────────── -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.gleaum.app</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>gleaum</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- ── 앱 화면 방향 ──────────────────────────────────────── -->
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    <key>UIMainStoryboardFile</key>
+    <string>Main</string>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+
+    <!-- iPhone: Portrait 우선, Landscape 허용 -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- iPad: 전 방향 허용 (Stage Manager 지원) -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- ── 상태바 ────────────────────────────────────────────── -->
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <true/>
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+
+    <!-- ── App-Bound Domains (WKWebView 보안) ───────────────── -->
+    <key>WKAppBoundDomains</key>
+    <array>
+        <string>gleaum.com</string>
+        <string>www.gleaum.com</string>
+    </array>
+
+    <!-- ── 권한 요청 설명 (Privacy) ─────────────────────────── -->
+    <key>NSCameraUsageDescription</key>
+    <string>프로필 사진 촬영 또는 일정에 사진을 첨부하기 위해 카메라가 필요합니다.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>일정에 사진을 첨부하기 위해 사진 라이브러리 접근이 필요합니다.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>캡처한 이미지를 사진 라이브러리에 저장합니다.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>음성 메모 기능을 위해 마이크 접근이 필요합니다.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>일정에 장소를 추가하기 위해 현재 위치가 필요합니다.</string>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>일정 리마인더 및 중요한 알림을 위해 알림 권한이 필요합니다.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>앱 잠금 해제를 위해 Face ID를 사용합니다.</string>
+
+    <!-- ── ATT (App Tracking Transparency) ──────────────────── -->
+    <!-- GA4 추적을 위해 필요 — iOS 14.5+ -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>서비스 개선을 위한 익명 사용 통계 수집에 동의해 주세요.</string>
+
+    <!-- ── 백그라운드 모드 ────────────────────────────────────── -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <!-- ── iPad 멀티태스킹 (Split View / Stage Manager) ──────── -->
+    <key>UISupportsDocumentBrowser</key>
+    <false/>
+    <key>UIRequiresFullScreen</key>
+    <false/>
+    <!-- UIRequiresFullScreen = false → Split View / Slide Over 허용 -->
+
+</dict>
+</plist>

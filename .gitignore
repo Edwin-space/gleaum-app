@@ -39,3 +39,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ── Capacitor / Native App ────────────────────────────────────────────────────
+# iOS — CocoaPods 캐시 (npx cap sync 시 자동 복원)
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/.xcode.env.local
+
+# Android — Gradle 빌드 캐시
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
+# 네이티브 빌드 출력 (정적 export — 현재 미사용)
+/out/
+
+# Android 키스토어 (절대 커밋 금지)
+*.keystore
+*.jks
