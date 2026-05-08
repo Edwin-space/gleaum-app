@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ── 글리움 브랜드 컬러 ──────────────────────────────────────────── -->
+    <color name="gleaum_navy">#0F1A2E</color>       <!-- 메인 배경 / 스플래시 -->
+    <color name="gleaum_blue">#0084CC</color>        <!-- 브랜드 블루 -->
+    <color name="gleaum_teal">#0CC9B5</color>        <!-- 브랜드 틸 -->
+    <color name="gleaum_green">#2EE895</color>       <!-- 브랜드 그린 -->
+    <color name="gleaum_dark">#1A1B2E</color>        <!-- 다크 네이비 2 -->
+
+    <!-- ── 시스템 컬러 (Material Theme) ─────────────────────────────────── -->
+    <color name="colorPrimary">@color/gleaum_blue</color>
+    <color name="colorPrimaryDark">@color/gleaum_navy</color>
+    <color name="colorAccent">@color/gleaum_teal</color>
+
+    <!-- ── 상태바 / 네비게이션바 ─────────────────────────────────────────── -->
+    <color name="statusBarColor">@color/gleaum_navy</color>
+    <color name="navigationBarColor">@color/gleaum_navy</color>
+</resources>

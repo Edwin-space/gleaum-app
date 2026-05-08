@@ -1,22 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+    <!-- ── 기본 앱 테마 (런타임 UI) ─────────────────────────────────────── -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/gleaum_blue</item>
+        <item name="colorPrimaryDark">@color/gleaum_navy</item>
+        <item name="colorAccent">@color/gleaum_teal</item>
+        <item name="android:windowBackground">@color/gleaum_navy</item>
+        <item name="android:statusBarColor">@color/gleaum_navy</item>
+        <item name="android:navigationBarColor">@color/gleaum_navy</item>
+        <!-- Edge-to-Edge: WebView가 전체 화면 차지 -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
+    <!-- ── NoActionBar (WebView 표시용) ─────────────────────────────────── -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
     </style>
 
-
+    <!-- ── 런치 스플래시 테마 (앱 시작 직후) ─────────────────────────────
+         androidx.core:core-splashscreen 기반
+         AndroidManifest의 android:theme 에서 참조됨               -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <!-- 스플래시 배경: 다크 네이비 -->
+        <item name="windowSplashScreenBackground">@color/gleaum_navy</item>
+        <!-- 스플래시 아이콘: 로고 (mipmap-anydpi-v26의 적응형 아이콘) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <!-- 아이콘 배경색 (원형 마스크 뒤) -->
+        <item name="windowSplashScreenIconBackgroundColor">@color/gleaum_navy</item>
+        <!-- 브랜드 로고 하단 표시 (선택) -->
+        <!-- <item name="windowSplashScreenBrandingImage">@drawable/gleaum_brand</item> -->
+        <!-- 전환 후 사용할 앱 테마 -->
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
+
 </resources>
