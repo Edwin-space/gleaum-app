@@ -23,6 +23,7 @@
 8. **AI 간 작업 동기화** — 작업 완료 후 반드시 `docs/` 폴더 관련 문서 업데이트.
 9. **제품 모델 방향 유지** — 글리움은 **개인 중심 + Space 확장형 토털 라이프 관리 서비스**. 신규 기능은 개인 단독 사용을 기본값으로.
 10. **hooks 임포트 경로** — `useIsDesktop()`은 `@/hooks/useMediaQuery`에서 import (NOT `@/hooks/useIsDesktop`).
+11. **NAS 자동 동기화** — `git push` 후 `.git/hooks/post-push` 훅이 자동으로 NAS 동기화. 훅이 없는 경우: `bash scripts/install-hooks.sh` 실행. 동기화 대상: `/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/`
 
 ---
 

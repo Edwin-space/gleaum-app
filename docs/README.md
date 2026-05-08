@@ -68,6 +68,7 @@
 5. **`useIsDesktop()`** — `@/hooks/useMediaQuery`에서 import (NOT `@/hooks/useIsDesktop`)
 6. **빌드 확인 필수** — `npm run build` 후 에러 없을 때만 push
 7. **문서 업데이트 필수** — 작업 완료 후 `07-features-completed.md`, `10-ai-handoff-guide.md` 반드시 업데이트
+8. **NAS 자동 동기화** — `git push` 완료 시 post-push 훅이 자동으로 NAS(`/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/`)에 동기화. 훅 재설치 필요 시: `bash scripts/install-hooks.sh`
 
 ---
 
