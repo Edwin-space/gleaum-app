@@ -25,6 +25,22 @@ export function getNativePlatform(): 'ios' | 'android' | 'web' {
   return 'web';
 }
 
+/**
+ * Mac Catalyst 환경 감지
+ *
+ * Capacitor는 Mac Catalyst에서도 getPlatform() = 'ios'를 반환합니다.
+ * userAgent의 'Macintosh' 포함 여부로 실제 macOS 실행을 구분합니다.
+ *
+ * iOS/iPadOS → false
+ * Mac Catalyst → true
+ * 웹 브라우저(macOS Safari) → false (isNativeApp() 체크로 배제)
+ */
+export function isMacCatalyst(): boolean {
+  if (!isNativeApp()) return false;
+  if (typeof navigator === 'undefined') return false;
+  return getNativePlatform() === 'ios' && navigator.userAgent.includes('Macintosh');
+}
+
 // ── 보안 스토리지 (iOS Keychain / Android EncryptedSharedPreferences) ─────────
 
 /**
@@ -130,18 +146,24 @@ export async function hideSplash(): Promise<void> {
 
 // ── 상태바 제어 ───────────────────────────────────────────────────────────────
 
-/** 상태바 스타일 설정 (다크 배경 위: Light 텍스트) */
+/**
+ * 상태바 스타일 설정 (다크 배경 위: Light 텍스트)
+ * Mac Catalyst는 상태바 개념이 없으므로 자동 스킵
+ */
 export async function setStatusBarDark(): Promise<void> {
-  if (isNativeApp() && getNativePlatform() === 'ios') {
+  if (isNativeApp() && getNativePlatform() === 'ios' && !isMacCatalyst()) {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#0F1A2E' });
   }
 }
 
-/** 상태바 스타일 설정 (밝은 배경 위: Dark 텍스트) */
+/**
+ * 상태바 스타일 설정 (밝은 배경 위: Dark 텍스트)
+ * Mac Catalyst는 상태바 개념이 없으므로 자동 스킵
+ */
 export async function setStatusBarLight(): Promise<void> {
-  if (isNativeApp() && getNativePlatform() === 'ios') {
+  if (isNativeApp() && getNativePlatform() === 'ios' && !isMacCatalyst()) {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
     await StatusBar.setStyle({ style: Style.Light });
     await StatusBar.setBackgroundColor({ color: '#FAFAFD' });

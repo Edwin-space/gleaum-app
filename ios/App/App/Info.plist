@@ -39,8 +39,7 @@
     </array>
 
     <!-- ── 앱 화면 방향 ──────────────────────────────────────── -->
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
+    <!-- LSRequiresIPhoneOS 제거 → Mac Catalyst 빌드 허용 -->
     <key>UILaunchStoryboardName</key>
     <string>LaunchScreen</string>
     <key>UIMainStoryboardFile</key>

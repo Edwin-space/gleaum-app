@@ -50,6 +50,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillResignActive(_ application: UIApplication) {}
     func applicationDidEnterBackground(_ application: UIApplication) {}
     func applicationWillEnterForeground(_ application: UIApplication) {}
-    func applicationDidBecomeActive(_ application: UIApplication) {}
     func applicationWillTerminate(_ application: UIApplication) {}
+
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        #if targetEnvironment(macCatalyst)
+        // Mac Catalyst: 최소/최대 윈도우 크기 설정
+        if let windowScene = application.connectedScenes.first as? UIWindowScene {
+            // 최소 800×600, 최대 무제한 (자유 리사이즈)
+            windowScene.sizeRestrictions?.minimumSize = CGSize(width: 800, height: 600)
+            windowScene.sizeRestrictions?.maximumSize = CGSize(
+                width: CGFloat.greatestFiniteMagnitude,
+                height: CGFloat.greatestFiniteMagnitude
+            )
+        }
+        #endif
+    }
 }

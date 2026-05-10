@@ -38,7 +38,9 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',   // Safe area inset 자동 처리
     scrollEnabled: true,         // 서버 로드 방식에서는 WebView 스크롤 필요
     backgroundColor: '#0F1A2E',  // 스플래시 제거 전 배경색 (다크 네이비)
-    preferredContentMode: 'mobile',
+    // 'recommended': iPad → tablet 뷰, Mac Catalyst → desktop 뷰
+    // 'mobile': 강제 iPhone 뷰 (iPad/Mac에서도 모바일 레이아웃)
+    preferredContentMode: 'recommended',
     webContentsDebuggingEnabled: !!devServerUrl,  // 개발 시에만 활성
     limitsNavigationsToAppBoundDomains: true,
     // ⚠️ Info.plist > WKAppBoundDomains 에 gleaum.com 등록 필요
