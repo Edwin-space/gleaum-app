@@ -234,25 +234,25 @@ export function MobileFamily() {
                     border: '2px solid white',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   }}>
-                    {member.avatar}
+                    {member.user?.avatar}
                   </div>
 
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {member.name}
+                      {member.user?.name}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{
                         padding: '3px 10px', borderRadius: '999px',
                         fontSize: '10px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase',
-                        background: member.role === 'parent' ? 'rgba(0,132,204,0.10)' : 'rgba(12,201,181,0.10)',
-                        color: member.role === 'parent' ? '#0084CC' : '#0CC9B5',
+                        background: member.role === 'admin' ? 'rgba(0,132,204,0.10)' : 'rgba(12,201,181,0.10)',
+                        color: member.role === 'admin' ? '#0084CC' : '#0CC9B5',
                       }}>
-                        {member.role === 'parent' ? 'Admin' : 'Member'}
+                        {member.role === 'admin' ? 'Admin' : 'Member'}
                       </span>
                       <span style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {member.email || '연결됨'}
+                        {member.user?.email || '연결됨'}
                       </span>
                     </div>
                   </div>

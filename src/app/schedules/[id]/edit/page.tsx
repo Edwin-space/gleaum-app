@@ -391,9 +391,9 @@ export default function EditSchedulePage() {
           ) : (
             <div className="flex gap-2 flex-wrap">
               {members.map((u) => {
-                const selected = participants.includes(u.id);
+                const selected = participants.includes(u.userId);
                 return (
-                  <button key={u.id} onClick={() => toggleParticipant(u.id)}
+                  <button key={u.userId} onClick={() => toggleParticipant(u.userId)}
                     className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all active:scale-95"
                     style={{
                       background: selected ? '#0084CC' : 'white',
@@ -402,8 +402,8 @@ export default function EditSchedulePage() {
                       boxShadow: selected ? '0 4px 16px rgba(0,132,204,0.30)' : 'none',
                     }}
                   >
-                    <span>{u.avatar}</span>
-                    <span>{u.name}</span>
+                    <span>{u.user?.avatar}</span>
+                    <span>{u.user?.name}</span>
                   </button>
                 );
               })}

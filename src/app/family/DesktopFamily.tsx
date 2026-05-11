@@ -142,17 +142,17 @@ export function DesktopFamily() {
                     background: 'white', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', fontSize: '28px',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.07)', flexShrink: 0,
-                  }}>{member.avatar}</div>
+                  }}>{member.user?.avatar}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.name}</p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.email || '연결됨'}</p>
+                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.name}</p>
+                    <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.email || '연결됨'}</p>
                   </div>
                   <span style={{
                     padding: '6px 14px', borderRadius: '999px', fontSize: '11px', fontWeight: 800,
-                    background: member.role === 'parent' ? 'rgba(0,132,204,0.1)' : 'rgba(12,201,181,0.1)',
-                    color: member.role === 'parent' ? '#0084CC' : '#0CC9B5',
+                    background: member.role === 'admin' ? 'rgba(0,132,204,0.1)' : 'rgba(12,201,181,0.1)',
+                    color: member.role === 'admin' ? '#0084CC' : '#0CC9B5',
                   }}>
-                    {member.role === 'parent' ? 'Admin' : 'Member'}
+                    {member.role === 'admin' ? 'Admin' : 'Member'}
                   </span>
                 </div>
               ))}

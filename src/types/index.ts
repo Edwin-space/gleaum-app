@@ -2,9 +2,25 @@
 // 글리움 (Gleaum) — 공통 타입 정의
 // ============================================================
 
-export type UserRole = 'parent' | 'child' | 'guest';
+// ── 역할 ──────────────────────────────────────────────────
+
+/**
+ * 공간(Space) 내 역할 — Migration 001 이후 표준
+ * admin  : 공간 설정, 초대/추방, 모든 일정 관리
+ * editor : 일정 등록/수정/삭제
+ * viewer : 일정 조회만
+ */
+export type SpaceRole = 'admin' | 'editor' | 'viewer';
+
+/**
+ * @deprecated profiles.role 레거시 값 (space_members.role 로 대체됨)
+ * DB 트리거 호환 목적으로만 유지
+ */
+export type UserRole = 'parent' | 'child' | 'guest' | SpaceRole;
 
 export type NameDisplayMode = 'nickname' | 'real_name';
+
+// ── 온보딩 ─────────────────────────────────────────────────
 
 export type OnboardingPrimaryGoal =
   | 'personal_schedule'
@@ -12,7 +28,7 @@ export type OnboardingPrimaryGoal =
   | 'expense'
   | 'couple'
   | 'friends'
-  | 'family';
+  | 'group';            // 'family' → 'group' 로 통일
 
 export type HomeLayoutPreference =
   | 'balanced'
@@ -21,130 +37,176 @@ export type HomeLayoutPreference =
   | 'expense_first'
   | 'space_first';
 
-export type SpaceIntent = 'solo' | 'friends' | 'couple' | 'family';
+/** 공간 성격 (온보딩 선택) */
+export type SpaceIntent = 'solo' | 'friends' | 'couple' | 'group';
+
+/** 온보딩 공간 진입 모드 */
+export type SpaceOnboardingMode = 'create' | 'join' | 'skip';
 
 export interface OnboardingPreferences {
-  primaryGoal: OnboardingPrimaryGoal;
-  homeLayout: HomeLayoutPreference;
-  enabledModules: Array<'calendar' | 'routine' | 'expense' | 'spaces'>;
+  primaryGoal:            OnboardingPrimaryGoal;
+  homeLayout:             HomeLayoutPreference;
+  enabledModules:         Array<'calendar' | 'routine' | 'expense' | 'spaces'>;
   defaultReminderMinutes: number;
-  spaceIntent: SpaceIntent[];
+  spaceIntent:            SpaceIntent[];
 }
 
 export interface NotificationSettings {
   scheduleReminders: boolean;
-  routineReminders: boolean;
-  expenseReminders: boolean;
-  spaceUpdates: boolean;
+  routineReminders:  boolean;
+  expenseReminders:  boolean;
+  spaceUpdates:      boolean;
 }
+
+// ── 사용자 ─────────────────────────────────────────────────
 
 export interface User {
-  id: string;
-  name: string;
-  displayName?: string;
-  realName?: string;
+  id:              string;
+  name:            string;
+  displayName?:    string;
+  realName?:       string;
   nameDisplayMode?: NameDisplayMode;
-  email: string;
-  avatar?: string;
-  role: UserRole;
-  familyGroupId?: string;
-  googleId?: string;
+  email:           string;
+  avatar?:         string;
+  /** @deprecated profiles.role 레거시. 공간별 역할은 SpaceMember.role 사용 */
+  role?:           UserRole;
+  /** @deprecated familyGroupId → spaceId 로 대체됨 (하위 호환 유지) */
+  familyGroupId?:  string;
+  /** 주 소속 공간 ID (familyGroupId 와 동일 값, 신규 코드에서 사용) */
+  spaceId?:        string;
+  googleId?:       string;
 }
 
-export type ScheduleType = 'shared' | 'personal' | 'child' | 'expense';
+// ── 공간(Space) ─────────────────────────────────────────────
 
+/** 공간 멤버 (space_members 테이블 + 사용자 정보 join) */
+export interface SpaceMember {
+  id:       string;
+  spaceId:  string;
+  userId:   string;
+  role:     SpaceRole;
+  joinedAt: Date;
+  user?:    User;       // join 시 포함
+}
+
+/** 공간(Space) 정보 */
+export interface Space {
+  id:          string;
+  name:        string;
+  members:     SpaceMember[];
+  inviteCode?: string;
+  createdBy:   string;
+  createdAt:   Date;
+}
+
+/**
+ * @deprecated FamilyGroup → Space 로 대체됨 (하위 호환 유지)
+ */
+export type FamilyGroup = Omit<Space, 'members'> & {
+  members: User[];
+};
+
+/** 공간 유형 (설정/표시 목적) */
+export type SpaceType = 'friend' | 'couple' | 'group' | 'custom';
+
+// ── 일정 ──────────────────────────────────────────────────
+
+export type ScheduleType   = 'shared' | 'personal' | 'child' | 'expense';
 export type ScheduleCategory = 'event' | 'task' | 'care' | 'expense' | 'anniversary' | 'routine';
-
 export type ScheduleVisibility = 'private' | 'space' | 'selected';
 
 export type AutomationPolicy =
-  | 'reminder_only'          // 상태 자동 변경 없음, 시작 전 리마인더만
-  | 'time_window'            // pending → in_progress → completed/ended (시간 기반)
-  | 'completion_required'    // pending → in_progress → missed (완료 확인 필요)
-  | 'payment_due'            // pending → due → overdue/paid (결제 기한)
-  | 'confirmation_required'; // 응답 대기 → 확인 완료/미응답
+  | 'reminder_only'
+  | 'time_window'
+  | 'completion_required'
+  | 'payment_due'
+  | 'confirmation_required';
 
 export type ScheduleStatus = 'pending' | 'in_progress' | 'completed' | 'missed';
-
-export type SpaceType = 'friend' | 'couple' | 'family' | 'group' | 'custom';
-
-export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type RepeatType     = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export type ExpenseCategory =
-  | 'education'   // 교육비
-  | 'housing'     // 주거비
-  | 'utility'     // 공과금
-  | 'insurance'   // 보험료
-  | 'subscription' // 구독서비스
-  | 'other';      // 기타
+  | 'education'
+  | 'housing'
+  | 'utility'
+  | 'insurance'
+  | 'subscription'
+  | 'other';
 
 export type PaymentMethod = 'auto' | 'card' | 'cash' | 'other';
 
 export interface Location {
   address: string;
-  lat?: number;
-  lng?: number;
+  lat?:    number;
+  lng?:    number;
 }
 
 export interface Attachment {
-  id: string;
-  name: string;
-  url: string;
-  type: 'image' | 'file';
+  id:     string;
+  name:   string;
+  url:    string;
+  type:   'image' | 'file';
   source: 'local' | 'google_drive';
 }
 
 export interface Schedule {
-  id: string;
-  title: string;
-  type: ScheduleType;
-  // Phase 2: 다축 분류 (type은 하위 호환용 유지)
+  id:        string;
+  title:     string;
+  type:      ScheduleType;
   category?: ScheduleCategory;
   visibility?: ScheduleVisibility;
   automationPolicy?: AutomationPolicy;
-  startTime: Date;
-  endTime?: Date;
-  allDay?: boolean;
-  status: ScheduleStatus;
-  participants: string[];        // user ids
-  location?: Location;
-  referenceUrl?: string;
-  reminder?: number;             // 분 단위 (0 = 없음)
-  repeat: RepeatType;
+  startTime:      Date;
+  endTime?:       Date;
+  allDay?:        boolean;
+  status:         ScheduleStatus;
+  participants:   string[];
+  location?:      Location;
+  referenceUrl?:  string;
+  reminder?:      number;
+  repeat:         RepeatType;
   repeatEndDate?: Date;
-  memo?: string;
-  attachments?: Attachment[];
-  familyGroupId: string;
-  createdBy: string;
+  memo?:          string;
+  attachments?:   Attachment[];
+  /** @deprecated familyGroupId → spaceId 로 대체됨 (하위 호환 유지) */
+  familyGroupId:  string;
+  /** 소속 공간 ID (familyGroupId 와 동일 값, 신규 코드에서 사용) */
+  spaceId?:       string;
+  createdBy:      string;
   // 정기지출 전용
-  amount?: number;
+  amount?:          number;
   expenseCategory?: ExpenseCategory;
-  paymentMethod?: PaymentMethod;
-  // 구글 캘린더 연동
-  googleEventId?: string;
+  paymentMethod?:   PaymentMethod;
+  googleEventId?:   string;
 }
 
-export interface FamilyGroup {
-  id: string;
-  name: string;
-  members: User[];
-  inviteCode?: string;
-  createdBy: string;
-  createdAt: Date;
-}
+// ── 알림 ──────────────────────────────────────────────────
 
 export interface Notification {
-  id: string;
-  userId: string;
+  id:          string;
+  userId:      string;
   scheduleId?: string;
-  title: string;
-  body: string;
-  type: 'reminder' | 're_notify' | 'completion' | 'invite' | 'system';
-  read: boolean;
-  createdAt: Date;
+  title:       string;
+  body:        string;
+  type:        'reminder' | 're_notify' | 'completion' | 'invite' | 'system';
+  read:        boolean;
+  createdAt:   Date;
 }
 
-// UI 전용
+// ── UI 상수 레이블 ─────────────────────────────────────────
+
+export const SPACE_ROLE_LABELS: Record<SpaceRole, string> = {
+  admin:  '관리자',
+  editor: '편집자',
+  viewer: '조회자',
+};
+
+export const SPACE_ROLE_DESCRIPTIONS: Record<SpaceRole, string> = {
+  admin:  '공간 설정, 초대/추방, 모든 일정 관리',
+  editor: '일정 등록·수정·삭제',
+  viewer: '일정 조회만 가능',
+};
+
 export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = {
   shared:   '공유일정',
   personal: '개인일정',
@@ -169,11 +231,11 @@ export const SCHEDULE_CATEGORY_LABELS: Record<ScheduleCategory, string> = {
 };
 
 export const AUTOMATION_POLICY_LABELS: Record<AutomationPolicy, string> = {
-  reminder_only:          '리마인더만',
-  time_window:            '시간 기반 자동',
-  completion_required:    '완료 확인 필요',
-  payment_due:            '결제 기한',
-  confirmation_required:  '확인 필요',
+  reminder_only:         '리마인더만',
+  time_window:           '시간 기반 자동',
+  completion_required:   '완료 확인 필요',
+  payment_due:           '결제 기한',
+  confirmation_required: '확인 필요',
 };
 
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {

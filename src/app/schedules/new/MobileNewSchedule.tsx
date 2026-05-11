@@ -9,7 +9,7 @@ import {
   EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS,
 } from '@/types';
-import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
+import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod , SpaceMember } from '@/types';
 
 interface MobileNewScheduleProps {
   saving: boolean;
@@ -25,7 +25,7 @@ interface MobileNewScheduleProps {
   setEnd: (t: string) => void;
   participants: string[];
   toggleParticipant: (id: string) => void;
-  members: User[];
+  members: SpaceMember[];
   address: string;
   setAddress: (a: string) => void;
   refUrl: string;
@@ -434,8 +434,8 @@ export function MobileNewSchedule({
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <span style={{ fontSize: '16px' }}>{u.avatar}</span>
-                  <span>{u.name}</span>
+                  <span style={{ fontSize: '16px' }}>{u.user?.avatar}</span>
+                  <span>{u.user?.name}</span>
                   {selected && (
                     <span style={{ fontSize: '12px', opacity: 0.8 }}>✓</span>
                   )}

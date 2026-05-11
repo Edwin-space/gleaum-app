@@ -83,8 +83,8 @@ export function useCurrentUser(): CurrentUserState {
       nameDisplayMode: profile.name_display_mode ?? 'nickname',
       email:         profile.email ?? '',
       avatar:        profile.avatar ?? '👤',
-      role:          profile.role,
       familyGroupId: profile.family_group_id ?? undefined,
+      spaceId:       profile.family_group_id ?? undefined,
       googleId:      profile.google_id ?? undefined,
     } : null
   ), [profile]);

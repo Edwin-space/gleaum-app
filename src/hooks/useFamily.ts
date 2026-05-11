@@ -1,63 +1,38 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { getSpaceWithMembers, type ProfileRow, type FamilyGroupRow } from '@/lib/db';
-import type { User, FamilyGroup } from '@/types';
+/**
+ * @deprecated useSpace 를 사용하세요.
+ * 하위 호환을 위해 유지됩니다.
+ */
+
+import { useSpace } from './useSpace';
+import type { FamilyGroup } from '@/types';
 
 export interface FamilyState {
   group: FamilyGroup | null;
-  members: User[];
+  members: FamilyGroup['members'];
   loading: boolean;
   refresh: () => Promise<void>;
 }
 
 export function useFamily(familyGroupId: string | null): FamilyState {
-  const [group, setGroup]     = useState<FamilyGroup | null>(null);
-  const [members, setMembers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { space, loading, refresh } = useSpace(familyGroupId);
 
-  const load = useCallback(async () => {
-    if (!familyGroupId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const result = await getSpaceWithMembers(familyGroupId);
-      if (result) {
-        setGroup(rowsToFamilyGroup(result.group, result.members));
-        setMembers(result.members.map(rowToUser));
+  const group: FamilyGroup | null = space
+    ? {
+        id:         space.id,
+        name:       space.name,
+        members:    space.members.map((m) => m.user!).filter(Boolean),
+        inviteCode: space.inviteCode,
+        createdBy:  space.createdBy,
+        createdAt:  space.createdAt,
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [familyGroupId]);
+    : null;
 
-  useEffect(() => {
-    void Promise.resolve().then(load);
-  }, [load]);
-
-  return { group, members, loading, refresh: load };
-}
-
-function rowToUser(row: ProfileRow): User {
   return {
-    id:            row.id,
-    name:          row.name ?? '이름 없음',
-    email:         row.email ?? '',
-    avatar:        row.avatar ?? '👤',
-    role:          row.role,
-    familyGroupId: row.family_group_id ?? undefined,
-  };
-}
-
-function rowsToFamilyGroup(group: FamilyGroupRow, members: ProfileRow[]): FamilyGroup {
-  return {
-    id:         group.id,
-    name:       group.name,
-    members:    members.map(rowToUser),
-    inviteCode: group.invite_code ?? undefined,
-    createdBy:  group.created_by,
-    createdAt:  new Date(group.created_at),
+    group,
+    members: group?.members ?? [],
+    loading,
+    refresh,
   };
 }

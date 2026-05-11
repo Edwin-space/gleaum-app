@@ -21,7 +21,7 @@ const goals: Array<{ key: OnboardingPrimaryGoal; title: string; desc: string; ac
   { key: 'expense', title: '자금 관리', desc: '현명한 지출의 시작', accent: '#F59E0B', icon: '💰' },
   { key: 'couple', title: '연인과 함께', desc: '우리만의 소중한 기록', accent: '#FF6B6B', icon: '❤️' },
   { key: 'friends', title: '친구/모임', desc: '함께 즐거운 약속', accent: '#8B5CF6', icon: '🙌' },
-  { key: 'family', title: '가족 케어', desc: '따뜻한 우리 가족 연결', accent: '#0CC9B5', icon: '🏠' },
+  { key: 'group', title: '공간 케어', desc: '우리만의 공간을 함께', accent: '#0CC9B5', icon: '🏠' },
 ];
 
 const layouts: Array<{ key: HomeLayoutPreference; title: string; desc: string; preview: string }> = [
@@ -34,7 +34,7 @@ const layouts: Array<{ key: HomeLayoutPreference; title: string; desc: string; p
 
 const spaceOptions: Array<{ key: SpaceIntent; label: string; desc: string; icon: string }> = [
   { key: 'solo', label: '개인 공간', desc: '나만의 기록으로 시작할게요', icon: '👤' },
-  { key: 'family', label: '가족 공간', desc: '가족 일상을 하나로 연결해요', icon: '🏠' },
+  { key: 'group', label: '그룹 공간', desc: '소중한 사람들과 함께해요', icon: '🏠' },
   { key: 'couple', label: '연인 공간', desc: '우리 둘만의 특별한 기록', icon: '✨' },
   { key: 'friends', label: '모임 공간', desc: '친구들과 함께 계획해요', icon: '🤝' },
 ];
@@ -50,14 +50,14 @@ const steps = [
 function modulesForGoal(goal: OnboardingPrimaryGoal): OnboardingPreferences['enabledModules'] {
   if (goal === 'routine') return ['calendar', 'routine'];
   if (goal === 'expense') return ['calendar', 'expense'];
-  if (goal === 'couple' || goal === 'friends' || goal === 'family') return ['calendar', 'spaces', 'expense'];
+  if (goal === 'couple' || goal === 'friends' || goal === 'group') return ['calendar', 'spaces', 'expense'];
   return ['calendar'];
 }
 
 function layoutForGoal(goal: OnboardingPrimaryGoal): HomeLayoutPreference {
   if (goal === 'routine') return 'routine_first';
   if (goal === 'expense') return 'expense_first';
-  if (goal === 'couple' || goal === 'friends' || goal === 'family') return 'space_first';
+  if (goal === 'couple' || goal === 'friends' || goal === 'group') return 'space_first';
   return 'calendar_first';
 }
 
@@ -111,7 +111,7 @@ export default function OnboardingPage() {
     setHomeLayout(layoutForGoal(nextGoal));
     if (nextGoal === 'couple') setSpaceIntent(['couple']);
     else if (nextGoal === 'friends') setSpaceIntent(['friends']);
-    else if (nextGoal === 'family') setSpaceIntent(['family']);
+    else if (nextGoal === 'group') setSpaceIntent(['group']);
     else setSpaceIntent(['solo']);
   };
 

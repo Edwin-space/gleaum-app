@@ -44,10 +44,10 @@ export function MobileChildren() {
 
   const loading = spaceLoading || schedulesLoading;
 
-  const children = members.filter((u) => u.role === 'child');
+  const children = members.filter((u) => u.role === 'editor');
   const tabs = [
     { id: 'all', label: '전체' },
-    ...children.map((c) => ({ id: c.id, label: c.name })),
+    ...children.map((c) => ({ id: c.id, label: c.user?.name })),
   ];
 
   const childSchedules = schedules.filter((s) => {
@@ -380,7 +380,7 @@ export function MobileChildren() {
                             color: '#059669',
                           }}
                         >
-                          {c.avatar} {c.name}
+                          {c.user?.avatar} {c.user?.name}
                         </span>
                       ))}
                     </div>
@@ -491,7 +491,7 @@ export function MobileChildren() {
                         disabled={reNotifyingId === schedule.id}
                         onClick={async () => {
                           setReNotifyingId(schedule.id);
-                          const memberNames = participantChildren.map((c) => c.name).join(', ');
+                          const memberNames = participantChildren.map((c) => c.user?.name).join(', ');
                           const ok = await sendReNotify(schedule, memberNames);
                           setReNotifyingId(null);
                           alert(ok

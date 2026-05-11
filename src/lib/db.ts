@@ -19,6 +19,9 @@ import type {
   NameDisplayMode,
   OnboardingPreferences,
   NotificationSettings,
+  SpaceRole,
+  SpaceMember,
+  Space,
 } from '@/types';
 import { createGoogleEvent, updateGoogleEvent, deleteGoogleEvent } from './googleCalendar';
 
@@ -35,7 +38,8 @@ export interface ProfileRow {
   name_display_mode?: NameDisplayMode | null;
   email: string | null;
   avatar: string | null;
-  role: 'parent' | 'child' | 'guest';
+  /** @deprecated profiles.role 레거시. 권한 관리는 space_members.role 사용 */
+  role: string | null;
   family_group_id: string | null;
   google_id: string | null;
   onboarding_completed_at?: string | null;
@@ -46,12 +50,25 @@ export interface ProfileRow {
   updated_at: string;
 }
 
+/** family_groups 테이블 Row (내부명 유지, UI에서는 Space 로 표시) */
 export interface FamilyGroupRow {
   id: string;
   name: string;
   invite_code: string | null;
   created_by: string;
   created_at: string;
+}
+export type SpaceRow = FamilyGroupRow; // alias
+
+/** space_members 테이블 Row */
+export interface SpaceMemberRow {
+  id:        string;
+  space_id:  string;
+  user_id:   string;
+  role:      SpaceRole;
+  joined_at: string;
+  // join 시 포함될 수 있는 profiles 데이터
+  profiles?: ProfileRow | null;
 }
 
 export interface ScheduleRow {
@@ -99,6 +116,7 @@ export interface NotificationRow {
 // ── 변환 함수 ──────────────────────────────────────────────
 
 export function rowToSchedule(row: ScheduleRow): Schedule {
+  const spaceId = row.family_group_id;
   return {
     id: row.id,
     title: row.title,
@@ -123,7 +141,8 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
     repeat: row.repeat,
     repeatEndDate: row.repeat_end_date ? new Date(row.repeat_end_date) : undefined,
     memo: row.memo ?? undefined,
-    familyGroupId: row.family_group_id,
+    familyGroupId: spaceId,   // 하위 호환
+    spaceId,                  // 신규 코드에서 사용
     createdBy: row.created_by,
     amount: row.amount ?? undefined,
     expenseCategory: row.expense_category ?? undefined,
@@ -142,9 +161,20 @@ export function rowToUser(row: ProfileRow): User {
     nameDisplayMode: row.name_display_mode ?? 'nickname',
     email: row.email ?? '',
     avatar: row.avatar ?? '👤',
-    role: row.role,
-    familyGroupId: row.family_group_id ?? undefined,
+    familyGroupId: row.family_group_id ?? undefined,  // 하위 호환
+    spaceId: row.family_group_id ?? undefined,         // 신규 코드에서 사용
     googleId: row.google_id ?? undefined,
+  };
+}
+
+export function rowToSpaceMember(row: SpaceMemberRow): SpaceMember {
+  return {
+    id:       row.id,
+    spaceId:  row.space_id,
+    userId:   row.user_id,
+    role:     row.role,
+    joinedAt: new Date(row.joined_at),
+    user:     row.profiles ? rowToUser(row.profiles) : undefined,
   };
 }
 
@@ -265,11 +295,10 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
   return true;
 }
 
-/** 스페이스 정보 및 멤버 조회 */
-export async function getSpaceWithMembers(spaceId: string): Promise<{
-  group: FamilyGroupRow;
-  members: ProfileRow[];
-} | null> {
+// ── 공간(Space) ───────────────────────────────────────────
+
+/** 공간 정보 + space_members 기반 멤버 목록 조회 */
+export async function getSpaceWithMembers(spaceId: string): Promise<Space | null> {
   const supabase = createClient();
 
   const { data: group, error: groupError } = await supabase
@@ -280,18 +309,116 @@ export async function getSpaceWithMembers(spaceId: string): Promise<{
 
   if (groupError || !group) return null;
 
-  const { data: members, error: membersError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('family_group_id', spaceId);
+  const { data: memberRows, error: membersError } = await supabase
+    .from('space_members')
+    .select('*, profiles(*)')
+    .eq('space_id', spaceId);
 
   if (membersError) return null;
 
-  return { group, members };
+  return {
+    id:          group.id,
+    name:        group.name,
+    inviteCode:  group.invite_code ?? undefined,
+    createdBy:   group.created_by,
+    createdAt:   new Date(group.created_at),
+    members:     (memberRows as SpaceMemberRow[]).map(rowToSpaceMember),
+  };
 }
 
-/** 초대 코드로 가족 그룹 정보 조회 (미가입자도 조회 가능하도록 anon key 사용) */
-export async function getFamilyByCode(inviteCode: string): Promise<{ id: string; name: string } | null> {
+/** 공간 멤버 목록만 조회 */
+export async function getSpaceMembers(spaceId: string): Promise<SpaceMember[]> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('space_members')
+    .select('*, profiles(*)')
+    .eq('space_id', spaceId);
+
+  if (error || !data) return [];
+  return (data as SpaceMemberRow[]).map(rowToSpaceMember);
+}
+
+/** 현재 사용자가 특정 공간에서 가진 역할 조회 */
+export async function getMyRoleInSpace(spaceId: string): Promise<SpaceRole | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('space_members')
+    .select('role')
+    .eq('space_id', spaceId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !data) return null;
+  return data.role as SpaceRole;
+}
+
+/** 현재 사용자가 속한 모든 공간 목록 */
+export async function getMySpaces(): Promise<Space[]> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('space_members')
+    .select('space_id, role, joined_at, family_groups(*)')
+    .eq('user_id', user.id);
+
+  if (error || !data) return [];
+
+  return data
+    .filter((row: any) => row.family_groups)
+    .map((row: any) => ({
+      id:         row.family_groups.id,
+      name:       row.family_groups.name,
+      inviteCode: row.family_groups.invite_code ?? undefined,
+      createdBy:  row.family_groups.created_by,
+      createdAt:  new Date(row.family_groups.created_at),
+      members:    [],  // 필요 시 별도 조회
+    }));
+}
+
+/** 멤버 역할 변경 (admin 전용) */
+export async function updateSpaceMemberRole(
+  spaceId: string,
+  userId: string,
+  role: SpaceRole,
+): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('space_members')
+    .update({ role })
+    .eq('space_id', spaceId)
+    .eq('user_id', userId);
+  return !error;
+}
+
+/** 멤버 추방 (admin) 또는 본인 탈퇴 */
+export async function removeSpaceMember(spaceId: string, userId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('space_members')
+    .delete()
+    .eq('space_id', spaceId)
+    .eq('user_id', userId);
+  return !error;
+}
+
+/** 공간 이름 수정 (admin 전용) */
+export async function updateSpaceName(spaceId: string, name: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('family_groups')
+    .update({ name })
+    .eq('id', spaceId);
+  return !error;
+}
+
+/** 초대 코드로 공간 정보 조회 */
+export async function getSpaceByCode(inviteCode: string): Promise<{ id: string; name: string } | null> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('family_groups')
@@ -303,43 +430,49 @@ export async function getFamilyByCode(inviteCode: string): Promise<{ id: string;
   return { id: data.id, name: data.name };
 }
 
-/** 초대 코드로 스페이스 합류 */
-export async function joinSpaceByCode(inviteCode: string): Promise<{ success: boolean; alreadyMember?: boolean; spaceName?: string }> {
+/** @deprecated getSpaceByCode 사용 권장 */
+export const getFamilyByCode = getSpaceByCode;
+
+/** 초대 코드로 공간 합류 → space_members INSERT + profiles 업데이트 */
+export async function joinSpaceByCode(inviteCode: string): Promise<{
+  success: boolean;
+  alreadyMember?: boolean;
+  spaceName?: string;
+}> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false };
 
-  // 이미 스페이스가 있는지 확인
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('family_group_id')
-    .eq('id', user.id)
-    .single();
+  // 초대 코드로 공간 찾기
+  const space = await getSpaceByCode(inviteCode);
+  if (!space) return { success: false };
 
-  // 초대 코드로 스페이스 찾기
-  const { data: group, error: groupError } = await supabase
-    .from('family_groups')
-    .select('id, name')
-    .eq('invite_code', inviteCode)
-    .single();
-
-  if (groupError || !group) return { success: false };
-
-  // 이미 같은 스페이스 멤버인 경우
-  if (profile?.family_group_id === group.id) {
-    return { success: true, alreadyMember: true, spaceName: group.name };
+  // 이미 멤버인지 확인
+  const existingRole = await getMyRoleInSpace(space.id);
+  if (existingRole) {
+    return { success: true, alreadyMember: true, spaceName: space.name };
   }
 
-  const { error } = await supabase
+  // space_members INSERT (role: editor — 초대로 참여한 사용자)
+  const { error: memberError } = await supabase
+    .from('space_members')
+    .insert({ space_id: space.id, user_id: user.id, role: 'editor' });
+
+  if (memberError) {
+    console.error('공간 합류 오류:', memberError.message);
+    return { success: false };
+  }
+
+  // profiles.family_group_id 업데이트 (하위 호환)
+  await supabase
     .from('profiles')
-    .update({ family_group_id: group.id })
+    .update({ family_group_id: space.id })
     .eq('id', user.id);
 
-  return { success: !error, spaceName: group.name };
+  return { success: true, spaceName: space.name };
 }
 
-
-/** 신규 스페이스 생성 + 프로필에 연결 */
+/** 신규 공간 생성 → space_members admin 등록 + profiles 업데이트 */
 export async function createSpace(name: string): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -347,6 +480,7 @@ export async function createSpace(name: string): Promise<string | null> {
 
   const inviteCode = `GLEAUM-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
 
+  // 1. family_groups 생성
   const { data: group, error: groupError } = await supabase
     .from('family_groups')
     .insert({ name, invite_code: inviteCode, created_by: user.id })
@@ -354,11 +488,21 @@ export async function createSpace(name: string): Promise<string | null> {
     .single();
 
   if (groupError || !group) {
-    console.error('Space creation error (Check RLS Policies):', groupError?.message);
+    console.error('공간 생성 오류:', groupError?.message);
     return null;
   }
 
+  // 2. space_members에 admin으로 등록
+  const { error: memberError } = await supabase
+    .from('space_members')
+    .insert({ space_id: group.id, user_id: user.id, role: 'admin' });
 
+  if (memberError) {
+    console.error('공간 멤버 등록 오류:', memberError.message);
+    // 공간은 생성됐으므로 계속 진행
+  }
+
+  // 3. profiles.family_group_id 업데이트 (하위 호환)
   await supabase
     .from('profiles')
     .update({ family_group_id: group.id })
@@ -367,56 +511,26 @@ export async function createSpace(name: string): Promise<string | null> {
   return group.id;
 }
 
-
-/** 로그인 후 프로필 초기화 (가족 그룹 없으면 자동 생성) */
+/**
+ * 로그인 후 프로필 보장
+ * Phase 2 이후: 공간 자동 생성 제거 — 온보딩에서 명시적으로 생성
+ */
 export async function ensureUserSetup(): Promise<ProfileRow | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   // 프로필 조회
-  let { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
 
-  // 프로필 없으면 생성
-  if (!profile) {
-    const { data: newProfile, error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        name: user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? '사용자',
-        email: user.email ?? '',
-        avatar: '👤',
-        role: 'parent',
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('프로필 생성 오류:', error.message);
-      return null;
-    }
-    profile = newProfile;
+  if (error || !profile) {
+    console.error('프로필 조회 오류:', error?.message);
+    return null;
   }
-
-  // 스페이스 정보가 없으면 자동 생성 시도
-  if (!profile.family_group_id && !hasTriedAutoCreateGroup) {
-    hasTriedAutoCreateGroup = true; 
-    const spaceName = `${profile.name || '나'}의 공간`;
-    try {
-      const spaceId = await createSpace(spaceName);
-      if (spaceId) {
-        profile.family_group_id = spaceId;
-      }
-    } catch (err: any) {
-      console.warn('Space auto-creation skipped. This is usually due to Supabase RLS policies:', err.message);
-    }
-
-  }
-
 
   return profile;
 }
@@ -535,6 +649,7 @@ export async function createSchedule(
       status: input.status ?? 'pending',
       participants: input.participantIds ?? [user.id],
       familyGroupId,
+      spaceId: familyGroupId,
       createdBy: user.id,
       repeat: input.repeat ?? 'none',
       repeatEndDate: input.repeatEndDate,
@@ -794,7 +909,8 @@ export async function uploadScheduleAttachment(file: File): Promise<string | nul
 }
 
 /** 마이페이지 대시보드용 인사이트 데이터 추출 */
-export async function getMyPageInsights(familyGroupId: string | undefined) {
+export async function getMyPageInsights(spaceId: string | undefined) {
+  const familyGroupId = spaceId; // 하위 호환
   if (!familyGroupId) return null;
   const supabase = createClient();
   const now = new Date();

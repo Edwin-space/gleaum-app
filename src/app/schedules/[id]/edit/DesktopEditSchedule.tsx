@@ -9,7 +9,7 @@ import {
   EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS,
 } from '@/types';
-import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
+import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod , SpaceMember } from '@/types';
 
 interface DesktopEditScheduleProps {
   saving: boolean;
@@ -25,7 +25,7 @@ interface DesktopEditScheduleProps {
   setEnd: (t: string) => void;
   participants: string[];
   toggleParticipant: (id: string) => void;
-  members: User[];
+  members: SpaceMember[];
   address: string;
   setAddress: (a: string) => void;
   refUrl: string;
@@ -405,8 +405,8 @@ export function DesktopEditSchedule({
                         boxShadow: selected ? '0 4px 12px rgba(26,27,46,0.2)' : 'none',
                       }}
                     >
-                      <span style={{ fontSize: '16px' }}>{u.avatar}</span>
-                      <span>{u.name}</span>
+                      <span style={{ fontSize: '16px' }}>{u.user?.avatar}</span>
+                      <span>{u.user?.name}</span>
                       {selected && (
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round">
                           <polyline points="20 6 9 17 4 12"/>

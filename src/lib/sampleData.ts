@@ -2,10 +2,14 @@ import type { User, Schedule, FamilyGroup, Notification } from '@/types';
 
 // ── 샘플 가족 구성원 ──
 export const sampleUsers: User[] = [
-  { id: 'u1', name: '김태호', email: 'taejo.kim@gmail.com', role: 'parent', familyGroupId: 'f1', avatar: '👨' },
-  { id: 'u2', name: '김지수', email: 'jisu.kim@gmail.com',  role: 'parent', familyGroupId: 'f1', avatar: '👩' },
-  { id: 'u3', name: '김민준', email: '',                    role: 'child',  familyGroupId: 'f1', avatar: '👦' },
-  { id: 'u4', name: '김서연', email: '',                    role: 'child',  familyGroupId: 'f1', avatar: '👧' },
+  { id: 'u1', name: '김태호', email: 'taejo.kim@gmail.com', role: 'parent', familyGroupId: 'f1',
+    spaceId: 'f1', avatar: '👨' },
+  { id: 'u2', name: '김지수', email: 'jisu.kim@gmail.com',  role: 'parent', familyGroupId: 'f1',
+    spaceId: 'f1', avatar: '👩' },
+  { id: 'u3', name: '김민준', email: '',                    role: 'child',  familyGroupId: 'f1',
+    spaceId: 'f1', avatar: '👦' },
+  { id: 'u4', name: '김서연', email: '',                    role: 'child',  familyGroupId: 'f1',
+    spaceId: 'f1', avatar: '👧' },
 ];
 
 export const currentUser = sampleUsers[0];
@@ -38,6 +42,7 @@ export const sampleSchedules: Schedule[] = [
     repeat: 'none',
     memo: '케이크 주문 확인하기',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u2',
   },
   {
@@ -52,6 +57,7 @@ export const sampleSchedules: Schedule[] = [
     reminder: 30,
     repeat: 'weekly',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -66,6 +72,7 @@ export const sampleSchedules: Schedule[] = [
     reminder: 30,
     repeat: 'weekly',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -80,6 +87,7 @@ export const sampleSchedules: Schedule[] = [
     reminder: 60,
     repeat: 'none',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -93,6 +101,7 @@ export const sampleSchedules: Schedule[] = [
     reminder: 60,
     repeat: 'none',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -106,6 +115,7 @@ export const sampleSchedules: Schedule[] = [
     reminder: 30,
     repeat: 'weekly',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   // 정기지출
@@ -122,6 +132,7 @@ export const sampleSchedules: Schedule[] = [
     expenseCategory: 'education',
     paymentMethod: 'auto',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -137,6 +148,7 @@ export const sampleSchedules: Schedule[] = [
     expenseCategory: 'education',
     paymentMethod: 'auto',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -152,6 +164,7 @@ export const sampleSchedules: Schedule[] = [
     expenseCategory: 'housing',
     paymentMethod: 'auto',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -167,6 +180,7 @@ export const sampleSchedules: Schedule[] = [
     expenseCategory: 'utility',
     paymentMethod: 'auto',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
   {
@@ -182,6 +196,7 @@ export const sampleSchedules: Schedule[] = [
     expenseCategory: 'subscription',
     paymentMethod: 'card',
     familyGroupId: 'f1',
+    spaceId: 'f1',
     createdBy: 'u1',
   },
 ];
