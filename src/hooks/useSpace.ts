@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { getSpaceWithMembers } from '@/lib/db';
-import type { Space, SpaceMember, User } from '@/types';
+import { getSpaceWithMembers, getMyRoleInSpace } from '@/lib/db';
+import type { Space, SpaceMember, User, SpaceRole } from '@/types';
 
 export interface SpaceState {
   space:       Space | null;
   members:     SpaceMember[];
   /** @deprecated 하위 호환용. 새 코드에서는 members(SpaceMember[]) 사용 권장 */
   memberUsers: User[];
+  /** 현재 로그인 사용자의 공간 내 역할 */
+  myRole:      SpaceRole | null;
   loading:     boolean;
   refresh:     () => Promise<void>;
 }
@@ -19,6 +21,7 @@ export interface SpaceState {
 export function useSpace(spaceId: string | null): SpaceState {
   const [space,   setSpace]   = useState<Space | null>(null);
   const [members, setMembers] = useState<SpaceMember[]>([]);
+  const [myRole,  setMyRole]  = useState<SpaceRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -28,11 +31,15 @@ export function useSpace(spaceId: string | null): SpaceState {
     }
     setLoading(true);
     try {
-      const result = await getSpaceWithMembers(spaceId);
+      const [result, role] = await Promise.all([
+        getSpaceWithMembers(spaceId),
+        getMyRoleInSpace(spaceId),
+      ]);
       if (result) {
         setSpace(result);
         setMembers(result.members);
       }
+      setMyRole(role);
     } finally {
       setLoading(false);
     }
@@ -47,5 +54,5 @@ export function useSpace(spaceId: string | null): SpaceState {
     [members],
   );
 
-  return { space, members, memberUsers, loading, refresh: load };
+  return { space, members, memberUsers, myRole, loading, refresh: load };
 }

@@ -3,6 +3,7 @@
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS } from '@/types';
 import type { Schedule, ScheduleStatus, ExpenseCategory } from '@/types';
+import type { BudgetTab } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
 
 interface DesktopBudgetProps {
@@ -10,6 +11,9 @@ interface DesktopBudgetProps {
   viewDate: Date;
   prevMonth: () => void;
   nextMonth: () => void;
+  isCurrentMonth: boolean;
+  tab: BudgetTab;
+  setTab: (t: BudgetTab) => void;
   total: number;
   completePct: number;
   completedCnt: number;
@@ -27,6 +31,9 @@ export function DesktopBudget({
   viewDate,
   prevMonth,
   nextMonth,
+  isCurrentMonth,
+  tab,
+  setTab,
   total,
   completePct,
   completedCnt,
@@ -63,15 +70,38 @@ export function DesktopBudget({
             </p>
           </div>
 
-          {/* 월 네비게이션 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '18px', padding: '6px', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
-            <button onClick={prevMonth} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18L9 12L15 6"/></svg>
-            </button>
-            <span style={{ fontSize: '17px', fontWeight: 900, padding: '0 16px', letterSpacing: '-0.3px' }}>{formatMonthYear(viewDate)}</span>
-            <button onClick={nextMonth} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18L15 12L9 6"/></svg>
-            </button>
+          {/* 탭 + 월 네비게이션 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* 탭 스위처 */}
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.10)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,0.12)' }}>
+              {([
+                { key: 'space'    as BudgetTab, label: '🏠 공간' },
+                { key: 'personal' as BudgetTab, label: '👤 개인' },
+              ]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  style={{
+                    padding: '7px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 800,
+                    border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+                    background: tab === key ? 'rgba(255,255,255,0.18)' : 'transparent',
+                    color: tab === key ? 'white' : 'rgba(255,255,255,0.50)',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* 월 네비게이션 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '18px', padding: '6px', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
+              <button onClick={prevMonth} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18L9 12L15 6"/></svg>
+              </button>
+              <span style={{ fontSize: '17px', fontWeight: 900, padding: '0 16px', letterSpacing: '-0.3px' }}>{formatMonthYear(viewDate)}</span>
+              <button onClick={nextMonth} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18L15 12L9 6"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>

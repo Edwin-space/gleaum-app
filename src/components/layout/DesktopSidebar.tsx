@@ -35,7 +35,7 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: '가족', href: '/family',
+    label: '공간', href: '/space',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? '#0084CC' : '#8E8E93'} strokeWidth="2" strokeLinecap="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>

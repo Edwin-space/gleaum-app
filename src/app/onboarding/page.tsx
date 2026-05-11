@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GleaumLogo, GleaumAppIcon } from '@/components/ui/GleaumLogo';
-import { completeOnboarding } from '@/lib/db';
+import { completeOnboarding, createSpace, joinSpaceByCode } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { trackEvent } from '@/lib/analytics';
 import type {
@@ -44,6 +44,7 @@ const steps = [
   { title: '어떤 가치에 집중할까요?', eyebrow: 'PRIORITY', desc: '가장 중요하게 관리하고 싶은 목표를 선택하세요.' },
   { title: '최적의 화면 구성', eyebrow: 'INTERFACE', desc: '선택하신 목표에 딱 맞는 화면 구성을 제안해 드려요.' },
   { title: '공간의 성격 선택', eyebrow: 'ENVIRONMENT', desc: '혼자 시작하거나 소중한 사람들과 함께 할 수 있습니다.' },
+  { title: '공간 설정', eyebrow: 'SPACE SETUP', desc: '새 공간을 만들거나, 초대 코드로 참여하거나, 혼자 시작할 수 있습니다.' },
   { title: '중요한 순간의 리마인더', eyebrow: 'ASSISTANCE', desc: '글리움이 당신의 소중한 일정을 꼼꼼히 챙겨드릴게요.' },
 ] as const;
 
@@ -80,6 +81,14 @@ export default function OnboardingPage() {
   const [goal, setGoal] = useState<OnboardingPrimaryGoal>('personal_schedule');
   const [homeLayout, setHomeLayout] = useState<HomeLayoutPreference>('calendar_first');
   const [spaceIntent, setSpaceIntent] = useState<SpaceIntent[]>(['solo']);
+
+  // Step 4: 공간 설정
+  type SpaceSetupMode = 'create' | 'join' | 'skip';
+  const [spaceSetupMode, setSpaceSetupMode] = useState<SpaceSetupMode>('skip');
+  const [newSpaceName, setNewSpaceName] = useState('');
+  const [spaceJoinCode, setSpaceJoinCode] = useState('');
+  const [spaceSetupError, setSpaceSetupError] = useState('');
+
   const [defaultReminder, setDefaultReminder] = useState(30);
   const [notifications, setNotifications] = useState<NotificationSettings>({
     scheduleReminders: true,
@@ -104,7 +113,12 @@ export default function OnboardingPage() {
   const suggestedDisplayName = user?.displayName ?? user?.name ?? user?.email.split('@')[0] ?? '사용자';
   const effectiveDisplayName = hasEditedName ? displayName : suggestedDisplayName;
   const progressPct = Math.round(((step + 1) / steps.length) * 100);
-  const canContinue = step !== 0 || (effectiveDisplayName && effectiveDisplayName.trim().length > 0);
+  const canContinue =
+    (step !== 0 || (effectiveDisplayName && effectiveDisplayName.trim().length > 0)) &&
+    (step !== 4 ||
+      spaceSetupMode === 'skip' ||
+      (spaceSetupMode === 'create' && newSpaceName.trim().length > 0) ||
+      (spaceSetupMode === 'join' && spaceJoinCode.trim().length > 0));
 
   const handleGoal = (nextGoal: OnboardingPrimaryGoal) => {
     setGoal(nextGoal);
@@ -118,6 +132,19 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setError(null);
     setSaving(true);
+
+    // 공간 설정 처리 (step 4에서 선택한 모드)
+    if (spaceSetupMode === 'create' && newSpaceName.trim()) {
+      await createSpace(newSpaceName.trim());
+    } else if (spaceSetupMode === 'join' && spaceJoinCode.trim()) {
+      const joinResult = await joinSpaceByCode(spaceJoinCode.trim().toUpperCase());
+      if (!joinResult.success && !joinResult.alreadyMember) {
+        setSaving(false);
+        setSpaceSetupError('유효하지 않은 초대 코드입니다. 코드를 다시 확인해 주세요.');
+        return;
+      }
+    }
+
     const ok = await completeOnboarding({
       displayName: effectiveDisplayName,
       realName,
@@ -135,6 +162,7 @@ export default function OnboardingPage() {
       trackEvent('onboarding_complete', {
         goal: goal ?? 'personal_schedule',
         space_intent: (spaceIntent.length > 0 ? spaceIntent[0] : 'solo') as string,
+        space_setup: spaceSetupMode,
       });
       await refresh();
       router.replace('/home');
@@ -308,6 +336,77 @@ export default function OnboardingPage() {
           )}
 
           {step === 4 && (
+            <div className="space-y-4">
+              {/* 세 가지 공간 설정 모드 */}
+              {(
+                [
+                  { mode: 'create' as const, icon: '✨', label: '새 공간 만들기', desc: '내가 관리자로 공간을 시작합니다' },
+                  { mode: 'join'   as const, icon: '🗝️', label: '초대 코드로 참여', desc: '공유받은 코드로 기존 공간에 합류합니다' },
+                  { mode: 'skip'  as const, icon: '👤', label: '혼자 사용하기', desc: '지금은 개인 공간으로 시작합니다' },
+                ] as const
+              ).map(({ mode, icon, label, desc }) => {
+                const active = spaceSetupMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => { setSpaceSetupMode(mode); setSpaceSetupError(''); }}
+                    className="glass-card w-full p-6 rounded-[40px] text-left transition-all active:scale-[0.97] border-2 shadow-sm flex items-center gap-5"
+                    style={{
+                      borderColor: active ? 'var(--brand-teal)' : 'white',
+                      background: active ? 'white' : 'rgba(255,255,255,0.6)',
+                    }}
+                  >
+                    <div className="w-16 h-16 rounded-3xl bg-gray-50 flex items-center justify-center text-[32px] shadow-sm">
+                      {icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-[18px] font-black mb-1 ${active ? 'text-brand-teal' : 'text-[#1A1B2E]'}`}>{label}</p>
+                      <p className="text-[13px] text-[#8E8E93] font-bold leading-snug">{desc}</p>
+                    </div>
+                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${active ? 'bg-brand-teal border-brand-teal' : 'border-gray-200'}`}>
+                      {active && <span className="text-white text-[11px] font-black">✓</span>}
+                    </div>
+                  </button>
+                );
+              })}
+
+              {/* 공간 이름 입력 (create 모드) */}
+              {spaceSetupMode === 'create' && (
+                <div className="glass-card p-6 rounded-[32px] border border-white shadow-sm animate-fade-in-up">
+                  <p className="text-[13px] font-black text-[#8E8E93] mb-3">공간 이름</p>
+                  <input
+                    value={newSpaceName}
+                    onChange={(e) => { setNewSpaceName(e.target.value); setSpaceSetupError(''); }}
+                    placeholder="예: 우리 가족 공간, 친구들"
+                    className="w-full h-14 bg-transparent text-[20px] font-black text-[#1A1B2E] border-b-2 outline-none transition-all placeholder:text-gray-300"
+                    style={{ borderColor: newSpaceName ? 'var(--brand-teal)' : '#F0F0F0' }}
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              {/* 초대 코드 입력 (join 모드) */}
+              {spaceSetupMode === 'join' && (
+                <div className="glass-card p-6 rounded-[32px] border border-white shadow-sm animate-fade-in-up">
+                  <p className="text-[13px] font-black text-[#8E8E93] mb-3">초대 코드</p>
+                  <input
+                    value={spaceJoinCode}
+                    onChange={(e) => { setSpaceJoinCode(e.target.value.toUpperCase()); setSpaceSetupError(''); }}
+                    placeholder="예: GLEAUM-ABCD"
+                    className="w-full h-14 bg-transparent text-[20px] font-black text-[#1A1B2E] border-b-2 outline-none transition-all placeholder:text-gray-300 font-mono tracking-widest"
+                    style={{ borderColor: spaceJoinCode ? 'var(--brand-teal)' : '#F0F0F0' }}
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              {spaceSetupError && (
+                <p className="text-[13px] font-bold text-red-500 text-center">{spaceSetupError}</p>
+              )}
+            </div>
+          )}
+
+          {step === 5 && (
             <div className="space-y-8">
               <div className="glass-card p-8 rounded-[40px] border border-white shadow-sm">
                  <p className="text-[14px] font-black text-[#1A1B2E] mb-6 flex items-center gap-2">
@@ -368,7 +467,7 @@ export default function OnboardingPage() {
               </>
             ) : (
               <>
-                <span>{step === steps.length - 1 ? '글리움 시작하기' : '다음 단계로'}</span>
+                <span>{step === steps.length - 1 ? '글리움 시작하기' : step === 4 && spaceSetupMode === 'skip' ? '혼자 시작하기' : '다음 단계로'}</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>

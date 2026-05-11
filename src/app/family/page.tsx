@@ -1,10 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useIsDesktop } from '@/hooks/useMediaQuery';
-import { MobileFamily } from './MobileFamily';
-import { DesktopFamily } from './DesktopFamily';
-
+/** /family는 /space로 영구 리디렉션 */
 export default function FamilyPage() {
-  const isDesktop = useIsDesktop();
-  return isDesktop ? <DesktopFamily /> : <MobileFamily />;
+  redirect('/space');
 }

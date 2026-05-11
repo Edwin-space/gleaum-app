@@ -10,27 +10,41 @@ import type { ScheduleStatus } from '@/types';
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
 
+export type BudgetTab = 'space' | 'personal';
+
 export default function BudgetPage() {
   const isDesktop = useIsDesktop();
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [tab, setTab] = useState<BudgetTab>('space');
 
-  const { familyGroupId } = useCurrentUser();
+  const { familyGroupId, user } = useCurrentUser();
   const { schedules, loading, updateStatus } = useSchedules(familyGroupId);
+  const userId = user?.id;
 
-  // 현재 선택된 달의 지출
-  const expenses = schedules.filter(
+  // 현재 선택된 달의 지출 전체
+  const allExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
       s.startTime.getFullYear() === viewDate.getFullYear() &&
       s.startTime.getMonth()    === viewDate.getMonth()
   );
 
-  // 지난달 지출 (비교용)
+  // 탭 필터: 공간(공유) vs 내 개인 지출
+  // 공간 지출: visibility가 'space' 이거나 null (공유)
+  // 내 지출:   createdBy가 나이고 visibility가 'private'
+  const expenses = tab === 'personal'
+    ? allExpenses.filter((s) => s.createdBy === userId && s.visibility === 'private')
+    : allExpenses.filter((s) => s.visibility !== 'private');
+
+  // 지난달 지출 (비교용 — 현재 탭 기준)
   const lastMonthDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
   const lastMonthExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
       s.startTime.getFullYear() === lastMonthDate.getFullYear() &&
-      s.startTime.getMonth()    === lastMonthDate.getMonth()
+      s.startTime.getMonth()    === lastMonthDate.getMonth() &&
+      (tab === 'personal'
+        ? s.createdBy === userId && s.visibility === 'private'
+        : s.visibility !== 'private')
   );
 
   const total          = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
@@ -69,6 +83,8 @@ export default function BudgetPage() {
     prevMonth,
     nextMonth,
     isCurrentMonth,
+    tab,
+    setTab,
     total,
     completePct,
     completedCnt,
@@ -78,7 +94,7 @@ export default function BudgetPage() {
     lastMonthTotal,
     categories,
     expenses,
-    handleToggleStatus
+    handleToggleStatus,
   };
 
   if (isDesktop) {

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   let targetIds: string[] = (participants ?? []).map((p: { user_id: string }) => p.user_id);
 
-  // 참여자 없으면 가족 전체
+  // 참여자 없으면 공간 전체 멤버 (space_members 기반)
   if (targetIds.length === 0) {
     const { data: schedule } = await supabaseAdmin
       .from('schedules')
@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (schedule) {
-      const { data: members } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('family_group_id', schedule.family_group_id);
-      targetIds = (members ?? []).map((m: { id: string }) => m.id);
+      const { data: spaceMembers } = await supabaseAdmin
+        .from('space_members')
+        .select('user_id')
+        .eq('space_id', schedule.family_group_id);
+      targetIds = (spaceMembers ?? []).map((m: { user_id: string }) => m.user_id);
     }
   }
 

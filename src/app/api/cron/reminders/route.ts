@@ -64,11 +64,19 @@ export async function GET(req: NextRequest) {
 
     if (existing) continue;
 
-    // ── 3) 가족 FCM 토큰 조회 ─────────────────────────────
+    // ── 3) 공간 멤버 FCM 토큰 조회 (space_members 기반) ──────
+    const { data: spaceMembers } = await supabaseAdmin
+      .from('space_members')
+      .select('user_id')
+      .eq('space_id', schedule.family_group_id);
+
+    const memberIds = (spaceMembers ?? []).map((m: { user_id: string }) => m.user_id);
+    if (memberIds.length === 0) continue;
+
     const { data: profiles } = await supabaseAdmin
       .from('profiles')
       .select('id, fcm_token')
-      .eq('family_group_id', schedule.family_group_id)
+      .in('id', memberIds)
       .not('fcm_token', 'is', null);
 
     if (!profiles || profiles.length === 0) continue;

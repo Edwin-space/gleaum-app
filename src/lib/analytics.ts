@@ -31,7 +31,7 @@ export type GleaumEventParams = {
   // 퍼널
   login:                { method: 'google' | 'email' };
   sign_up:              { method: 'google' | 'email' };
-  onboarding_complete:  { goal: string; space_intent: string };
+  onboarding_complete:  { goal: string; space_intent: string; space_setup?: string };
 
   // 일정
   schedule_create: {

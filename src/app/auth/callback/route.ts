@@ -21,13 +21,12 @@ export async function GET(request: Request) {
         .single();
 
       if (!existingProfile) {
-        // 프로필 생성
+        // 프로필 생성 (DB 트리거가 이미 처리하지만 안전망으로)
         await supabase.from('profiles').upsert({
           id:     userId,
           name:   data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? '사용자',
           email:  data.user.email ?? '',
           avatar: '👤',
-          role:   'parent',
         });
 
         const { data: createdProfile } = await supabase
@@ -38,28 +37,7 @@ export async function GET(request: Request) {
         existingProfile = createdProfile;
       }
 
-      // 가족 그룹이 없으면 자동 생성
-      const profileFamilyGroupId = existingProfile?.family_group_id;
-      if (!profileFamilyGroupId) {
-        const inviteCode = `GLEAUM-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-        const { data: group } = await supabase
-          .from('family_groups')
-          .insert({
-            name:        '나의 공간',
-            invite_code: inviteCode,
-            created_by:  userId,
-          })
-          .select()
-          .single();
-
-        if (group) {
-          await supabase
-            .from('profiles')
-            .update({ family_group_id: group.id })
-            .eq('id', userId);
-        }
-      }
+      // 공간 자동 생성 제거 — 온보딩에서 사용자가 직접 선택
 
       const supportsOnboarding = existingProfile && 'onboarding_completed_at' in existingProfile;
       const needsOnboarding = supportsOnboarding && !existingProfile.onboarding_completed_at;

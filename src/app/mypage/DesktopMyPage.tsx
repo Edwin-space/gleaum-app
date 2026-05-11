@@ -210,8 +210,8 @@ export function DesktopMyPage({
               <SettingRow
                 icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />}
                 label="공간(Space) 관리"
-                description="가족, 연인, 친구와의 공간을 관리하고 새로운 멤버를 초대합니다."
-                href="/family"
+                description="연인, 친구와의 공간을 관리하고 새로운 멤버를 초대합니다."
+                href="/space"
               />
             </div>
           </div>

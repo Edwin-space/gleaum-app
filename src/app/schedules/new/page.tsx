@@ -7,7 +7,7 @@ import { useSpace } from '@/hooks/useSpace';
 import { createSchedule } from '@/lib/db';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
-import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod } from '@/types';
+import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod, ScheduleVisibility } from '@/types';
 
 import { MobileNewSchedule } from './MobileNewSchedule';
 import { DesktopNewSchedule } from './DesktopNewSchedule';
@@ -18,7 +18,7 @@ export default function NewSchedulePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { familyGroupId } = useCurrentUser();
-  const { members } = useSpace(familyGroupId);
+  const { members, myRole } = useSpace(familyGroupId);
 
   const [saving, setSaving] = useState(false);
   const [type, setType] = useState<ScheduleType>((searchParams.get('type') as ScheduleType) || 'shared');
@@ -39,6 +39,7 @@ export default function NewSchedulePage() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('other');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [expenseVisibility, setExpenseVisibility] = useState<ScheduleVisibility>('space');
 
   // Attachments
   const [attachments, setAttachments] = useState<{ id: string; file: File | null; url: string }[]>([]);
@@ -81,6 +82,12 @@ export default function NewSchedulePage() {
     }
     if (!familyGroupId) return;
 
+    // viewer 역할은 일정 생성 불가
+    if (myRole === 'viewer') {
+      toast.error('조회 권한만 있어 일정을 생성할 수 없습니다');
+      return;
+    }
+
     setSaving(true);
     try {
       const start = new Date(`${date}T${startTime}`);
@@ -100,6 +107,8 @@ export default function NewSchedulePage() {
         amount: type === 'expense' ? Number(amount) : undefined,
         expenseCategory: type === 'expense' ? category : undefined,
         paymentMethod: type === 'expense' ? paymentMethod : undefined,
+        // expense 유형일 때 공유/개인 선택 적용
+        visibility: type === 'expense' ? expenseVisibility : undefined,
       });
 
       trackEvent('schedule_create', {
@@ -123,8 +132,9 @@ export default function NewSchedulePage() {
     saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
     participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
     reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
-    category, setCategory, paymentMethod, setPaymentMethod, attachments,
-    handleFileSelect, fileInputRef, removeAttachment, handleSave
+    category, setCategory, paymentMethod, setPaymentMethod,
+    expenseVisibility, setExpenseVisibility,
+    attachments, handleFileSelect, fileInputRef, removeAttachment, handleSave,
   };
 
   if (isDesktop) {

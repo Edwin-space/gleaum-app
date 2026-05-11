@@ -153,6 +153,12 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
               <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: cfg.color }}>
                 {schedule.type}
               </span>
+              {schedule.visibility === 'private' && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                  style={{ background: 'rgba(12,201,181,0.10)', color: '#0CC9B5' }}>
+                  🔒 나만
+                </span>
+              )}
             </div>
             <StatusBadge status={schedule.status} />
           </div>

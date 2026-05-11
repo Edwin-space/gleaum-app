@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-05-08
+> **최종 업데이트**: 2026-05-11
 
 ---
 
@@ -19,28 +19,34 @@
    - ⚠️ **Purple(`#5A32FA`)은 완전 폐기**
 5. **RLS 보안** — 새 테이블 생성 시 반드시 RLS 활성화 + `my_family_group_id()` 기반 정책 추가.
 6. **TypeScript 엄격 모드** — 타입 오류 없이 `npm run build` 통과해야 함.
-7. **배포** — `main` 브랜치 push → Vercel 자동 배포. 또는 `npx vercel --prod`.
-8. **AI 간 작업 동기화** — 작업 완료 후 반드시 `docs/` 폴더 관련 문서 업데이트.
+7. **배포** — `npx vercel --prod` 로 직접 배포. 또는 `git push origin main` → Vercel 자동 배포.
+8. **AI 간 작업 동기화** — 작업 완료 후 반드시 `docs/` 폴더 관련 문서 업데이트 후 커밋.
 9. **제품 모델 방향 유지** — 글리움은 **개인 중심 + Space 확장형 토털 라이프 관리 서비스**. 신규 기능은 개인 단독 사용을 기본값으로.
 10. **hooks 임포트 경로** — `useIsDesktop()`은 `@/hooks/useMediaQuery`에서 import (NOT `@/hooks/useIsDesktop`).
 11. **NAS 자동 동기화** — `git push` 후 `.git/hooks/post-push` 훅이 자동으로 NAS 동기화. 훅이 없는 경우: `bash scripts/install-hooks.sh` 실행. 동기화 대상: `/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/`
+12. **`/family` 경로 폐기** — `/family`는 `/space`로 영구 리다이렉트. 새 코드에서 `/family` 참조 금지.
+13. **Space 용어 통일** — 코드/문서에서 "가족(family)" → "공간(space)" 용어 사용. DB 테이블명(`family_groups`)은 하위 호환으로 유지.
 
 ---
 
-## 현재 앱 상태 (2026-05-08 기준)
+## 현재 앱 상태 (2026-05-11 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app` (main 브랜치)
-- **최신 커밋**: `f304a95`
-- **Vercel Speed Insights**: `/home` 최적화 완료 (이전 poor → 개선 중)
+- **최신 배포**: 2026-05-11 (Vercel, `npx vercel --prod`)
+- **최신 git 커밋**: `c999212` (Phase 1 Step 2 — SpaceRole/SpaceMember 타입 교체)
+- ⚠️ Phase 1 Step 3~5 + Phase 2 전체는 **배포 완료되었으나 git 미커밋** 상태 → 이 문서 업데이트 후 커밋 예정
 
-### 디자인 히스토리 요약
-- 초기 Purple(`#5A32FA`) 구현 → Blue/Teal/Green으로 전면 복구
-- Tailwind CSS v4 신뢰성 문제 발견 → 2026-05-08 **전 컴포넌트 100% 인라인 스타일로 전환**
-- PC WEB 전 구간 + 모바일 전 구간 프리미엄 리디자인 완료
+### 주요 변경 이력 요약
 
-### 현재 코드 아키텍처
+| 날짜 | 내용 |
+|------|------|
+| 2026-05-08 | 전체 UI 리디자인(인라인 스타일), 성능 최적화, GA4, Capacitor 기반 구축 |
+| 2026-05-11 | Phase 1: Space 아키텍처 전환, Phase 2: 4개 기능 개선 동시 배포 |
+
+### 코드 아키텍처 패턴
+
 ```
 page.tsx (thin router)
   ├── useIsDesktop() 분기
@@ -48,18 +54,24 @@ page.tsx (thin router)
   └── return <MobileXxx />
 ```
 
-### ✅ 완전 작동 기능
+모든 `page.tsx`는 상태와 핸들러만 보유하고, 실제 UI는 `Desktop*.tsx` / `Mobile*.tsx`로 완전 분리.
+
+---
+
+## ✅ 현재 작동 중인 기능 전체 목록
 
 | 기능 | 경로/파일 | 상태 |
 |------|----------|------|
 | Google OAuth 로그인 | `/login` → `/auth/callback` | ✅ |
-| 온보딩 플로우 | `/onboarding` | ✅ |
-| 홈 대시보드 | `/home` (PC/모바일 분리) | ✅ |
+| 온보딩 플로우 (6단계) | `/onboarding` | ✅ |
+| 홈 대시보드 | `/home` (PC/모바일) | ✅ |
 | 일정 CRUD | `/schedules`, `/schedules/new`, `/schedules/[id]` | ✅ |
 | 일정 수정 | `/schedules/[id]/edit` | ✅ |
 | 자녀 일정 | `/schedules/children` | ✅ |
-| 가족 관리 + 초대 | `/family`, `/invite/[code]` | ✅ |
-| 가계부 | `/budget` | ✅ |
+| **공간 관리** | `/space` (PC/모바일) | ✅ 신규 |
+| `/family` 하위호환 리다이렉트 | `/family/page.tsx` | ✅ |
+| 초대 링크/코드 | `/invite/[code]` | ✅ |
+| **가계부 탭 분리** | `/budget` (공간 지출 / 내 지출) | ✅ 신규 |
 | 마이페이지 | `/mypage` | ✅ |
 | 알림 목록 | `/notifications` | ✅ |
 | FCM 푸시 알림 | `FCMProvider`, `useFCM` | ✅ |
@@ -69,29 +81,114 @@ page.tsx (thin router)
 | GA4 분석 | `GoogleAnalytics.tsx`, `src/lib/analytics.ts` | ✅ |
 | PWA (설치 가능) | `manifest.json`, `sw.js`, `PWAInstallBanner` | ✅ |
 | 네이버/SEO 최적화 | `layout.tsx` 메타데이터 | ✅ |
+| **일정 visibility 보안** | `src/lib/db.ts` getSchedules() | ✅ 신규 |
+| **역할 기반 권한 UI** | Admin/Editor/Viewer 분기 | ✅ 신규 |
 
-### ❌ 미구현 기능
+---
+
+## ❌ 미구현 기능 (다음 작업 후보)
 
 | 기능 | 우선순위 | 비고 |
 |------|---------|------|
-| 이미지 첨부 실제 업로드 | 🟡 | UI만 있음, Storage 연동 필요 |
-| Google Calendar 동기화 | 🟡 | 코드 완성, API 활성화 대기 |
+| 이미지 첨부 실제 업로드 | 🟡 | UI만 있음, Supabase Storage 연동 필요 |
+| Google Calendar 동기화 | 🟡 | 코드 완성, GCP API 활성화 대기 |
 | 통계/분석 페이지 | 🟢 | 신규 개발 필요 |
-| 네이티브 앱 (macOS → iOS → Android) | 🔴 | Capacitor 계획 수립 완료, 작업 대기 |
+| 네이티브 앱 (iOS → Android) | 🔴 | Capacitor 기반 완료, Xcode 빌드 대기 |
+| Space 타입 확장 | 🟢 | 개인/연인/가족/모임 구분 (`family_groups.type`) |
+| 일정 단건 외부 공유 | 🟢 | `/share/[scheduleId]` 공개 읽기 전용 뷰 |
 
 ---
 
-## 프로젝트 파일 구조 핵심 3개
+## 핵심 파일 맵
 
 ```
-1. src/lib/db.ts          ← 모든 DB 쿼리 (여기서 시작)
-2. src/types/index.ts     ← 모든 TypeScript 타입
-3. src/lib/analytics.ts   ← GA4 이벤트 트래킹 유틸리티
+src/
+├── lib/
+│   ├── db.ts              ← 모든 Supabase 쿼리 (단일 진입점)
+│   ├── analytics.ts       ← GA4 이벤트 트래킹 유틸
+│   ├── fcm.ts             ← FCM 서버 발송
+│   └── native.ts          ← Capacitor 네이티브 유틸
+├── types/
+│   └── index.ts           ← 모든 TypeScript 타입 정의
+├── hooks/
+│   ├── useCurrentUser.ts  ← 현재 로그인 사용자 (spaceId, user, refreshUser)
+│   ├── useSpace.ts        ← 공간 데이터 (space, members, myRole, loading, refresh)
+│   ├── useSchedules.ts    ← 일정 목록
+│   └── useMediaQuery.ts   ← useIsDesktop() — 반드시 이 파일에서 import
+├── app/
+│   ├── space/             ← 공간 관리 (신규)
+│   │   ├── page.tsx
+│   │   ├── DesktopSpace.tsx
+│   │   └── MobileSpace.tsx
+│   ├── budget/
+│   │   ├── page.tsx       ← BudgetTab 타입 export, tab 상태 관리
+│   │   ├── DesktopBudget.tsx
+│   │   └── MobileBudget.tsx
+│   ├── schedules/new/
+│   │   ├── page.tsx       ← expenseVisibility 상태, viewer 차단
+│   │   ├── DesktopNewSchedule.tsx
+│   │   └── MobileNewSchedule.tsx
+│   └── family/
+│       └── page.tsx       ← redirect('/space') 하위호환 리다이렉트
+└── components/
+    ├── ui/Card.tsx        ← 🔒 나만 배지 (visibility === 'private')
+    └── layout/
+        └── DesktopSidebar.tsx  ← '공간' 링크 → /space
 ```
 
 ---
 
-## 인라인 스타일 표준 패턴 (필수 숙지)
+## Space / 권한 시스템 상세
+
+### 테이블 구조 (DB)
+```sql
+-- space_members (기존 family_group_members 대체)
+id          uuid
+space_id    uuid  → family_groups.id
+user_id     uuid  → profiles.id
+role        text  CHECK IN ('admin', 'editor', 'viewer')
+
+-- 여전히 family_groups 테이블명 사용 (DB 하위 호환)
+```
+
+### SpaceRole 타입
+```typescript
+// src/types/index.ts
+export type SpaceRole = 'admin' | 'editor' | 'viewer';
+```
+
+### useSpace 훅 반환값
+```typescript
+const { space, members, myRole, loading, refresh } = useSpace(spaceId);
+// myRole: SpaceRole | null  ← getMyRoleInSpace() 병렬 로드
+```
+
+### 역할별 권한 매트릭스
+
+| 기능 | admin | editor | viewer |
+|------|:-----:|:------:|:------:|
+| 일정 조회 | ✅ | ✅ | ✅ |
+| 일정 생성 | ✅ | ✅ | ❌ |
+| 일정 수정 | ✅ | ✅ | ❌ |
+| 공간 이름 변경 | ✅ | ❌ | ❌ |
+| 멤버 제거 | ✅ | ❌ | ❌ |
+
+### Visibility 보안
+```typescript
+// src/lib/db.ts — getSchedules()
+// private 일정은 본인만 조회 가능
+.or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+```
+
+| visibility 값 | 의미 |
+|---------------|------|
+| `'space'` | 공간 전체 공유 (기본값) |
+| `'private'` | 본인만 조회 가능 (🔒 나만 배지) |
+| `'selected'` | 지정된 참여자만 조회 (미구현 UI) |
+
+---
+
+## 인라인 스타일 표준 패턴
 
 ### 카드 컴포넌트
 ```tsx
@@ -108,8 +205,7 @@ page.tsx (thin router)
 ```tsx
 <div style={{
   background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
-  position: 'relative',
-  overflow: 'hidden',
+  position: 'relative', overflow: 'hidden',
 }}>
   {/* glow blob */}
   <div style={{
@@ -124,11 +220,20 @@ page.tsx (thin router)
 ```tsx
 <button style={{
   background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-  color: 'white',
-  borderRadius: '18px',
-  border: 'none',
+  color: 'white', borderRadius: '18px', border: 'none',
   boxShadow: '0 8px 24px rgba(0,132,204,0.3)',
 }}>
+```
+
+### 역할 배지 (Admin/Editor/Viewer)
+```tsx
+<span style={{
+  padding: '6px 14px', borderRadius: '999px', fontSize: '11px', fontWeight: 800,
+  background: role === 'admin' ? 'rgba(0,132,204,0.1)' : role === 'viewer' ? 'rgba(142,142,147,0.1)' : 'rgba(12,201,181,0.1)',
+  color: role === 'admin' ? '#0084CC' : role === 'viewer' ? '#8E8E93' : '#0CC9B5',
+}}>
+  {role === 'admin' ? 'Admin' : role === 'viewer' ? 'Viewer' : 'Editor'}
+</span>
 ```
 
 ### 모바일 Safe Area
@@ -137,9 +242,21 @@ paddingTop: 'calc(env(safe-area-inset-top) + 48px)'
 paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)'
 ```
 
+### 모바일 input overflow 방지 (iOS Safari)
+```tsx
+{/* ❌ 금지 — 좁은 화면에서 잘림 */}
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+
+{/* ✅ 권장 — flex + minWidth: 0 */}
+<div style={{ display: 'flex', gap: '8px' }}>
+  <input style={{ flex: 1, minWidth: 0 }} />
+  <input style={{ flex: 1, minWidth: 0 }} />
+</div>
+```
+
 ### useIsDesktop() 사용법
 ```tsx
-import { useIsDesktop } from '@/hooks/useMediaQuery';  // ← 이 경로만 사용
+import { useIsDesktop } from '@/hooks/useMediaQuery';  // ← 반드시 이 경로
 
 const isDesktop = useIsDesktop();
 if (isDesktop) return <DesktopComponent />;
@@ -155,20 +272,46 @@ trackEvent('schedule_create', {
   has_participants: participants.length > 0,
   has_reminder: reminder > 0,
   has_repeat: repeat !== 'none',
-  has_expense: type === 'expense',
+  has_expense: type === 'expense' && !!amount,
 });
 ```
 
 ---
 
-## 네이티브 앱 확장 방향
+## Phase 1 & 2 작업 요약 (2026-05-11)
 
-> 상세 계획: `docs/14-native-app-plan.md`
+### Phase 1 — Space 아키텍처 전환
 
-- **기술**: Capacitor.js (현재 Next.js 코드베이스 85~90% 재사용)
-- **DB**: 웹과 동일한 Supabase 프로젝트 공유 (별도 백엔드 불필요)
-- **순서**: macOS 먼저 → iOS/iPad → Android
-- **배포**: Mac App Store / App Store / Google Play
+**Step 1**: `space_members` 테이블 신설 + 역할 기반 RLS (커밋 `5446976`)
+- Supabase Migration 적용: `space_members(id, space_id, user_id, role)`
+- RLS: space_id 기반 조회, admin 전용 INSERT/DELETE
+
+**Step 2**: SpaceRole / SpaceMember 타입 교체 (커밋 `c999212`)
+- `src/types/index.ts` — `SpaceRole`, `SpaceMember` 타입 전면 교체
+- `src/lib/db.ts` — `getSpaceWithMembers()`, `getMyRoleInSpace()`, `removeSpaceMember()`, `updateSpaceName()` 추가
+
+**Step 3**: 인증 콜백 자동 생성 제거 + 온보딩 Space 선택 단계 추가
+- `src/app/auth/callback/route.ts` — 자동 Space 생성 제거
+- `src/app/onboarding/page.tsx` — 6단계, Step 4 '공간 설정' 신규
+
+**Step 4**: Cron / 알림 API → `space_members` 기반으로 교체
+- `src/app/api/cron/reminders/route.ts`
+- `src/app/api/cron/automations/route.ts`
+- `src/app/api/notifications/renotify/route.ts`
+
+**Step 5**: `/family` → `/space` 전면 마이그레이션
+- `/space` 페이지 신규 (`DesktopSpace.tsx`, `MobileSpace.tsx`)
+- 사이드바, 마이페이지, 홈, 초대 링크 URL 전부 교체
+- `/family/page.tsx` → `redirect('/space')`
+
+### Phase 2 — 4개 기능 동시 개선
+
+| # | 기능 | 주요 파일 |
+|---|------|---------|
+| 1 | 모바일 입력 오버플로우 수정 | `MobileNewSchedule.tsx` |
+| 2 | visibility 보안 수정 + 🔒 배지 | `db.ts`, `Card.tsx` |
+| 3 | 가계부 탭 분리 (공간/내 지출) | `budget/page.tsx`, `MobileBudget.tsx`, `DesktopBudget.tsx` |
+| 4 | 공간 권한 UI 적용 (Admin/Editor/Viewer) | `useSpace.ts`, `space/*.tsx`, `schedules/new/page.tsx` |
 
 ---
 
@@ -205,30 +348,50 @@ CRON_SECRET=
 
 ---
 
-## 작업 전 확인 체크리스트
+## 작업 시작 체크리스트
 
 ```bash
 # 1. 최신 코드 확인
 git log --oneline -5
 
-# 2. 로컬 빌드 테스트 (배포 전 필수)
+# 2. 로컬 빌드 테스트 (작업 후 배포 전 필수)
 npm run build
 
 # 3. 배포
-git add [파일들] && git commit -m "feat: ..." && git push origin main
-# 또는
 npx vercel --prod
+# 또는 git push (Vercel 자동 배포)
+git add [파일들] && git commit -m "feat: ..." && git push origin main
 ```
 
 ---
 
-## 주요 커밋 히스토리
+## 커밋 히스토리 (최신순)
 
-| 커밋 | 내용 |
-|------|------|
-| `f304a95` | 전체 UI 리디자인 + 성능 최적화 + GA4 이벤트 트래킹 (2026-05-08) |
-| `86867a9` | PC/데스크탑 레이아웃 프리미엄 리디자인 |
-| `a3c7acb` | PWA 완전체 — 스플래시/파비콘/OG 이미지 전체 적용 |
-| `6770360` | 공식 BI/로고 이미지 전 구간 적용 |
-| `8f35e4b` | Phase 2 PC/모바일 뷰 분리 + cron POST 메서드 지원 |
-| `605d634` | Firebase 프로젝트 이관 |
+| 커밋 | 날짜 | 내용 |
+|------|------|------|
+| `c999212` | 2026-05-11 | Phase 1 Step 2 — SpaceRole/SpaceMember 타입 교체 |
+| `5446976` | 2026-05-11 | Phase 1 Step 1 — space_members 테이블 + RLS |
+| `2de32c3` | 2026-05-08 | iOS: Mac Catalyst → Designed for iPad 전환 |
+| `2354961` | 2026-05-08 | iOS: iPad + macOS(Mac Catalyst) 지원 확장 |
+| `0be69da` | 2026-05-08 | Android: 앱 기반 구축 — 스플래시/아이콘/딥링크 |
+| `d3e8439` | 2026-05-08 | iOS: PWA 배너 억제 + OAuth 딥링크 + 스플래시 |
+| `e47adb8` | 2026-05-08 | iOS: 시뮬레이터 빌드 성공 + AppDelegate 개선 |
+| `b68ab5e` | 2026-05-08 | Capacitor 네이티브 앱 기반 구축 (iOS + Android) |
+| `f304a95` | 2026-05-08 | 전체 UI 리디자인 + 성능 최적화 + GA4 |
+
+> ⚠️ Phase 1 Step 3~5 + Phase 2 변경사항은 Vercel 배포 완료, git 커밋 예정
+
+---
+
+## 네이티브 앱 현황
+
+> 상세 계획: `docs/14-native-app-plan.md`
+
+| 플랫폼 | 상태 | 비고 |
+|--------|------|------|
+| iOS | 시뮬레이터 빌드 성공 | Apple Developer 계정 연결 후 TestFlight 배포 가능 |
+| Android | 기반 구축 완료 | Android Studio에서 실행 가능 |
+| macOS | iOS에서 "Designed for iPad" 방식으로 전환 | Mac Catalyst 대신 |
+
+- **기술**: Capacitor.js (`server.url = 'https://www.gleaum.com'` — 웹 래핑 방식)
+- **DB**: 웹과 동일한 Supabase 공유, 별도 백엔드 불필요

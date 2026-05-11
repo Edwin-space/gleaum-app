@@ -40,10 +40,11 @@
 ### 🟢 마이페이지 PC UI 최적화
 - 프로필 수정 영역 PC 대시보드 구조화
 
-### 🟢 Space 아키텍처 확장
-- `family_groups.type` 추가 → 기존 가족 그룹을 Space로 확장
-- `spaces`, `space_members`, `schedule_assignees`, `schedule_observers`, `notification_rules` 테이블 설계
-- 중기 목표: 개인 Space / 연인 Space / 가족 Space / 모임 Space 구분
+### 🟢 Space 아키텍처 2단계 확장 (Phase 1·2 완료, Phase 3 대기)
+- ✅ Phase 1 완료: `/space` 페이지, 공간 관리 UI, 초대/합류/권한 시스템
+- ✅ Phase 2 완료: 역할(Admin/Editor/Viewer) UI 적용, visibility 보안 수정, 가계부 탭 분리
+- Phase 3 미완: `family_groups.type` 추가 → 개인/연인/가족/모임 Space 구분
+- Phase 3 미완: `schedule_assignees`, `schedule_observers`, `notification_rules` 테이블 설계
 
 ---
 

@@ -539,8 +539,11 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
 
 /** 스페이스 일정 전체 조회 */
 export async function getSchedules(spaceId: string): Promise<Schedule[]> {
-
   const supabase = createClient();
+
+  // 현재 사용자 확인 — private 일정은 생성자 본인만 조회 가능
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id ?? '';
 
   const { data, error } = await supabase
     .from('schedules')
@@ -549,7 +552,9 @@ export async function getSchedules(spaceId: string): Promise<Schedule[]> {
       schedule_participants (user_id)
     `)
     .eq('family_group_id', spaceId)
-
+    // visibility가 'private'인 일정은 생성자(created_by)만 볼 수 있음
+    // visibility가 null이거나 'space'/'selected'인 경우는 전체 공개
+    .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
     .order('start_time', { ascending: true });
 
   if (error) {

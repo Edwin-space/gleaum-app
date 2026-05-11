@@ -238,8 +238,8 @@ export function MobileMyPage({
 
           <Divider />
 
-          {/* Family / space */}
-          <Link href="/family" style={{ textDecoration: 'none', display: 'block' }}>
+          {/* Space */}
+          <Link href="/space" style={{ textDecoration: 'none', display: 'block' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', cursor: 'pointer' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

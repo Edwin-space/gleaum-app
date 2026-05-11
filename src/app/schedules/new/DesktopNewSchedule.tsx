@@ -9,7 +9,7 @@ import {
   EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS,
 } from '@/types';
-import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod , SpaceMember } from '@/types';
+import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod, SpaceMember, ScheduleVisibility } from '@/types';
 
 interface DesktopNewScheduleProps {
   saving: boolean;
@@ -42,6 +42,8 @@ interface DesktopNewScheduleProps {
   setCategory: (c: ExpenseCategory) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (m: PaymentMethod) => void;
+  expenseVisibility: ScheduleVisibility;
+  setExpenseVisibility: (v: ScheduleVisibility) => void;
   attachments: any[];
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -99,8 +101,9 @@ export function DesktopNewSchedule({
   saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
   participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
   reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
-  category, setCategory, paymentMethod, setPaymentMethod, attachments,
-  handleFileSelect, fileInputRef, removeAttachment, handleSave,
+  category, setCategory, paymentMethod, setPaymentMethod,
+  expenseVisibility, setExpenseVisibility,
+  attachments, handleFileSelect, fileInputRef, removeAttachment, handleSave,
 }: DesktopNewScheduleProps) {
   const router = useRouter();
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
@@ -281,6 +284,29 @@ export function DesktopNewSchedule({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* 공유/개인 토글 */}
+                <div>
+                  <FieldLabel>공개 범위</FieldLabel>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {([
+                      { val: 'space'   as ScheduleVisibility, icon: '🏠', label: '공간 공유', desc: '멤버 모두 확인' },
+                      { val: 'private' as ScheduleVisibility, icon: '🔒', label: '내 지출',   desc: '나만 확인'    },
+                    ]).map(({ val, icon, label, desc }) => (
+                      <button key={val} onClick={() => setExpenseVisibility(val)} style={{
+                        flex: 1, padding: '12px', borderRadius: '14px', cursor: 'pointer',
+                        background: expenseVisibility === val ? 'rgba(245,158,11,0.10)' : '#FAFAFA',
+                        border: `1.5px solid ${expenseVisibility === val ? 'rgba(245,158,11,0.40)' : 'transparent'}`,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        transition: 'all 0.15s',
+                      }}>
+                        <span style={{ fontSize: '20px' }}>{icon}</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: expenseVisibility === val ? '#D97706' : '#1A1B2E' }}>{label}</span>
+                        <span style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 600 }}>{desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* 금액 */}
                 <div>
                   <FieldLabel>지출 금액</FieldLabel>

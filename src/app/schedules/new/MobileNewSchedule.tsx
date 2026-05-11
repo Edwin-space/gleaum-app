@@ -9,7 +9,7 @@ import {
   EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS,
 } from '@/types';
-import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod , SpaceMember } from '@/types';
+import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod, SpaceMember, ScheduleVisibility } from '@/types';
 
 interface MobileNewScheduleProps {
   saving: boolean;
@@ -42,6 +42,8 @@ interface MobileNewScheduleProps {
   setCategory: (c: ExpenseCategory) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (m: PaymentMethod) => void;
+  expenseVisibility: ScheduleVisibility;
+  setExpenseVisibility: (v: ScheduleVisibility) => void;
   attachments: any[];
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -50,10 +52,10 @@ interface MobileNewScheduleProps {
 }
 
 const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; activeBg: string; label: string; desc: string }> = {
-  shared:   { icon: '👨‍👩‍👧‍👦', activeColor: '#0084CC', activeBg: '#EBF5FF', label: '공유', desc: '가족 전체' },
-  personal: { icon: '👤',       activeColor: '#0891B2', activeBg: '#E0F7FA', label: '개인', desc: '나만 보기' },
-  child:    { icon: '🧒',       activeColor: '#059669', activeBg: '#ECFDF5', label: '자녀', desc: '자녀 관리' },
-  expense:  { icon: '💰',       activeColor: '#D97706', activeBg: '#FFFBEB', label: '지출', desc: '정기 지출' },
+  shared:   { icon: '🏠',  activeColor: '#0084CC', activeBg: '#EBF5FF', label: '공유', desc: '공간 공유' },
+  personal: { icon: '👤',  activeColor: '#0891B2', activeBg: '#E0F7FA', label: '개인', desc: '나만 보기' },
+  child:    { icon: '🧒',  activeColor: '#059669', activeBg: '#ECFDF5', label: '자녀', desc: '자녀 관리' },
+  expense:  { icon: '💰',  activeColor: '#D97706', activeBg: '#FFFBEB', label: '지출', desc: '정기 지출' },
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -75,8 +77,9 @@ export function MobileNewSchedule({
   saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
   participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
   reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
-  category, setCategory, paymentMethod, setPaymentMethod, attachments,
-  handleFileSelect, fileInputRef, removeAttachment, handleSave
+  category, setCategory, paymentMethod, setPaymentMethod,
+  expenseVisibility, setExpenseVisibility,
+  attachments, handleFileSelect, fileInputRef, removeAttachment, handleSave
 }: MobileNewScheduleProps) {
   const router = useRouter();
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
@@ -249,51 +252,43 @@ export function MobileNewSchedule({
         {/* 날짜 & 시간 카드 */}
         <div style={cardBase}>
           <SectionLabel>날짜 & 시간</SectionLabel>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '10px',
-          }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{
-                  ...inputBase,
-                  height: '52px',
-                  border: `1.5px solid ${date ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
-                }}
-              />
-            </div>
+          {/* 날짜 — 전체 너비 */}
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            style={{
+              ...inputBase,
+              height: '52px',
+              border: `1.5px solid ${date ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
+              marginBottom: '10px',
+            }}
+          />
+          {/* 시작~종료 시간 — flex row (overflow 방지) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input
               type="time"
               value={startTime}
               onChange={(e) => setStart(e.target.value)}
               style={{
                 ...inputBase,
+                flex: 1,
+                minWidth: 0,
                 height: '52px',
                 border: `1.5px solid ${startTime ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
-                gridColumn: '1 / 2',
               }}
             />
-            <div style={{
-              gridColumn: '2 / 3',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <span style={{ fontSize: '13px', color: '#C7C7CC', fontWeight: 600 }}>~</span>
-            </div>
+            <span style={{ fontSize: '13px', color: '#C7C7CC', fontWeight: 600, flexShrink: 0 }}>~</span>
             <input
               type="time"
               value={endTime}
               onChange={(e) => setEnd(e.target.value)}
               style={{
                 ...inputBase,
+                flex: 1,
+                minWidth: 0,
                 height: '52px',
                 border: `1.5px solid ${endTime ? activeCfg.activeColor + '80' : '#EBEBF0'}`,
-                gridColumn: '3 / 4',
               }}
             />
           </div>
@@ -317,6 +312,29 @@ export function MobileNewSchedule({
             }}>
               💰 정기지출 정보
             </p>
+
+            {/* 공유/개인 토글 */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              {([
+                { val: 'space'   as ScheduleVisibility, label: '🏠 공간 공유', desc: '멤버 모두 확인' },
+                { val: 'private' as ScheduleVisibility, label: '🔒 내 지출',   desc: '나만 확인' },
+              ]).map(({ val, label, desc }) => (
+                <button
+                  key={val}
+                  onClick={() => setExpenseVisibility(val)}
+                  style={{
+                    flex: 1, padding: '10px 8px', borderRadius: '14px',
+                    border: `2px solid ${expenseVisibility === val ? 'rgba(217,119,6,0.40)' : 'rgba(217,119,6,0.15)'}`,
+                    background: expenseVisibility === val ? 'rgba(217,119,6,0.10)' : 'white',
+                    cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+                  }}
+                >
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: expenseVisibility === val ? '#D97706' : '#8E8E93' }}>{label}</span>
+                  <span style={{ fontSize: '10px', color: '#B0B0B0', fontWeight: 600 }}>{desc}</span>
+                </button>
+              ))}
+            </div>
 
             {/* 금액 입력 */}
             <div style={{ position: 'relative', marginBottom: '16px' }}>

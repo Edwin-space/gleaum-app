@@ -47,7 +47,7 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
     calendar_first:{ title: '오늘 일정부터 선명하게 볼게요.',  body: '가장 가까운 약속과 캘린더 흐름을 우선으로 보여드립니다.' },
     routine_first: { title: '완료해야 할 루틴을 먼저 챙길게요.', body: '반복되는 습관과 완료 확인이 필요한 일을 놓치지 않게 도와드립니다.' },
     expense_first: { title: '다가오는 지출 흐름을 먼저 볼게요.', body: '정기결제와 공동비용 알림을 중심으로 홈을 구성합니다.' },
-    space_first:   { title: 'Space를 먼저 볼게요.',           body: '친구, 연인, 가족과 연결된 일정과 자금 흐름을 우선합니다.' },
+    space_first:   { title: 'Space를 먼저 볼게요.',           body: '친구, 연인과 연결된 공간의 일정과 자금 흐름을 우선합니다.' },
   };
   const personalCopy = homeCopy[homeLayout];
 

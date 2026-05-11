@@ -43,7 +43,7 @@ export default function EditSchedulePage() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const { user, spaceId } = useCurrentUser();
-  const { space: group, members } = useSpace(spaceId);
+  const { space: group, members, myRole } = useSpace(spaceId);
 
   const { refresh } = useSchedules(spaceId);
 
@@ -114,6 +114,12 @@ export default function EditSchedulePage() {
     if (!title.trim()) { toastError('제목을 입력해주세요'); return; }
     if (!date)         { toastError('날짜를 선택해주세요'); return; }
     if (!id)           return;
+
+    // viewer 역할은 수정 불가
+    if (myRole === 'viewer') {
+      toastError('조회 권한만 있어 일정을 수정할 수 없습니다');
+      return;
+    }
 
     setSaving(true);
     try {

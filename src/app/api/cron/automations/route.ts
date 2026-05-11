@@ -239,11 +239,19 @@ async function sendOverdueNotification(
   schedule: ScheduleRef,
   now: Date
 ) {
-  // 가족/Space 멤버 전체에게 알림
+  // 공간 멤버 전체에게 알림 (space_members 기반)
+  const { data: spaceMembers } = await supabase
+    .from('space_members')
+    .select('user_id')
+    .eq('space_id', schedule.family_group_id);
+
+  const memberIds = (spaceMembers ?? []).map((m: { user_id: string }) => m.user_id);
+  if (!memberIds.length) return;
+
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, fcm_token')
-    .eq('family_group_id', schedule.family_group_id)
+    .in('id', memberIds)
     .not('fcm_token', 'is', null);
 
   if (!profiles || profiles.length === 0) return;

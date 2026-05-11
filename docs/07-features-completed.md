@@ -310,3 +310,101 @@ npm run cap:open:android # Android Studio 열기
 - **GitHub**: `Edwin-space/gleaum-app` (`main` 브랜치 push → Vercel 자동 배포)
 - **Vercel CLI 직접 배포도 가능**: `npx vercel --prod`
 - **최신 커밋**: `b68ab5e` (2026-05-08)
+
+---
+
+## Phase 1 — 공간(Space) 아키텍처 전환 (완료 — 2026-05-11)
+
+> `/family` 경로·개념을 전면 `/space`로 마이그레이션. DB 테이블명(`family_groups`, `space_members`)은 유지하되 UI·라우팅·훅만 변경.
+
+### 변경된 핵심 파일
+
+| 파일 | 변경 내용 |
+|------|---------|
+| `src/app/auth/callback/route.ts` | 자동 Space 생성 로직 제거 — 온보딩에서 사용자가 직접 선택 |
+| `src/app/onboarding/page.tsx` | 6단계 플로우로 확장; 4번째 단계 '공간 설정'(만들기/합류/건너뛰기) 추가 |
+| `src/app/family/page.tsx` | `redirect('/space')` 영구 리다이렉트 (하위 호환) |
+| `src/app/space/page.tsx` | 신규 — `useIsDesktop()` 분기 라우터 |
+| `src/app/space/DesktopSpace.tsx` | 신규 — 공간 관리 PC UI |
+| `src/app/space/MobileSpace.tsx` | 신규 — 공간 관리 모바일 UI |
+| `src/app/invite/[code]/page.tsx` | `/family` → `/space` 리다이렉트 2곳 수정 |
+| `src/app/mypage/DesktopMyPage.tsx` | href `/family` → `/space` |
+| `src/app/mypage/MobileMyPage.tsx` | href `/family` → `/space` |
+| `src/app/home/DesktopHome.tsx` | `space_first` 문구 업데이트 |
+| `src/components/layout/DesktopSidebar.tsx` | 사이드바 레이블 `가족` → `공간`, href `/family` → `/space` |
+| `src/app/api/cron/reminders/route.ts` | FCM 토큰 조회를 `profiles.family_group_id` → `space_members` JOIN 방식으로 변경 |
+| `src/app/api/cron/automations/route.ts` | 동일 패턴 적용 |
+| `src/app/api/notifications/renotify/route.ts` | 동일 패턴 적용 |
+| `src/lib/analytics.ts` | `onboarding_complete` 이벤트 타입에 `space_setup?: string` 추가 |
+
+### 온보딩 Space 설정 단계 (Step 4)
+- **만들기**: 공간 이름 입력 → `createSpace()` 호출
+- **합류하기**: 초대 코드 입력 → `joinSpaceByCode()` 호출
+- **건너뛰기**: 바로 통과 (나중에 /space에서 생성 가능)
+
+---
+
+## Phase 2 — 4개 기능 개선 동시 적용 (완료 — 2026-05-11)
+
+### #1 모바일 입력 오버플로우 버그 수정
+
+**원인**: `MobileNewSchedule.tsx`의 날짜/시간 영역이 `gridTemplateColumns: '1fr 1fr 1fr'` 3컬럼 그리드여서 iOS Safari에서 입력 필드가 잘림.
+
+**수정**: `src/app/schedules/new/MobileNewSchedule.tsx`
+- 날짜 input: 독립 행으로 분리, `marginBottom: '10px'`
+- 시간 row: `display: flex` + 각 input에 `flex: 1, minWidth: 0` 적용
+
+### #2 일정 visibility 보안 수정 + UI 배지
+
+**문제**: `getSchedules()`가 `visibility === 'private'`인 타인의 일정도 노출하는 보안 결함.
+
+**수정**: `src/lib/db.ts`
+```typescript
+.or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+```
+
+**UI**: `src/components/ui/Card.tsx` — `visibility === 'private'`일 때 `🔒 나만` 배지 표시
+
+### #3 가계부 탭 분리 (공간 지출 / 내 지출)
+
+**수정 파일들**:
+
+| 파일 | 변경 내용 |
+|------|---------|
+| `src/app/budget/page.tsx` | `BudgetTab = 'space' \| 'personal'` 타입 export; `tab` state 추가; expenses 필터링 로직 분기 |
+| `src/app/budget/MobileBudget.tsx` | 탭 switcher UI 추가 (🏠 공간 지출 / 👤 내 지출) |
+| `src/app/budget/DesktopBudget.tsx` | 탭 switcher UI 추가; 누락된 `isCurrentMonth` prop 추가 |
+
+**필터 로직**:
+- 공간 지출: `visibility !== 'private'` (공간 전체 공유 지출)
+- 내 지출: `createdBy === userId && visibility === 'private'` (나만 보는 지출)
+
+### #4 공간 권한 시스템 UI 적용
+
+**`useSpace` 훅 확장** (`src/hooks/useSpace.ts`):
+- `myRole: SpaceRole | null` 상태 추가
+- `Promise.all([getSpaceWithMembers, getMyRoleInSpace])` 병렬 로드
+
+**일정 생성/수정 viewer 차단**:
+- `src/app/schedules/new/page.tsx` — `myRole === 'viewer'` 시 토스트 에러 + 조기 반환
+- `src/app/schedules/[id]/edit/page.tsx` — 동일 적용
+
+**일정 visibility 토글 (expense 타입)**:
+- `src/app/schedules/new/page.tsx` — `expenseVisibility` state (`'space'` 기본값)
+- `src/app/schedules/new/MobileNewSchedule.tsx` — 🏠 공간 공유 / 🔒 내 지출 토글 UI
+- `src/app/schedules/new/DesktopNewSchedule.tsx` — 동일 UI 추가
+
+**공간 관리 Admin UI**:
+
+| 파일 | 변경 내용 |
+|------|---------|
+| `src/app/space/MobileSpace.tsx` | ✏️ 이름 수정 버튼(admin), 멤버 역할 배지 Admin/Editor/Viewer, ✕ 제거 버튼(admin, 자신 제외), 이름 수정 모달 |
+| `src/app/space/DesktopSpace.tsx` | 동일 기능 PC 버전 — ✏️ 버튼, 역할 배지, ✕ 제거 버튼, 중앙 정렬 다이얼로그 모달 |
+
+**역할 배지 색상**:
+- Admin: `#0084CC` (Blue)
+- Editor: `#0CC9B5` (Teal)
+- Viewer: `#8E8E93` (Gray)
+
+### typeConfig 아이콘 업데이트
+- `shared` 타입: 아이콘 `👨‍👩‍👧‍👦` → `🏠`, 설명 `가족 전체` → `공간 공유`

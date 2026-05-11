@@ -3,6 +3,7 @@
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS } from '@/types';
 import type { Schedule, ScheduleStatus, ExpenseCategory } from '@/types';
+import type { BudgetTab } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
 
 interface MobileBudgetProps {
@@ -11,6 +12,8 @@ interface MobileBudgetProps {
   prevMonth: () => void;
   nextMonth: () => void;
   isCurrentMonth: boolean;
+  tab: BudgetTab;
+  setTab: (t: BudgetTab) => void;
   total: number;
   completePct: number;
   completedCnt: number;
@@ -29,6 +32,8 @@ export function MobileBudget({
   prevMonth,
   nextMonth,
   isCurrentMonth,
+  tab,
+  setTab,
   total,
   completePct,
   completedCnt,
@@ -154,6 +159,34 @@ export function MobileBudget({
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* ── 탭 스위처 ── */}
+      <div style={{ padding: '16px 16px 0', display: 'flex', gap: '8px' }}>
+        {([
+          { key: 'space'    as BudgetTab, label: '🏠 공간 지출' },
+          { key: 'personal' as BudgetTab, label: '👤 내 지출'   },
+        ]).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            style={{
+              flex: 1,
+              height: '44px',
+              borderRadius: '14px',
+              fontSize: '13px',
+              fontWeight: 800,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              background: tab === key ? 'white' : 'rgba(255,255,255,0.45)',
+              color: tab === key ? '#1A1B2E' : '#8E8E93',
+              boxShadow: tab === key ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {loading ? (

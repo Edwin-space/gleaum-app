@@ -38,8 +38,8 @@ export default function InvitePage() {
       } else if (result.success) {
         setSpaceName(result.spaceName ?? '');
         setPageState('success');
-        // 2초 후 /family(공간관리)로 이동
-        setTimeout(() => router.replace('/family'), 2000);
+        // 2초 후 /space(공간관리)로 이동
+        setTimeout(() => router.replace('/space'), 2000);
       } else {
         setPageState('invalid_code');
       }
@@ -171,7 +171,7 @@ export default function InvitePage() {
         </p>
 
         <button
-          onClick={() => router.replace('/family')}
+          onClick={() => router.replace('/space')}
           className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"
           style={{ background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)' }}
         >
