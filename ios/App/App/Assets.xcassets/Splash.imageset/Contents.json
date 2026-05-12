@@ -1,36 +1,38 @@
 {
   "images" : [
     {
-      "filename" : "logo.png",
+      "filename" : "appstore.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "logo 1.png",
+      "filename" : "appstore 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "logo 2.png",
+      "filename" : "appstore 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     },
     {
+      "filename" : "appstore 5.png",
       "idiom" : "ipad",
       "scale" : "1x"
     },
     {
+      "filename" : "appstore 6.png",
       "idiom" : "ipad",
       "scale" : "2x"
     },
     {
-      "filename" : "logo 4.png",
+      "filename" : "appstore 3.png",
       "idiom" : "ipad",
       "scale" : "1x",
       "subtype" : "mac-catalyst"
     },
     {
-      "filename" : "logo 3.png",
+      "filename" : "appstore 4.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "subtype" : "mac-catalyst"

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS, REPEAT_LABELS } from '@/types';
-import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType, ScheduleVisibility } from '@/types';
+import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 import type { BudgetTab, AddExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
 
@@ -13,6 +13,7 @@ interface DesktopBudgetProps {
   prevMonth: () => void;
   nextMonth: () => void;
   isCurrentMonth: boolean;
+  hasSpace: boolean;
   tab: BudgetTab;
   setTab: (t: BudgetTab) => void;
   total: number;
@@ -37,12 +38,19 @@ const REPEAT_OPTIONS: { value: RepeatType; label: string }[] = [
   { value: 'yearly',  label: '매년' },
 ];
 
+function formatInputAmount(raw: string): string {
+  const digits = raw.replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  return Number(digits).toLocaleString('ko-KR');
+}
+
 export function DesktopBudget({
   loading,
   viewDate,
   prevMonth,
   nextMonth,
   isCurrentMonth,
+  hasSpace,
   tab,
   setTab,
   total,
@@ -58,34 +66,33 @@ export function DesktopBudget({
   handleAddExpense,
 }: DesktopBudgetProps) {
   // ── 지출 추가 모달 상태 ──
-  const [showAddModal, setShowAddModal]   = useState(false);
-  const [saving, setSaving]               = useState(false);
-  const [newTitle, setNewTitle]           = useState('');
-  const [newAmount, setNewAmount]         = useState('');
-  const [newDate, setNewDate]             = useState(new Date().toISOString().split('T')[0]);
-  const [newCategory, setNewCategory]     = useState<ExpenseCategory>('other');
-  const [newPayment, setNewPayment]       = useState<PaymentMethod>('card');
-  const [newRepeat, setNewRepeat]         = useState<RepeatType>('none');
-  const [newVisibility, setNewVisibility] = useState<ScheduleVisibility>(tab === 'personal' ? 'private' : 'space');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [newTitle, setNewTitle]         = useState('');
+  const [newAmountRaw, setNewAmountRaw] = useState('');
+  const [newDate, setNewDate]           = useState(new Date().toISOString().split('T')[0]);
+  const [newCategory, setNewCategory]   = useState<ExpenseCategory>('other');
+  const [newPayment, setNewPayment]     = useState<PaymentMethod>('card');
+  const [newRepeat, setNewRepeat]       = useState<RepeatType>('none');
+
+  const amountDisplay = formatInputAmount(newAmountRaw);
 
   const openAddModal = () => {
-    setNewTitle(''); setNewAmount(''); setNewDate(new Date().toISOString().split('T')[0]);
+    setNewTitle(''); setNewAmountRaw(''); setNewDate(new Date().toISOString().split('T')[0]);
     setNewCategory('other'); setNewPayment('card'); setNewRepeat('none');
-    setNewVisibility(tab === 'personal' ? 'private' : 'space');
     setShowAddModal(true);
   };
 
   const handleSave = async () => {
-    if (!newTitle.trim() || !newAmount) return;
+    if (!newTitle.trim() || !newAmountRaw) return;
     setSaving(true);
     const ok = await handleAddExpense({
       title:         newTitle.trim(),
-      amount:        Number(newAmount),
+      amount:        Number(newAmountRaw),
       date:          new Date(newDate),
       category:      newCategory,
       paymentMethod: newPayment,
       repeat:        newRepeat,
-      visibility:    newVisibility,
     });
     setSaving(false);
     if (ok) setShowAddModal(false);
@@ -116,8 +123,25 @@ export function DesktopBudget({
 
             {/* 탭 스위처 */}
             <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.10)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,0.12)' }}>
-              {([{ key: 'space' as BudgetTab, label: '🏠 공간' }, { key: 'personal' as BudgetTab, label: '👤 개인' }]).map(({ key, label }) => (
-                <button key={key} onClick={() => setTab(key)} style={{ padding: '7px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', transition: 'all 0.15s', background: tab === key ? 'rgba(255,255,255,0.18)' : 'transparent', color: tab === key ? 'white' : 'rgba(255,255,255,0.50)' }}>{label}</button>
+              {([
+                { key: 'personal' as BudgetTab, label: '👤 개인', disabled: false },
+                { key: 'space'    as BudgetTab, label: '🏠 공간', disabled: !hasSpace },
+              ]).map(({ key, label, disabled }) => (
+                <button
+                  key={key}
+                  onClick={() => !disabled && setTab(key)}
+                  style={{
+                    padding: '7px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 800,
+                    border: disabled ? '1px dashed rgba(255,255,255,0.25)' : 'none',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s',
+                    background: tab === key && !disabled ? 'rgba(255,255,255,0.18)' : 'transparent',
+                    color: disabled ? 'rgba(255,255,255,0.28)' : tab === key ? 'white' : 'rgba(255,255,255,0.50)',
+                    opacity: disabled ? 0.55 : 1,
+                  }}
+                >
+                  {label}{disabled ? ' (공간 필요)' : ''}
+                </button>
               ))}
             </div>
 
@@ -290,27 +314,22 @@ export function DesktopBudget({
             style={{ background: 'white', borderRadius: '28px', padding: '36px', width: '100%', maxWidth: '520px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 24px' }}>지출 추가</h3>
+            {/* 모달 헤더 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+                {tab === 'personal' ? '개인 지출 추가' : '공간 지출 추가'}
+              </h3>
+              <span style={{ fontSize: '12px', fontWeight: 800, padding: '5px 12px', borderRadius: '20px', background: tab === 'personal' ? 'rgba(142,142,147,0.10)' : 'rgba(0,132,204,0.08)', color: tab === 'personal' ? '#8E8E93' : '#0084CC' }}>
+                {tab === 'personal' ? '🔒 나만 보기' : '🏠 공간 공유'}
+              </span>
+            </div>
 
-            {/* 유형 */}
+            {/* 지출 유형 */}
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>지출 유형</p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {REPEAT_OPTIONS.map(({ value, label }) => (
                   <button key={value} onClick={() => setNewRepeat(value)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newRepeat === value ? '#1A1B2E' : '#F5F5F7', color: newRepeat === value ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{label}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* 공유 범위 */}
-            <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>공유 범위</p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {([
-                  { val: 'space' as ScheduleVisibility, label: '🏠 공간 공유' },
-                  { val: 'private' as ScheduleVisibility, label: '🔒 나만' },
-                ] as { val: ScheduleVisibility; label: string }[]).map(({ val, label }) => (
-                  <button key={val} onClick={() => setNewVisibility(val)} style={{ flex: 1, height: '44px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newVisibility === val ? '#1A1B2E' : '#F5F5F7', color: newVisibility === val ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{label}</button>
                 ))}
               </div>
             </div>
@@ -325,7 +344,25 @@ export function DesktopBudget({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>금액</p>
-                <input type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="0" style={{ width: '100%', height: '52px', padding: '0 16px', borderRadius: '14px', fontSize: '18px', fontWeight: 800, background: '#F5F5F7', border: `2px solid ${newAmount ? '#0084CC' : 'transparent'}`, outline: 'none', boxSizing: 'border-box', color: '#1A1B2E', transition: 'border-color 0.2s' }} />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={amountDisplay}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                      setNewAmountRaw(raw);
+                    }}
+                    placeholder="0"
+                    style={{ width: '100%', height: '52px', padding: '0 40px 0 16px', borderRadius: '14px', fontSize: '18px', fontWeight: 800, background: '#F5F5F7', border: `2px solid ${newAmountRaw ? '#0084CC' : 'transparent'}`, outline: 'none', boxSizing: 'border-box', color: '#1A1B2E', transition: 'border-color 0.2s' }}
+                  />
+                  <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', fontWeight: 700, color: '#8E8E93', pointerEvents: 'none' }}>원</span>
+                </div>
+                {newAmountRaw && Number(newAmountRaw) >= 10000 && (
+                  <p style={{ fontSize: '12px', color: '#8E8E93', marginTop: '6px', fontWeight: 600 }}>
+                    {(Number(newAmountRaw) / 10000).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}만원
+                  </p>
+                )}
               </div>
               <div>
                 <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>{newRepeat === 'none' ? '지출 날짜' : '첫 결제일'}</p>
@@ -358,7 +395,7 @@ export function DesktopBudget({
             {/* 버튼 */}
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setShowAddModal(false)} style={{ flex: 1, height: '52px', borderRadius: '16px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>취소</button>
-              <button onClick={handleSave} disabled={saving || !newTitle.trim() || !newAmount} style={{ flex: 2, height: '52px', borderRadius: '16px', background: newTitle.trim() && newAmount ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : '#F0F0F5', border: 'none', cursor: newTitle.trim() && newAmount ? 'pointer' : 'not-allowed', fontSize: '15px', fontWeight: 800, color: newTitle.trim() && newAmount ? 'white' : '#AEAEA8', opacity: saving ? 0.7 : 1, boxShadow: newTitle.trim() && newAmount ? '0 6px 20px rgba(0,132,204,0.25)' : 'none' }}>{saving ? '저장 중...' : '지출 등록'}</button>
+              <button onClick={handleSave} disabled={saving || !newTitle.trim() || !newAmountRaw} style={{ flex: 2, height: '52px', borderRadius: '16px', background: newTitle.trim() && newAmountRaw ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : '#F0F0F5', border: 'none', cursor: newTitle.trim() && newAmountRaw ? 'pointer' : 'not-allowed', fontSize: '15px', fontWeight: 800, color: newTitle.trim() && newAmountRaw ? 'white' : '#AEAEA8', opacity: saving ? 0.7 : 1, boxShadow: newTitle.trim() && newAmountRaw ? '0 6px 20px rgba(0,132,204,0.25)' : 'none' }}>{saving ? '저장 중...' : '지출 등록'}</button>
             </div>
           </div>
         </div>
