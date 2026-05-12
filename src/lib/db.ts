@@ -568,8 +568,38 @@ export async function createSpace(name: string): Promise<string | null> {
 }
 
 /**
- * 로그인 후 프로필 보장
- * Phase 2 이후: 공간 자동 생성 제거 — 온보딩에서 명시적으로 생성
+ * 개인 공간 자동 생성 — 사용자에게 노출되지 않는 개인 전용 공간
+ * preferences.personalSpaceId 에 저장하여 공유 공간과 구분함
+ */
+export async function createPersonalSpace(displayName: string): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const spaceName = displayName?.trim() ? `${displayName.trim()}의 공간` : '나의 공간';
+  const spaceId = await createSpace(spaceName);
+  if (!spaceId) return null;
+
+  // preferences.personalSpaceId 에 저장 (공유 공간 여부 판별 용도)
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('preferences')
+    .eq('id', user.id)
+    .single();
+
+  const existingPrefs = (profileData?.preferences as object) ?? {};
+  await supabase
+    .from('profiles')
+    .update({ preferences: { ...existingPrefs, personalSpaceId: spaceId } })
+    .eq('id', user.id);
+
+  return spaceId;
+}
+
+/**
+ * 로그인 후 프로필 보장.
+ * 온보딩을 완료했으나 공간이 없는 기존 사용자를 위해
+ * 개인 공간을 자동 생성합니다 (무한 루프 방지용 전역 플래그 사용).
  */
 export async function ensureUserSetup(): Promise<ProfileRow | null> {
   const supabase = createClient();
@@ -586,6 +616,21 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
   if (error || !profile) {
     console.error('프로필 조회 오류:', error?.message);
     return null;
+  }
+
+  // 온보딩 완료 후 공간이 없는 경우 개인 공간 자동 생성
+  if (profile.onboarding_completed_at && !profile.family_group_id && !hasTriedAutoCreateGroup) {
+    hasTriedAutoCreateGroup = true;
+    const displayName = profile.display_name ?? profile.name ?? '나';
+    await createPersonalSpace(displayName);
+
+    // 업데이트된 프로필 재조회 후 반환
+    const { data: updated } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    return updated ?? profile;
   }
 
   return profile;

@@ -49,6 +49,8 @@ export interface OnboardingPreferences {
   enabledModules:         Array<'calendar' | 'routine' | 'expense' | 'spaces'>;
   defaultReminderMinutes: number;
   spaceIntent:            SpaceIntent[];
+  /** 자동 생성된 개인 공간 ID — 공유 공간 여부 판별용 */
+  personalSpaceId?:       string;
 }
 
 export interface NotificationSettings {

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GleaumLogo, GleaumAppIcon } from '@/components/ui/GleaumLogo';
-import { completeOnboarding, createSpace, joinSpaceByCode } from '@/lib/db';
+import { completeOnboarding, createSpace, createPersonalSpace, joinSpaceByCode } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { trackEvent } from '@/lib/analytics';
 import type {
@@ -143,6 +143,9 @@ export default function OnboardingPage() {
         setSpaceSetupError('유효하지 않은 초대 코드입니다. 코드를 다시 확인해 주세요.');
         return;
       }
+    } else if (spaceSetupMode === 'skip') {
+      // 혼자 시작 → 개인 공간 자동 생성 (사용자에게는 보이지 않음)
+      await createPersonalSpace(effectiveDisplayName);
     }
 
     const ok = await completeOnboarding({

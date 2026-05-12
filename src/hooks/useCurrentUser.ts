@@ -15,6 +15,12 @@ export interface CurrentUserState {
   /** @deprecated Use spaceId instead */
   familyGroupId: string | null;
   spaceId: string | null;
+  /**
+   * 공유 공간 여부 — 자동 생성된 개인 공간(personalSpaceId)이 아닌
+   * 명시적으로 만들거나 참여한 공간이 있을 때 true.
+   * 가계부 "공간 지출" 탭 활성화 여부 등에 사용.
+   */
+  hasSharedSpace: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
 }
@@ -91,11 +97,16 @@ export function useCurrentUser(): CurrentUserState {
 
   const spaceId = profile?.family_group_id ?? null;
 
+  // preferences.personalSpaceId 와 비교: 다르면 공유 공간을 갖고 있는 것
+  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+  const hasSharedSpace = !!spaceId && spaceId !== personalSpaceId;
+
   return {
     user,
     profile,
     spaceId,
     familyGroupId: spaceId,
+    hasSharedSpace,
     loading,
     refresh: () => load(true),
   };
