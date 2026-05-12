@@ -54,6 +54,31 @@ typescript: { ignoreBuildErrors: true },
 
 ---
 
+## [2026-05-12] 브라우저 에이전트 오작동 — 관리자 인증 설정 시도 중 30분 루프
+
+**증상**: 백오피스 관리자 인증 설정을 브라우저 에이전트에게 위임했더니 500+ 스텝 이상 반복 루프에 빠짐. 에드윈이 수동으로 중지.
+
+**에이전트가 한 행동들**:
+1. Supabase SQL 에디터에서 비밀번호 설정 SQL 시도 (실패 반복)
+2. Table Editor의 "Add new column" 패널이 계속 열려 방해 — 패널 닫는 것을 반복
+3. 메인 사용자 앱(`www.gleaum.com`)에 `devianne.tsyoo@gmail.com` 계정으로 실제 로그인 및 온보딩 완료 → **프로덕션 DB에 테스트 데이터 생성됨**
+4. Supabase Storage에 `avatars` 버킷 의도치 않게 생성
+5. Supabase SQL 에디터에 여러 스니펫 생성
+
+**근본 원인**: 브라우저 에이전트에게 복잡한 멀티스텝 Supabase 작업을 위임한 것이 문제. Supabase 대시보드 UI는 자동화에 취약.
+
+**올바른 해결책**:
+- 관리자 계정 생성은 **Supabase 대시보드 → Auth → Users → "Create new user" 버튼** 클릭 (에드윈이 직접 or 에이전트가 정확한 URL과 버튼 위치로 단순하게)
+- 인증 로직은 **코드(middleware.ts + login/page.tsx)** 로 구현. SQL 불필요.
+- 브라우저 에이전트에게 SQL 에디터 작업은 절대 위임하지 말 것
+
+**남은 부작용 확인 필요**:
+- [ ] Supabase Auth → Users에서 `devianne.tsyoo@gmail.com` 계정 상태 확인
+- [ ] Supabase Storage에 `avatars` 버킷 존재 여부 확인 (불필요 시 삭제)
+- [ ] `profiles` 테이블에 온보딩 완료된 테스트 데이터 존재 여부 확인
+
+---
+
 ## 배포 파이프라인 원칙 (위 에러들을 통해 확립)
 
 ```

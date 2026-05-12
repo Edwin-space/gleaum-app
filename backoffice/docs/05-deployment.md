@@ -7,11 +7,14 @@
 | 항목 | 값 |
 |------|----|
 | 플랫폼 | Vercel |
+| 프로젝트명 | `gleaum-backoffice` |
 | 연결 레포지토리 | `https://github.com/Edwin-space/gleaum-app` |
 | Root Directory | `backoffice` |
 | 배포 브랜치 | `main` |
 | 빌드 명령어 | `npm run build` (자동 감지) |
-| Node.js 버전 | 20.x (권장) |
+| 현재 배포 URL | `https://gleaum-backoffice.vercel.app` ✅ Ready |
+| 목표 커스텀 도메인 | `https://admin.gleaum.com` (미설정) |
+| 배포 상태 | ✅ Production 배포 완료 (2026-05-12) |
 
 ---
 
@@ -25,10 +28,10 @@
 ## 환경변수 목록
 
 ```env
-# ✅ 필수 — Supabase (기존 사용자 앱과 동일한 프로젝트)
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJh...
-SUPABASE_SERVICE_ROLE_KEY=eyJh...    # 서버 사이드 전용, 절대 클라이언트에 노출 금지
+# ✅ 설정 완료 — Supabase (기존 사용자 앱과 동일한 프로젝트)
+NEXT_PUBLIC_SUPABASE_URL=https://tyvjdsescukaeorcuaga.supabase.co  # ✅ Vercel에 입력됨
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJh...  # ✅ Vercel에 입력됨
+SUPABASE_SERVICE_ROLE_KEY=eyJh...      # ✅ Vercel에 입력됨 (서버사이드 전용, 클라이언트 노출 금지)
 
 # ⏳ Phase 5 이후 필요 — Firebase Admin (CRM 푸시 발송)
 FIREBASE_SERVICE_ACCOUNT_BASE64=     # Firebase 서비스 계정 JSON을 base64 인코딩한 값
