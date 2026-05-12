@@ -97,3 +97,27 @@
 - [ ] Google Play Console 등록 및 심사 제출
 - [ ] 키스토어 생성 + APK/AAB 서명
 
+---
+
+## 백오피스(Admin Backoffice) 잔여 과제
+
+> 상세 내용은 `backoffice/docs/03-current-status.md` 참조
+
+### 🔴 즉시 필요
+- [ ] Vercel 환경변수 입력 (NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, SERVICE_ROLE_KEY)
+- [ ] 관리자 인증 시스템 — 현재 URL 직접 접근 시 인증 없이 진입 가능
+
+### 🟡 Phase 4 — 실데이터 연동
+- [ ] 대시보드 KPI 실제 Supabase 데이터 연동
+- [ ] 회원/공간 상세 페이지 (`/users/[id]`, `/spaces/[id]`)
+
+### 🟡 Phase 5 — CRM 발송 API
+- [ ] Firebase Admin SDK 앱/웹 푸시 발송
+- [ ] 알리고(Aligo) SMS API 연동
+- [ ] SendGrid 이메일 API 연동
+
+### 🟢 Phase 6 — 광고 매니저 DB 연동
+- [ ] 광고 전략 설정 DB 저장 (`app_settings` 테이블 생성)
+- [ ] 배너 CRUD API 및 Supabase Storage 이미지 업로드
+
+마지막 업데이트: 2026-05-12

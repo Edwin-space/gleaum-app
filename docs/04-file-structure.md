@@ -3,8 +3,16 @@
 ## 전체 구조
 
 ```
-/Volumes/WD_BLACK/Ai Works/gleaum/
-├── docs/                          # ← 지금 읽고 있는 문서
+gleaum-app/                            # GitHub 레포지토리 루트
+├── backoffice/                        # ⭐ 관리자 백오피스 (독립 서브프로젝트)
+│   ├── docs/                          # 백오피스 전용 문서 (README.md 참조)
+│   ├── src/
+│   │   ├── app/                       # 백오피스 페이지 (/, /users, /spaces, /campaigns, /ads, /settings)
+│   │   ├── components/Sidebar.tsx     # 공통 사이드바
+│   │   └── lib/supabase.ts            # Supabase 클라이언트
+│   ├── next.config.ts
+│   └── package.json
+├── docs/                              # ← 지금 읽고 있는 문서 (사용자 앱 전용)
 ├── supabase/
 │   └── schema.sql                 # DB 스키마 (Supabase SQL Editor에서 실행)
 ├── src/
