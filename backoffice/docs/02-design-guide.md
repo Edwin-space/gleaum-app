@@ -12,40 +12,60 @@
 
 ---
 
-## 2. CSS 방식
+## 2. shadcn/ui 컴포넌트 사용 원칙 (반드시 읽을 것)
 
-**Tailwind CSS v4를 사용하며, shadcn/ui 스타일을 수동으로 구현합니다.**
+> ❗️ **배포 참사 사례**: shadcn/ui 컴포넌트가 설치되지 않은 상태에서 Tailwind 클래스로 디자인을 흔내내다 Vercel 배포 후 화면이 검게 나오거나 컴포넌트가 주저는 문제가 발생했습니다. **UI 코드를 작성하기 전, `components.json`이 존재하는지 반드시 확인하세요.**
 
-```css
-/* globals.css에 정의된 CSS 변수 기반 테마 */
---background: oklch(1 0 0);
---foreground: oklch(0.145 0 0);
---card: oklch(1 0 0);
---primary: oklch(0.205 0 0);    /* 거의 검정색 */
---muted: oklch(0.961 0 0);
---accent: oklch(0.961 0 0);
---border: oklch(0.922 0 0);
-```
+### 컴포넌트 사용 방법
 
-**shadcn/ui 패키지를 설치하지 않으므로**, 아래처럼 Tailwind 클래스를 직접 조합해서 컴포넌트를 구현합니다.
+**항상 `src/components/ui/`에서 import하여 사용합니다.**
 
 ```tsx
-/* 버튼 예시 */
-<button className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-9 px-4 text-sm font-medium hover:bg-primary/90 transition-colors">
-  버튼 텍스트
-</button>
+// ✅ 올바른 방법 — shadcn 컴포넌트 import
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 
-/* 카드 예시 */
-<div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
-  ...
-</div>
-
-/* 테이블 예시 */
-<table className="w-full caption-bottom text-sm">
-  <thead><tr className="border-b">...</tr></thead>
-  <tbody><tr className="border-b transition-colors hover:bg-muted/50">...</tr></tbody>
-</table>
+// ❌ 금지 — Tailwind로 shadcn 디자인을 직접 흔내내는 수동 작성
+<button className="inline-flex items-center rounded-md bg-primary...">하지 마세요</button>
 ```
+
+### 새 컴포넌트가 필요할 때
+
+```bash
+# backoffice/ 폴더에서 실행
+npx shadcn@latest add [component-name] -y
+
+# 예시
+npx shadcn@latest add dialog -y
+npx shadcn@latest add toast -y
+```
+
+### 현재 설치된 컴포넌트 (2026-05-12 기준)
+
+| 컴포넌트 | 사용 화면 |
+|-----------|----------|
+| `Button` | 전체 |
+| `Input` | 회원관리, 공간관리, CRM, 광고매니저, 설정 |
+| `Label` | 전체 폼 |
+| `Badge` | 회원관리(온보딩), CRM(변수) |
+| `Table` | 회원관리, 공간관리 |
+| `Tabs` | CRM(채널 선택) |
+| `Select` | CRM(타겟), 광고매니저(라우팅, 위치) |
+| `Textarea` | CRM(메시지 본문) |
+| `Card` | 전체 섹션 컨테이너 |
+| `Separator` | 폼 영역 구분 |
+| `RadioGroup` | 광고매니저(방식 선택) |
+| `Switch` | 설정 폼(토글스위치) |
 
 ---
 
@@ -80,31 +100,66 @@ const links = [
 
 ## 5. 주요 컴포넌트 패턴 레퍼런스
 
-### 섹션 헤더
+### 페이지 헤더 (모든 페이지 공통)
 ```tsx
 <header className="mb-8">
-  <h1 className="text-3xl font-bold tracking-tight text-foreground">페이지 제목</h1>
-  <p className="text-muted-foreground mt-1">부제목 설명</p>
+  <h1 className="text-3xl font-bold tracking-tight">페이지 제목</h1>
+  <p className="text-muted-foreground mt-1">설명 텍스트</p>
 </header>
 ```
 
-### 데이터 테이블 (회원/공간 등)
-- `rounded-xl border bg-card shadow-sm` 래퍼
-- 상단: 검색 Input + 필터
-- 테이블: `hover:bg-muted/50` 행 hover 효과
-- 데이터 없을 시: `<td colSpan={n}>DB 연동 후 데이터가 표시됩니다.</td>`
+### 데이터 테이블 (shadcn Table 컴포넌트)
+```tsx
+<Card>
+  <CardHeader className="flex flex-row items-center justify-between">
+    <CardTitle className="text-base">제목</CardTitle>
+    <Input placeholder="검색..." className="w-64" />
+  </CardHeader>
+  <CardContent className="p-0">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>열 제목</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <TableRow>
+          <TableCell>데이터</TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </CardContent>
+</Card>
+```
 
 ### 상태 배지
 ```tsx
-/* 완료 */
-<span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">완료</span>
-/* 미완료 */
-<span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">미완료</span>
+<Badge>완료</Badge>              {/* 기본(dark) */}
+<Badge variant="secondary">미완료</Badge>  {/* 회색 */}
+<Badge variant="destructive">출시됨</Badge>  {/* 빨간색 */}
+<Badge variant="outline">대기중</Badge>   {/* 테두리 */}
 ```
 
-### 셀렉트 박스 / 인풋
+### Select 드롭다운
 ```tsx
-<input className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+<Select defaultValue="all">
+  <SelectTrigger>
+    <SelectValue placeholder="선택" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">전체</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+### RadioGroup (광고 매니저 전략 선택 등)
+```tsx
+<RadioGroup value={value} onValueChange={setValue}>
+  <div className="flex items-center gap-2">
+    <RadioGroupItem value="opt1" id="opt1" />
+    <Label htmlFor="opt1">옵션 1</Label>
+  </div>
+</RadioGroup>
 ```
 
 ---
