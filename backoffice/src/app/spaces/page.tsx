@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default async function SpacesPage() {
   const { data: spaces } = await supabase
@@ -13,71 +24,64 @@ export default async function SpacesPage() {
     <main className="p-8">
       <header className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">공간(Space) 관리</h1>
+          <h1 className="text-3xl font-bold tracking-tight">공간(Space) 관리</h1>
           <p className="text-muted-foreground mt-1">생성된 공간 현황 및 초대 코드를 관리합니다.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/users" className="text-sm font-medium text-primary hover:underline">
-            👈 회원 관리로 이동
-          </Link>
-        </div>
+        <Button variant="outline" asChild>
+          <Link href="/users">← 회원 관리</Link>
+        </Button>
       </header>
 
-      {/* Data Table Area */}
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-        <div className="p-4 border-b flex items-center justify-between">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base">공간 목록</CardTitle>
+            <CardDescription>최근 생성된 50개를 표시합니다.</CardDescription>
+          </div>
           <div className="relative w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="공간명 검색..."
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring pl-9"
-            />
+            <Input placeholder="공간명 검색..." className="pl-9" />
           </div>
-          <div className="text-sm text-muted-foreground">
-            최근 50개 표시
-          </div>
-        </div>
-        
-        <div className="relative w-full overflow-auto">
-          <table className="w-full caption-bottom text-sm">
-            <thead className="[&_tr]:border-b">
-              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">공간 ID</th>
-                <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">공간명(Space Name)</th>
-                <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">초대 코드</th>
-                <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">생성일</th>
-                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">관리</th>
-              </tr>
-            </thead>
-            <tbody className="[&_tr:last-child]:border-0">
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>공간 ID</TableHead>
+                <TableHead>공간명</TableHead>
+                <TableHead>초대 코드</TableHead>
+                <TableHead>생성일</TableHead>
+                <TableHead className="text-right">관리</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {spaces && spaces.length > 0 ? (
                 spaces.map((space) => (
-                  <tr key={space.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                    <td className="p-4 align-middle text-xs text-muted-foreground">{space.id.slice(0, 8)}...</td>
-                    <td className="p-4 align-middle font-medium">{space.name}</td>
-                    <td className="p-4 align-middle">
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">{space.invite_code || '-'}</code>
-                    </td>
-                    <td className="p-4 align-middle">{new Date(space.created_at).toLocaleDateString()}</td>
-                    <td className="p-4 align-middle text-right">
-                      <button className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3">
-                        상세 보기
-                      </button>
-                    </td>
-                  </tr>
+                  <TableRow key={space.id}>
+                    <TableCell className="text-xs text-muted-foreground font-mono">{space.id.slice(0, 8)}...</TableCell>
+                    <TableCell className="font-medium">{space.name}</TableCell>
+                    <TableCell>
+                      <code className="rounded bg-muted px-2 py-0.5 font-mono text-sm">
+                        {space.invite_code || "-"}
+                      </code>
+                    </TableCell>
+                    <TableCell>{new Date(space.created_at).toLocaleDateString("ko-KR")}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm">상세 보기</Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
                     DB 연동 후 데이터가 표시됩니다.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </main>
   );
 }

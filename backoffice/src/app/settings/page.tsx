@@ -1,65 +1,63 @@
 "use client";
 
-import { Settings, Key } from "lucide-react";
+import { Key } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default function SettingsPage() {
   return (
     <main className="p-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">시스템 설정</h1>
-        <p className="text-muted-foreground mt-1">글리움 서비스의 전역 통신망 및 API 키를 관리합니다. (광고 설정은 광고 매니저 메뉴로 이동되었습니다.)</p>
+        <h1 className="text-3xl font-bold tracking-tight">시스템 설정</h1>
+        <p className="text-muted-foreground mt-1">
+          외부 통신망 API 키를 관리합니다. 광고 관련 설정은{" "}
+          <span className="text-primary font-medium">광고 매니저</span> 메뉴를 이용하세요.
+        </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
-        {/* External API Keys Setup */}
-        <section className="rounded-xl border bg-card text-card-foreground shadow-sm flex flex-col h-fit">
-          <div className="p-6 border-b flex items-center gap-2">
-            <Key className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">외부 통신망 API Key 관리</h2>
-          </div>
-          <div className="p-6 flex flex-col gap-6">
-            
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">알리고 (Aligo SMS)</label>
+      <div className="max-w-2xl space-y-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2">
+            <Key className="w-4 h-4 text-primary" />
+            <CardTitle className="text-base">외부 통신망 API Key 관리</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="aligo-key">알리고 (Aligo SMS)</Label>
               <div className="flex gap-2">
-                <input
-                  type="password"
-                  defaultValue="sk_test_1234567890"
-                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-                <button className="h-10 px-4 rounded-md border text-sm font-medium hover:bg-muted transition-colors whitespace-nowrap">검증</button>
+                <Input id="aligo-key" type="password" defaultValue="sk_test_placeholder" />
+                <Button variant="outline">검증</Button>
               </div>
-              <p className="text-[10px] text-muted-foreground">마케팅 센터에서 SMS 발송 시 사용됩니다.</p>
+              <p className="text-xs text-muted-foreground">마케팅 센터에서 SMS 발송 시 사용됩니다.</p>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">SendGrid (이메일)</label>
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="sendgrid-key">SendGrid (이메일)</Label>
               <div className="flex gap-2">
-                <input
-                  type="password"
-                  defaultValue="SG.test_key_abcde"
-                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-                <button className="h-10 px-4 rounded-md border text-sm font-medium hover:bg-muted transition-colors whitespace-nowrap">검증</button>
+                <Input id="sendgrid-key" type="password" defaultValue="SG.test_placeholder" />
+                <Button variant="outline">검증</Button>
               </div>
+              <p className="text-xs text-muted-foreground">마케팅 센터에서 이메일 발송 시 사용됩니다.</p>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">GA4 Property ID</label>
-              <input
-                type="text"
-                placeholder="예: 312345678"
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-              <p className="text-[10px] text-muted-foreground">대시보드 실시간 통계 연동 시 필요합니다. (.env.local 설정이 우선됨)</p>
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="ga4-id">GA4 Property ID</Label>
+              <Input id="ga4-id" type="text" placeholder="예: 312345678" />
+              <p className="text-xs text-muted-foreground">
+                대시보드 실시간 통계 연동 시 필요합니다. (.env.local 설정이 우선 적용됩니다.)
+              </p>
             </div>
 
-            <button className="mt-4 w-full h-10 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-              설정 저장
-            </button>
-
-          </div>
-        </section>
+            <Button className="w-full">설정 저장</Button>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
