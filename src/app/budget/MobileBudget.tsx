@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
-import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS, REPEAT_LABELS } from '@/types';
-import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType, ScheduleVisibility } from '@/types';
+import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS } from '@/types';
+import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 import type { BudgetTab, AddExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
 
@@ -13,6 +13,7 @@ interface MobileBudgetProps {
   prevMonth: () => void;
   nextMonth: () => void;
   isCurrentMonth: boolean;
+  hasSpace: boolean;
   tab: BudgetTab;
   setTab: (t: BudgetTab) => void;
   total: number;
@@ -37,12 +38,20 @@ const REPEAT_OPTIONS: { value: RepeatType; label: string }[] = [
   { value: 'yearly',  label: '매년' },
 ];
 
+/** 숫자 문자열 → 천 단위 콤마 포맷 */
+function formatInputAmount(raw: string): string {
+  const digits = raw.replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  return Number(digits).toLocaleString('ko-KR');
+}
+
 export function MobileBudget({
   loading,
   viewDate,
   prevMonth,
   nextMonth,
   isCurrentMonth,
+  hasSpace,
   tab,
   setTab,
   total,
@@ -57,39 +66,49 @@ export function MobileBudget({
   handleToggleStatus,
   handleAddExpense,
 }: MobileBudgetProps) {
-  // ── 지출 추가 모달 상태 ──
   const [showAddModal, setShowAddModal] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [newTitle, setNewTitle]                 = useState('');
-  const [newAmount, setNewAmount]               = useState('');
-  const [newDate, setNewDate]                   = useState(new Date().toISOString().split('T')[0]);
-  const [newCategory, setNewCategory]           = useState<ExpenseCategory>('other');
-  const [newPayment, setNewPayment]             = useState<PaymentMethod>('card');
-  const [newRepeat, setNewRepeat]               = useState<RepeatType>('none');
-  const [newVisibility, setNewVisibility]       = useState<ScheduleVisibility>(tab === 'personal' ? 'private' : 'space');
+  const [saving, setSaving]             = useState(false);
+  const [newTitle, setNewTitle]         = useState('');
+  const [newAmountRaw, setNewAmountRaw] = useState(''); // 순수 숫자 문자열
+  const [newDate, setNewDate]           = useState(new Date().toISOString().split('T')[0]);
+  const [newCategory, setNewCategory]   = useState<ExpenseCategory>('other');
+  const [newPayment, setNewPayment]     = useState<PaymentMethod>('card');
+  const [newRepeat, setNewRepeat]       = useState<RepeatType>('none');
+
+  const amountDisplay = formatInputAmount(newAmountRaw);
 
   const openAddModal = () => {
-    setNewTitle(''); setNewAmount(''); setNewDate(new Date().toISOString().split('T')[0]);
+    setNewTitle(''); setNewAmountRaw('');
+    setNewDate(new Date().toISOString().split('T')[0]);
     setNewCategory('other'); setNewPayment('card'); setNewRepeat('none');
-    setNewVisibility(tab === 'personal' ? 'private' : 'space');
     setShowAddModal(true);
   };
 
+  const handleAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/[^0-9]/g, '');
+    setNewAmountRaw(digits);
+  };
+
   const handleSave = async () => {
-    if (!newTitle.trim() || !newAmount) return;
+    if (!newTitle.trim() || !newAmountRaw) return;
     setSaving(true);
     const ok = await handleAddExpense({
       title:         newTitle.trim(),
-      amount:        Number(newAmount),
+      amount:        Number(newAmountRaw),
       date:          new Date(newDate),
       category:      newCategory,
       paymentMethod: newPayment,
       repeat:        newRepeat,
-      visibility:    newVisibility,
     });
     setSaving(false);
     if (ok) setShowAddModal(false);
   };
+
+  // 탭 레이블: 개인 먼저, 공간 두 번째
+  const tabs: { key: BudgetTab; label: string; disabled?: boolean }[] = [
+    { key: 'personal', label: '👤 개인 지출' },
+    { key: 'space',    label: '🏠 공간 지출', disabled: !hasSpace },
+  ];
 
   return (
     <div
@@ -97,27 +116,12 @@ export function MobileBudget({
       style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
     >
       {/* ── Hero Header ── */}
-      <div
-        style={{
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(135deg, #0F1A2E 0%, #0D2A22 50%, #1A3A2E 100%)',
-          paddingTop: 'calc(env(safe-area-inset-top) + 52px)',
-          paddingBottom: '48px',
-          paddingLeft: '20px',
-          paddingRight: '20px',
-        }}
-      >
-        {/* Glow blobs */}
+      <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0F1A2E 0%, #0D2A22 50%, #1A3A2E 100%)', paddingTop: 'calc(env(safe-area-inset-top) + 52px)', paddingBottom: '48px', paddingLeft: '20px', paddingRight: '20px' }}>
         <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(46,232,149,0.22) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-30px', left: '-30px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(12,201,181,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        {/* Label */}
-        <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.45)', letterSpacing: '1.6px', textTransform: 'uppercase', marginBottom: '18px', position: 'relative', zIndex: 10 }}>
-          글리움 가계부
-        </p>
+        <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.45)', letterSpacing: '1.6px', textTransform: 'uppercase', marginBottom: '18px', position: 'relative', zIndex: 10 }}>글리움 가계부</p>
 
-        {/* Month navigator */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', position: 'relative', zIndex: 10 }}>
           <button onClick={prevMonth} style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -125,9 +129,7 @@ export function MobileBudget({
           <div style={{ textAlign: 'center', minWidth: '140px' }}>
             <h2 style={{ fontSize: '30px', fontWeight: 800, color: 'white', letterSpacing: '-1px', margin: 0, lineHeight: 1.1 }}>{formatMonthYear(viewDate)}</h2>
             <div style={{ minHeight: '24px', marginTop: '8px' }}>
-              {isCurrentMonth && (
-                <span style={{ display: 'inline-block', padding: '3px 14px', borderRadius: '999px', background: 'rgba(46,232,149,0.18)', fontSize: '11px', fontWeight: 700, color: '#2EE895', border: '1px solid rgba(46,232,149,0.28)' }}>이번 달</span>
-              )}
+              {isCurrentMonth && <span style={{ display: 'inline-block', padding: '3px 14px', borderRadius: '999px', background: 'rgba(46,232,149,0.18)', fontSize: '11px', fontWeight: 700, color: '#2EE895', border: '1px solid rgba(46,232,149,0.28)' }}>이번 달</span>}
             </div>
           </div>
           <button onClick={nextMonth} style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -136,14 +138,25 @@ export function MobileBudget({
         </div>
       </div>
 
-      {/* ── 탭 스위처 ── */}
+      {/* ── 탭 스위처: 개인 먼저, 공간 비활성화 가능 ── */}
       <div style={{ padding: '16px 16px 0', display: 'flex', gap: '8px' }}>
-        {([
-          { key: 'space'    as BudgetTab, label: '🏠 공간 지출' },
-          { key: 'personal' as BudgetTab, label: '👤 내 지출'   },
-        ]).map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key)} style={{ flex: 1, height: '44px', borderRadius: '14px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', transition: 'all 0.15s', background: tab === key ? 'white' : 'rgba(255,255,255,0.45)', color: tab === key ? '#1A1B2E' : '#8E8E93', boxShadow: tab === key ? '0 2px 12px rgba(0,0,0,0.10)' : 'none' }}>
+        {tabs.map(({ key, label, disabled }) => (
+          <button
+            key={key}
+            onClick={() => !disabled && setTab(key)}
+            style={{
+              flex: 1, height: '44px', borderRadius: '14px', fontSize: '13px', fontWeight: 800,
+              border: disabled ? '1.5px dashed #E5E5EA' : 'none',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
+              background: disabled ? 'transparent' : (tab === key ? 'white' : 'rgba(255,255,255,0.45)'),
+              color: disabled ? '#C7C7CC' : (tab === key ? '#1A1B2E' : '#8E8E93'),
+              boxShadow: (!disabled && tab === key) ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
+              opacity: disabled ? 0.55 : 1,
+            }}
+          >
             {label}
+            {disabled && <span style={{ fontSize: '10px', marginLeft: '4px' }}>공간 필요</span>}
           </button>
         ))}
       </div>
@@ -155,11 +168,13 @@ export function MobileBudget({
         </div>
       ) : (
         <div>
-          {/* ── Summary hero card ── */}
+          {/* ── Summary card ── */}
           <div style={{ padding: '0 16px', marginTop: '-24px', position: 'relative', zIndex: 20 }}>
             <div style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', borderRadius: '28px', padding: '24px 24px 20px', boxShadow: '0 12px 40px rgba(0,132,204,0.30)', overflow: 'hidden', position: 'relative' }}>
               <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px', fontWeight: 600 }}>이번 달 지출</p>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px', fontWeight: 600 }}>
+                {tab === 'personal' ? '개인 지출' : '공간 지출'}
+              </p>
               <p style={{ fontSize: '36px', fontWeight: 800, color: 'white', letterSpacing: '-1.5px', margin: 0, lineHeight: 1.1 }}>{formatAmount(total)}</p>
               <div style={{ marginTop: '16px', height: '6px', borderRadius: '999px', background: 'rgba(255,255,255,0.20)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', borderRadius: '999px', background: 'rgba(255,255,255,0.85)', width: `${Math.min(completePct, 100)}%`, transition: 'width 0.7s ease' }} />
@@ -171,14 +186,12 @@ export function MobileBudget({
             </div>
           </div>
 
-          {/* ── Report card ── */}
+          {/* ── Report ── */}
           <div style={{ padding: '0 16px', marginTop: '20px' }}>
             <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)', padding: '20px' }}>
               <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: '#8E8E93', marginBottom: '6px' }}>Report</p>
               <p style={{ fontSize: '18px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>
-                지난달보다{' '}
-                <span style={{ color: isLess ? '#10B981' : '#D97706' }}>{formatAmount(Math.abs(diff))}</span>{' '}
-                {isLess ? '덜 썼어요 🎉' : '더 썼어요'}
+                지난달보다 <span style={{ color: isLess ? '#10B981' : '#D97706' }}>{formatAmount(Math.abs(diff))}</span> {isLess ? '덜 썼어요 🎉' : '더 썼어요'}
               </p>
               {lastMonthTotal > 0 && <p style={{ fontSize: '13px', color: '#8E8E93', marginTop: '4px', fontWeight: 500 }}>지난달: {formatAmount(lastMonthTotal)}</p>}
             </div>
@@ -192,7 +205,7 @@ export function MobileBudget({
             </div>
           </div>
 
-          {/* ── Category bar chart ── */}
+          {/* ── Category bars ── */}
           <div style={{ padding: '0 16px', marginTop: '12px' }}>
             <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)', padding: '24px' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', marginBottom: '20px' }}>항목별 현황</h3>
@@ -226,10 +239,7 @@ export function MobileBudget({
           <div style={{ padding: '0 16px', marginTop: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingLeft: '4px' }}>
               <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1.6px', textTransform: 'uppercase', color: '#8E8E93', margin: 0 }}>지출 내역</p>
-              <button
-                onClick={openAddModal}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
-              >
+              <button onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
                 <span style={{ fontSize: '17px', lineHeight: 1 }}>＋</span> 지출 추가
               </button>
             </div>
@@ -250,7 +260,6 @@ export function MobileBudget({
                       </div>
                       <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0, fontWeight: 500 }}>
                         {e.startTime.getDate()}일 · {PAYMENT_METHOD_LABELS[e.paymentMethod ?? 'card']}
-                        {e.visibility === 'private' && ' · 🔒'}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -264,7 +273,7 @@ export function MobileBudget({
               }) : (
                 <button onClick={openAddModal} style={{ width: '100%', padding: '32px', borderRadius: '20px', border: '2px dashed #E5E5EA', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                   <span style={{ fontSize: '32px' }}>💰</span>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>지출을 추가해 보세요</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>{tab === 'personal' ? '개인 지출을 추가해 보세요' : '공간 지출을 추가해 보세요'}</p>
                   <p style={{ fontSize: '12px', color: '#C7C7CC', margin: 0 }}>일회성 및 정기 지출 모두 관리</p>
                 </button>
               )}
@@ -283,45 +292,31 @@ export function MobileBudget({
             style={{ width: '100%', maxWidth: '600px', background: 'white', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)', maxHeight: '92vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Drag handle */}
             <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '20px' }}>
               <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: '#E5E5EA' }} />
             </div>
 
-            <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 20px' }}>지출 추가</h3>
+            {/* 제목 + 탭 표시 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+                {tab === 'personal' ? '개인 지출 추가' : '공간 지출 추가'}
+              </h3>
+              <span style={{ fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', background: tab === 'personal' ? '#F5F5F7' : 'rgba(0,132,204,0.08)', color: tab === 'personal' ? '#8E8E93' : '#0084CC' }}>
+                {tab === 'personal' ? '🔒 나만 보기' : '🏠 공간 공유'}
+              </span>
+            </div>
 
-            {/* 구분: 일회성 / 정기 */}
+            {/* 지출 유형 */}
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>지출 유형</p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {REPEAT_OPTIONS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setNewRepeat(value)}
-                    style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newRepeat === value ? '#1A1B2E' : '#F5F5F7', color: newRepeat === value ? 'white' : '#8E8E93', transition: 'all 0.15s' }}
-                  >{label}</button>
+                  <button key={value} onClick={() => setNewRepeat(value)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newRepeat === value ? '#1A1B2E' : '#F5F5F7', color: newRepeat === value ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{label}</button>
                 ))}
               </div>
             </div>
 
-            {/* 공유 범위 */}
-            <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>공유 범위</p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {([
-                  { val: 'space' as ScheduleVisibility, label: '🏠 공간 공유' },
-                  { val: 'private' as ScheduleVisibility, label: '🔒 나만' },
-                ] as { val: ScheduleVisibility; label: string }[]).map(({ val, label }) => (
-                  <button
-                    key={val}
-                    onClick={() => setNewVisibility(val)}
-                    style={{ flex: 1, height: '44px', borderRadius: '14px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newVisibility === val ? '#1A1B2E' : '#F5F5F7', color: newVisibility === val ? 'white' : '#8E8E93', transition: 'all 0.15s' }}
-                  >{label}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* 제목 */}
+            {/* 항목명 */}
             <div style={{ marginBottom: '12px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>항목명</p>
               <input
@@ -332,27 +327,31 @@ export function MobileBudget({
               />
             </div>
 
-            {/* 금액 */}
+            {/* 금액 — 콤마 포맷 */}
             <div style={{ marginBottom: '12px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>금액</p>
-              <input
-                type="number"
-                value={newAmount}
-                onChange={(e) => setNewAmount(e.target.value)}
-                placeholder="0"
-                style={{ width: '100%', height: '52px', padding: '0 16px', borderRadius: '14px', fontSize: '20px', fontWeight: 800, background: '#F5F5F7', border: `2px solid ${newAmount ? '#0084CC' : 'transparent'}`, outline: 'none', boxSizing: 'border-box', color: '#1A1B2E', transition: 'border-color 0.2s' }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={amountDisplay}
+                  onChange={handleAmountInput}
+                  placeholder="0"
+                  style={{ width: '100%', height: '56px', padding: '0 40px 0 16px', borderRadius: '14px', fontSize: '22px', fontWeight: 800, background: '#F5F5F7', border: `2px solid ${newAmountRaw ? '#0084CC' : 'transparent'}`, outline: 'none', boxSizing: 'border-box', color: '#1A1B2E', transition: 'border-color 0.2s', letterSpacing: '-0.5px' }}
+                />
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', fontWeight: 700, color: newAmountRaw ? '#0084CC' : '#C7C7CC', pointerEvents: 'none' }}>원</span>
+              </div>
+              {newAmountRaw && Number(newAmountRaw) >= 10000 && (
+                <p style={{ fontSize: '12px', color: '#8E8E93', marginTop: '6px', fontWeight: 600, paddingLeft: '4px' }}>
+                  {(Number(newAmountRaw) / 10000).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}만원
+                </p>
+              )}
             </div>
 
             {/* 날짜 */}
             <div style={{ marginBottom: '12px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>{newRepeat === 'none' ? '지출 날짜' : '첫 결제일'}</p>
-              <input
-                type="date"
-                value={newDate}
-                onChange={(e) => setNewDate(e.target.value)}
-                style={{ width: '100%', height: '52px', padding: '0 16px', borderRadius: '14px', fontSize: '15px', fontWeight: 600, background: '#F5F5F7', border: '2px solid transparent', outline: 'none', boxSizing: 'border-box', color: '#1A1B2E' }}
-              />
+              <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} style={{ width: '100%', height: '52px', padding: '0 16px', borderRadius: '14px', fontSize: '15px', fontWeight: 600, background: '#F5F5F7', border: '2px solid transparent', outline: 'none', boxSizing: 'border-box', color: '#1A1B2E' }} />
             </div>
 
             {/* 카테고리 */}
@@ -360,13 +359,8 @@ export function MobileBudget({
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>카테고리</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {EXPENSE_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setNewCategory(cat)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: newCategory === cat ? '#1A1B2E' : '#F5F5F7', color: newCategory === cat ? 'white' : '#8E8E93', transition: 'all 0.15s' }}
-                  >
-                    <span>{EXPENSE_CATEGORY_ICONS[cat]}</span>
-                    <span>{EXPENSE_CATEGORY_LABELS[cat]}</span>
+                  <button key={cat} onClick={() => setNewCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: newCategory === cat ? '#1A1B2E' : '#F5F5F7', color: newCategory === cat ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>
+                    <span>{EXPENSE_CATEGORY_ICONS[cat]}</span><span>{EXPENSE_CATEGORY_LABELS[cat]}</span>
                   </button>
                 ))}
               </div>
@@ -377,22 +371,15 @@ export function MobileBudget({
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', marginBottom: '8px', letterSpacing: '0.5px' }}>결제 방법</p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {PAYMENT_METHODS.map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setNewPayment(m)}
-                    style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: newPayment === m ? '#1A1B2E' : '#F5F5F7', color: newPayment === m ? 'white' : '#8E8E93', transition: 'all 0.15s' }}
-                  >{PAYMENT_METHOD_LABELS[m]}</button>
+                  <button key={m} onClick={() => setNewPayment(m)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: newPayment === m ? '#1A1B2E' : '#F5F5F7', color: newPayment === m ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{PAYMENT_METHOD_LABELS[m]}</button>
                 ))}
               </div>
             </div>
 
-            {/* 저장 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button
-                onClick={handleSave}
-                disabled={saving || !newTitle.trim() || !newAmount}
-                style={{ width: '100%', height: '58px', borderRadius: '18px', background: newTitle.trim() && newAmount ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : '#F0F0F5', border: 'none', cursor: newTitle.trim() && newAmount ? 'pointer' : 'not-allowed', fontSize: '16px', fontWeight: 800, color: newTitle.trim() && newAmount ? 'white' : '#AEAEA8', opacity: saving ? 0.7 : 1, boxShadow: newTitle.trim() && newAmount ? '0 8px 24px rgba(0,132,204,0.25)' : 'none' }}
-              >{saving ? '저장 중...' : '지출 등록'}</button>
+              <button onClick={handleSave} disabled={saving || !newTitle.trim() || !newAmountRaw} style={{ width: '100%', height: '58px', borderRadius: '18px', background: newTitle.trim() && newAmountRaw ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : '#F0F0F5', border: 'none', cursor: newTitle.trim() && newAmountRaw ? 'pointer' : 'not-allowed', fontSize: '16px', fontWeight: 800, color: newTitle.trim() && newAmountRaw ? 'white' : '#AEAEA8', opacity: saving ? 0.7 : 1, boxShadow: newTitle.trim() && newAmountRaw ? '0 8px 24px rgba(0,132,204,0.25)' : 'none' }}>
+                {saving ? '저장 중...' : '지출 등록'}
+              </button>
               <button onClick={() => setShowAddModal(false)} style={{ width: '100%', height: '52px', borderRadius: '18px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>취소</button>
             </div>
           </div>

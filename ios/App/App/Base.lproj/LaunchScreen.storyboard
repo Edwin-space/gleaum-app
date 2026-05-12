@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17132" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="24765" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17105"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24743"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -11,30 +12,21 @@
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <!-- 다크 네이비 배경 뷰 (#0F1A2E) -->
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <!-- 중앙 스플래시 이미지 -->
-                            <imageView
-                                contentMode="scaleAspectFit"
-                                horizontalHuggingPriority="251"
-                                verticalHuggingPriority="251"
-                                image="Splash"
-                                translatesAutoresizingMaskIntoConstraints="NO"
-                                id="Xnw-9h-3fY">
-                                <rect key="frame" x="112" y="326" width="169" height="200"/>
+                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="Xnw-9h-3fY">
+                                <rect key="frame" x="127" y="328" width="160" height="160"/>
                             </imageView>
                         </subviews>
-                        <!-- 다크 네이비: #0F1A2E = R:0.059 G:0.102 B:0.180 -->
-                        <color key="backgroundColor" red="0.058823529" green="0.10196078" blue="0.18039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <viewLayoutGuide key="safeArea" id="cGa-bB-1UN"/>
+                        <color key="backgroundColor" red="0.058823528999999999" green="0.10196078" blue="0.18039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <!-- 스플래시 이미지: 중앙 정렬, 너비 160pt -->
                             <constraint firstItem="Xnw-9h-3fY" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="cx1"/>
                             <constraint firstItem="Xnw-9h-3fY" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-40" id="cy1"/>
-                            <constraint firstItem="Xnw-9h-3fY" firstAttribute="width" constant="160" id="w1"/>
                             <constraint firstItem="Xnw-9h-3fY" firstAttribute="height" constant="160" id="h1"/>
+                            <constraint firstItem="Xnw-9h-3fY" firstAttribute="width" constant="160" id="w1"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -44,6 +36,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="Splash" width="2732" height="2732"/>
+        <image name="Splash" width="512" height="512"/>
     </resources>
 </document>
