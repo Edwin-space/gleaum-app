@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import Sidebar from "@/components/Sidebar";
+import ConditionalSidebar from "@/components/ConditionalSidebar";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="ko" className={cn("font-sans", geist.variable)}>
       <body className="antialiased min-h-screen bg-background font-sans">
         <div className="flex flex-col md:flex-row h-screen overflow-hidden">
-          <Sidebar />
+          <ConditionalSidebar />
           <div className="flex-1 overflow-y-auto bg-muted/40">
             {children}
           </div>
