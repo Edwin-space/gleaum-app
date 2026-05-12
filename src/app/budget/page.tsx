@@ -5,12 +5,23 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
-import type { ScheduleStatus } from '@/types';
+import type { ScheduleStatus, ExpenseCategory, PaymentMethod, ScheduleVisibility, RepeatType } from '@/types';
 
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
 
 export type BudgetTab = 'space' | 'personal';
+
+/** 지출 추가 입력값 */
+export interface AddExpenseInput {
+  title: string;
+  amount: number;
+  date: Date;
+  category: ExpenseCategory;
+  paymentMethod: PaymentMethod;
+  repeat: RepeatType;        // 'none' = 일회성, 그 외 = 정기
+  visibility: ScheduleVisibility; // 'space' | 'private'
+}
 
 export default function BudgetPage() {
   const isDesktop = useIsDesktop();
@@ -19,7 +30,7 @@ export default function BudgetPage() {
   const [tab, setTab] = useState<BudgetTab>('space');
 
   const { familyGroupId, user } = useCurrentUser();
-  const { schedules, loading, updateStatus } = useSchedules(familyGroupId);
+  const { schedules, loading, updateStatus, create } = useSchedules(familyGroupId);
   const userId = user?.id;
 
   // 현재 선택된 달의 지출 전체
@@ -30,13 +41,11 @@ export default function BudgetPage() {
   );
 
   // 탭 필터: 공간(공유) vs 내 개인 지출
-  // 공간 지출: visibility가 'space' 이거나 null (공유)
-  // 내 지출:   createdBy가 나이고 visibility가 'private'
   const expenses = tab === 'personal'
     ? allExpenses.filter((s) => s.createdBy === userId && s.visibility === 'private')
     : allExpenses.filter((s) => s.visibility !== 'private');
 
-  // 지난달 지출 (비교용 — 현재 탭 기준)
+  // 지난달 지출 (비교용)
   const lastMonthDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
   const lastMonthExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
@@ -77,6 +86,37 @@ export default function BudgetPage() {
     });
   };
 
+  const handleAddExpense = async (input: AddExpenseInput): Promise<boolean> => {
+    if (!familyGroupId) {
+      toast.error('공간이 없습니다. 먼저 공간을 만들어 주세요.');
+      return false;
+    }
+    try {
+      const result = await create({
+        title:          input.title,
+        type:           'expense',
+        startTime:      input.date,
+        endTime:        input.date,
+        amount:         input.amount,
+        expenseCategory: input.category,
+        paymentMethod:  input.paymentMethod,
+        repeat:         input.repeat,
+        visibility:     input.visibility,
+      });
+      if (result) {
+        toast.success('지출이 등록되었습니다', {
+          position: isDesktop ? 'bottom-right' : 'top-center',
+          duration: 1500,
+        });
+        return true;
+      }
+      return false;
+    } catch {
+      toast.error('지출 등록에 실패했습니다');
+      return false;
+    }
+  };
+
   const commonProps = {
     loading,
     viewDate,
@@ -95,6 +135,7 @@ export default function BudgetPage() {
     categories,
     expenses,
     handleToggleStatus,
+    handleAddExpense,
   };
 
   if (isDesktop) {

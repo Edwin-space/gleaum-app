@@ -297,7 +297,9 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
 
 // ── 공간(Space) ───────────────────────────────────────────
 
-/** 공간 정보 + space_members 기반 멤버 목록 조회 */
+/** 공간 정보 + space_members 기반 멤버 목록 조회
+ *  마이그레이션 이전(Phase 1 이전) 공간 생성자가 space_members에 없는 경우를 자동 보정.
+ */
 export async function getSpaceWithMembers(spaceId: string): Promise<Space | null> {
   const supabase = createClient();
 
@@ -316,13 +318,45 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
 
   if (membersError) return null;
 
+  const rows = memberRows as SpaceMemberRow[];
+
+  // ── 마이그레이션 보정: 공간 생성자가 space_members에 없으면 admin으로 자동 등록 ──
+  const creatorInMembers = rows.some((r) => r.user_id === group.created_by);
+  if (!creatorInMembers && group.created_by) {
+    // space_members에 backfill (이미 존재하면 무시)
+    await supabase
+      .from('space_members')
+      .upsert(
+        { space_id: spaceId, user_id: group.created_by, role: 'admin' },
+        { onConflict: 'space_id,user_id', ignoreDuplicates: true },
+      );
+
+    // 생성자 프로필 조회하여 반환 목록에 추가
+    const { data: creatorProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', group.created_by)
+      .single();
+
+    if (creatorProfile) {
+      rows.push({
+        id:         `backfill-${group.created_by}`,
+        space_id:   spaceId,
+        user_id:    group.created_by,
+        role:       'admin',
+        joined_at:  group.created_at,
+        profiles:   creatorProfile,
+      } as unknown as SpaceMemberRow);
+    }
+  }
+
   return {
     id:          group.id,
     name:        group.name,
     inviteCode:  group.invite_code ?? undefined,
     createdBy:   group.created_by,
     createdAt:   new Date(group.created_at),
-    members:     (memberRows as SpaceMemberRow[]).map(rowToSpaceMember),
+    members:     rows.map(rowToSpaceMember),
   };
 }
 
@@ -339,12 +373,15 @@ export async function getSpaceMembers(spaceId: string): Promise<SpaceMember[]> {
   return (data as SpaceMemberRow[]).map(rowToSpaceMember);
 }
 
-/** 현재 사용자가 특정 공간에서 가진 역할 조회 */
+/** 현재 사용자가 특정 공간에서 가진 역할 조회
+ *  Phase 1 이전 생성자는 space_members에 없을 수 있으므로 created_by 폴백 적용.
+ */
 export async function getMyRoleInSpace(spaceId: string): Promise<SpaceRole | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // 1차: space_members 조회
   const { data, error } = await supabase
     .from('space_members')
     .select('role')
@@ -352,8 +389,27 @@ export async function getMyRoleInSpace(spaceId: string): Promise<SpaceRole | nul
     .eq('user_id', user.id)
     .single();
 
-  if (error || !data) return null;
-  return data.role as SpaceRole;
+  if (!error && data) return data.role as SpaceRole;
+
+  // 2차 폴백: 공간 생성자인지 확인 (마이그레이션 이전 사용자 대응)
+  const { data: group } = await supabase
+    .from('family_groups')
+    .select('created_by')
+    .eq('id', spaceId)
+    .single();
+
+  if (group?.created_by === user.id) {
+    // space_members에 admin으로 자동 등록 (backfill)
+    await supabase
+      .from('space_members')
+      .upsert(
+        { space_id: spaceId, user_id: user.id, role: 'admin' },
+        { onConflict: 'space_id,user_id', ignoreDuplicates: true },
+      );
+    return 'admin';
+  }
+
+  return null;
 }
 
 /** 현재 사용자가 속한 모든 공간 목록 */
