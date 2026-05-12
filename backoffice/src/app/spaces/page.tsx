@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";

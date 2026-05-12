@@ -79,7 +79,7 @@ export default function Sidebar() {
           }`}
         >
           <Clock className="w-4 h-4 shrink-0" />
-          <span className="text-xs">세션 만료까지</span>
+          <span className="text-xs">비활동 로그아웃까지</span>
           <span
             className={`ml-auto font-mono font-semibold text-sm tabular-nums ${
               isDanger

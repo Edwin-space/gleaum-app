@@ -11,9 +11,12 @@ import {
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter, usePathname } from "next/navigation";
 
-/** 세션 유지 시간: 10분 */
-const SESSION_DURATION_SEC = 10 * 60;
-const STORAGE_KEY = "gleaum_admin_login_at";
+/** 비활동 허용 시간: 10분 */
+const IDLE_LIMIT_SEC = 10 * 60;
+/** sessionStorage 키: 마지막 활동 시각 (ms) */
+const STORAGE_KEY = "gleaum_admin_last_active";
+/** 활동 이벤트마다 storage 갱신하면 부하가 크므로 최소 간격(ms) */
+const DEBOUNCE_MS = 10_000;
 
 interface SessionContextValue {
   remainingSeconds: number;
@@ -21,7 +24,7 @@ interface SessionContextValue {
 }
 
 const SessionContext = createContext<SessionContextValue>({
-  remainingSeconds: SESSION_DURATION_SEC,
+  remainingSeconds: IDLE_LIMIT_SEC,
   logout: async () => {},
 });
 
@@ -30,12 +33,14 @@ export function useSession() {
 }
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [remainingSeconds, setRemainingSeconds] = useState(SESSION_DURATION_SEC);
-  const router = useRouter();
-  const pathname = usePathname();
-  const isLoginPage = pathname === "/login";
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(IDLE_LIMIT_SEC);
+  const router        = useRouter();
+  const pathname      = usePathname();
+  const isLoginPage   = pathname === "/login";
+  const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastWriteRef  = useRef<number>(0);
 
+  // ── 로그아웃 ────────────────────────────────────────────────
   const logout = useCallback(async () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     sessionStorage.removeItem(STORAGE_KEY);
@@ -49,21 +54,37 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     router.refresh();
   }, [router]);
 
+  // ── 활동 감지 → lastActive 갱신 (디바운스) ─────────────────
+  const handleActivity = useCallback(() => {
+    const now = Date.now();
+    if (now - lastWriteRef.current < DEBOUNCE_MS) return;
+    lastWriteRef.current = now;
+    sessionStorage.setItem(STORAGE_KEY, now.toString());
+  }, []);
+
+  // ── 메인 타이머 ─────────────────────────────────────────────
   useEffect(() => {
-    // 로그인 페이지에서는 타이머 불필요
     if (isLoginPage) return;
 
-    // 로그인 시각 초기화 (세션 시작)
-    if (!sessionStorage.getItem(STORAGE_KEY)) {
-      sessionStorage.setItem(STORAGE_KEY, Date.now().toString());
+    // 첫 진입 시 lastActive 초기화
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+      const now = Date.now();
+      sessionStorage.setItem(STORAGE_KEY, now.toString());
+      lastWriteRef.current = now;
     }
 
-    const tick = () => {
-      const loginAt = parseInt(sessionStorage.getItem(STORAGE_KEY) || "0", 10);
-      if (!loginAt) return;
+    // 활동 이벤트 리스너 등록
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"] as const;
+    events.forEach((ev) => window.addEventListener(ev, handleActivity, { passive: true }));
 
-      const elapsed = Math.floor((Date.now() - loginAt) / 1000);
-      const remaining = Math.max(0, SESSION_DURATION_SEC - elapsed);
+    // 1초 tick
+    const tick = () => {
+      const lastActive = parseInt(sessionStorage.getItem(STORAGE_KEY) || "0", 10);
+      if (!lastActive) return;
+
+      const elapsed   = Math.floor((Date.now() - lastActive) / 1000);
+      const remaining = Math.max(0, IDLE_LIMIT_SEC - elapsed);
       setRemainingSeconds(remaining);
 
       if (remaining === 0) {
@@ -71,20 +92,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    tick(); // 즉시 1회 실행
+    tick();
     intervalRef.current = setInterval(tick, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      events.forEach((ev) => window.removeEventListener(ev, handleActivity));
     };
-  }, [isLoginPage, logout]);
+  }, [isLoginPage, handleActivity, logout]);
 
-  // 로그인 성공 후 타이머 리셋용 헬퍼 (login 페이지에서 호출)
+  // ── 로그인 페이지 진입 시 초기화 ────────────────────────────
   useEffect(() => {
     if (!isLoginPage) return;
-    // 로그인 페이지 진입 시 기존 타이머 세션 초기화
     sessionStorage.removeItem(STORAGE_KEY);
-    setRemainingSeconds(SESSION_DURATION_SEC);
+    setRemainingSeconds(IDLE_LIMIT_SEC);
   }, [isLoginPage]);
 
   return (
