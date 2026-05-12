@@ -1,23 +1,160 @@
 "use client";
 
 import { useState } from "react";
-import { Key, CheckCircle2, AlertCircle } from "lucide-react";
+import { Key, CheckCircle2, AlertCircle, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { createBrowserClient } from "@supabase/ssr";
 
 const GA4_ENV_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
 
+function PasswordChangeCard() {
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw]         = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showNew, setShowNew]     = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [message, setMessage]     = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+
+    if (newPw.length < 8) {
+      setMessage({ type: "error", text: "새 비밀번호는 8자 이상이어야 합니다." });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setMessage({ type: "error", text: "새 비밀번호가 일치하지 않습니다." });
+      return;
+    }
+
+    setLoading(true);
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // 현재 비밀번호 확인 (재로그인으로 검증)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      setMessage({ type: "error", text: "세션이 만료되었습니다. 다시 로그인해 주세요." });
+      setLoading(false);
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPw,
+    });
+    if (signInError) {
+      setMessage({ type: "error", text: "현재 비밀번호가 올바르지 않습니다." });
+      setLoading(false);
+      return;
+    }
+
+    // 새 비밀번호로 변경
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    if (error) {
+      setMessage({ type: "error", text: `변경 실패: ${error.message}` });
+    } else {
+      setMessage({ type: "success", text: "비밀번호가 변경되었습니다." });
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-primary" />
+        <CardTitle className="text-base">관리자 비밀번호 변경</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleChange} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="current-pw">현재 비밀번호</Label>
+            <Input
+              id="current-pw"
+              type="password"
+              placeholder="현재 비밀번호"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label htmlFor="new-pw">새 비밀번호</Label>
+            <div className="relative">
+              <Input
+                id="new-pw"
+                type={showNew ? "text" : "password"}
+                placeholder="8자 이상"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                required
+                autoComplete="new-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirm-pw">새 비밀번호 확인</Label>
+            <Input
+              id="confirm-pw"
+              type="password"
+              placeholder="새 비밀번호 재입력"
+              value={confirmPw}
+              onChange={(e) => setConfirmPw(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </div>
+
+          {message && (
+            <p className={`text-sm flex items-center gap-1.5 ${
+              message.type === "success" ? "text-green-600" : "text-destructive"
+            }`}>
+              {message.type === "success"
+                ? <CheckCircle2 className="w-4 h-4" />
+                : <AlertCircle className="w-4 h-4" />}
+              {message.text}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "변경 중..." : "비밀번호 변경"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const [ga4Id, setGa4Id] = useState(GA4_ENV_ID);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved]  = useState(false);
 
   const handleSave = () => {
-    // 실제 저장 로직: Phase 5에서 DB 연동 예정
-    // 현재는 .env 환경변수가 우선 적용되므로, UI 저장은 로컬 상태만 유지
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -32,6 +169,9 @@ export default function SettingsPage() {
       </header>
 
       <div className="max-w-2xl space-y-6">
+        {/* 비밀번호 변경 */}
+        <PasswordChangeCard />
+
         {/* API 키 카드 */}
         <Card>
           <CardHeader className="flex flex-row items-center gap-2">
