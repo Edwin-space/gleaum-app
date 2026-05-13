@@ -411,35 +411,51 @@ npm run cap:open:android # Android Studio 열기
 
 ---
 
-## 백오피스(Admin Backoffice) 서비스 구축 (완료 — 2026-05-12)
+## 백오피스(Admin Backoffice) Phase 1~4 완료 (완료 — 2026-05-13)
 
-> 기존 사용자 앱과 완전히 분리된 독립 관리자 인터페이스를 구축했습니다.
+> 기존 사용자 앱과 완전히 분리된 독립 관리자 인터페이스.
 > 상세 문서는 `backoffice/docs/` 폴더를 참조하세요.
 
 ### 기술 스택
-- Next.js 15.1.6 (App Router) + Tailwind CSS v4 + shadcn/ui 스타일 수동 구현
+- Next.js 16.2.6 (App Router) + Tailwind CSS v4 + shadcn/ui
 - Vercel 독립 프로젝트 배포 (Root Directory: `backoffice`)
 - 기존 Supabase 프로젝트 공유 사용
+- GA4 Data API (`@google-analytics/data` v5, gRPC 기반)
 
 ### 구현 완료 화면
 
 | 라우트 | 기능 |
 |--------|------|
-| `/` | 대시보드 — KPI 카드 4종(회원 수, 공간 수, 일정 수, 실시간 접속자) |
-| `/users` | 회원 관리 — `profiles` 테이블 조회, 온보딩 상태 배지 |
-| `/spaces` | 공간 관리 — `family_groups` 테이블 조회, 초대코드 표시 |
-| `/campaigns` | CRM 캠페인 빌더 — 5채널 탭(앱/웹/인앱/SMS/이메일) + `{{변수}}` 초개인화 에디터 + 가상 스마트폰 미리보기 |
-| `/ads` | 광고 매니저 — GAM 전략 스위치(In-House/AdSense/GAM) + 내부 딥링크/외부 URL 라우팅 + 라이브 앱 목업 시뮬레이터 |
-| `/settings` | 시스템 설정 — Aligo(SMS), SendGrid(이메일), GA4 API 키 관리 |
+| `/login` | 관리자 로그인 — Supabase Auth 이메일/비밀번호 |
+| `/` | 대시보드 — KPI 카드(회원/공간/일정), GA4 실시간 접속자·7일 통계·상위 페이지 |
+| `/users` | 회원 관리 — `profiles` 실데이터, 온보딩 상태·공간 보유 배지 |
+| `/spaces` | 공간 관리 — `family_groups` 실데이터, 초대코드 표시 |
+| `/campaigns` | CRM 캠페인 빌더 — 5채널 탭 + `{{변수}}` 에디터 + 스마트폰 미리보기 |
+| `/ads` | 광고 매니저 — 전략 스위치 + 앱 목업 시뮬레이터 |
+| `/settings` | 시스템 설정 — 비밀번호 변경, GA4 연동 상태, API 키 관리 |
 
-### 주요 파일
-- `backoffice/src/components/Sidebar.tsx` — 공통 사이드바 (현재 경로 기반 Active 처리)
-- `backoffice/src/lib/supabase.ts` — Supabase 클라이언트 (URL 유효성 검사 포함)
-- `backoffice/next.config.ts` — ESLint/TS 빌드 오류 무시 설정
-- `backoffice/.gitignore` — node_modules, .next, .env.local 제외
+### Phase 4 완료 내용 (2026-05-13)
 
-### 미완료 (Phase 4 이후)
-- 관리자 인증 시스템 (현재 누구나 URL 직접 접근 가능)
-- KPI 실제 데이터 연동 (현재 정적 "0" 표시)
-- CRM 실제 발송 API (Firebase Admin, Aligo, SendGrid)
-- 광고 설정 DB 저장 및 배너 CRUD API
+**인증 시스템**
+- `src/proxy.ts` — Next.js 16 라우트 보호 미들웨어 (미인증 시 전체 → `/login` 리다이렉트)
+- `src/app/login/page.tsx` — 로그인 폼
+- `src/components/ConditionalSidebar.tsx` — 로그인 페이지 사이드바 숨김
+
+**비활동 세션 타이머 (10분)**
+- `src/components/SessionProvider.tsx` — 마지막 활동 시각 sessionStorage 저장, 10분 비활동 시 자동 로그아웃
+- `src/components/Sidebar.tsx` — 카운트다운 UI (120s 이하 노랑, 60s 이하 빨강), 로그아웃 버튼
+
+**GA4 Data API 연동**
+- `src/lib/ga4.ts` — `BetaAnalyticsDataClient`로 7일 통계 + 실시간 접속자 + 상위 페이지 조회
+- `next.config.ts` — `serverExternalPackages` 설정으로 gRPC 번들링 충돌 해결
+- GA4 서비스 계정(`gleaum-backoffice@gleaum-firebase.iam.gserviceaccount.com`) 뷰어 권한 부여 완료
+
+**실데이터 연동**
+- 전 페이지 `force-dynamic` 적용으로 정적 렌더링 문제 해결
+- 회원 관리 컬럼명 오류 수정 (`full_name` → `name`, `onboarding_completed` → `onboarding_completed_at`)
+
+### 미완료 (Phase 5 이후)
+- Recharts 차트 (WAU 트렌드, 가계부 vs 캘린더 비율)
+- 회원/공간 상세 페이지
+- CRM 실제 발송 API
+- 광고 설정 DB 저장
