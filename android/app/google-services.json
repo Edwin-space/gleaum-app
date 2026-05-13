@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "913127709928",
+    "project_id": "gleaum-firebase",
+    "storage_bucket": "gleaum-firebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913127709928:android:c4334b982b98b282febd5d",
+        "android_client_info": {
+          "package_name": "com.gleaum.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC31ur_bKAoI0qHlQdpQ9T3M2RP9MmCU0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

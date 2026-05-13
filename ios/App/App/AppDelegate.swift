@@ -1,14 +1,39 @@
 import UIKit
 import Capacitor
+import FirebaseCore
+import FirebaseMessaging
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // ── Firebase 초기화 ───────────────────────────────────────────────────
+        FirebaseApp.configure()
+        Messaging.messaging().delegate = self
+
+        // ── 원격 알림 등록 요청 ───────────────────────────────────────────────
+        UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+        UNUserNotificationCenter.current().requestAuthorization(
+            options: authOptions,
+            completionHandler: { _, _ in }
+        )
+        application.registerForRemoteNotifications()
+
         return true
+    }
+
+    // ── FCM 토큰 갱신 시 콜백 ─────────────────────────────────────────────────
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        // FCM 토큰이 갱신될 때마다 호출됨 — Capacitor Firebase Messaging 플러그인이 자동 처리
+        NotificationCenter.default.post(
+            name: Notification.Name("FCMToken"),
+            object: nil,
+            userInfo: ["token": fcmToken ?? ""]
+        )
     }
 
     // ── URL Scheme 처리 (gleaum:// — Google OAuth 콜백) ──────────────────────
@@ -30,7 +55,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // ── APNs 푸시 알림 등록 성공 ──────────────────────────────────────────────
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        // Capacitor에 APNs 토큰 전달 (LocalNotifications 플러그인 사용)
+        // FCM에 APNs 토큰 전달 (FCM이 내부적으로 APNs 토큰 ↔ FCM 토큰 매핑)
+        Messaging.messaging().apnsToken = deviceToken
+        // Capacitor에도 전달
         NotificationCenter.default.post(
             name: .capacitorDidRegisterForRemoteNotifications,
             object: deviceToken
