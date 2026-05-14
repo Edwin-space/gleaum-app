@@ -46,16 +46,6 @@ export function useAuth() {
         options: {
           redirectTo: 'gleaum://auth/callback',
           skipBrowserRedirect: true,
-          scopes: [
-            'https://www.googleapis.com/auth/calendar',
-            'https://www.googleapis.com/auth/calendar.events',
-            'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/drive.readonly',
-          ].join(' '),
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
       if (error) {
@@ -75,16 +65,6 @@ export function useAuth() {
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
-          scopes: [
-            'https://www.googleapis.com/auth/calendar',
-            'https://www.googleapis.com/auth/calendar.events',
-            'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/drive.readonly',
-          ].join(' '),
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
       if (error) console.error('Google 로그인 오류:', error.message);

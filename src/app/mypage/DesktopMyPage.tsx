@@ -223,8 +223,8 @@ export function DesktopMyPage({
             </div>
             <SettingRow
               icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0CC9B5" />}
-              label="구글 캘린더 동기화"
-              value="동기화 중"
+              label="기기 캘린더 연동"
+              value="준비 중"
               href="/settings/calendar"
             />
             <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />

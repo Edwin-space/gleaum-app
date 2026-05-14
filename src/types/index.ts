@@ -148,7 +148,7 @@ export interface Attachment {
   name:   string;
   url:    string;
   type:   'image' | 'file';
-  source: 'local' | 'google_drive';
+  source: 'local';
 }
 
 export interface Schedule {

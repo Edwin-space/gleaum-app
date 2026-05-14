@@ -257,7 +257,7 @@ export function MobileMyPage({
         <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)', overflow: 'hidden' }}>
           <SectionLabel title="서비스 연동" />
 
-          {/* Google Calendar */}
+          {/* 기기 캘린더 */}
           <Link href="/settings/calendar" style={{ textDecoration: 'none', display: 'block' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', cursor: 'pointer' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(12,201,181,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -268,8 +268,8 @@ export function MobileMyPage({
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <span style={{ flex: 1, fontSize: '15px', fontWeight: 700, color: '#1A1B2E' }}>구글 캘린더</span>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', marginRight: '6px' }}>연동됨</span>
+              <span style={{ flex: 1, fontSize: '15px', fontWeight: 700, color: '#1A1B2E' }}>기기 캘린더 연동</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', marginRight: '6px' }}>준비 중</span>
               <Chevron />
             </div>
           </Link>
