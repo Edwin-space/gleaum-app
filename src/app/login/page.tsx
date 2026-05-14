@@ -232,7 +232,11 @@ function MobileLogin() {
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '11px', color: '#C7C7CC', marginTop: '18px', lineHeight: 1.7 }}>
-              가입 시 글리움의 서비스 약관 및 개인정보 처리방침에<br />동의하게 됩니다.
+              가입 시 글리움의{' '}
+              <a href="/legal/terms" style={{ color: '#8E8E93', textDecoration: 'underline' }}>서비스 약관</a>
+              {' '}및{' '}
+              <a href="/legal/privacy" style={{ color: '#8E8E93', textDecoration: 'underline' }}>개인정보 처리방침</a>
+              에<br />동의하게 됩니다.
             </p>
           </>
         ) : (
@@ -331,7 +335,11 @@ function MobileLogin() {
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '11px', color: '#C7C7CC', marginTop: '16px', lineHeight: 1.65 }}>
-              가입 시 서비스 약관 및 개인정보 처리방침에 동의하게 됩니다.
+              가입 시{' '}
+              <a href="/legal/terms" style={{ color: '#8E8E93', textDecoration: 'underline' }}>서비스 약관</a>
+              {' '}및{' '}
+              <a href="/legal/privacy" style={{ color: '#8E8E93', textDecoration: 'underline' }}>개인정보 처리방침</a>
+              에 동의하게 됩니다.
             </p>
           </form>
         )}

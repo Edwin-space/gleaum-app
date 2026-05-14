@@ -338,14 +338,19 @@ export function MobileMyPage({
       </div>
 
       {/* ── Footer ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 24px 12px', opacity: 0.38 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 24px 12px' }}>
         <GleaumBI variant="dark" width={72} />
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#1A1B2E', letterSpacing: '0.8px', margin: '8px 0 0', textTransform: 'uppercase' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: '#1A1B2E', letterSpacing: '0.8px', margin: '8px 0 0', textTransform: 'uppercase', opacity: 0.38 }}>
           Premium Dashboard
         </p>
+        {/* 법적 링크 */}
+        <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+          <Link href="/legal/terms" style={{ fontSize: '11px', color: '#8E8E93', textDecoration: 'underline' }}>이용약관</Link>
+          <Link href="/legal/privacy" style={{ fontSize: '11px', color: '#8E8E93', textDecoration: 'underline' }}>개인정보처리방침</Link>
+        </div>
         <button
           onClick={() => setShowDeleteModal(true)}
-          style={{ marginTop: '14px', fontSize: '11px', fontWeight: 700, color: '#1A1B2E', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          style={{ marginTop: '12px', fontSize: '11px', fontWeight: 700, color: '#1A1B2E', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', opacity: 0.38 }}
         >
           회원탈퇴
         </button>
