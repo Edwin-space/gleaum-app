@@ -34,7 +34,7 @@ export function LegalLayout({ title, children }: LegalLayoutProps) {
 
       {/* ── 네비게이션 ── */}
       <nav style={{
-        position: 'sticky',
+        position: 'sticky' as const,
         top: 0,
         zIndex: 100,
         background: 'rgba(8,8,14,0.88)',
@@ -46,7 +46,6 @@ export function LegalLayout({ title, children }: LegalLayoutProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        position: 'sticky' as const,
       }}>
         {/* 로고 */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
