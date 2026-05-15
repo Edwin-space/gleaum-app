@@ -11,6 +11,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { NativeAppProvider } from '@/components/NativeAppProvider';
+import { AppFooter } from '@/components/layout/AppFooter';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
@@ -187,6 +188,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           offset={96}
           richColors
         />
+        <AppFooter />
         <PwaRegistry />
         <Analytics />
         <SpeedInsights />
