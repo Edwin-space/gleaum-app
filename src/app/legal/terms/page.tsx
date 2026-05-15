@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { LegalLayout } from '@/components/layout/LegalLayout';
 
 export const metadata: Metadata = {
   title: '이용약관 | 글리움',
@@ -13,14 +14,8 @@ const EMAIL = 'helper@gleaum.com';
 
 export default function TermsPage() {
   return (
-    <div style={{ minHeight: '100dvh', background: '#FAFAFD', fontFamily: "'Pretendard', sans-serif" }}>
-      {/* 헤더 */}
-      <div style={{ background: 'white', borderBottom: '1px solid #F0F0F5', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <Link href="/mypage" style={{ color: '#1A1B2E', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
-        <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#1A1B2E' }}>이용약관</h1>
-      </div>
-
-      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 20px 80px' }}>
+    <LegalLayout title="이용약관">
+      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px 80px' }}>
 
         {/* 시행일 */}
         <div style={{ background: 'rgba(12,201,181,0.06)', borderRadius: '12px', padding: '14px 18px', marginBottom: '32px', border: '1px solid rgba(12,201,181,0.15)' }}>
@@ -145,7 +140,7 @@ export default function TermsPage() {
           <Link href="/legal/privacy" style={{ fontSize: '13px', color: '#0084CC', textDecoration: 'underline' }}>개인정보처리방침 보기</Link>
         </div>
       </div>
-    </div>
+    </LegalLayout>
   );
 }
 
