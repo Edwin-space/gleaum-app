@@ -14,12 +14,12 @@ const EMAIL = 'helper@gleaum.com';
 export default function PrivacyPage() {
   return (
     <LegalLayout title="개인정보처리방침">
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px 80px' }}>
+      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '48px 24px 80px' }}>
 
         {/* 시행일 */}
-        <div style={{ background: 'rgba(0,132,204,0.06)', borderRadius: '12px', padding: '14px 18px', marginBottom: '32px', border: '1px solid rgba(0,132,204,0.12)' }}>
-          <p style={{ margin: 0, fontSize: '13px', color: '#0084CC', fontWeight: 600 }}>시행일: {EFFECTIVE_DATE}</p>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#555' }}>
+        <div style={{ background: 'rgba(0,132,204,0.1)', borderRadius: '14px', padding: '16px 20px', marginBottom: '36px', border: '1px solid rgba(0,132,204,0.25)' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: '#0CC9B5', fontWeight: 600 }}>시행일: {EFFECTIVE_DATE}</p>
+          <p style={{ margin: '6px 0 0', fontSize: '14px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
             글리움(이하 "서비스")은 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」을 준수합니다.
           </p>
         </div>
@@ -134,24 +134,28 @@ export default function PrivacyPage() {
         </Section>
 
         {/* 하단 링크 */}
-        <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid #EEEEF5', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <Link href="/legal/terms" style={{ fontSize: '13px', color: '#0084CC', textDecoration: 'underline' }}>이용약관 보기</Link>
-          <Link href="/legal/delete-account" style={{ fontSize: '13px', color: '#C62828', textDecoration: 'underline' }}>계정 및 데이터 삭제 요청</Link>
+        <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <Link href="/legal/terms" style={{ fontSize: '13px', color: '#0CC9B5', textDecoration: 'underline' }}>이용약관 보기</Link>
+          <Link href="/legal/delete-account" style={{ fontSize: '13px', color: 'rgba(255,100,100,0.85)', textDecoration: 'underline' }}>계정 및 데이터 삭제 요청</Link>
         </div>
       </div>
     </LegalLayout>
   );
 }
 
-/* ── 하위 컴포넌트 ─────────────────────────────────────────────────── */
+/* ── 하위 컴포넌트 (다크 테마) ───────────────────────────────────────── */
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginBottom: '36px' }}>
-      <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#1A1B2E', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid #EEEEF5' }}>
+    <section style={{ marginBottom: '40px' }}>
+      <h2 style={{
+        fontSize: '16px', fontWeight: 700, color: '#FFFFFF',
+        marginBottom: '14px', paddingBottom: '12px',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+      }}>
         {title}
       </h2>
-      <div style={{ fontSize: '14px', lineHeight: '1.75', color: '#3A3A4A' }}>
+      <div style={{ fontSize: '14px', lineHeight: '1.85', color: 'rgba(255,255,255,0.68)' }}>
         {children}
       </div>
     </section>
@@ -160,9 +164,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function List({ items }: { items: string[] }) {
   return (
-    <ul style={{ paddingLeft: '20px', margin: '8px 0' }}>
+    <ul style={{ paddingLeft: '20px', margin: '10px 0' }}>
       {items.map((item) => (
-        <li key={item} style={{ marginBottom: '6px' }}>{item}</li>
+        <li key={item} style={{ marginBottom: '7px', color: 'rgba(255,255,255,0.68)' }}>{item}</li>
       ))}
     </ul>
   );
@@ -170,20 +174,20 @@ function List({ items }: { items: string[] }) {
 
 function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div style={{ overflowX: 'auto', margin: '12px 0' }}>
+    <div style={{ overflowX: 'auto', margin: '14px 0', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead>
-          <tr style={{ background: '#F5F5FB' }}>
+          <tr style={{ background: 'rgba(255,255,255,0.08)' }}>
             {headers.map((h) => (
-              <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#1A1B2E', border: '1px solid #EEEEF5', whiteSpace: 'nowrap' }}>{h}</th>
+              <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontWeight: 700, color: 'rgba(255,255,255,0.9)', borderBottom: '1px solid rgba(255,255,255,0.08)', whiteSpace: 'nowrap' }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#FAFAFD' }}>
+            <tr key={i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)' }}>
               {row.map((cell, j) => (
-                <td key={j} style={{ padding: '10px 12px', color: '#3A3A4A', border: '1px solid #EEEEF5', verticalAlign: 'top' }}>{cell}</td>
+                <td key={j} style={{ padding: '10px 14px', color: 'rgba(255,255,255,0.65)', borderBottom: '1px solid rgba(255,255,255,0.06)', verticalAlign: 'top' }}>{cell}</td>
               ))}
             </tr>
           ))}
@@ -195,7 +199,7 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: '#F5F5FB', borderRadius: '8px', padding: '10px 14px', marginTop: '10px', fontSize: '13px', color: '#666' }}>
+    <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px 16px', marginTop: '12px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.07)' }}>
       {children}
     </div>
   );

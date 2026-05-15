@@ -70,7 +70,12 @@ export function DesktopSidebar() {
 
   if (!isDesktop) return null;
 
-  if (pathname === '/login' || pathname === '/onboarding' || pathname === '/') {
+  if (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/onboarding' ||
+    pathname.startsWith('/legal')
+  ) {
     return null;
   }
 

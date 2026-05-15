@@ -18,9 +18,9 @@ export default function TermsPage() {
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px 80px' }}>
 
         {/* 시행일 */}
-        <div style={{ background: 'rgba(12,201,181,0.06)', borderRadius: '12px', padding: '14px 18px', marginBottom: '32px', border: '1px solid rgba(12,201,181,0.15)' }}>
-          <p style={{ margin: 0, fontSize: '13px', color: '#0A9E5C', fontWeight: 600 }}>시행일: {EFFECTIVE_DATE}</p>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#555' }}>
+        <div style={{ background: 'rgba(0,132,204,0.1)', borderRadius: '14px', padding: '16px 20px', marginBottom: '36px', border: '1px solid rgba(0,132,204,0.25)' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: '#0CC9B5', fontWeight: 600 }}>시행일: {EFFECTIVE_DATE}</p>
+          <p style={{ margin: '6px 0 0', fontSize: '14px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
             본 약관은 {OPERATOR}(이하 "운영자")가 제공하는 {SERVICE_NAME} 서비스(이하 "서비스")의 이용 조건 및 절차에 관한 사항을 규정합니다.
           </p>
         </div>
@@ -127,17 +127,18 @@ export default function TermsPage() {
 
         <Section title="제12조 (문의)">
           <p>서비스 이용과 관련한 문의는 아래 연락처로 해주세요.</p>
-          <div style={{ background: '#F5F5FB', borderRadius: '10px', padding: '14px 18px', marginTop: '8px' }}>
-            <p style={{ margin: 0, fontSize: '14px', color: '#1A1B2E' }}>
-              <strong>운영자:</strong> {OPERATOR}<br />
-              <strong>이메일:</strong> <a href={`mailto:${EMAIL}`} style={{ color: '#0084CC' }}>{EMAIL}</a>
+          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '14px 18px', marginTop: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.75)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.9)' }}>운영자:</strong> {OPERATOR}<br />
+              <strong style={{ color: 'rgba(255,255,255,0.9)' }}>이메일:</strong> <a href={`mailto:${EMAIL}`} style={{ color: '#0CC9B5' }}>{EMAIL}</a>
             </p>
           </div>
         </Section>
 
         {/* 하단 링크 */}
-        <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid #EEEEF5', display: 'flex', gap: '16px' }}>
-          <Link href="/legal/privacy" style={{ fontSize: '13px', color: '#0084CC', textDecoration: 'underline' }}>개인정보처리방침 보기</Link>
+        <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '16px' }}>
+          <Link href="/legal/privacy" style={{ fontSize: '13px', color: '#0CC9B5', textDecoration: 'underline' }}>개인정보처리방침 보기</Link>
+          <Link href="/legal/delete-account" style={{ fontSize: '13px', color: 'rgba(255,100,100,0.85)', textDecoration: 'underline' }}>계정 및 데이터 삭제 요청</Link>
         </div>
       </div>
     </LegalLayout>
@@ -148,11 +149,15 @@ export default function TermsPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginBottom: '36px' }}>
-      <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#1A1B2E', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid #EEEEF5' }}>
+    <section style={{ marginBottom: '40px' }}>
+      <h2 style={{
+        fontSize: '16px', fontWeight: 700, color: '#FFFFFF',
+        marginBottom: '14px', paddingBottom: '12px',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+      }}>
         {title}
       </h2>
-      <div style={{ fontSize: '14px', lineHeight: '1.75', color: '#3A3A4A' }}>
+      <div style={{ fontSize: '14px', lineHeight: '1.85', color: 'rgba(255,255,255,0.68)' }}>
         {children}
       </div>
     </section>
