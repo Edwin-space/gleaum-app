@@ -13,6 +13,7 @@ import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod, Sp
 
 interface DesktopNewScheduleProps {
   saving: boolean;
+  userLoading?: boolean;
   type: ScheduleType;
   setType: (t: ScheduleType) => void;
   title: string;
@@ -98,7 +99,8 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 }
 
 export function DesktopNewSchedule({
-  saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
+  saving, userLoading = false,
+  type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
   participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
   reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
   category, setCategory, paymentMethod, setPaymentMethod,

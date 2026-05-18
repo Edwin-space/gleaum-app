@@ -13,6 +13,7 @@ import type { User, ScheduleType, RepeatType, ExpenseCategory, PaymentMethod, Sp
 
 interface MobileNewScheduleProps {
   saving: boolean;
+  userLoading?: boolean;
   type: ScheduleType;
   setType: (t: ScheduleType) => void;
   title: string;
@@ -74,7 +75,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function MobileNewSchedule({
-  saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
+  saving, userLoading = false,
+  type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
   participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
   reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
   category, setCategory, paymentMethod, setPaymentMethod,
@@ -179,7 +181,7 @@ export function MobileNewSchedule({
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          {saving ? '로딩 중…' : '저장'}
+          {saving ? '저장 중…' : '저장'}
         </button>
       </div>
 
@@ -728,22 +730,25 @@ export function MobileNewSchedule({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || userLoading}
             style={{
               height: '56px',
               borderRadius: '20px',
               border: 'none',
-              cursor: saving ? 'not-allowed' : 'pointer',
+              cursor: (saving || userLoading) ? 'not-allowed' : 'pointer',
               fontSize: '15px',
               fontWeight: 800,
               color: 'white',
-              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-              boxShadow: '0 6px 20px rgba(0,132,204,0.35)',
-              opacity: saving ? 0.7 : 1,
+              background: (saving || userLoading)
+                ? 'rgba(0,132,204,0.5)'
+                : 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              boxShadow: (saving || userLoading) ? 'none' : '0 6px 20px rgba(0,132,204,0.35)',
+              opacity: (saving || userLoading) ? 0.6 : 1,
               letterSpacing: '-0.01em',
+              transition: 'all 0.2s ease',
             }}
           >
-            {saving ? '저장 중...' : '일정 저장'}
+            {saving ? '저장 중...' : userLoading ? '초기화 중...' : '일정 저장'}
           </button>
         </div>
       </div>

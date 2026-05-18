@@ -80,6 +80,40 @@ export async function requestFCMToken(): Promise<string | null> {
 }
 
 /**
+ * 푸시 알림 탭(클릭) 리스너 — 백그라운드/종료 상태에서 알림을 탭했을 때 실행
+ *
+ * 네이티브: notificationActionPerformed 이벤트 (data.url 로 이동)
+ * 웹: 서비스워커가 처리하므로 여기서는 노-옵
+ *
+ * 반환: unsubscribe 함수
+ */
+export async function onNotificationTap(
+  callback: (url: string) => void
+): Promise<() => void> {
+  if (typeof window === 'undefined' || !isNativeApp()) return () => {};
+
+  try {
+    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
+
+    const handle = await FirebaseMessaging.addListener(
+      'notificationActionPerformed',
+      (event) => {
+        // FCM 데이터 페이로드의 url 필드 우선, 없으면 notification 링크
+        const data = event.notification.data as Record<string, string> | undefined;
+        const url  = data?.url ?? '/home';
+        console.info('[FCM] 알림 탭 → 이동:', url);
+        callback(url);
+      }
+    );
+
+    return () => { handle.remove(); };
+  } catch (err) {
+    console.error('[FCM] 탭 리스너 등록 실패:', err);
+    return () => {};
+  }
+}
+
+/**
  * 앱 포그라운드 상태에서 FCM 메시지 수신 리스너
  *
  * 네이티브: @capacitor-firebase/messaging notificationReceived 이벤트

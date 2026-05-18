@@ -143,7 +143,8 @@ export default function NewSchedulePage() {
   };
 
   const commonProps = {
-    saving: saving || userLoading,
+    saving,
+    userLoading,
     type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
     participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
     reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
