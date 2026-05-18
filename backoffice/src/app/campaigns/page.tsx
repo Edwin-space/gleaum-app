@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Send, Variable, Smartphone, Globe, Mail,
-  MessageSquare, LayoutGrid, Loader2, CheckCircle2, AlertCircle, RefreshCw,
+  MessageSquare, LayoutGrid, Loader2, CheckCircle2, AlertCircle, RefreshCw, History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,25 +108,38 @@ export default function CampaignsPage() {
 
   return (
     <main className="p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">캠페인 생성기</h1>
-        <p className="text-muted-foreground mt-1">
-          타겟 유저를 설정하고 최적의 채널로 메시지를 발송하세요.
-        </p>
+      <header className="mb-8 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">캠페인 생성기</h1>
+          <p className="text-muted-foreground mt-1">
+            타겟 유저를 설정하고 최적의 채널로 메시지를 발송하세요.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/campaigns/history">
+            <History className="h-4 w-4 mr-1.5" /> 발송 이력
+          </Link>
+        </Button>
       </header>
 
       {/* 발송 결과 배너 */}
       {status === "success" && result && (
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-          <div>
+          <div className="flex-1">
             <p className="font-semibold">발송 완료</p>
             <p className="mt-0.5">
               총 {result.total}명 중 <strong>{result.sent}명 성공</strong>
               {result.failed > 0 && `, ${result.failed}명 실패`}
             </p>
           </div>
-          <button className="ml-auto text-green-600 hover:text-green-800" onClick={() => setStatus("idle")}>✕</button>
+          <Link
+            href="/campaigns/history"
+            className="text-xs underline text-green-700 hover:text-green-900 whitespace-nowrap"
+          >
+            이력 확인 →
+          </Link>
+          <button className="text-green-600 hover:text-green-800 ml-2" onClick={() => setStatus("idle")}>✕</button>
         </div>
       )}
       {status === "error" && errorMsg && (
