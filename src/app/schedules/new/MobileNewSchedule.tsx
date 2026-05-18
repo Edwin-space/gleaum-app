@@ -168,13 +168,18 @@ export function MobileNewSchedule({
             fontSize: '14px',
             fontWeight: 800,
             color: 'white',
-            background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-            boxShadow: '0 4px 16px rgba(0,132,204,0.35)',
-            opacity: saving ? 0.6 : 1,
+            background: saving
+              ? 'rgba(0,132,204,0.5)'
+              : 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+            boxShadow: saving ? 'none' : '0 4px 16px rgba(0,132,204,0.35)',
+            opacity: saving ? 0.7 : 1,
             letterSpacing: '-0.01em',
+            minWidth: '64px',
+            transition: 'all 0.2s ease',
+            WebkitTapHighlightColor: 'transparent',
           }}
         >
-          {saving ? '저장중' : '저장'}
+          {saving ? '로딩 중…' : '저장'}
         </button>
       </div>
 

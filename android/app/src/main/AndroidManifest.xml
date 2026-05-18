@@ -52,14 +52,18 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="gleaum_notifications" />
-        <!-- 알림 아이콘: 흰색 실루엣 PNG (투명 배경) -->
+        <!--
+            알림 아이콘: Android 5.0+ 는 반드시 흰색 단색 실루엣 벡터 사용.
+            @mipmap/ic_launcher(풀컬러) 는 회색 사각형으로 렌더되거나
+            삼성/샤오미 등 일부 ROM 에서 알림 자체를 무시함.
+        -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
-        <!-- 알림 아이콘 색상 -->
+            android:resource="@drawable/ic_stat_notify" />
+        <!-- 알림 강조 색상 (글리움 브랜드 블루) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/ic_launcher_background" />
+            android:resource="@color/gleaum_blue" />
 
         <!-- FileProvider (파일 공유) -->
         <provider

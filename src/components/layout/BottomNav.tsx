@@ -48,7 +48,7 @@ export function BottomNav() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
 
-  const hideOnPaths = ['/', '/login', '/onboarding', '/auth/callback', '/invite', '/legal'];
+  const hideOnPaths = ['/', '/login', '/onboarding', '/auth/callback', '/invite', '/legal', '/schedules/new', '/schedules/edit'];
   const shouldHide = hideOnPaths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
 
   if (shouldHide || isDesktop) return null;

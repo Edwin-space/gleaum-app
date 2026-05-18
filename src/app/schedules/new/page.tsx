@@ -17,7 +17,7 @@ export default function NewSchedulePage() {
   const isDesktop = useIsDesktop();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { familyGroupId } = useCurrentUser();
+  const { familyGroupId, loading: userLoading } = useCurrentUser();
   const { members, myRole } = useSpace(familyGroupId);
 
   const [saving, setSaving] = useState(false);
@@ -80,7 +80,10 @@ export default function NewSchedulePage() {
       toast.error('일정 제목을 입력해주세요');
       return;
     }
-    if (!familyGroupId) return;
+    if (!familyGroupId) {
+      toast.error('스페이스 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요');
+      return;
+    }
 
     // viewer 역할은 일정 생성 불가
     if (myRole === 'viewer') {
@@ -129,7 +132,8 @@ export default function NewSchedulePage() {
   };
 
   const commonProps = {
-    saving, type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
+    saving: saving || userLoading,
+    type, setType, title, setTitle, date, setDate, startTime, setStart, endTime, setEnd,
     participants, toggleParticipant, members, address, setAddress, refUrl, setRefUrl,
     reminder, setReminder, repeat, setRepeat, memo, setMemo, amount, setAmount,
     category, setCategory, paymentMethod, setPaymentMethod,

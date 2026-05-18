@@ -902,10 +902,17 @@ export async function saveFCMToken(token: string): Promise<void> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase
+
+  const { error } = await supabase
     .from('profiles')
     .update({ fcm_token: token })
     .eq('id', user.id);
+
+  if (error) {
+    console.error('[FCM] 토큰 저장 실패 — userId:', user.id, '| error:', error.message);
+  } else {
+    console.info('[FCM] 토큰 저장 완료 — prefix:', token.slice(0, 20));
+  }
 }
 
 /** 알림 레코드 생성 (DB 기록용) */
