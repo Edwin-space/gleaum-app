@@ -62,7 +62,7 @@ interface GleaumLogoImgProps {
 export function GleaumLogoImg({ size = 40, className = '' }: GleaumLogoImgProps) {
   return (
     <Image
-      src="/logo.jpg"
+      src="/logo.png"
       alt="글리움 로고"
       width={size}
       height={size}

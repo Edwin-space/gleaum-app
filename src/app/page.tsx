@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PcLandingPage } from '@/components/landing/PcLandingPage';
+import { RootPageRouter } from '@/components/landing/RootPageRouter';
 
 export const metadata: Metadata = {
   title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootPage() {
-  return <PcLandingPage />;
+  return <RootPageRouter />;
 }
