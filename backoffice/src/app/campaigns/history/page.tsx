@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Send, MousePointerClick, Users,
-  CheckCircle2, AlertCircle, XCircle, TrendingUp,
+  CheckCircle2, AlertCircle, XCircle, TrendingUp, ChevronRight,
 } from "lucide-react";
 
 /* ── 타입 ─────────────────────────────────────────────────── */
@@ -178,12 +178,13 @@ export default async function CampaignHistoryPage() {
                 <TableHead className="text-right">클릭</TableHead>
                 <TableHead className="text-right">CTR</TableHead>
                 <TableHead>상태</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {campaigns.length > 0 ? (
                 campaigns.map((c) => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={c.failed_count > 0 ? "bg-destructive/[0.03]" : ""}>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(c.created_at).toLocaleString("ko-KR", {
                         month: "2-digit",
@@ -208,7 +209,7 @@ export default async function CampaignHistoryPage() {
                     <TableCell className="text-right text-sm font-mono text-green-700">
                       {c.sent_count.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right text-sm font-mono text-destructive">
+                    <TableCell className="text-right text-sm font-mono text-destructive font-semibold">
                       {c.failed_count > 0 ? c.failed_count.toLocaleString() : "—"}
                     </TableCell>
                     <TableCell className="text-right text-sm font-mono font-semibold text-primary">
@@ -220,11 +221,18 @@ export default async function CampaignHistoryPage() {
                     <TableCell>
                       <StatusBadge status={c.status} />
                     </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-xs" asChild>
+                        <Link href={`/campaigns/history/${c.id}`}>
+                          상세 <ChevronRight className="h-3 w-3" />
+                        </Link>
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-16">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-16">
                     {error
                       ? "데이터를 불러올 수 없습니다."
                       : "발송 이력이 없습니다. 캠페인을 생성하고 발송해 보세요."}

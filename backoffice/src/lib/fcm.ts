@@ -1,6 +1,5 @@
 /**
  * 백오피스 — FCM HTTP v1 헬퍼 (서버 전용)
- * 메인 앱의 src/lib/fcm.ts와 동일 구현체
  */
 
 import { GoogleAuth } from 'google-auth-library';
@@ -29,24 +28,47 @@ export interface FCMMessage {
   url?: string;
 }
 
-export async function sendFCMNotification(msg: FCMMessage): Promise<boolean> {
-  try {
-    const accessToken = await getFCMAccessToken();
-    const payload = {
-      message: {
-        token: msg.token,
-        notification: { title: msg.title, body: msg.body },
-        webpush: {
-          notification: {
-            title: msg.title,
-            body: msg.body,
-            icon: '/icon-192.png',
-          },
-          fcm_options: { link: msg.url ?? '/home' },
+/** 단일 토큰 발송 결과 */
+export interface FCMSendResult {
+  success: boolean;
+  errorCode?: string;    // FCM v1 error.status (UNREGISTERED, INVALID_ARGUMENT 등)
+  errorMessage?: string; // FCM v1 error.message
+}
+
+/** 배치 발송 단건 결과 (user_id + token 연계) */
+export interface FCMBatchDetail {
+  userId: string;
+  tokenPrefix: string;   // 토큰 앞 20자
+  success: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+/**
+ * FCM v1 단일 기기 발송
+ * - 성공 여부와 에러 코드를 함께 반환
+ */
+export async function sendFCMNotification(
+  msg: FCMMessage,
+  accessToken: string
+): Promise<FCMSendResult> {
+  const payload = {
+    message: {
+      token: msg.token,
+      notification: { title: msg.title, body: msg.body },
+      webpush: {
+        notification: {
+          title: msg.title,
+          body: msg.body,
+          icon: '/icon-192.png',
         },
-        data: { url: msg.url ?? '/home' },
+        fcm_options: { link: msg.url ?? '/home' },
       },
-    };
+      data: { url: msg.url ?? '/home' },
+    },
+  };
+
+  try {
     const res = await fetch(FCM_URL, {
       method: 'POST',
       headers: {
@@ -55,38 +77,104 @@ export async function sendFCMNotification(msg: FCMMessage): Promise<boolean> {
       },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-      const err = await res.json();
-      console.error('[FCM] 발송 실패:', JSON.stringify(err));
-      return false;
+
+    if (res.ok) return { success: true };
+
+    // FCM v1 에러 파싱
+    let errorCode   = `HTTP_${res.status}`;
+    let errorMessage = res.statusText;
+
+    try {
+      const errBody = await res.json() as {
+        error?: { status?: string; message?: string };
+      };
+      errorCode    = errBody.error?.status   ?? errorCode;
+      errorMessage = errBody.error?.message  ?? errorMessage;
+    } catch {
+      // JSON 파싱 실패 — HTTP 상태코드만 사용
     }
-    return true;
+
+    return { success: false, errorCode, errorMessage };
   } catch (err) {
-    console.error('[FCM] 오류:', err);
-    return false;
+    const msg2 = err instanceof Error ? err.message : String(err);
+    return { success: false, errorCode: 'EXCEPTION', errorMessage: msg2 };
   }
 }
 
-/** 여러 토큰에 동시 발송 */
+/**
+ * 여러 유저·토큰에 배치 발송 (50개씩 병렬)
+ * - 집계: sent / failed
+ * - 상세: 토큰별 성공·에러 코드
+ */
 export async function sendFCMBatch(
-  tokens: string[],
+  targets: Array<{ userId: string; token: string }>,
   title: string,
   body: string,
   url?: string
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; details: FCMBatchDetail[] }> {
   let sent = 0;
   let failed = 0;
-  // FCM 배치: 병렬 처리 (최대 50개씩)
+  const details: FCMBatchDetail[] = [];
+
+  // 액세스 토큰은 배치 전체에서 재사용 (1회 발급)
+  let accessToken: string;
+  try {
+    const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64!;
+    const credentials = JSON.parse(Buffer.from(b64, 'base64').toString('utf-8'));
+    const auth = new GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+    });
+    const client = await auth.getClient();
+    const t = await client.getAccessToken();
+    if (!t.token) throw new Error('토큰 발급 실패');
+    accessToken = t.token;
+  } catch (err) {
+    const msg2 = err instanceof Error ? err.message : String(err);
+    // 토큰 발급 자체 실패 → 전체 실패
+    return {
+      sent: 0,
+      failed: targets.length,
+      details: targets.map((t) => ({
+        userId:      t.userId,
+        tokenPrefix: t.token.slice(0, 20),
+        success:     false,
+        errorCode:   'ACCESS_TOKEN_ERROR',
+        errorMessage: msg2,
+      })),
+    };
+  }
+
   const CHUNK = 50;
-  for (let i = 0; i < tokens.length; i += CHUNK) {
-    const chunk = tokens.slice(i, i + CHUNK);
+  for (let i = 0; i < targets.length; i += CHUNK) {
+    const chunk = targets.slice(i, i + CHUNK);
     const results = await Promise.allSettled(
-      chunk.map((token) => sendFCMNotification({ token, title, body, url }))
+      chunk.map((t) =>
+        sendFCMNotification({ token: t.token, title, body, url }, accessToken).then(
+          (r) => ({ ...r, userId: t.userId, tokenPrefix: t.token.slice(0, 20) })
+        )
+      )
     );
+
     for (const r of results) {
-      if (r.status === 'fulfilled' && r.value) sent++;
-      else failed++;
+      if (r.status === 'fulfilled') {
+        const { userId, tokenPrefix, success, errorCode, errorMessage } = r.value;
+        details.push({ userId, tokenPrefix, success, errorCode, errorMessage });
+        if (success) sent++;
+        else failed++;
+      } else {
+        // Promise 자체 reject (거의 없음)
+        details.push({
+          userId: '',
+          tokenPrefix: '',
+          success: false,
+          errorCode: 'PROMISE_REJECTED',
+          errorMessage: String(r.reason),
+        });
+        failed++;
+      }
     }
   }
-  return { sent, failed };
+
+  return { sent, failed, details };
 }
