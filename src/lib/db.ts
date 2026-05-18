@@ -27,6 +27,11 @@ import type {
 // [전역 상태] 세션 내 무한 루프 방지용
 let hasTriedAutoCreateGroup = false;
 
+/** 로그인 시 공간 자동 생성 플래그 초기화 (재시도 허용) */
+export function resetAutoCreateFlag() {
+  hasTriedAutoCreateGroup = false;
+}
+
 // ── Row types (DB → TypeScript 변환용) ─────────────────────
 
 export interface ProfileRow {
@@ -617,19 +622,22 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
     return null;
   }
 
-  // 온보딩 완료 후 공간이 없는 경우 개인 공간 자동 생성
-  if (profile.onboarding_completed_at && !profile.family_group_id && !hasTriedAutoCreateGroup) {
+  // 공간이 없는 경우 개인 공간 자동 생성
+  // (온보딩 완료 여부와 무관하게 — 온보딩 미완료 사용자도 일정 생성 등을 위해 공간 필요)
+  if (!profile.family_group_id && !hasTriedAutoCreateGroup) {
     hasTriedAutoCreateGroup = true;
     const displayName = profile.display_name ?? profile.name ?? '나';
-    await createPersonalSpace(displayName);
+    const newSpaceId = await createPersonalSpace(displayName);
 
-    // 업데이트된 프로필 재조회 후 반환
-    const { data: updated } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    return updated ?? profile;
+    if (newSpaceId) {
+      // 업데이트된 프로필 재조회 후 반환
+      const { data: updated } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      return updated ?? profile;
+    }
   }
 
   return profile;

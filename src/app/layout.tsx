@@ -80,6 +80,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: '#FAFAFD',
+  // safe-area-inset 값을 CSS env() 변수로 노출시켜 BottomNav 등이 safe area까지 확장 가능
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

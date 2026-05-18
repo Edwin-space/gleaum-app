@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ensureUserSetup, type ProfileRow } from '@/lib/db';
+import { ensureUserSetup, resetAutoCreateFlag, type ProfileRow } from '@/lib/db';
 import type { User } from '@/types';
 
 // ── [전역 캐시] 앱 실행 동안 유지되는 싱글톤 사용자 데이터 ──
@@ -73,7 +73,9 @@ export function useCurrentUser(): CurrentUserState {
         cachedProfile = null;
         setProfile(null);
       } else if (event === 'SIGNED_IN') {
-        void load(true); 
+        // 로그인 시 공간 자동 생성 플래그를 초기화하여 재시도 허용
+        resetAutoCreateFlag();
+        void load(true);
       }
     });
 

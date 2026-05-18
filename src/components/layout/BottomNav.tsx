@@ -67,6 +67,9 @@ export function BottomNav() {
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)',
         paddingLeft: '16px',
         paddingRight: '16px',
+        // safe-area inset 영역(홈 인디케이터 아래)까지 앱 배경색으로 채워
+        // iOS/Android 에서 OS 네비게이션 바 색과 다른 배경이 보이는 갭 제거
+        background: '#FAFAFD',
       }}
     >
       <div

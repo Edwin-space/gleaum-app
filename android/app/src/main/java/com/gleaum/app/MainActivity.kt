@@ -90,9 +90,13 @@ class MainActivity : BridgeActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // Android 11+: WindowInsetsController 사용
             window.insetsController?.apply {
-                // 상태바 아이콘 색상: 흰색 (다크 배경 위)
+                // 상태바 아이콘: 흰색 (다크 배경)
                 setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
-                setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
+                // 네비게이션 바 아이콘: 어두운 색 (밝은 배경 #FAFAFD 위)
+                setSystemBarsAppearance(
+                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                )
             }
         } else {
             // Android 10 이하: 레거시 플래그
@@ -101,11 +105,13 @@ class MainActivity : BridgeActivity() {
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR  // 네비게이션 바 아이콘 다크
             )
         }
 
-        // 상태바/네비게이션바 배경: 다크 네이비
+        // 상태바: 다크 네이비 (앱 상단 배경과 일치)
         window.statusBarColor = android.graphics.Color.parseColor("#0F1A2E")
-        window.navigationBarColor = android.graphics.Color.parseColor("#0F1A2E")
+        // 네비게이션 바: 앱 배경색(#FAFAFD)과 일치 → BottomNav safe area 갭 제거
+        window.navigationBarColor = android.graphics.Color.parseColor("#FAFAFD")
     }
 }

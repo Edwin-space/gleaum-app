@@ -142,13 +142,15 @@ export async function sendFCMNotification(
 
 /**
  * 여러 유저·토큰에 배치 발송 (50개씩 병렬)
+ *
+ * targets 각 항목에 title/body 가 있으면 개인화된 값을 사용,
+ * 없으면 url 파라미터만 공통으로 사용 (하위 호환을 위해 url 단독 파라미터 유지).
+ *
  * - 집계: sent / failed
  * - 상세: 토큰별 성공·에러 코드
  */
 export async function sendFCMBatch(
-  targets: Array<{ userId: string; token: string }>,
-  title: string,
-  body: string,
+  targets: Array<{ userId: string; token: string; title?: string; body?: string }>,
   url?: string
 ): Promise<{ sent: number; failed: number; details: FCMBatchDetail[] }> {
   let sent = 0;
@@ -170,15 +172,14 @@ export async function sendFCMBatch(
     accessToken = t.token;
   } catch (err) {
     const msg2 = err instanceof Error ? err.message : String(err);
-    // 토큰 발급 자체 실패 → 전체 실패
     return {
       sent: 0,
       failed: targets.length,
       details: targets.map((t) => ({
-        userId:      t.userId,
-        tokenPrefix: t.token.slice(0, 20),
-        success:     false,
-        errorCode:   'ACCESS_TOKEN_ERROR',
+        userId:       t.userId,
+        tokenPrefix:  t.token.slice(0, 20),
+        success:      false,
+        errorCode:    'ACCESS_TOKEN_ERROR',
         errorMessage: msg2,
       })),
     };
@@ -189,9 +190,10 @@ export async function sendFCMBatch(
     const chunk = targets.slice(i, i + CHUNK);
     const results = await Promise.allSettled(
       chunk.map((t) =>
-        sendFCMNotification({ token: t.token, title, body, url }, accessToken).then(
-          (r) => ({ ...r, userId: t.userId, tokenPrefix: t.token.slice(0, 20) })
-        )
+        sendFCMNotification(
+          { token: t.token, title: t.title ?? '', body: t.body ?? '', url },
+          accessToken
+        ).then((r) => ({ ...r, userId: t.userId, tokenPrefix: t.token.slice(0, 20) }))
       )
     );
 
@@ -202,7 +204,6 @@ export async function sendFCMBatch(
         if (success) sent++;
         else failed++;
       } else {
-        // Promise 자체 reject (거의 없음)
         details.push({
           userId: '',
           tokenPrefix: '',

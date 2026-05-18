@@ -1,8 +1,12 @@
 /**
  * POST /api/campaigns/send
  * 세그먼트 조건에 맞는 유저들에게 캠페인 메시지 발송
- * - campaign_logs    : 집계 기록 (sent / failed / status)
+ * - campaign_logs         : 집계 기록 (sent / failed / status)
  * - campaign_send_details : 건별 성공·실패 원인 기록
+ *
+ * 지원 템플릿 변수 (제목/본문에 자동 치환):
+ *   {{user_name}}   → 수신자 표시 이름
+ *   {{space_name}}  → 수신자 스페이스 이름
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,6 +14,16 @@ import { supabase } from '@/lib/supabase';
 import { sendFCMBatch } from '@/lib/fcm';
 
 const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'https://www.gleaum.com';
+
+/** 템플릿 변수를 실제 값으로 치환 */
+function resolveTemplate(
+  template: string,
+  vars: { user_name?: string; space_name?: string }
+): string {
+  return template
+    .replace(/\{\{user_name\}\}/g,  vars.user_name  ?? '사용자')
+    .replace(/\{\{space_name\}\}/g, vars.space_name ?? '내 공간');
+}
 
 export async function POST(req: NextRequest) {
   const { segment, spaceId, channel, title, body, url } = await req.json() as {
@@ -43,10 +57,12 @@ export async function POST(req: NextRequest) {
   }
   const campaignId: string | null = logRow?.id ?? null;
 
-  // ── 2. 대상 유저 + FCM 토큰 수집 ─────────────────────────
+  // ── 2. 대상 유저 + FCM 토큰 + 이름 수집 ──────────────────
+  //    display_name / name : 템플릿 {{user_name}} 치환용
+  //    family_group_id     : {{space_name}} 치환을 위한 스페이스 조인용
   let query = supabase
     .from('profiles')
-    .select('id, fcm_token')
+    .select('id, fcm_token, display_name, name, family_group_id')
     .not('fcm_token', 'is', null);
 
   if (segment === 'no_onboarding') {
@@ -67,24 +83,68 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sent: 0, failed: 0, total: 0, message: '발송 대상 없음', campaignId });
   }
 
-  const targets = profiles
-    .filter((p: { id: string; fcm_token: string | null }) => !!p.fcm_token)
-    .map((p: { id: string; fcm_token: string }) => ({ userId: p.id, token: p.fcm_token }));
+  // ── 3. {{space_name}} 치환을 위한 스페이스 이름 일괄 조회 ─
+  //    unique family_group_id 만 조회하여 N+1 방지
+  const needsSpaceName = title.includes('{{space_name}}') || body.includes('{{space_name}}');
+  const spaceNameMap: Record<string, string> = {};
 
-  // ── 3. 클릭 추적 URL 생성 ─────────────────────────────────
+  if (needsSpaceName) {
+    const uniqueSpaceIds = [...new Set(
+      profiles
+        .map((p: { family_group_id: string | null }) => p.family_group_id)
+        .filter(Boolean) as string[]
+    )];
+
+    if (uniqueSpaceIds.length > 0) {
+      const { data: spaces } = await supabase
+        .from('family_groups')
+        .select('id, name')
+        .in('id', uniqueSpaceIds);
+
+      (spaces ?? []).forEach((s: { id: string; name: string }) => {
+        spaceNameMap[s.id] = s.name;
+      });
+    }
+  }
+
+  // ── 4. 토큰 필터 + 템플릿 변수 치환 ─────────────────────
+  type ProfileRow = {
+    id: string;
+    fcm_token: string | null;
+    display_name: string | null;
+    name: string | null;
+    family_group_id: string | null;
+  };
+
+  const targets = profiles
+    .filter((p: ProfileRow) => !!p.fcm_token)
+    .map((p: ProfileRow) => {
+      const userName  = p.display_name ?? p.name ?? '사용자';
+      const spaceName = p.family_group_id ? (spaceNameMap[p.family_group_id] ?? '내 공간') : '내 공간';
+      const vars = { user_name: userName, space_name: spaceName };
+
+      return {
+        userId: p.id,
+        token:  p.fcm_token as string,
+        title:  resolveTemplate(title, vars),
+        body:   resolveTemplate(body,  vars),
+      };
+    });
+
+  // ── 5. 클릭 추적 URL 생성 ─────────────────────────────────
   const landingUrl = url || '/home';
   const trackingUrl = campaignId
     ? `${MAIN_APP_URL}/api/campaign/click?id=${campaignId}&to=${encodeURIComponent(landingUrl)}`
     : landingUrl;
 
-  // ── 4. FCM 배치 발송 ──────────────────────────────────────
-  const { sent, failed, details } = await sendFCMBatch(targets, title, body, trackingUrl);
+  // ── 6. FCM 배치 발송 (타겟별 개인화 title/body) ───────────
+  const { sent, failed, details } = await sendFCMBatch(targets, trackingUrl);
 
-  // ── 5. 집계 로그 업데이트 ─────────────────────────────────
+  // ── 7. 집계 로그 업데이트 ─────────────────────────────────
   const status = failed === 0 ? 'completed' : sent === 0 ? 'failed' : 'partial';
   await updateLog(campaignId, targets.length, sent, failed, status);
 
-  // ── 6. 건별 상세 기록 (campaign_send_details) ─────────────
+  // ── 8. 건별 상세 기록 (campaign_send_details) ─────────────
   if (campaignId && details.length > 0) {
     const detailRows = details.map((d) => ({
       campaign_id:   campaignId,
@@ -95,7 +155,6 @@ export async function POST(req: NextRequest) {
       error_message: d.errorMessage ?? null,
     }));
 
-    // 500건씩 분할 insert (Supabase 단건 한도 대응)
     const INSERT_CHUNK = 500;
     for (let i = 0; i < detailRows.length; i += INSERT_CHUNK) {
       const { error: detailErr } = await supabase
