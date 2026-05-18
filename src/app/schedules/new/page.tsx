@@ -17,8 +17,17 @@ export default function NewSchedulePage() {
   const isDesktop = useIsDesktop();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { familyGroupId, loading: userLoading } = useCurrentUser();
+  const { familyGroupId, loading: userLoading, refresh } = useCurrentUser();
   const { members, myRole } = useSpace(familyGroupId);
+
+  // 로딩 완료 후에도 familyGroupId 가 null 이면 공간 생성 재시도
+  useEffect(() => {
+    if (!userLoading && !familyGroupId) {
+      refresh();
+    }
+  // refresh 는 매 렌더마다 새 참조 — familyGroupId / userLoading 변화에만 반응
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLoading, familyGroupId]);
 
   const [saving, setSaving] = useState(false);
   const [type, setType] = useState<ScheduleType>((searchParams.get('type') as ScheduleType) || 'shared');
@@ -81,7 +90,9 @@ export default function NewSchedulePage() {
       return;
     }
     if (!familyGroupId) {
-      toast.error('스페이스 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요');
+      // 아직 로딩 중이거나 공간 생성 중 — refresh() 재시도 트리거
+      refresh();
+      toast.error('스페이스 초기화 중입니다. 잠시 후 다시 시도해주세요 (3~5초)');
       return;
     }
 

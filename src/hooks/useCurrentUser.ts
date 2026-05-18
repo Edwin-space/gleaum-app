@@ -30,14 +30,21 @@ export function useCurrentUser(): CurrentUserState {
   const [loading, setLoading]   = useState(isFirstLoad && !cachedProfile);
 
   const load = useCallback(async (force = false) => {
-    // 이미 데이터가 있고 강제 새로고침이 아니면 즉시 종료 (속도 최적화)
-    if (!force && cachedProfile) {
+    // 캐시가 있고 공간도 있으면 즉시 반환 (속도 최적화)
+    // family_group_id 가 null 이면 공간 자동 생성을 위해 서버 재조회 필요
+    const cacheValid = !force && !!cachedProfile && !!cachedProfile.family_group_id;
+    if (cacheValid) {
       setProfile(cachedProfile);
       setLoading(false);
       return;
     }
 
-    if (force) setLoading(true);
+    // null 공간 상태로 캐시되어 있으면 재시도 허용 (플래그 초기화)
+    if (!force && cachedProfile && !cachedProfile.family_group_id) {
+      resetAutoCreateFlag();
+    }
+
+    if (force || !cachedProfile || !cachedProfile.family_group_id) setLoading(true);
 
     try {
       // getSession으로 로컬 세션 먼저 확인 (getUser보다 훨씬 빠름)

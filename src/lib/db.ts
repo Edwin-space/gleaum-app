@@ -563,10 +563,16 @@ export async function createSpace(name: string): Promise<string | null> {
   }
 
   // 3. profiles.family_group_id 업데이트 (하위 호환)
-  await supabase
+  const { error: profileUpdateError } = await supabase
     .from('profiles')
     .update({ family_group_id: group.id })
     .eq('id', user.id);
+
+  if (profileUpdateError) {
+    console.error('[createSpace] profiles 업데이트 실패:', profileUpdateError.message, '| spaceId:', group.id);
+  } else {
+    console.info('[createSpace] 공간 생성 완료:', group.id, '| user:', user.id);
+  }
 
   return group.id;
 }
