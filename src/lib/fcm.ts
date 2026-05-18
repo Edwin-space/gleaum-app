@@ -41,13 +41,48 @@ export async function sendFCMNotification(msg: FCMMessage): Promise<boolean> {
   try {
     const accessToken = await getFCMAccessToken();
 
+    // 절대 URL 보장
+    const absoluteUrl = msg.url?.startsWith('http')
+      ? msg.url
+      : `https://www.gleaum.com${msg.url ?? '/home'}`;
+
     const payload = {
       message: {
         token: msg.token,
+        // ── 공통 알림 ──────────────────────────────────────────────────────
         notification: {
           title: msg.title,
           body:  msg.body,
         },
+
+        // ── Android: 채널 ID + 높은 우선순위 ─────────────────────────────
+        android: {
+          priority: 'HIGH',
+          notification: {
+            channel_id: 'gleaum_notifications',
+            sound:       'default',
+            title:       msg.title,
+            body:        msg.body,
+          },
+        },
+
+        // ── iOS (APNs) ────────────────────────────────────────────────────
+        apns: {
+          headers: {
+            'apns-priority':  '10',
+            'apns-push-type': 'alert',
+          },
+          payload: {
+            aps: {
+              alert: { title: msg.title, body: msg.body },
+              badge:             1,
+              sound:             'default',
+              'mutable-content': 1,
+            },
+          },
+        },
+
+        // ── Web Push ─────────────────────────────────────────────────────
         webpush: {
           notification: {
             title: msg.title,
@@ -56,11 +91,13 @@ export async function sendFCMNotification(msg: FCMMessage): Promise<boolean> {
             badge: '/icon-72.png',
           },
           fcm_options: {
-            link: msg.url ?? '/home',
+            link: absoluteUrl,
           },
         },
+
+        // ── 공통 데이터 (앱 내 URL 이동용) ───────────────────────────────
         data: {
-          url: msg.url ?? '/home',
+          url: absoluteUrl,
         },
       },
     };

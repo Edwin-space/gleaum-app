@@ -47,6 +47,20 @@
 
         </activity>
 
+        <!-- ── FCM 기본 알림 설정 ──────────────────────────────────────── -->
+        <!-- channel_id: MainActivity.createNotificationChannels() 와 반드시 일치 -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="gleaum_notifications" />
+        <!-- 알림 아이콘: 흰색 실루엣 PNG (투명 배경) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <!-- 알림 아이콘 색상 -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/ic_launcher_background" />
+
         <!-- FileProvider (파일 공유) -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -63,20 +77,11 @@
     <!-- ── 권한 ──────────────────────────────────────────────────── -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Firebase Cloud Messaging -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    <!-- Biometric -->
-    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <!-- 태블릿에서도 설치 가능 (스마트폰 전용 기능 불필요) -->
     <uses-feature android:name="android.hardware.telephony" android:required="false" />

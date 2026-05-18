@@ -52,19 +52,58 @@ export async function sendFCMNotification(
   msg: FCMMessage,
   accessToken: string
 ): Promise<FCMSendResult> {
+  // 절대 URL 보장 (webpush link / apns fcm_options 는 절대 URL 필요)
+  const absoluteUrl = msg.url?.startsWith('http')
+    ? msg.url
+    : `https://www.gleaum.com${msg.url ?? '/home'}`;
+
   const payload = {
     message: {
       token: msg.token,
+      // ── 공통 알림 (플랫폼별 섹션이 없을 때 fallback) ──────────────────────
       notification: { title: msg.title, body: msg.body },
+
+      // ── Android: 채널 ID + 높은 우선순위 ──────────────────────────────────
+      android: {
+        priority: 'HIGH',
+        notification: {
+          channel_id: 'gleaum_notifications',
+          sound:       'default',
+          title:       msg.title,
+          body:        msg.body,
+          click_action: 'OPEN_ACTIVITY_1',
+        },
+      },
+
+      // ── iOS (APNs): alert + sound + badge ─────────────────────────────────
+      apns: {
+        headers: {
+          'apns-priority':   '10',
+          'apns-push-type':  'alert',
+        },
+        payload: {
+          aps: {
+            alert: { title: msg.title, body: msg.body },
+            badge:            1,
+            sound:            'default',
+            'mutable-content': 1,
+          },
+        },
+        fcm_options: { analytics_label: 'campaign' },
+      },
+
+      // ── Web Push ───────────────────────────────────────────────────────────
       webpush: {
         notification: {
           title: msg.title,
-          body: msg.body,
-          icon: '/icon-192.png',
+          body:  msg.body,
+          icon:  '/icon-192.png',
         },
-        fcm_options: { link: msg.url ?? '/home' },
+        fcm_options: { link: absoluteUrl },
       },
-      data: { url: msg.url ?? '/home' },
+
+      // ── 공통 데이터 (앱에서 URL 처리용) ─────────────────────────────────
+      data: { url: absoluteUrl },
     },
   };
 
