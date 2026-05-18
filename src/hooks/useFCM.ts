@@ -43,12 +43,43 @@ export function useFCM() {
 
       // 2) 알림 탭 → URL 네비게이션 (백그라운드/종료 상태에서 탭했을 때)
       unsubTap = await onNotificationTap((url) => {
-        // 절대 URL이면 pathname만 추출, 상대 경로면 그대로 사용
         try {
-          const pathname = url.startsWith('http')
-            ? new URL(url).pathname + new URL(url).search
-            : url;
-          router.push(pathname);
+          // 트래킹 URL 처리: /api/campaign/click?id=...&to=ENCODED_URL
+          // 실제 목적지로 이동하고, 트래킹 요청은 백그라운드에서 실행
+          const resolveDestination = (rawUrl: string): string => {
+            try {
+              const parsed = rawUrl.startsWith('http')
+                ? new URL(rawUrl)
+                : new URL(rawUrl, 'https://placeholder.local');
+
+              // 트래킹 리다이렉트 URL인지 확인
+              if (parsed.pathname === '/api/campaign/click') {
+                const toParam = parsed.searchParams.get('to');
+                if (toParam) {
+                  // 백그라운드에서 트래킹 요청 전송 (결과 무시)
+                  fetch(rawUrl.startsWith('http') ? rawUrl : `https://www.gleaum.com${rawUrl}`, {
+                    method: 'GET',
+                    keepalive: true,
+                  }).catch(() => {});
+
+                  // 실제 목적지 URL 반환
+                  const dest = decodeURIComponent(toParam);
+                  return dest.startsWith('http')
+                    ? new URL(dest).pathname + new URL(dest).search
+                    : dest;
+                }
+              }
+
+              // 일반 URL: pathname 추출
+              return rawUrl.startsWith('http')
+                ? parsed.pathname + parsed.search
+                : rawUrl;
+            } catch {
+              return '/home';
+            }
+          };
+
+          router.push(resolveDestination(url));
         } catch {
           router.push('/home');
         }
