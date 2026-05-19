@@ -1,21 +1,47 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ──────────────────────────────────────────────────────────
+# 글리움 ProGuard / R8 Rules
+# ──────────────────────────────────────────────────────────
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 스택트레이스 가독성 유지 (Play Console 크래시 디버깅용)
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── Capacitor ──────────────────────────────────────────────
+-keep class com.getcapacitor.** { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keepclassmembers class * {
+    @com.getcapacitor.annotation.PluginMethod *;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── WebView JavaScript Interface ───────────────────────────
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keepattributes JavascriptInterface
+
+# ── Firebase / Google Services ─────────────────────────────
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# ── Firebase Messaging (FCM) ───────────────────────────────
+-keep class com.google.firebase.messaging.** { *; }
+
+# ── Kotlin ─────────────────────────────────────────────────
+-keep class kotlin.** { *; }
+-keep class kotlinx.** { *; }
+-dontwarn kotlin.**
+
+# ── AndroidX / Support ─────────────────────────────────────
+-keep class androidx.** { *; }
+-dontwarn androidx.**
+
+# ── JSON 직렬화 (JSObject 등) ──────────────────────────────
+-keepclassmembers class * {
+    public <init>(org.json.JSONObject);
+}
+-keep class org.json.** { *; }
+
+# ── Gleaum 앱 패키지 ───────────────────────────────────────
+-keep class com.gleaum.app.** { *; }
