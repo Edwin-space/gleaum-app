@@ -30,7 +30,7 @@ export default function NewSchedulePage() {
   }, [userLoading, familyGroupId]);
 
   const [saving, setSaving] = useState(false);
-  const [type, setType] = useState<ScheduleType>((searchParams.get('type') as ScheduleType) || 'shared');
+  const [type, setType] = useState<ScheduleType>((searchParams.get('type') as ScheduleType) || 'personal');
 
   // Fields
   const [title, setTitle] = useState('');
