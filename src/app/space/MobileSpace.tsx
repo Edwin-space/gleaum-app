@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { joinSpaceByCode, updateSpaceName, removeSpaceMember, getMySpaces } from '@/lib/db';
+import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
 import type { Space } from '@/types';
 
 const FREE_MAX_SPACES  = 2;
@@ -131,28 +132,9 @@ export function MobileSpace() {
             </svg>
           </button>
 
-          <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.5px', margin: 0, flex: 1 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.5px', margin: 0 }}>
             공간
           </h1>
-
-          {/* 공간 일정 추가 버튼 */}
-          <button
-            onClick={() => router.push('/schedules/new?type=shared')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 16px', borderRadius: '999px',
-              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-              border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 800, color: 'white',
-              boxShadow: '0 4px 12px rgba(0,132,204,0.30)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            공간 일정
-          </button>
         </div>
       </header>
 
@@ -422,6 +404,13 @@ export function MobileSpace() {
               </div>
             </div>
           </div>
+
+          {/* ── 공간 일정 타임라인 ── */}
+          <SpaceScheduleTimeline
+            spaceId={spaceId}
+            members={members}
+            currentUserId={user?.id ?? ''}
+          />
 
           {/* ── Members section ── */}
           <div style={{ padding: '0 16px', marginBottom: '32px' }}>

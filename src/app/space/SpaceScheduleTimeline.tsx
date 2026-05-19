@@ -1,0 +1,530 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { getSchedules, addScheduleParticipant, removeScheduleParticipant } from '@/lib/db';
+import type { Schedule, SpaceMember } from '@/types';
+
+// ── 상수 ──────────────────────────────────────────────────
+const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
+  shared:   { label: '공유', color: '#0084CC', bg: 'rgba(0,132,204,0.10)',   emoji: '🏠' },
+  child:    { label: '자녀', color: '#059669', bg: 'rgba(5,150,105,0.10)',   emoji: '🧒' },
+  expense:  { label: '지출', color: '#D97706', bg: 'rgba(217,119,6,0.10)',   emoji: '💰' },
+  personal: { label: '개인', color: '#0891B2', bg: 'rgba(8,145,178,0.10)',   emoji: '👤' },
+};
+
+const FILTER_OPTIONS = [
+  { key: '7',  label: '이번 주' },
+  { key: '30', label: '이번 달' },
+  { key: '90', label: '3개월'   },
+] as const;
+
+// ── 날짜 유틸 ─────────────────────────────────────────────
+function toDateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatDateHeader(dateKey: string): string {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const today    = new Date(); today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const wd = weekdays[date.getDay()];
+  const base = `${m}월 ${d}일 (${wd})`;
+
+  if (date.getTime() === today.getTime())    return `오늘  ${base}`;
+  if (date.getTime() === tomorrow.getTime()) return `내일  ${base}`;
+  return base;
+}
+
+function formatTime(d: Date): string {
+  const h = d.getHours(), mi = d.getMinutes();
+  const period = h < 12 ? '오전' : '오후';
+  const hh = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${period} ${hh}:${String(mi).padStart(2, '0')}`;
+}
+
+function getDayStrip(days: number): { key: string; label: string; short: string }[] {
+  const strip: { key: string; label: string; short: string }[] = [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const key = toDateKey(d);
+    const mo = d.getMonth() + 1;
+    const da = d.getDate();
+    const wd = weekdays[d.getDay()];
+    const label = i === 0 ? '오늘' : i === 1 ? '내일' : `${mo}/${da}`;
+    strip.push({ key, label, short: wd });
+  }
+  return strip;
+}
+
+// ── 컴포넌트 ──────────────────────────────────────────────
+interface Props {
+  spaceId: string | null;
+  members: SpaceMember[];
+  currentUserId: string;
+}
+
+export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props) {
+  const router = useRouter();
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  const [schedules,    setSchedules]    = useState<Schedule[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [filterDays,   setFilterDays]   = useState<'7' | '30' | '90'>('30');
+  const [selectedDate, setSelectedDate] = useState<string>(toDateKey(new Date()));
+  // scheduleId → loading state for bell button
+  const [bellLoading,  setBellLoading]  = useState<Record<string, boolean>>({});
+  // locally tracked participant sets (optimistic)
+  const [localParticipants, setLocalParticipants] = useState<Record<string, Set<string>>>({});
+
+  // ── 일정 조회 ──────────────────────────────────────────
+  const fetchSchedules = useCallback(async () => {
+    if (!spaceId) return;
+    setLoading(true);
+    const data = await getSchedules(spaceId);
+    setSchedules(data);
+    // init local participants map
+    const map: Record<string, Set<string>> = {};
+    data.forEach(s => { map[s.id] = new Set(s.participants); });
+    setLocalParticipants(map);
+    setLoading(false);
+  }, [spaceId]);
+
+  useEffect(() => { fetchSchedules(); }, [fetchSchedules]);
+
+  // ── 날짜 필터 ──────────────────────────────────────────
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const cutoff = new Date(today);
+  cutoff.setDate(today.getDate() + Number(filterDays));
+
+  const filteredSchedules = schedules.filter(s => {
+    const d = new Date(s.startTime); d.setHours(0, 0, 0, 0);
+    return d >= today && d <= cutoff;
+  });
+
+  // ── 날짜별 그루핑 ────────────────────────────────────
+  const groupedByDate: Record<string, Schedule[]> = {};
+  filteredSchedules.forEach(s => {
+    const key = toDateKey(new Date(s.startTime));
+    if (!groupedByDate[key]) groupedByDate[key] = [];
+    groupedByDate[key].push(s);
+  });
+
+  // ── 날짜 스트립 (선택된 날짜의 일정만 보임) ────────────
+  const dayStrip = getDayStrip(Number(filterDays));
+  const displayedDates = selectedDate === '__all__'
+    ? Object.keys(groupedByDate).sort()
+    : (groupedByDate[selectedDate] ? [selectedDate] : []);
+
+  // 날짜 스트립에서 일정 있는 날짜 표시용
+  const datesWithSchedules = new Set(Object.keys(groupedByDate));
+
+  // ── 날짜 탭 선택 시 스크롤 ────────────────────────────
+  const selectDate = (key: string) => {
+    setSelectedDate(key);
+  };
+
+  // ── 알림 토글 ──────────────────────────────────────────
+  const toggleAlarm = async (schedule: Schedule) => {
+    const isWatching = (localParticipants[schedule.id] ?? new Set()).has(currentUserId);
+    setBellLoading(prev => ({ ...prev, [schedule.id]: true }));
+
+    // 낙관적 업데이트
+    setLocalParticipants(prev => {
+      const next = { ...prev };
+      const set = new Set(prev[schedule.id] ?? []);
+      if (isWatching) set.delete(currentUserId);
+      else            set.add(currentUserId);
+      next[schedule.id] = set;
+      return next;
+    });
+
+    if (isWatching) await removeScheduleParticipant(schedule.id);
+    else            await addScheduleParticipant(schedule.id);
+
+    setBellLoading(prev => ({ ...prev, [schedule.id]: false }));
+  };
+
+  // ── 멤버 맵 (userId → member) ─────────────────────────
+  const memberMap = new Map(members.map(m => [m.userId, m]));
+
+  // ── 렌더 ──────────────────────────────────────────────
+  return (
+    <div style={{ padding: '0 16px', marginBottom: '32px' }}>
+
+      {/* Section heading */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingLeft: '4px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+          공간 일정
+        </h3>
+        <button
+          onClick={() => router.push('/schedules/new?type=shared')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            fontSize: '13px', fontWeight: 800, color: '#0084CC',
+            background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0',
+          }}
+        >
+          <span style={{ fontSize: '16px', lineHeight: 1 }}>＋</span>
+          일정 추가
+        </button>
+      </div>
+
+      {/* Filter chips */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        {FILTER_OPTIONS.map(opt => (
+          <button
+            key={opt.key}
+            onClick={() => { setFilterDays(opt.key as typeof filterDays); setSelectedDate(toDateKey(new Date())); }}
+            style={{
+              padding: '6px 14px', borderRadius: '999px',
+              fontSize: '12px', fontWeight: 800,
+              background: filterDays === opt.key ? '#1A1B2E' : 'white',
+              color: filterDays === opt.key ? 'white' : '#8E8E93',
+              border: filterDays === opt.key ? 'none' : '1.5px solid #E5E5EA',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >{opt.label}</button>
+        ))}
+      </div>
+
+      {/* Date strip */}
+      <div
+        ref={stripRef}
+        style={{
+          display: 'flex', gap: '8px', overflowX: 'auto',
+          paddingBottom: '12px', marginBottom: '8px',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+        } as React.CSSProperties}
+      >
+        <style>{`.strip-scroll::-webkit-scrollbar { display: none; }`}</style>
+        {dayStrip.map(day => {
+          const isSelected = selectedDate === day.key;
+          const hasEvents  = datesWithSchedules.has(day.key);
+          const [, mo, da] = day.key.split('-').map(Number);
+          return (
+            <button
+              key={day.key}
+              onClick={() => selectDate(day.key)}
+              style={{
+                flexShrink: 0,
+                width: '52px',
+                padding: '10px 4px',
+                borderRadius: '16px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                background: isSelected ? '#1A1B2E' : 'white',
+                border: isSelected ? 'none' : '1.5px solid #E5E5EA',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                boxShadow: isSelected ? '0 4px 16px rgba(26,27,46,0.20)' : 'none',
+              }}
+            >
+              <span style={{
+                fontSize: '10px', fontWeight: 700,
+                color: isSelected ? 'rgba(255,255,255,0.60)' : '#8E8E93',
+              }}>
+                {day.short}
+              </span>
+              <span style={{
+                fontSize: '16px', fontWeight: 900,
+                color: isSelected ? 'white' : '#1A1B2E',
+              }}>
+                {da}
+              </span>
+              {/* 일정 있는 날 표시 점 */}
+              <div style={{
+                width: '5px', height: '5px', borderRadius: '50%',
+                background: hasEvents
+                  ? (isSelected ? 'rgba(12,201,181,1)' : '#0084CC')
+                  : 'transparent',
+              }} />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 일정 목록 */}
+      {loading ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0', gap: '12px' }}>
+          <div style={{
+            width: '24px', height: '24px', borderRadius: '50%',
+            border: '3px solid #0084CC', borderTopColor: 'transparent',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93' }}>일정 불러오는 중...</span>
+        </div>
+      ) : displayedDates.length === 0 ? (
+        /* Empty state */
+        <div style={{
+          background: 'white', borderRadius: '20px', padding: '36px 20px',
+          border: '1.5px dashed #E5E5EA', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '36px', marginBottom: '12px' }}>📅</div>
+          <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px' }}>
+            이 날 공간 일정이 없어요
+          </p>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93', margin: '0 0 20px', lineHeight: 1.5 }}>
+            공간 멤버들과 함께할 일정을 추가해보세요
+          </p>
+          <button
+            onClick={() => router.push('/schedules/new?type=shared')}
+            style={{
+              padding: '10px 24px', borderRadius: '14px',
+              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+              border: 'none', cursor: 'pointer',
+              fontSize: '13px', fontWeight: 800, color: 'white',
+              boxShadow: '0 4px 16px rgba(0,132,204,0.25)',
+            }}
+          >
+            공간 일정 추가
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {displayedDates.map(dateKey => (
+            <DateGroup
+              key={dateKey}
+              dateKey={dateKey}
+              schedules={groupedByDate[dateKey] ?? []}
+              memberMap={memberMap}
+              currentUserId={currentUserId}
+              localParticipants={localParticipants}
+              bellLoading={bellLoading}
+              onToggleAlarm={toggleAlarm}
+              onNavigate={(id) => router.push(`/schedules/${id}`)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DateGroup ─────────────────────────────────────────────
+interface DateGroupProps {
+  dateKey:           string;
+  schedules:         Schedule[];
+  memberMap:         Map<string, SpaceMember>;
+  currentUserId:     string;
+  localParticipants: Record<string, Set<string>>;
+  bellLoading:       Record<string, boolean>;
+  onToggleAlarm:     (s: Schedule) => void;
+  onNavigate:        (id: string) => void;
+}
+
+function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticipants, bellLoading, onToggleAlarm, onNavigate }: DateGroupProps) {
+  return (
+    <div>
+      {/* Date header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        marginBottom: '12px', paddingLeft: '2px',
+      }}>
+        <div style={{ width: '3px', height: '16px', borderRadius: '2px', background: '#0084CC', flexShrink: 0 }} />
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.2px' }}>
+          {formatDateHeader(dateKey)}
+        </span>
+        <div style={{ flex: 1, height: '1px', background: '#F0F0F5' }} />
+        <span style={{
+          fontSize: '11px', fontWeight: 700, color: '#8E8E93',
+          padding: '2px 8px', background: '#F5F5F7', borderRadius: '999px',
+        }}>
+          {schedules.length}개
+        </span>
+      </div>
+
+      {/* Timeline cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+        {schedules.map((schedule, idx) => {
+          const isLast    = idx === schedules.length - 1;
+          const typeCfg   = TYPE_CONFIG[schedule.type] ?? TYPE_CONFIG.shared;
+          const creator   = memberMap.get(schedule.createdBy);
+          const isMe      = schedule.createdBy === currentUserId;
+          const isWatching = (localParticipants[schedule.id] ?? new Set()).has(currentUserId);
+          const isBusy    = bellLoading[schedule.id] ?? false;
+
+          return (
+            <div key={schedule.id} style={{ display: 'flex', gap: '0' }}>
+              {/* Timeline spine */}
+              <div style={{ width: '44px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '18px' }}>
+                {/* Dot */}
+                <div style={{
+                  width: '10px', height: '10px', borderRadius: '50%',
+                  background: typeCfg.color,
+                  border: '2px solid white',
+                  boxShadow: `0 0 0 2px ${typeCfg.color}33`,
+                  flexShrink: 0,
+                  zIndex: 1,
+                }} />
+                {/* Line */}
+                {!isLast && (
+                  <div style={{
+                    flex: 1, width: '2px',
+                    background: 'linear-gradient(to bottom, #E5E5EA, transparent)',
+                    marginTop: '4px',
+                    minHeight: '24px',
+                  }} />
+                )}
+              </div>
+
+              {/* Card */}
+              <div style={{ flex: 1, paddingBottom: isLast ? 0 : '10px' }}>
+                <div
+                  onClick={() => onNavigate(schedule.id)}
+                  style={{
+                    background: 'white',
+                    borderRadius: '18px',
+                    padding: '14px 16px',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                    border: '1px solid rgba(0,0,0,0.04)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* Top row: time + type badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93' }}>
+                      {formatTime(new Date(schedule.startTime))}
+                      {schedule.endTime && (
+                        <span style={{ fontWeight: 600, color: '#C7C7CC' }}>
+                          {' '}~{' '}{formatTime(new Date(schedule.endTime))}
+                        </span>
+                      )}
+                    </span>
+                    {/* Type badge */}
+                    <span style={{
+                      padding: '2px 8px', borderRadius: '999px',
+                      fontSize: '10px', fontWeight: 800,
+                      background: typeCfg.bg, color: typeCfg.color,
+                    }}>
+                      {typeCfg.emoji} {typeCfg.label}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <p style={{
+                    fontSize: '15px', fontWeight: 800, color: '#1A1B2E',
+                    margin: '0 0 10px',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {schedule.title}
+                  </p>
+
+                  {/* Location */}
+                  {schedule.location?.address && (
+                    <p style={{
+                      fontSize: '12px', fontWeight: 600, color: '#8E8E93',
+                      margin: '0 0 10px',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      📍 {schedule.location.address}
+                    </p>
+                  )}
+
+                  {/* Bottom row: creator + alarm button */}
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Creator chip */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {creator?.user?.avatar ? (
+                        <span style={{ fontSize: '16px', lineHeight: 1 }}>{creator.user.avatar}</span>
+                      ) : (
+                        <div style={{
+                          width: '20px', height: '20px', borderRadius: '50%',
+                          background: '#F0F0F5', fontSize: '10px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>?</div>
+                      )}
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>
+                        {isMe ? '나' : (creator?.user?.name ?? '멤버')}
+                      </span>
+                      {isMe && (
+                        <span style={{
+                          padding: '1px 7px', borderRadius: '999px',
+                          fontSize: '10px', fontWeight: 800,
+                          background: 'rgba(0,132,204,0.08)', color: '#0084CC',
+                        }}>내 일정</span>
+                      )}
+                    </div>
+
+                    {/* Alarm button — 본인 일정이 아닐 때만 표시 */}
+                    {!isMe && (
+                      <button
+                        onClick={() => onToggleAlarm(schedule)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '5px',
+                          padding: '6px 12px', borderRadius: '999px',
+                          fontSize: '11px', fontWeight: 800,
+                          background: isWatching
+                            ? 'rgba(0,132,204,0.10)'
+                            : 'rgba(0,0,0,0.04)',
+                          color: isWatching ? '#0084CC' : '#8E8E93',
+                          border: isWatching ? '1px solid rgba(0,132,204,0.25)' : '1px solid rgba(0,0,0,0.08)',
+                          cursor: isBusy ? 'not-allowed' : 'pointer',
+                          opacity: isBusy ? 0.6 : 1,
+                          transition: 'all 0.15s',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {isBusy ? (
+                          <>
+                            <div style={{
+                              width: '10px', height: '10px', borderRadius: '50%',
+                              border: '2px solid currentColor', borderTopColor: 'transparent',
+                              animation: 'spin 0.8s linear infinite',
+                            }} />
+                            처리 중
+                          </>
+                        ) : isWatching ? (
+                          <>
+                            <BellFilledIcon size={12} />
+                            알림 받는 중
+                          </>
+                        ) : (
+                          <>
+                            <BellIcon size={12} />
+                            알림 추가
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── 벨 아이콘 ─────────────────────────────────────────────
+function BellIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+  );
+}
+
+function BellFilledIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  );
+}

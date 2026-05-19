@@ -947,6 +947,36 @@ export async function createNotification(params: {
   });
 }
 
+// ── 일정 참여자 구독 (알림 추가/제거) ────────────────────────
+
+/** 현재 사용자를 일정 참여자(알림 구독)로 추가 */
+export async function addScheduleParticipant(scheduleId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('schedule_participants')
+    .upsert({ schedule_id: scheduleId, user_id: user.id }, { onConflict: 'schedule_id,user_id' });
+
+  return !error;
+}
+
+/** 현재 사용자를 일정 참여자(알림 구독)에서 제거 */
+export async function removeScheduleParticipant(scheduleId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('schedule_participants')
+    .delete()
+    .eq('schedule_id', scheduleId)
+    .eq('user_id', user.id);
+
+  return !error;
+}
+
 // ── 파일 첨부 ──────────────────────────────────────────────
 
 /** 일정 첨부 파일 업로드 → 공개 URL 반환 */
