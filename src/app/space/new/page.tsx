@@ -78,8 +78,20 @@ export default function SpaceNewPage() {
     setTimeout(() => setLinkCopied(false), 2500);
   };
 
-  const shareKakao = () => {
-    // Kakao SDK가 있으면 실제 공유, 없으면 링크만 복사
+  const shareKakao = async () => {
+    const shareData = {
+      title: `${spaceName} 공간 초대`,
+      text: `글리움에서 "${spaceName}" 공간에 초대되었어요! 함께 일정을 공유해보세요 🎉`,
+      url: inviteLink,
+    };
+    // 1) 네이티브 공유 시트 (모바일에서 카카오톡 포함)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {}
+    }
+    // 2) Kakao SDK 있으면 사용
     if (typeof window !== 'undefined' && (window as any).Kakao?.Share) {
       (window as any).Kakao.Share.sendDefault({
         objectType: 'feed',
@@ -91,14 +103,21 @@ export default function SpaceNewPage() {
         },
         buttons: [{ title: '공간 참여하기', link: { mobileWebUrl: inviteLink, webUrl: inviteLink } }],
       });
-    } else {
-      copyLink();
+      return;
     }
+    // 3) fallback: 링크 복사
+    copyLink();
   };
 
   // 새로 만든 공간 ID를 쿼리 파라미터로 넘겨 MobileSpace가 올바른 공간을 표시하게 함
-  const goToSpace = () => router.replace(createdId ? `/space?sid=${createdId}` : '/space');
-  const skip       = () => router.replace('/space');
+  const goToSpace = () => {
+    // localStorage에 새 공간 ID 저장 → MobileSpace가 이 공간을 우선 표시
+    if (createdId) {
+      try { localStorage.setItem('gleaum_lastSpaceId', createdId); } catch {}
+    }
+    router.replace(createdId ? `/space?sid=${createdId}` : '/space');
+  };
+  const skip = () => router.replace('/space');
 
   // ── 공통 레이아웃 ─────────────────────────────────────────
   return (

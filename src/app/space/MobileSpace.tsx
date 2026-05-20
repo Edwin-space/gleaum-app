@@ -48,8 +48,16 @@ export function MobileSpace() {
   // My spaces (for plan + swipe)
   const [mySpaces,     setMySpaces]     = useState<Space[]>([]);
   const [spaceIndex,   setSpaceIndex]   = useState(0);
-  // sid 쿼리 파라미터가 있으면 그 공간을 즉시 표시, 없으면 profiles.family_group_id 사용
-  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(sidParam ?? spaceId);
+  // 우선순위: 1) URL ?sid 파라미터  2) localStorage 최근 공간  3) profiles.family_group_id
+  const initActiveSpace = (() => {
+    if (sidParam) return sidParam;
+    try {
+      const stored = localStorage.getItem('gleaum_lastSpaceId');
+      if (stored) return stored;
+    } catch {}
+    return spaceId;
+  })();
+  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(initActiveSpace);
 
   // ★ spaceId(profiles.family_group_id)가 바뀌면 activeSpaceId도 동기화
   //    (space/new 에서 새 공간 생성 후 돌아올 때 반영)
@@ -77,10 +85,18 @@ export function MobileSpace() {
   useEffect(() => {
     getMySpaces().then(spaces => {
       setMySpaces(spaces);
-      const idx = spaces.findIndex(s => s.id === spaceId);
-      setSpaceIndex(idx >= 0 ? idx : 0);
+      // activeSpaceId 기준으로 index 결정, 없으면 spaceId, 그래도 없으면 0
+      const currentId = activeSpaceId ?? spaceId;
+      let idx = spaces.findIndex(s => s.id === currentId);
+      if (idx < 0 && spaceId) idx = spaces.findIndex(s => s.id === spaceId);
+      const finalIdx = idx >= 0 ? idx : 0;
+      setSpaceIndex(finalIdx);
+      // 실제 표시할 공간이 activeSpaceId와 다를 경우 activeSpaceId 보정
+      if (spaces[finalIdx] && spaces[finalIdx].id !== activeSpaceId) {
+        setActiveSpaceId(spaces[finalIdx].id);
+      }
     });
-  }, [spaceId]);
+  }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 공간이 없으면 온보딩으로
   useEffect(() => {
@@ -251,39 +267,15 @@ export function MobileSpace() {
       ) : (
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
 
-          {/* ── 다중 공간 스와이프 인디케이터 ── */}
-          {mySpaces.length > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', padding: '16px 0 8px' }}>
-              {mySpaces.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setSpaceIndex(i); setActiveSpaceId(mySpaces[i].id); }}
-                  style={{
-                    width: i === spaceIndex ? '24px' : '8px',
-                    height: '8px', borderRadius: '999px',
-                    background: i === spaceIndex ? '#0084CC' : '#D1D1D6',
-                    border: 'none', cursor: 'pointer', padding: 0,
-                    transition: 'all 0.25s ease',
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          {mySpaces.length > 1 && (
-            <p style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '4px' }}>
-              좌우 스와이프로 공간 전환
-            </p>
-          )}
-
           {/* ── Hero dark gradient card ── */}
-          <div style={{ padding: '0 16px', marginTop: '12px', marginBottom: '24px' }}>
+          <div style={{ padding: '0 16px', marginTop: '16px', marginBottom: '8px' }}>
             <div style={{
               position: 'relative', overflow: 'hidden',
               background: coverImageUrl
                 ? 'none'
                 : 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
-              borderRadius: '32px', padding: '32px 28px', color: 'white',
-              boxShadow: '0 16px 48px rgba(26,27,46,0.28)',
+              borderRadius: '28px', padding: '20px 20px 16px', color: 'white',
+              boxShadow: '0 8px 32px rgba(26,27,46,0.22)',
             }}>
               {/* Cover image background */}
               {coverImageUrl && (
@@ -304,120 +296,117 @@ export function MobileSpace() {
               <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,132,204,0.25) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 2 }} />
               <div style={{ position: 'absolute', bottom: '-30px', left: '-30px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(12,201,181,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 2 }} />
 
-              <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              {/* 가로 레이아웃: 아이콘 + 공간명/멤버 카운트 */}
+              <div style={{ position: 'relative', zIndex: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
 
-                {/* House tile + cover upload button */}
-                <div style={{ position: 'relative', marginBottom: '20px' }}>
-                  <div style={{
-                    width: '80px', height: '80px', borderRadius: '28px',
-                    background: 'rgba(255,255,255,0.10)',
-                    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '40px',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)',
-                  }}>
-                    {uploadingCover ? (
-                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '3px solid rgba(255,255,255,0.4)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite' }} />
-                    ) : '🏠'}
+                  {/* 아이콘 + 커버 업로드 버튼 */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div style={{
+                      width: '56px', height: '56px', borderRadius: '18px',
+                      background: 'rgba(255,255,255,0.10)',
+                      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '30px',
+                    }}>
+                      {uploadingCover
+                        ? <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: '3px solid rgba(255,255,255,0.4)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite' }} />
+                        : '🏠'}
+                    </div>
+                    {isAdmin && (
+                      <>
+                        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+                        <button
+                          onClick={() => coverInputRef.current?.click()}
+                          style={{
+                            position: 'absolute', bottom: '-4px', right: '-4px',
+                            width: '22px', height: '22px', borderRadius: '50%',
+                            background: 'white', border: '2px solid rgba(0,0,0,0.10)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', fontSize: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                          }}
+                        >📷</button>
+                      </>
+                    )}
                   </div>
-                  {/* 커버 이미지 변경 버튼 */}
-                  {isAdmin && (
-                    <>
-                      <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
-                      <button
-                        onClick={() => coverInputRef.current?.click()}
-                        style={{
-                          position: 'absolute', bottom: '-6px', right: '-6px',
-                          width: '26px', height: '26px', borderRadius: '50%',
-                          background: 'white', border: '2px solid rgba(0,0,0,0.10)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', fontSize: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        }}
-                      >📷</button>
-                    </>
-                  )}
+
+                  {/* 공간명 + 멤버 수 */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {isEditingName ? (
+                      <div>
+                        <input
+                          ref={nameInputRef}
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') cancelEditing(); }}
+                          style={{
+                            width: '100%', height: '40px', padding: '0 12px', borderRadius: '12px',
+                            fontSize: '16px', fontWeight: 800,
+                            background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.35)',
+                            outline: 'none', color: 'white', boxSizing: 'border-box',
+                            letterSpacing: '-0.3px', marginBottom: '8px',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={handleSaveName} disabled={savingName || !editName.trim()}
+                            style={{ padding: '6px 14px', borderRadius: '10px', background: '#0084CC', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 800, color: 'white', opacity: savingName || !editName.trim() ? 0.5 : 1 }}>
+                            {savingName ? '저장 중...' : '저장'}
+                          </button>
+                          <button onClick={cancelEditing}
+                            style={{ padding: '6px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <h2 style={{ fontSize: '20px', fontWeight: 900, margin: 0, letterSpacing: '-0.4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {group?.name ?? '나의 공간'}
+                          </h2>
+                          {isAdmin && (
+                            <button onClick={startEditing}
+                              style={{ width: '24px', height: '24px', borderRadius: '8px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px', flexShrink: 0 }}>
+                              ✏️
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: memberAtLimit ? '#EF4444' : '#0CC9B5', flexShrink: 0 }} />
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
+                            {memberCount}명 참여 중
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {/* Space name — inline editable */}
-                {isEditingName ? (
-                  <div style={{ width: '100%', marginBottom: '12px' }}>
-                    <input
-                      ref={nameInputRef}
-                      value={editName}
-                      onChange={e => setEditName(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') cancelEditing(); }}
-                      style={{
-                        width: '100%', height: '52px', padding: '0 16px', borderRadius: '16px',
-                        fontSize: '20px', fontWeight: 800, textAlign: 'center',
-                        background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.35)',
-                        outline: 'none', color: 'white', boxSizing: 'border-box',
-                        letterSpacing: '-0.3px', marginBottom: '10px',
-                      }}
-                    />
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button onClick={handleSaveName} disabled={savingName || !editName.trim()}
-                        style={{ padding: '9px 20px', borderRadius: '12px', background: '#0084CC', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 800, color: 'white', opacity: savingName || !editName.trim() ? 0.5 : 1 }}>
-                        {savingName ? '저장 중...' : '저장'}
-                      </button>
-                      <button onClick={cancelEditing}
-                        style={{ padding: '9px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>
-                        취소
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <h2 style={{ fontSize: '26px', fontWeight: 900, margin: 0, letterSpacing: '-0.6px' }}>
-                      {group?.name ?? '나의 공간'}
-                    </h2>
-                    {isAdmin && (
-                      <button onClick={startEditing}
-                        style={{ width: '30px', height: '30px', borderRadius: '10px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '14px', flexShrink: 0 }}>
-                        ✏️
-                      </button>
+                {/* 멤버 아바타 미리보기 */}
+                {members.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
+                    {members.slice(0, 5).map(m => (
+                      <div key={m.id} style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '3px 8px', borderRadius: '999px',
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                      }}>
+                        <span style={{ fontSize: '11px' }}>{m.user?.avatar ?? '👤'}</span>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>
+                          {m.userId === user?.id ? '나' : (m.user?.name ?? '멤버')}
+                        </span>
+                        {m.role === 'admin' && (
+                          <span style={{ fontSize: '8px', fontWeight: 800, color: '#0CC9B5' }}>★</span>
+                        )}
+                      </div>
+                    ))}
+                    {members.length > 5 && (
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.50)' }}>+{members.length - 5}</span>
                     )}
                   </div>
                 )}
-
-                {/* 멤버 목록 미리보기 (닉네임 표시) */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
-                  {members.slice(0, 4).map(m => (
-                    <div key={m.id} style={{
-                      display: 'flex', alignItems: 'center', gap: '5px',
-                      padding: '4px 10px', borderRadius: '999px',
-                      background: 'rgba(255,255,255,0.10)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                    }}>
-                      <span style={{ fontSize: '13px' }}>{m.user?.avatar ?? '👤'}</span>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>
-                        {m.userId === user?.id ? '나' : (m.user?.name ?? '멤버')}
-                      </span>
-                      {m.role === 'admin' && (
-                        <span style={{ fontSize: '9px', fontWeight: 800, color: '#0CC9B5', background: 'rgba(12,201,181,0.20)', padding: '1px 5px', borderRadius: '4px' }}>관리자</span>
-                      )}
-                    </div>
-                  ))}
-                  {members.length > 4 && (
-                    <div style={{ padding: '4px 10px', borderRadius: '999px', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.12)' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>+{members.length - 4}명</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Member count badge */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '7px 16px', borderRadius: '999px',
-                  background: memberAtLimit ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.10)',
-                  border: `1px solid ${memberAtLimit ? 'rgba(239,68,68,0.30)' : 'rgba(255,255,255,0.12)'}`,
-                  marginBottom: '24px',
-                }}>
-                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: memberAtLimit ? '#EF4444' : '#0CC9B5' }} />
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>
-                    {memberCount}명 참여 중
-                  </span>
-                </div>
 
                 {/* Invite code */}
                 {group?.inviteCode && (
@@ -439,6 +428,31 @@ export function MobileSpace() {
               </div>
             </div>
           </div>
+
+          {/* ── 다중 공간 스와이프 인디케이터 (히어로 아래) ── */}
+          {mySpaces.length > 1 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '8px 0 4px' }}>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                {mySpaces.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setSpaceIndex(i); setActiveSpaceId(mySpaces[i].id); }}
+                    title={s.name}
+                    style={{
+                      width: i === spaceIndex ? '20px' : '6px',
+                      height: '6px', borderRadius: '999px',
+                      background: i === spaceIndex ? '#0084CC' : '#D1D1D6',
+                      border: 'none', cursor: 'pointer', padding: 0,
+                      transition: 'all 0.25s ease',
+                    }}
+                  />
+                ))}
+              </div>
+              <p style={{ fontSize: '10px', fontWeight: 600, color: '#AEAEB2', margin: 0 }}>
+                ← 스와이프로 공간 전환 →
+              </p>
+            </div>
+          )}
 
           {/* ── 공간 일정 타임라인 ── */}
           <SpaceScheduleTimeline
