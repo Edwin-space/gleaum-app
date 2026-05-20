@@ -35,7 +35,7 @@ export function MobileSchedules({
       className="min-h-dvh"
       style={{
         background: '#FAFAFD',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
       }}
     >
       {/* ── 스티키 헤더 ── */}

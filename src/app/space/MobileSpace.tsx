@@ -238,7 +238,7 @@ export function MobileSpace() {
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
+      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

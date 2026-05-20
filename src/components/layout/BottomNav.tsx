@@ -85,7 +85,11 @@ export function BottomNav() {
 
   return (
     <>
-      {/* 하단 고정 네비게이션 바 */}
+      {/* 콘텐츠가 고정 내비바에 가려지지 않도록 하단 여백 확보 */}
+      <div style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }} aria-hidden="true" />
+
+      {/* 하단 고정 네비게이션 바
+          transform: translate3d(0,0,0) → iOS WKWebView 스크롤 중 fixed 떨림 방지 */}
       <nav
         style={{
           position: 'fixed',
@@ -97,6 +101,9 @@ export function BottomNav() {
           borderTop: '1px solid rgba(0,0,0,0.08)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           boxShadow: '0 -2px 12px rgba(0,0,0,0.06)',
+          transform: 'translate3d(0,0,0)',
+          WebkitTransform: 'translate3d(0,0,0)',
+          willChange: 'transform',
         }}
       >
         <div

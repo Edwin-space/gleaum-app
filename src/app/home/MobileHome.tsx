@@ -63,7 +63,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
       style={{
         minHeight: '100dvh',
         background: '#FAFAFD',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
       }}
     >
       {/* ── 헤더 ── */}

@@ -67,7 +67,7 @@ export function MobileNotifications() {
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
+      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}
     >
       {/* ── Sticky frosted header ── */}
       <header style={{
