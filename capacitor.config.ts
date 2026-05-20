@@ -35,9 +35,9 @@ const config: CapacitorConfig = {
   // ── iOS / macOS 설정 ───────────────────────────────────────────────────────
   ios: {
     scheme: 'gleaum',            // Custom URL scheme: gleaum://
-    contentInset: 'automatic',   // Safe area inset 자동 처리
+    contentInset: 'never',       // ★ CSS가 safe area를 직접 처리 (env(safe-area-inset-*) 활성화)
     scrollEnabled: true,         // 서버 로드 방식에서는 WebView 스크롤 필요
-    backgroundColor: '#0F1A2E',  // 스플래시 제거 전 배경색 (다크 네이비)
+    backgroundColor: '#FFFFFF',  // ★ WKWebView 배경: 흰색 (home indicator 영역 갭 방지)
     // 'recommended': iPad → tablet 뷰, Mac Catalyst → desktop 뷰
     // 'mobile': 강제 iPhone 뷰 (iPad/Mac에서도 모바일 레이아웃)
     preferredContentMode: 'recommended',
@@ -71,9 +71,9 @@ const config: CapacitorConfig = {
     },
 
     StatusBar: {
-      style: 'Dark',
-      backgroundColor: '#0F1A2E',
-      overlaysWebView: false,
+      style: 'Dark',              // 다크 아이콘 (라이트 배경용)
+      backgroundColor: '#FAFAFD', // ★ 앱 배경색과 일치
+      overlaysWebView: true,      // ★ StatusBar가 WebView 위에 오버레이 → 전체화면 WebView + CSS safe area 처리
     },
 
     Keyboard: {
