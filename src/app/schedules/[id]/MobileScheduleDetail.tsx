@@ -37,7 +37,7 @@ export function MobileScheduleDetail({
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}
+      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}
     >
       {/* ── 히어로 헤더 ── */}
       <div

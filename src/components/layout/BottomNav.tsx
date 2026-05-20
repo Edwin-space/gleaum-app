@@ -85,11 +85,8 @@ export function BottomNav() {
 
   return (
     <>
-      {/* 콘텐츠가 고정 내비바에 가려지지 않도록 하단 여백 확보 */}
-      <div style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }} aria-hidden="true" />
-
       {/* 하단 고정 네비게이션 바
-          transform: translate3d(0,0,0) → iOS WKWebView 스크롤 중 fixed 떨림 방지 */}
+          body는 overflow:hidden (모바일), #app-shell이 스크롤 → fixed 완전 고정 */}
       <nav
         style={{
           position: 'fixed',

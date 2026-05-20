@@ -57,9 +57,25 @@ body {
   overflow-x: hidden;
 }
 
-/* 모바일/앱 환경 (기존 스타일 유지) */
+/* ── 모바일: iOS WKWebView fixed 요소 떨림 방지 ─────────────────────────
+   body가 스크롤되면 position:fixed 요소가 같이 움직이는 iOS 버그 존재.
+   해결: body를 overflow:hidden으로 고정하고 #app-shell이 스크롤 담당.
+   BottomNav 등 fixed 요소는 body 레벨에서 완전히 고정됨.
+──────────────────────────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
+  html {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  body {
+    height: 100dvh;
+    overflow: hidden;
+  }
   #app-shell {
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     max-width: 430px;
     box-shadow: 0 0 40px rgba(0,0,0,0.08);
   }

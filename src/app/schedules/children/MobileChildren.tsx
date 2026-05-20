@@ -81,7 +81,7 @@ export function MobileChildren() {
       className="min-h-dvh"
       style={{
         background: '#FAFAFD',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)',
       }}
     >
       <AppHeader title="자녀 일정" showLogo={false} showBack showNotification={false} />

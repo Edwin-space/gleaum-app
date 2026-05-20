@@ -240,7 +240,7 @@ export default function SpaceScheduleNewPage() {
   };
 
   return (
-    <div className="min-h-dvh" style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}>
+    <div className="min-h-dvh" style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}>
       {/* ── 헤더 ── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 20,
