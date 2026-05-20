@@ -117,7 +117,7 @@ export function MobileNewSchedule({
       className="min-h-dvh"
       style={{
         background: '#FAFAFD',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)',
       }}
     >
       {/* ── 스티키 헤더 ── */}

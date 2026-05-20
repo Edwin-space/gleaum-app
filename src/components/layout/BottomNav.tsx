@@ -9,7 +9,7 @@ const NAV_ITEMS = [
     href: '/home',
     label: '홈',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -21,7 +21,7 @@ const NAV_ITEMS = [
     href: '/schedules',
     label: '일정',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <rect width="18" height="18" x="3" y="4" rx="2"/>
@@ -35,7 +35,7 @@ const NAV_ITEMS = [
     href: '/space',
     label: '공간',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -49,7 +49,7 @@ const NAV_ITEMS = [
     href: '/budget',
     label: '가계부',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <rect width="20" height="14" x="2" y="5" rx="2"/>
@@ -61,7 +61,7 @@ const NAV_ITEMS = [
     href: '/mypage',
     label: '전체',
     icon: (active: boolean) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <line x1="3" y1="6" x2="21" y2="6"/>
@@ -95,19 +95,17 @@ export function BottomNav() {
           right: 0,
           zIndex: 9999,
           background: '#FFFFFF',
-          borderTop: '1px solid rgba(0,0,0,0.08)',
+          borderTop: '1px solid rgba(0,0,0,0.07)',
+          /* safe-area 포함해 물리 화면 끝까지 흰 배경 확장 */
           paddingBottom: 'env(safe-area-inset-bottom)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.06)',
-          transform: 'translate3d(0,0,0)',
-          WebkitTransform: 'translate3d(0,0,0)',
-          willChange: 'transform',
+          boxShadow: '0 -1px 8px rgba(0,0,0,0.05)',
         }}
       >
         <div
           style={{
             display: 'flex',
             alignItems: 'stretch',
-            height: '56px',
+            height: '48px',  /* 56 → 48px 슬림화 */
           }}
         >
           {NAV_ITEMS.map((item) => {
@@ -125,7 +123,7 @@ export function BottomNav() {
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '3px',
+                  gap: '2px',
                   textDecoration: 'none',
                   position: 'relative',
                   WebkitTapHighlightColor: 'transparent',

@@ -113,7 +113,7 @@ export function MobileBudget({
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}
+      style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
     >
       {/* ── Hero Header ── */}
       <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0F1A2E 0%, #0D2A22 50%, #1A3A2E 100%)', paddingTop: 'calc(env(safe-area-inset-top) + 52px)', paddingBottom: '48px', paddingLeft: '20px', paddingRight: '20px' }}>
