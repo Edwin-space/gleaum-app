@@ -1,7 +1,7 @@
 {
   "name": "글리움",
   "short_name": "글리움",
-  "description": "나, 그리고 연인/가족의 일상 네트워크 — 일정, 가계부, 알림을 한 곳에서",
+  "description": "나, 그리고 연인, 가족 등 공간을 통한 일상 네트워크를 한 곳에서 도와 드립니다.",
   "start_url": "/home",
   "scope": "/",
   "display": "standalone",

@@ -15,9 +15,9 @@ import { AppFooter } from '@/components/layout/AppFooter';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
-  title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
-  description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
-  keywords: ['글리움', '가족 일정 관리', '공유 캘린더', '가족 앱', '일상 네트워크', 'gleaum'],
+  title: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
+  description: '나, 그리고 연인, 가족 등 공간을 통한 일상 네트워크를 한 곳에서 도와 드립니다.',
+  keywords: ['글리움', '가족 일정 관리', '공유 캘린더', '커플 앱', '일상 네트워크', '모임 관리', '가족 앱', 'gleaum'],
   manifest: '/manifest.json',
   authors: [{ name: 'Gleaum Team' }],
   creator: 'Gleaum',
@@ -28,16 +28,16 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
-    description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
+    title: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
+    description: '나, 그리고 연인, 가족 등 공간을 통한 일상 네트워크를 한 곳에서 도와 드립니다.',
     url: 'https://gleaum.com',
     siteName: '글리움 (Gleaum)',
     images: [
       {
         url: '/og_image.png',
-        width: 1200,
-        height: 630,
-        alt: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
+        width: 1024,
+        height: 541,
+        alt: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
       },
     ],
     locale: 'ko_KR',
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: '글리움 — 나, 그리고 연인/가족의 일상 네트워크',
-    description: '가족의 모든 일정을 한 곳에서 관리하는 공유 일정 앱',
+    title: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
+    description: '나, 그리고 연인, 가족 등 공간을 통한 일상 네트워크를 한 곳에서 도와 드립니다.',
     images: ['/og_image.png'],
   },
   robots: {
