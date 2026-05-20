@@ -11,9 +11,17 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      const userId = data.user.id;
+      const userId   = data.user.id;
+      const meta     = data.user.user_metadata ?? {};
 
-      // 프로필이 없으면 생성 (DB 트리거가 이미 처리하지만 안전망으로)
+      // SNS 프로필 이미지 URL — Google: avatar_url / picture, Apple: picture
+      const socialAvatarUrl: string | null =
+        meta.avatar_url ?? meta.picture ?? null;
+
+      // SNS 표시 이름 — Google: full_name / name, Apple: full_name
+      const socialName: string =
+        meta.full_name ?? meta.name ?? data.user.email?.split('@')[0] ?? '사용자';
+
       let { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
@@ -21,26 +29,36 @@ export async function GET(request: Request) {
         .single();
 
       if (!existingProfile) {
-        // 프로필 생성 (DB 트리거가 이미 처리하지만 안전망으로)
+        // 신규 프로필 생성 — SNS 이미지 적용
         await supabase.from('profiles').upsert({
           id:     userId,
-          name:   data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? '사용자',
+          name:   socialName,
           email:  data.user.email ?? '',
-          avatar: '👤',
+          // SNS 이미지가 있으면 URL 저장, 없으면 기본 이모지
+          avatar: socialAvatarUrl ?? '👤',
         });
 
-        const { data: createdProfile } = await supabase
+        const { data: created } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .single();
-        existingProfile = createdProfile;
+        existingProfile = created;
+      } else {
+        // 기존 프로필 — avatar가 기본 이모지('👤')인 경우에만 SNS 이미지로 업데이트
+        const currentAvatar = existingProfile.avatar ?? '👤';
+        const isDefaultAvatar = currentAvatar === '👤';
+
+        if (isDefaultAvatar && socialAvatarUrl) {
+          await supabase
+            .from('profiles')
+            .update({ avatar: socialAvatarUrl })
+            .eq('id', userId);
+        }
       }
 
-      // 공간 자동 생성 제거 — 온보딩에서 사용자가 직접 선택
-
       const supportsOnboarding = existingProfile && 'onboarding_completed_at' in existingProfile;
-      const needsOnboarding = supportsOnboarding && !existingProfile.onboarding_completed_at;
+      const needsOnboarding    = supportsOnboarding && !existingProfile.onboarding_completed_at;
       const shouldUseOnboarding = needsOnboarding && next === '/home';
 
       return NextResponse.redirect(`${origin}${shouldUseOnboarding ? '/onboarding' : next}`);

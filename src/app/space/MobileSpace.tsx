@@ -21,8 +21,6 @@ const ROLE_OPTIONS: SpaceRole[] = ['admin', 'editor', 'viewer'];
 export function MobileSpace() {
   const router = useRouter();
   const { spaceId, user, loading: userLoading, refresh: refreshUser } = useCurrentUser();
-  const { space: group, members, myRole, loading, refresh } = useSpace(spaceId);
-  const isAdmin = myRole === 'admin';
 
   // ── 상태 ──────────────────────────────────────────────
   const [showInviteModal, setShowInviteModal]   = useState(false);
@@ -48,6 +46,13 @@ export function MobileSpace() {
   const [spaceIndex,   setSpaceIndex]   = useState(0);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(spaceId);
 
+  // ★ 스와이프된 공간 ID 우선 사용 (activeSpaceId) — 없으면 기본 spaceId
+  const displaySpaceId = activeSpaceId ?? spaceId;
+
+  // useSpace를 activeSpaceId 기준으로 로드 (스와이프 전환 반영)
+  const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
+  const isAdmin = myRole === 'admin';
+
   // Role management
   const [editingRole, setEditingRole] = useState<string | null>(null); // memberId
 
@@ -71,11 +76,9 @@ export function MobileSpace() {
     }
   }, [userLoading, spaceId, router]);
 
-  // cover image 초기화 (group에서)
+  // cover image 초기화 — 공간 전환 시 리셋 후 새 값 적용
   useEffect(() => {
-    if ((group as any)?.coverImageUrl) {
-      setCoverImageUrl((group as any).coverImageUrl);
-    }
+    setCoverImageUrl((group as any)?.coverImageUrl ?? null);
   }, [group]);
 
   // ── 스와이프 핸들러 ──────────────────────────────────
@@ -108,9 +111,9 @@ export function MobileSpace() {
   };
   const cancelEditing = () => { setIsEditingName(false); setEditName(''); };
   const handleSaveName = async () => {
-    if (!editName.trim() || !spaceId) return;
+    if (!editName.trim() || !displaySpaceId) return;
     setSavingName(true);
-    await updateSpaceName(spaceId, editName.trim());
+    await updateSpaceName(displaySpaceId, editName.trim());
     setSavingName(false);
     setIsEditingName(false);
     await refresh();
@@ -119,26 +122,26 @@ export function MobileSpace() {
   // ── 커버 이미지 업로드 ────────────────────────────────
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !spaceId) return;
+    if (!file || !displaySpaceId) return;
     setUploadingCover(true);
-    const url = await updateSpaceCoverImage(spaceId, file);
+    const url = await updateSpaceCoverImage(displaySpaceId, file);
     if (url) setCoverImageUrl(url);
     setUploadingCover(false);
   };
 
   // ── 멤버 역할 변경 ────────────────────────────────────
   const handleRoleChange = async (memberId: string, userId: string, role: SpaceRole) => {
-    if (!spaceId) return;
-    await updateSpaceMemberRole(spaceId, userId, role);
+    if (!displaySpaceId) return;
+    await updateSpaceMemberRole(displaySpaceId, userId, role);
     setEditingRole(null);
     await refresh();
   };
 
   // ── 멤버 제거 ─────────────────────────────────────────
   const handleRemoveMember = async (memberId: string) => {
-    if (!spaceId) return;
+    if (!displaySpaceId) return;
     if (!confirm('이 멤버를 공간에서 제거하시겠습니까?')) return;
-    await removeSpaceMember(spaceId, memberId);
+    await removeSpaceMember(displaySpaceId, memberId);
     await refresh();
   };
 
@@ -172,7 +175,7 @@ export function MobileSpace() {
   const spaceAtLimit  = spaceCount >= FREE_MAX_SPACES;
 
   // ── 로딩 ─────────────────────────────────────────────
-  if (userLoading || (!spaceId && !userLoading)) {
+  if (userLoading || (!displaySpaceId && !userLoading)) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh' }}>
         <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px solid #0084CC', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
@@ -426,7 +429,7 @@ export function MobileSpace() {
 
           {/* ── 공간 일정 타임라인 ── */}
           <SpaceScheduleTimeline
-            spaceId={spaceId}
+            spaceId={displaySpaceId}
             members={members}
             currentUserId={user?.id ?? ''}
           />

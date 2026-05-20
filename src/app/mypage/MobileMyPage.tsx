@@ -13,6 +13,7 @@ interface MobileMyPageProps {
   handleToggle: (key: keyof NotificationSettings) => void;
   signOut: () => void;
   setShowEditModal: (v: boolean) => void;
+  setShowAvatarEditor?: (v: boolean) => void;
   setShowPasswordModal: (v: boolean) => void;
   setShowDeleteModal: (v: boolean) => void;
 }
@@ -134,6 +135,7 @@ export function MobileMyPage({
   handleToggle,
   signOut,
   setShowEditModal,
+  setShowAvatarEditor,
   setShowPasswordModal,
   setShowDeleteModal,
 }: MobileMyPageProps) {
@@ -166,25 +168,49 @@ export function MobileMyPage({
 
         {/* 프로필 행 */}
         <div
-          onClick={() => setShowEditModal(true)}
           style={{
             display: 'flex', alignItems: 'center',
             gap: '16px', paddingBottom: '20px', cursor: 'pointer',
           }}
         >
-          {/* 아바타 */}
-          <div style={{
-            width: '64px', height: '64px', borderRadius: '22px',
-            background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '30px', flexShrink: 0,
-            border: '2px solid rgba(0,132,204,0.15)',
-          }}>
-            {user?.avatar ?? '👤'}
+          {/* 아바타 — 탭 시 아바타 에디터 */}
+          <div
+            onClick={() => setShowAvatarEditor ? setShowAvatarEditor(true) : setShowEditModal(true)}
+            style={{
+              width: '64px', height: '64px', borderRadius: '22px',
+              background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '30px', flexShrink: 0,
+              border: '2px solid rgba(0,132,204,0.20)',
+              position: 'relative', overflow: 'hidden',
+            }}
+          >
+            {(user?.avatar?.startsWith('http') || user?.avatar?.startsWith('data:')) ? (
+              <img
+                src={user.avatar}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '20px' }}
+              />
+            ) : (
+              <span>{user?.avatar ?? '👤'}</span>
+            )}
+            {/* Camera badge */}
+            <div style={{
+              position: 'absolute', bottom: -1, right: -1,
+              width: '20px', height: '20px', borderRadius: '50%',
+              background: '#0084CC',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '10px', border: '1.5px solid white',
+            }}>
+              📷
+            </div>
           </div>
 
-          {/* 이름 / 이메일 */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          {/* 이름 / 이메일 — 탭 시 이름 수정 모달 */}
+          <div
+            onClick={() => setShowEditModal(true)}
+            style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
+          >
             <h2 style={{
               fontSize: '18px', fontWeight: 800,
               color: '#1A1B2E', margin: '0 0 3px',
@@ -202,9 +228,11 @@ export function MobileMyPage({
           </div>
 
           {/* 수정 화살표 */}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18L15 12L9 6"/>
-          </svg>
+          <div onClick={() => setShowEditModal(true)} style={{ cursor: 'pointer' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18L15 12L9 6"/>
+            </svg>
+          </div>
         </div>
 
         {/* 통계 바 */}

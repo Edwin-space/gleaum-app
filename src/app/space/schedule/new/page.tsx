@@ -46,11 +46,14 @@ function ParticipantPicker({
     <div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
         {showing.map(member => {
-          const isSelected = selected.includes(member.id);
+          // ★ member.userId (auth UUID) 사용 — member.id는 space_members 레코드 UUID
+          const isSelected = selected.includes(member.userId);
+          const avatarIsUrl = !!member.user?.avatar &&
+            (member.user.avatar.startsWith('http') || member.user.avatar.startsWith('data:'));
           return (
             <button
-              key={member.id}
-              onClick={() => onToggle(member.id)}
+              key={member.userId}
+              onClick={() => onToggle(member.userId)}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -69,11 +72,20 @@ function ParticipantPicker({
                 boxShadow: isSelected ? '0 4px 12px rgba(0,132,204,0.30)' : 'none',
                 transition: 'all 0.15s',
                 position: 'relative',
+                overflow: 'hidden',
               }}>
-                {member.user?.avatar
-                  ? <span style={{ filter: isSelected ? 'brightness(0) invert(1)' : 'none', fontSize: '26px' }}>{member.user.avatar}</span>
-                  : <span style={{ fontSize: '20px', color: isSelected ? 'white' : '#8E8E93' }}>👤</span>
-                }
+                {avatarIsUrl ? (
+                  <img
+                    src={member.user!.avatar}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover',
+                      filter: isSelected ? 'brightness(0.7)' : 'none' }}
+                  />
+                ) : member.user?.avatar ? (
+                  <span style={{ fontSize: '26px' }}>{member.user.avatar}</span>
+                ) : (
+                  <span style={{ fontSize: '20px', color: isSelected ? 'white' : '#8E8E93' }}>👤</span>
+                )}
                 {isSelected && (
                   <div style={{
                     position: 'absolute', bottom: '-2px', right: '-2px',
@@ -178,10 +190,10 @@ export default function SpaceScheduleNewPage() {
     });
   }, [spaceId]);
 
-  // 참여자 초기화 (전체 선택)
+  // 참여자 초기화 (전체 선택) — userId(auth UUID) 사용
   useEffect(() => {
     if (members.length > 0 && participants.length === 0) {
-      setParticipants(members.map(m => m.id));
+      setParticipants(members.map(m => m.userId));
     }
   }, [members]);
 

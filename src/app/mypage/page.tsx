@@ -5,11 +5,12 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { updateMyProfile, updateNotificationSettings, getMyPageInsights } from '@/lib/db';
-import { profileToast, toastInfo } from '@/lib/toast';
+import { profileToast } from '@/lib/toast';
 import type { NotificationSettings } from '@/types';
 
 import { MobileMyPage } from './MobileMyPage';
 import { DesktopMyPage } from './DesktopMyPage';
+import { ProfileAvatarEditor } from '@/components/ui/ProfileAvatarEditor';
 
 // ── 기본 알림 설정 ──
 const DEFAULT_NOTIF: NotificationSettings = {
@@ -18,8 +19,6 @@ const DEFAULT_NOTIF: NotificationSettings = {
   expenseReminders: true,
   spaceUpdates: true,
 };
-
-const AVATAR_OPTIONS = ['👤', '😊', '🦁', '🐼', '🐸', '🐯', '🦊', '🐺', '🦄', '🐨', '🐻', '🐶', '🐱', '🐰', '🐹'];
 
 export default function MyPage() {
   const isDesktop = useIsDesktop();
@@ -31,6 +30,7 @@ export default function MyPage() {
   const [savingNotif, setSavingNotif] = useState(false);
 
   const [showEditModal, setShowEditModal]   = useState(false);
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [editName, setEditName]             = useState('');
   const [editAvatar, setEditAvatar]         = useState('👤');
   const [savingProfile, setSavingProfile]   = useState(false);
@@ -114,8 +114,9 @@ export default function MyPage() {
     handleToggle,
     signOut,
     setShowEditModal,
+    setShowAvatarEditor,
     setShowPasswordModal,
-    setShowDeleteModal
+    setShowDeleteModal,
   };
 
   return (
@@ -127,12 +128,39 @@ export default function MyPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }} onClick={() => setShowEditModal(false)}>
           <div className="w-full max-w-[480px] glass-card rounded-[40px] p-8 animate-slide-up shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <p className="text-[24px] font-black mb-6 text-[#1A1B2E]">프로필 수정</p>
-            <div className="flex flex-wrap gap-3 mb-8">
-              {AVATAR_OPTIONS.map((av) => (
-                <button key={av} onClick={() => setEditAvatar(av)} className="w-14 h-14 rounded-2xl flex items-center justify-center text-[28px] transition-all active:scale-90"
-                  style={{ background: editAvatar === av ? 'rgba(0,132,204,0.12)' : '#F5F5F7', border: editAvatar === av ? '2.5px solid var(--brand-blue)' : '2.5px solid transparent' }}>{av}</button>
-              ))}
+
+            {/* 아바타 변경 버튼 */}
+            <div className="flex flex-col items-center mb-6">
+              <div
+                onClick={() => { setShowEditModal(false); setShowAvatarEditor(true); }}
+                style={{
+                  width: '80px', height: '80px', borderRadius: '28px', cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative', border: '2.5px solid rgba(0,132,204,0.25)',
+                  overflow: 'hidden',
+                }}
+              >
+                {editAvatar.startsWith('http') || editAvatar.startsWith('data:') ? (
+                  <img src={editAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: '38px' }}>{editAvatar}</span>
+                )}
+                {/* Edit overlay */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(0,0,0,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: '26px',
+                }}>
+                  <span style={{ fontSize: '20px' }}>✏️</span>
+                </div>
+              </div>
+              <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, marginTop: '6px' }}>
+                사진 또는 이모지 변경
+              </p>
             </div>
+
             <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="이름을 입력하세요" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold bg-[#F5F5F7] border-2 outline-none transition-all mb-8"
               style={{ borderColor: editName ? 'var(--brand-blue)' : 'transparent' }} />
             <div className="grid grid-cols-2 gap-4">
@@ -141,6 +169,26 @@ export default function MyPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── 아바타 에디터 (사진 업로드 + 이모지) ── */}
+      {showAvatarEditor && (
+        <ProfileAvatarEditor
+          currentAvatar={editAvatar}
+          onClose={() => setShowAvatarEditor(false)}
+          onSaved={(newAvatar) => {
+            setEditAvatar(newAvatar);
+            // If it's an emoji (not a URL), save immediately without the name modal
+            const isUrl = newAvatar.startsWith('http') || newAvatar.startsWith('blob') || newAvatar.startsWith('data:');
+            if (!isUrl) {
+              // Emoji was already saved inside ProfileAvatarEditor — just refresh
+              window.location.reload();
+            } else {
+              // Photo URL was saved — also refresh
+              window.location.reload();
+            }
+          }}
+        />
       )}
 
       {/* ── 공통 모달: 비밀번호 설정 ── */}

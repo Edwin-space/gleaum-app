@@ -355,12 +355,14 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
   }
 
   return {
-    id:          group.id,
-    name:        group.name,
-    inviteCode:  group.invite_code ?? undefined,
-    createdBy:   group.created_by,
-    createdAt:   new Date(group.created_at),
-    members:     rows.map(rowToSpaceMember),
+    id:             group.id,
+    name:           group.name,
+    inviteCode:     group.invite_code ?? undefined,
+    createdBy:      group.created_by,
+    createdAt:      new Date(group.created_at),
+    members:        rows.map(rowToSpaceMember),
+    // cover_url 컬럼이 있을 때만 값이 채워짐 (DB 마이그레이션 후 활성화)
+    coverImageUrl:  (group as any).cover_url ?? undefined,
   };
 }
 
@@ -477,9 +479,45 @@ export async function updateSpaceName(spaceId: string, name: string): Promise<bo
   return !error;
 }
 
+/** 프로필 아바타 이미지 업로드 → 공개 URL 반환 후 profiles.avatar 저장
+ *  Bucket: profile-avatars (public 읽기 권한 필요)
+ *  권장: 300×300 JPEG 0.85 — 호출 전 canvas로 리사이즈 후 전달
+ */
+export async function uploadProfileAvatar(file: Blob, ext = 'jpg'): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const path = `${user.id}/avatar.${ext}`;
+
+  // profile-avatars 버킷 사용 (없으면 schedule-attachments 폴백)
+  let bucket = 'profile-avatars';
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, { upsert: true, cacheControl: '3600', contentType: `image/${ext}` });
+
+  if (uploadError) {
+    // 폴백: schedule-attachments 버킷
+    bucket = 'schedule-attachments';
+    const { error: fallbackError } = await supabase.storage
+      .from(bucket)
+      .upload(`profile-avatars/${path}`, file, { upsert: true, cacheControl: '3600', contentType: `image/${ext}` });
+    if (fallbackError) { console.error('[uploadProfileAvatar]', fallbackError); return null; }
+  }
+
+  const finalPath = bucket === 'profile-avatars' ? path : `profile-avatars/${path}`;
+  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(finalPath);
+  const url = urlData?.publicUrl ?? null;
+  if (!url) return null;
+
+  // profiles.avatar 업데이트
+  await supabase.from('profiles').update({ avatar: url }).eq('id', user.id);
+  return url;
+}
+
 /** 공간 커버 이미지 업로드 & URL 저장 (admin 전용)
- *  DB 컬럼: family_groups.cover_url TEXT
- *  마이그레이션 필요: ALTER TABLE family_groups ADD COLUMN IF NOT EXISTS cover_url TEXT;
+ *  저장 위치: schedule-attachments 버킷 → space-covers/{spaceId}/
+ *  DB: family_groups.cover_url TEXT
  */
 export async function updateSpaceCoverImage(spaceId: string, file: File): Promise<string | null> {
   const supabase = createClient();
@@ -501,8 +539,7 @@ export async function updateSpaceCoverImage(spaceId: string, file: File): Promis
 }
 
 /** 공간 설정 업데이트 (purpose, scheduleTypes 등)
- *  DB 컬럼: family_groups.settings JSONB DEFAULT '{}'
- *  마이그레이션 필요: ALTER TABLE family_groups ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}';
+ *  DB: family_groups.settings JSONB DEFAULT '{}'
  */
 export async function updateSpaceSettings(
   spaceId: string,

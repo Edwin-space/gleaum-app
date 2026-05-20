@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSpace, updateSpaceSettings } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { toast } from 'sonner';
 import type { SpacePurpose } from '@/types';
 
 // ── 공간 목적 옵션 ─────────────────────────────────────────
@@ -33,25 +34,38 @@ export default function SpaceNewPage() {
 
   // ── 공간 생성 (step3 완료 시) ─────────────────────────────
   const handleCreate = async () => {
-    if (!spaceName.trim()) return;
+    if (!spaceName.trim()) {
+      toast.error('공간 이름을 입력해주세요');
+      setStep(2);
+      return;
+    }
+    if (!purpose) {
+      toast.error('공간 목적을 선택해주세요');
+      return;
+    }
     setCreating(true);
     try {
       const spaceId = await createSpace(spaceName.trim());
-      if (!spaceId) throw new Error('생성 실패');
+      if (!spaceId) {
+        toast.error('공간 생성에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
 
-      // settings 저장 (purpose + 기본 일정 유형)
+      // settings 저장 — 실패해도 공간 생성은 계속 진행
       await updateSpaceSettings(spaceId, {
-        purpose: purpose ?? 'other',
+        purpose,
         scheduleTypes: ['공지', '약속', '활동', '행사', '기타'],
-      });
+      }).catch(e => console.warn('[onboarding] settings 저장 실패:', e));
 
-      await refresh();
+      // 캐시 갱신
+      await refresh().catch(e => console.warn('[onboarding] refresh 실패:', e));
+
       setCreatedId(spaceId);
-      // 초대 링크 생성 (inviteCode는 별도 조회 필요, 여기서는 경로 기반)
       setInviteLink(`https://gleaum.com/space/${spaceId}/join`);
       setStep(4);
     } catch (e) {
-      console.error(e);
+      console.error('[handleCreate]', e);
+      toast.error('공간 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setCreating(false);
     }
