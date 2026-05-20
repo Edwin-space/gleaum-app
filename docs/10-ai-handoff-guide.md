@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-05-12
+> **최종 업데이트**: 2026-05-14
 
 ---
 
@@ -31,23 +31,39 @@
 
 ---
 
-## 현재 앱 상태 (2026-05-12 기준)
+## 현재 앱 상태 (2026-05-14 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app` (main 브랜치)
-- **최신 배포**: 2026-05-12 (Vercel `npx vercel --prod`)
-- **최신 git 커밋**: `04fe0ca` (개인 공간 자동 생성 + 공유 공간 구분)
+- **최신 배포**: 2026-05-14
+- **Google Play**: 내부 테스트 버전 업로드 완료 (`com.gleaum.app`, versionCode: 1)
 
 ### 최근 변경 이력
 
-| 날짜 | 커밋 | 내용 |
-|------|------|------|
-| 2026-05-12 | `04fe0ca` | 개인 공간 자동 생성, `hasSharedSpace` 도입 |
-| 2026-05-12 | `46e8985` | DesktopBudget UX 3종 개선 (탭 순서, 금액 포맷, visibility 제거) |
-| 2026-05-11 | `d0711c9` | Space Admin 미표시 버그 수정 + 가계부 지출 추가 기능 |
-| 2026-05-11 | `c6fb8f2` | Phase 1 Space 전환 + Phase 2 기능 개선 4종 |
-| 2026-05-11 | `c999212` | SpaceRole/SpaceMember 타입 교체 |
+| 날짜 | 내용 |
+|------|------|
+| 2026-05-14 | Firebase SDK 네이티브 연동 (iOS AppDelegate + Package.swift) |
+| 2026-05-14 | Google Calendar/Drive 연동 완전 제거 → 기기 캘린더 전환 준비 |
+| 2026-05-14 | Google OAuth 스코프 축소 (email+profile만 요청) |
+| 2026-05-14 | 법적 문서 페이지 신규 생성 (`/legal/terms`, `/legal/privacy`) |
+| 2026-05-14 | 릴리즈 키스토어 생성 + Google Play 패키지명 소유권 인증 완료 |
+| 2026-05-14 | Android 미사용 권한 제거 (CAMERA, BIOMETRIC 등) |
+| 2026-05-14 | signed AAB 빌드 → Google Play 내부 테스트 버전 업로드 완료 |
+| 2026-05-12 | `04fe0ca` — 개인 공간 자동 생성, `hasSharedSpace` 도입 |
+| 2026-05-12 | `46e8985` — DesktopBudget UX 3종 개선 |
+| 2026-05-11 | `c6fb8f2` — Phase 1 Space 전환 + Phase 2 기능 개선 4종 |
+
+### 주요 인프라 현황
+
+| 구분 | 상태 |
+|------|------|
+| Vercel 웹 배포 | ✅ 운영 중 (`https://www.gleaum.com`) |
+| 백오피스 배포 | ✅ 운영 중 (별도 Vercel 프로젝트) |
+| GA4 데이터 수집 | ✅ 정상 (서비스 계정 뷰어 권한 부여 완료) |
+| Firebase FCM | ✅ 웹/네이티브 분기 처리 완료 |
+| Google Play | ✅ 내부 테스트 버전 등록 완료 |
+| App Store (iOS) | ❌ 미등록 (APNs 설정 후 진행 필요) |
 | 2026-05-11 | `5446976` | space_members 테이블 + 역할 기반 RLS |
 
 ### 코드 아키텍처 패턴

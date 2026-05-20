@@ -226,3 +226,105 @@ const nextConfig: NextConfig = {
 5. Vercel 배포 에러 → 해당 커밋 로그 확인 → 로컬에서 재현 후 수정
 6. Vercel 함수 로그(Logs 탭) — 런타임 에러 확인 필수
 ```
+
+---
+
+## [2026-05-14] Android AAB 빌드 — proguard-android.txt 미지원 에러
+
+**증상**:
+```
+Build file '.../android/app/build.gradle' line: 29
+`getDefaultProguardFile('proguard-android.txt')` is no longer supported
+```
+
+**원인**: Gradle 9.4.1에서 `proguard-android.txt` 파일 참조가 제거됨. R8 최적화를 막는 `-dontoptimize` 옵션이 포함되어 있어 지원 중단.
+
+**해결**: `android/app/build.gradle`에서 파일명 변경
+```groovy
+// Before
+proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+// After
+proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+```
+
+---
+
+## [2026-05-14] Android AAB 빌드 — 키스토어 비밀번호 오류 (특수문자 쉘 해석)
+
+**증상**:
+```
+Failed to read key gleaum from store "~/gleaum-release.keystore": keystore password was incorrect
+```
+
+**원인**: 비밀번호에 `$` 문자가 포함되어 있어 쉘이 `$12`를 변수(`$12`)로 해석. 큰따옴표(`"`) 사용 시 `$` 이후 문자열이 빈 값으로 치환되어 실제 비밀번호와 달라짐.
+
+**해결**: 환경변수 전달 시 **작은따옴표(`'`)** 사용
+```bash
+# 오류 발생 (큰따옴표)
+KEYSTORE_PASSWORD="Edwinyoo($12" ./gradlew bundleRelease
+
+# 정상 동작 (작은따옴표)
+KEYSTORE_PASSWORD='Edwinyoo($12' KEY_PASSWORD='Edwinyoo($12' ./gradlew bundleRelease
+```
+
+**원칙**: 쉘 특수문자(`$`, `` ` ``, `\`, `!`, `(`, `)`)가 포함된 비밀번호는 항상 작은따옴표로 감쌀 것.
+
+---
+
+## [2026-05-14] Google Play 패키지명 인증 — adi-registration.properties 토큰 불일치
+
+**증상**:
+```
+업로드된 APK에 잘못된 토큰 파일이 있습니다.
+```
+
+**원인 1**: `echo` 명령어가 파일 끝에 개행문자(`\n`)를 추가해 토큰 값이 달라짐.
+
+**원인 2**: 화면 스크린샷에서 토큰 값을 수동으로 읽어 입력 시 A 문자 1개 누락
+- 잘못된 값: `DJ3DGQPVEK6CKAAAAAAAAAAAA` (25자)
+- 실제 값: `DJ3DGQPVEK6CKAAAAAAAAAAAAA` (26자)
+
+**해결**:
+1. Play Console UI의 복사 버튼(📋)을 직접 클릭해 클립보드로 복사
+2. `printf` (개행 없음) 사용으로 파일 생성
+```bash
+printf '토큰값' > android/app/src/main/assets/adi-registration.properties
+```
+3. Debug APK 재빌드 후 업로드 → 통과
+
+**주의**: 소유권 인증 완료 후 `adi-registration.properties` 파일은 즉시 삭제할 것 (배포 APK/AAB에 포함 불필요).
+
+---
+
+## [2026-05-14] Android 터미널 빌드 — Java Runtime 미발견
+
+**증상**:
+```
+The operation couldn't be completed. Unable to locate a Java Runtime.
+```
+
+**원인**: macOS 시스템 PATH에 Java가 설정되어 있지 않음. Android Studio는 자체 JDK를 번들링하고 있으나 터미널에서는 인식 안 됨.
+
+**해결**: Android Studio 내장 JDK를 JAVA_HOME으로 지정 후 빌드
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+./gradlew bundleRelease
+```
+
+---
+
+## [2026-05-14] Android 미사용 권한으로 인한 Play Console 경고
+
+**증상**: AAB 업로드 후
+```
+APK 또는 Android App Bundle에서 개인정보처리방침이 필요한 권한을 사용합니다(android.permission.CAMERA).
+```
+
+**원인**: `AndroidManifest.xml`에 선언된 CAMERA, BIOMETRIC 등 권한이 실제 서비스에서 미사용 상태임에도 민감 권한으로 분류되어 개인정보처리방침 연결을 요구함.
+
+**해결**: 현재 미구현 기능에 해당하는 권한 일괄 제거
+- 제거: `CAMERA`, `READ_MEDIA_IMAGES`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `USE_BIOMETRIC`, `USE_FINGERPRINT`
+- 유지: `INTERNET`, `ACCESS_NETWORK_STATE`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, `POST_NOTIFICATIONS`, `c2dm.RECEIVE`
+
+**향후**: 카메라/생체인증 기능 구현 시 해당 권한 복원 + Play Console 데이터 안전 섹션 업데이트 필요. (`docs/08-features-pending.md` 참조)

@@ -411,6 +411,47 @@ npm run cap:open:android # Android Studio 열기
 
 ---
 
+## Google Play 스토어 출시 준비 (완료 — 2026-05-14)
+
+### Firebase SDK 네이티브 연동
+- [x] `@capacitor-firebase/messaging` 플러그인 설치 및 연동
+- [x] iOS `AppDelegate.swift` — `FirebaseApp.configure()` + `Messaging.messaging().delegate` + APNs 토큰 매핑
+- [x] `ios/App/CapApp-SPM/Package.swift` — `CapacitorFirebaseMessaging` 의존성 수동 추가
+- [x] `src/lib/firebase.ts` — 네이티브(Capacitor) / 웹(JS SDK) FCM 토큰 분기 처리
+- [x] `google-services.json` (Android), `GoogleService-Info.plist` (iOS) — Firebase 구성 파일 배치 완료
+
+### Google OAuth 스코프 축소 (구글 검수 회피)
+- [x] `src/hooks/useAuth.ts` — Calendar, Drive 스코프 제거 → `email`, `profile`만 요청
+- [x] Google Cloud Console OAuth 스코프 단순화로 Google 앱 검수 불필요 상태 달성
+
+### 구글 캘린더 연동 제거 (기기 캘린더 전환 준비)
+- [x] `src/lib/googleCalendar.ts` — 파일 전체 삭제
+- [x] `src/lib/db.ts` — Google Calendar API 호출 3곳 제거 (`createSchedule`, `updateSchedule`, `deleteSchedule`)
+- [x] `src/app/settings/calendar/page.tsx` — "Google 캘린더 동기화" → "기기 캘린더 연동 준비 중" 안내 페이지로 교체
+- [x] `src/app/mypage/MobileMyPage.tsx` — "구글 캘린더" → "기기 캘린더 연동 (준비 중)"
+- [x] `src/app/mypage/DesktopMyPage.tsx` — 동일 변경
+- [x] `src/types/index.ts` — `source: 'local' | 'google_drive'` → `source: 'local'`
+
+### 법적 문서 페이지 (이용약관 + 개인정보처리방침)
+- [x] `src/app/legal/terms/page.tsx` — 이용약관 12개 조항 (운영자: 유태성, helper@gleaum.com)
+- [x] `src/app/legal/privacy/page.tsx` — 개인정보처리방침 11개 조항 (테이블형 수탁업체 목록 포함)
+- [x] `src/proxy.ts` — `/legal` 공개 경로 추가 (비로그인 접근 허용)
+- [x] `src/app/login/page.tsx` — 로그인 화면 하단에 이용약관·개인정보처리방침 링크 연결
+- [x] `src/app/mypage/MobileMyPage.tsx` — 마이페이지 푸터에 법적 문서 링크 추가
+
+### Google Play Console 등록 및 패키지명 인증
+- [x] Google Play 개발자 등록 및 인증 완료
+- [x] 릴리즈 키스토어 생성: `~/gleaum-release.keystore` (alias: gleaum, RSA 2048, 유효: 10,000일)
+- [x] 패키지명 소유권 증명 완료 (`com.gleaum.app` — debug.keystore SHA-256 활용)
+- [x] `adi-registration.properties` 파일로 APK 서명 후 Play Console 검증 통과
+- [x] `android/app/build.gradle` — `signingConfigs.release` 설정 추가
+- [x] `android/app/build.gradle` — `proguard-android.txt` → `proguard-android-optimize.txt` 수정 (Gradle 9.4 호환)
+- [x] `android/app/src/main/AndroidManifest.xml` — 미사용 권한 제거 (`CAMERA`, `READ_MEDIA_IMAGES`, `READ/WRITE_EXTERNAL_STORAGE`, `USE_BIOMETRIC`, `USE_FINGERPRINT`)
+- [x] 서명된 AAB 빌드 성공 (`app-release.aab`) — Google Play 내부 테스트 버전 업로드 완료
+- [x] 앱 무결성 설정 완료 (자동 보호 + Google Play 서명 버전)
+
+---
+
 ## 백오피스(Admin Backoffice) Phase 1~4 완료 (완료 — 2026-05-13)
 
 > 기존 사용자 앱과 완전히 분리된 독립 관리자 인터페이스.

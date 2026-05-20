@@ -14,10 +14,41 @@
 
 | 항목 | 내용 | 파일 |
 |------|------|------|
-| `middleware.ts` 경고 | "middleware" 파일명 deprecated → "proxy"로 변경 권장 | `src/middleware.ts` |
+| ~~`middleware.ts` 경고~~ | ✅ 해결 — `src/proxy.ts`로 파일명 변경 완료 | — |
+| ~~Google Calendar 연동~~ | ✅ 제거 — 기기 캘린더 방식으로 전환 결정 | — |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |
-| Google OAuth 앱 게시 | 테스트 사용자만 로그인 가능 (프로덕션 미게시) | Google Cloud Console |
-| Google Calendar 연동 | 코드 완성, 수동 API 활성화 대기 | Google Cloud Console |
+| Google OAuth 앱 게시 | email+profile 스코프만 사용 → 간소화 검수 대상 (정식 출시 전 완료 필요) | Google Cloud Console |
+| R8 난독화 미적용 | `minifyEnabled false` 상태 — 정식 출시 전 `true`로 변경 후 mapping.txt 업로드 필요 | `android/app/build.gradle` |
+
+---
+
+## 🔴 Google Play 정식 출시 전 필수 처리 사항
+
+> 내부 테스트 버전 업로드 완료 (2026-05-14). 정식 출시 전 아래 항목 반드시 처리 필요.
+
+| 항목 | 내용 |
+|------|------|
+| **R8 난독화 매핑 파일** | `minifyEnabled true` 변경 후 `mapping.txt` Play Console 업로드 |
+| **네이티브 디버그 기호** | `.so` 심볼 파일 업로드 (크래시 스택트레이스 해독) |
+| **스토어 등록정보** | 앱 설명(국문), 스크린샷(폰/태블릿), 기능 그래픽(1024×500) |
+| **데이터 안전 섹션** | 수집 데이터 항목·목적 양식 작성 |
+| **콘텐츠 등급** | IARC 등급 설문 완료 |
+| **개인정보처리방침 URL** | `https://www.gleaum.com/legal/privacy` Play Console 등록 |
+| **Firebase SHA-1 (릴리즈)** | `gleaum-release.keystore` SHA-1 → Firebase Console 등록 (Google 로그인 프로덕션용) |
+| **iOS APNs** | Apple Developer Center APNs Auth Key 생성 → Firebase Console 업로드 |
+| **iOS Xcode Capabilities** | Push Notifications + Background Modes 추가 |
+| **Supabase Redirect URL** | `gleaum://auth/callback` 등록 |
+
+### Android 권한 향후 복원 예정 (기능 추가 시)
+
+> 현재 Play Console 경고 방지를 위해 제거됨. 해당 기능 개발 시 `AndroidManifest.xml`에 복원 필요.
+
+| 권한 | 복원 이유 | 함께 필요한 작업 |
+|------|-----------|----------------|
+| `CAMERA` | 첨부파일 촬영, 프로필 사진 | `@capacitor/camera` 플러그인 |
+| `READ_MEDIA_IMAGES` | 갤러리 이미지 첨부 | `@capacitor/camera` 플러그인 |
+| `READ/WRITE_EXTERNAL_STORAGE` | 파일 첨부 저장 | Android 버전별 조건부 처리 |
+| `USE_BIOMETRIC` / `USE_FINGERPRINT` | 앱 잠금, 민감 데이터 보호 | `@capacitor-community/biometric-auth` |
 
 ---
 

@@ -139,13 +139,10 @@ Authorization: Bearer <CRON_SECRET>
 openid
 email
 profile
-https://www.googleapis.com/auth/calendar
-https://www.googleapis.com/auth/calendar.events
-https://www.googleapis.com/auth/drive.file
-https://www.googleapis.com/auth/drive.readonly
 ```
 
-> **Day 5 작업 전**: Google Cloud Console에서 Calendar API, Drive API 활성화 필요
+> **2026-05-14 변경**: Calendar, Drive 스코프 제거. 기기 캘린더 방식으로 전환 결정.
+> Google 앱 검수(민감한 스코프 심사) 불필요 상태. 정식 출시 전 OAuth 앱 게시만 완료하면 됨.
 
 ---
 
@@ -197,6 +194,53 @@ const nextConfig: NextConfig = {
   }
 }
 ```
+
+---
+
+## Android 앱 빌드 및 배포
+
+### 릴리즈 키스토어 정보
+
+| 항목 | 값 |
+|------|-----|
+| 파일 경로 | `~/gleaum-release.keystore` |
+| Alias | `gleaum` |
+| 알고리즘 | RSA 2048 |
+| 유효기간 | 10,000일 |
+| DN | CN=Taesung Yoo, OU=Gleaum, O=Gleaum, L=Seoul, ST=Seoul, C=KR |
+
+> ⚠️ 키스토어 파일과 비밀번호는 분실 시 복구 불가. 반드시 안전한 곳에 백업 보관.
+
+### AAB 빌드 명령어
+
+```bash
+cd /Volumes/WD_BLACK/Ai\ Works/gleaum/android
+
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+KEYSTORE_PASSWORD='비밀번호' KEY_PASSWORD='비밀번호' ./gradlew bundleRelease
+```
+
+> ⚠️ 비밀번호에 `$`, `(`, `)` 등 특수문자 포함 시 반드시 **작은따옴표(`'`)** 사용.
+
+빌드 산출물:
+```
+android/app/build/outputs/bundle/release/app-release.aab
+```
+
+### Google Play Console 현재 상태 (2026-05-14)
+
+| 항목 | 상태 |
+|------|------|
+| 개발자 등록 | ✅ 완료 |
+| 패키지명 소유권 인증 | ✅ 완료 (`com.gleaum.app`) |
+| 앱 무결성 설정 | ✅ 완료 (자동 보호 + Google Play 서명) |
+| 내부 테스트 버전 | ✅ 업로드 완료 (versionCode: 1, versionName: 1.0) |
+| 스토어 등록정보 | ❌ 미완료 |
+| 데이터 안전 섹션 | ❌ 미완료 |
+| 콘텐츠 등급 | ❌ 미완료 |
+| 정식 출시 | ❌ 미완료 |
 
 ---
 
