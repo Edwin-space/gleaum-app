@@ -478,6 +478,26 @@ export async function removeSpaceMember(spaceId: string, userId: string): Promis
   return !error;
 }
 
+/** 공간 폐쇄 (admin 전용) — 관련 데이터 즉시 삭제
+ *  삭제 순서: space_settings → schedules → space_members → family_groups
+ */
+export async function deleteSpace(spaceId: string): Promise<boolean> {
+  const supabase = createClient();
+
+  // 1. space_settings
+  await supabase.from('space_settings').delete().eq('space_id', spaceId);
+
+  // 2. schedules (space_id 컬럼 기준)
+  await supabase.from('schedules').delete().eq('space_id', spaceId);
+
+  // 3. space_members
+  await supabase.from('space_members').delete().eq('space_id', spaceId);
+
+  // 4. family_groups (공간 본체)
+  const { error } = await supabase.from('family_groups').delete().eq('id', spaceId);
+  return !error;
+}
+
 /** 공간 이름 수정 (admin 전용) */
 export async function updateSpaceName(spaceId: string, name: string): Promise<boolean> {
   const supabase = createClient();
