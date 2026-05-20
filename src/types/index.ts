@@ -91,14 +91,23 @@ export interface SpaceMember {
   user?:    User;       // join 시 포함
 }
 
+/** 공간 목적 */
+export type SpacePurpose = 'family' | 'couple' | 'friends' | 'work' | 'other';
+
 /** 공간(Space) 정보 */
 export interface Space {
-  id:          string;
-  name:        string;
-  members:     SpaceMember[];
-  inviteCode?: string;
-  createdBy:   string;
-  createdAt:   Date;
+  id:             string;
+  name:           string;
+  members:        SpaceMember[];
+  inviteCode?:    string;
+  createdBy:      string;
+  createdAt:      Date;
+  /** 커버 이미지 URL (family_groups.cover_url) */
+  coverImageUrl?: string;
+  /** 공간 목적 (settings.purpose) */
+  purpose?:       SpacePurpose;
+  /** 공간 일정 유형 목록 (settings.scheduleTypes) */
+  scheduleTypes?: string[];
 }
 
 /**

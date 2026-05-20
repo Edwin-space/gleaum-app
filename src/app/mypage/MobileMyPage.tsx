@@ -318,11 +318,55 @@ export function MobileMyPage({
         {/* 1. 공간 & 멤버 */}
         <div>
           <SectionTitle title="공간 & 멤버" />
+
+          {/* 무료 플랜 현황 카드 */}
+          <div style={{
+            background: 'white', borderRadius: '18px', padding: '18px 20px',
+            boxShadow: '0 1px 8px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+            marginBottom: '10px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>플랜 현황</p>
+              <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 800, background: 'rgba(0,132,204,0.08)', color: '#0084CC' }}>FREE</span>
+            </div>
+            {/* 공간 */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>내 공간</span>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.spaceCount ?? 0) >= 2 ? '#EF4444' : '#1A1B2E' }}>
+                  {insights?.spaceCount ?? 0}/2
+                </span>
+              </div>
+              <div style={{ height: '6px', borderRadius: '999px', background: '#F0F0F5', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.min(((insights?.spaceCount ?? 0) / 2) * 100, 100)}%`, borderRadius: '999px', background: (insights?.spaceCount ?? 0) >= 2 ? 'linear-gradient(90deg,#EF4444,#F97316)' : 'linear-gradient(90deg,#0CC9B5,#0084CC)', transition: 'width 0.4s' }} />
+              </div>
+            </div>
+            {/* 멤버 */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>공간 멤버</span>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.memberCount ?? 0) >= 10 ? '#EF4444' : '#1A1B2E' }}>
+                  {insights?.memberCount ?? 0}/10
+                </span>
+              </div>
+              <div style={{ height: '6px', borderRadius: '999px', background: '#F0F0F5', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.min(((insights?.memberCount ?? 0) / 10) * 100, 100)}%`, borderRadius: '999px', background: (insights?.memberCount ?? 0) >= 10 ? 'linear-gradient(90deg,#EF4444,#F97316)' : 'linear-gradient(90deg,#0CC9B5,#0084CC)', transition: 'width 0.4s' }} />
+              </div>
+            </div>
+            {/* 업그레이드 힌트 */}
+            <div style={{ padding: '10px 14px', borderRadius: '12px', background: 'linear-gradient(135deg,rgba(0,132,204,0.06),rgba(12,201,181,0.06))', border: '1px solid rgba(0,132,204,0.10)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '18px' }}>🎁</span>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93', margin: 0, lineHeight: 1.5 }}>
+                광고 시청 또는 인앱결제 포인트로 공간·멤버 슬롯 확장 가능 <span style={{ color: '#0084CC', fontWeight: 800 }}>준비 중</span>
+              </p>
+            </div>
+          </div>
+
           <MenuCard>
             <MenuItem
               href="/space"
               label="공간 관리"
-              sub="멤버 초대, 역할 설정"
+              sub="멤버 초대, 역할 설정, 일정 유형"
               icon={
                 <IconBox bg="rgba(0,132,204,0.09)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
@@ -330,6 +374,20 @@ export function MobileMyPage({
                     <circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </IconBox>
+              }
+            />
+            <MenuDivider />
+            <MenuItem
+              href="/space/new"
+              label="새 공간 만들기"
+              sub="최대 2개 (무료 플랜)"
+              icon={
+                <IconBox bg="rgba(12,201,181,0.09)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0CC9B5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
                   </svg>
                 </IconBox>
               }

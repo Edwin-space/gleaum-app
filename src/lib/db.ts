@@ -477,6 +477,59 @@ export async function updateSpaceName(spaceId: string, name: string): Promise<bo
   return !error;
 }
 
+/** 공간 커버 이미지 업로드 & URL 저장 (admin 전용)
+ *  DB 컬럼: family_groups.cover_url TEXT
+ *  마이그레이션 필요: ALTER TABLE family_groups ADD COLUMN IF NOT EXISTS cover_url TEXT;
+ */
+export async function updateSpaceCoverImage(spaceId: string, file: File): Promise<string | null> {
+  const supabase = createClient();
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const path = `space-covers/${spaceId}/${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('schedule-attachments')
+    .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+  if (uploadError) { console.error('[updateSpaceCoverImage]', uploadError); return null; }
+
+  const { data: urlData } = supabase.storage.from('schedule-attachments').getPublicUrl(path);
+  const url = urlData?.publicUrl ?? null;
+  if (!url) return null;
+
+  await supabase.from('family_groups').update({ cover_url: url } as any).eq('id', spaceId);
+  return url;
+}
+
+/** 공간 설정 업데이트 (purpose, scheduleTypes 등)
+ *  DB 컬럼: family_groups.settings JSONB DEFAULT '{}'
+ *  마이그레이션 필요: ALTER TABLE family_groups ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}';
+ */
+export async function updateSpaceSettings(
+  spaceId: string,
+  settings: { purpose?: string; scheduleTypes?: string[] },
+): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('family_groups')
+    .update({ settings } as any)
+    .eq('id', spaceId);
+  if (error) console.error('[updateSpaceSettings]', error);
+  return !error;
+}
+
+/** 공간 설정 조회 */
+export async function getSpaceSettings(
+  spaceId: string,
+): Promise<{ purpose?: string; scheduleTypes?: string[] }> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('family_groups')
+    .select('settings, cover_url')
+    .eq('id', spaceId)
+    .single();
+  return (data as any)?.settings ?? {};
+}
+
 /** 초대 코드로 공간 정보 조회 */
 export async function getSpaceByCode(inviteCode: string): Promise<{ id: string; name: string } | null> {
   const supabase = createClient();
@@ -1050,11 +1103,19 @@ export async function getMyPageInsights(spaceId: string | undefined) {
     .select('*', { count: 'exact', head: true })
     .eq('family_group_id', familyGroupId);
 
+  // ── [공간 수] 사용자가 속한 공간 수 ──
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const { count: spaceCount } = await supabase
+    .from('space_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', authUser?.id ?? '');
+
   return {
     totalExpense,
-    upcomingCount: upcomingCount || 0,
-    memberCount: memberCount || 0,
-    month: now.getMonth() + 1
+    upcomingCount:  upcomingCount || 0,
+    memberCount:    memberCount || 0,
+    spaceCount:     spaceCount || 0,
+    month:          now.getMonth() + 1,
   };
 }
 

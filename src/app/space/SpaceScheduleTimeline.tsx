@@ -164,7 +164,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
           공간 일정
         </h3>
         <button
-          onClick={() => router.push('/schedules/new?type=shared')}
+          onClick={() => router.push('/space/schedule/new')}
           style={{
             display: 'flex', alignItems: 'center', gap: '5px',
             fontSize: '13px', fontWeight: 800, color: '#0084CC',
@@ -275,7 +275,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
             공간 멤버들과 함께할 일정을 추가해보세요
           </p>
           <button
-            onClick={() => router.push('/schedules/new?type=shared')}
+            onClick={() => router.push('/space/schedule/new')}
             style={{
               padding: '10px 24px', borderRadius: '14px',
               background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
