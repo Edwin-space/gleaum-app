@@ -100,7 +100,6 @@ export interface ScheduleRow {
   amount: number | null;
   expense_category: ExpenseCategory | null;
   payment_method: PaymentMethod | null;
-  google_event_id: string | null;
   created_at: string;
   updated_at: string;
   schedule_participants?: { user_id: string }[];
@@ -151,7 +150,6 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
     amount: row.amount ?? undefined,
     expenseCategory: row.expense_category ?? undefined,
     paymentMethod: row.payment_method ?? undefined,
-    googleEventId: row.google_event_id ?? undefined,
   };
 }
 
@@ -875,8 +873,6 @@ export async function createSchedule(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const googleEventId: string | null = null;
-
   // Phase 2: type → category/visibility/automation_policy 자동 매핑
   const autoCategory = input.category ?? inferCategory(input.type);
   const autoVisibility = input.visibility ?? inferVisibility(input.type);
@@ -907,7 +903,6 @@ export async function createSchedule(
       amount:            input.amount ?? null,
       expense_category:  input.expenseCategory ?? null,
       payment_method:    input.paymentMethod ?? null,
-      google_event_id:   googleEventId,
     })
     .select()
     .single();
