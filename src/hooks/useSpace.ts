@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { getSpaceWithMembers, getMyRoleInSpace } from '@/lib/db';
 import type { Space, SpaceMember, User, SpaceRole } from '@/types';
 
@@ -23,11 +23,19 @@ export function useSpace(spaceId: string | null): SpaceState {
   const [members, setMembers] = useState<SpaceMember[]>([]);
   const [myRole,  setMyRole]  = useState<SpaceRole | null>(null);
   const [loading, setLoading] = useState(true);
+  // 공간 전환 시 이전 데이터가 노출되지 않도록 추적
+  const prevSpaceIdRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!spaceId) {
       setLoading(false);
       return;
+    }
+    // 다른 공간으로 전환될 때 stale 데이터 즉시 클리어
+    if (prevSpaceIdRef.current !== spaceId) {
+      setSpace(null);
+      setMembers([]);
+      prevSpaceIdRef.current = spaceId;
     }
     setLoading(true);
     try {

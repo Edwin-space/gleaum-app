@@ -28,6 +28,8 @@ export function MobileSpace() {
   const sidParam = searchParams.get('sid');
 
   // ── 상태 ──────────────────────────────────────────────
+  // (localStorage 'gleaum_lastSpaceId' 에 마지막 조회 공간 ID를 저장해
+  //  홈 → 공간 재진입 시에도 동일한 공간을 복원)
   const [showInviteModal, setShowInviteModal]   = useState(false);
   const [showJoinModal,   setShowJoinModal]      = useState(false);
   const [copied,          setCopied]             = useState(false);
@@ -52,6 +54,7 @@ export function MobileSpace() {
   const [spaceIndex,   setSpaceIndex]   = useState(0);
   // 우선순위: 1) URL ?sid 파라미터  2) localStorage 최근 공간  3) profiles.family_group_id
   const initActiveSpace = (() => {
+    if (typeof window === 'undefined') return spaceId;
     if (sidParam) return sidParam;
     try {
       const stored = localStorage.getItem('gleaum_lastSpaceId');
@@ -68,6 +71,26 @@ export function MobileSpace() {
       setActiveSpaceId(spaceId);
     }
   }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ★ activeSpaceId 변경 시 localStorage 저장 + optimistic 이름 초기화
+  //    스와이프로 공간 전환 시 이전 공간의 수정된 이름이 남지 않도록
+  useEffect(() => {
+    if (!activeSpaceId) return;
+    try { localStorage.setItem('gleaum_lastSpaceId', activeSpaceId); } catch {}
+    setOptimisticSpaceName(null);
+  }, [activeSpaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ★ 모바일 앱/PWA 포그라운드 복귀 시 최신 데이터 재조회
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void refresh();
+        void getMySpaces().then(setMySpaces);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ★ 스와이프된 공간 ID 우선 사용 (activeSpaceId) — 없으면 기본 spaceId
   const displaySpaceId = activeSpaceId ?? spaceId;
@@ -156,8 +179,11 @@ export function MobileSpace() {
       ));
       // localStorage 플래그 설정 (settings 페이지 sync용)
       try { localStorage.setItem('gleaum_space_name_updated', Date.now().toString()); } catch {}
-      // 백그라운드에서 DB 확인 (awaiting 없이)
+      // useSpace 갱신 + mySpaces DB 재조회 (홈 복귀 후 재진입 시 최신 이름 보장)
       void refresh();
+      void getMySpaces().then(spaces => {
+        setMySpaces(spaces);
+      });
     }
   };
 
@@ -400,7 +426,10 @@ export function MobileSpace() {
                       <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                           <h2 style={{ fontSize: '20px', fontWeight: 900, margin: 0, letterSpacing: '-0.4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {optimisticSpaceName ?? group?.name ?? '나의 공간'}
+                            {optimisticSpaceName
+                              ?? group?.name
+                              ?? mySpaces.find(s => s.id === displaySpaceId)?.name
+                              ?? '나의 공간'}
                           </h2>
                           {isAdmin && (
                             <button onClick={startEditing}
