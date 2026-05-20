@@ -62,8 +62,13 @@ export default function SpaceSettingsPage() {
     const ok = await updateSpaceName(spaceId, spaceName.trim());
     setSavingName(false);
     setEditingName(false);
-    if (ok) toast.success('공간 이름이 변경되었습니다');
-    else    toast.error('이름 변경에 실패했습니다');
+    if (ok) {
+      // localStorage 플래그 → 공간 메인 페이지에서 이름 재조회 트리거
+      try { localStorage.setItem('gleaum_space_name_updated', Date.now().toString()); } catch {}
+      toast.success('공간 이름이 변경되었습니다');
+    } else {
+      toast.error('이름 변경에 실패했습니다');
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -142,29 +147,32 @@ export default function SpaceSettingsPage() {
         <div style={card}>
           <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: '0 0 10px' }}>공간 이름</p>
           {editingName ? (
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div>
               <input
                 value={spaceName}
                 onChange={e => setSpaceName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') { setEditingName(false); setSpaceName(space?.name ?? ''); } }}
                 autoFocus
                 maxLength={30}
+                placeholder="공간 이름 입력"
                 style={{
-                  flex: 1, height: '46px', padding: '0 14px', borderRadius: '14px',
-                  fontSize: '15px', fontWeight: 600, background: '#F7F7FA',
+                  width: '100%', height: '50px', padding: '0 14px', borderRadius: '14px',
+                  fontSize: '16px', fontWeight: 700, background: '#F7F7FA',
                   border: '1.5px solid #0084CC', outline: 'none',
-                  boxSizing: 'border-box', color: '#1A1B2E',
+                  boxSizing: 'border-box', color: '#1A1B2E', marginBottom: '10px',
                 }}
               />
-              <button
-                onClick={() => { setEditingName(false); setSpaceName(space?.name ?? ''); }}
-                style={{ padding: '0 14px', height: '46px', borderRadius: '14px', border: '1.5px solid #E0E0E5', background: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: '#8E8E93' }}
-              >취소</button>
-              <button
-                onClick={handleSaveName}
-                disabled={savingName || !spaceName.trim()}
-                style={{ padding: '0 16px', height: '46px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 800 }}
-              >{savingName ? '저장 중...' : '저장'}</button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => { setEditingName(false); setSpaceName(space?.name ?? ''); }}
+                  style={{ flex: 1, height: '46px', borderRadius: '14px', border: '1.5px solid #E0E0E5', background: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: '#8E8E93' }}
+                >취소</button>
+                <button
+                  onClick={handleSaveName}
+                  disabled={savingName || !spaceName.trim()}
+                  style={{ flex: 2, height: '46px', borderRadius: '14px', border: 'none', background: savingName || !spaceName.trim() ? 'rgba(0,132,204,0.4)' : '#0084CC', color: 'white', cursor: savingName || !spaceName.trim() ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 800 }}
+                >{savingName ? '저장 중...' : '저장'}</button>
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

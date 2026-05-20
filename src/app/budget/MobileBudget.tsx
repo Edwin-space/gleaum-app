@@ -139,7 +139,7 @@ export function MobileBudget({
       </div>
 
       {/* ── 탭 스위처: 개인 먼저, 공간 비활성화 가능 ── */}
-      <div style={{ padding: '16px 16px 0', display: 'flex', gap: '8px' }}>
+      <div style={{ padding: '16px 16px 0', display: 'flex', gap: '8px', position: 'relative', zIndex: 25 }}>
         {tabs.map(({ key, label, disabled }) => (
           <button
             key={key}

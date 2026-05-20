@@ -238,7 +238,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 60,
+        position: 'fixed', inset: 0, zIndex: 10000,
         background: 'rgba(0,0,0,0.45)',
         backdropFilter: 'blur(10px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',

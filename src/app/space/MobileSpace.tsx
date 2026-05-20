@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import {
@@ -21,6 +21,7 @@ const ROLE_OPTIONS: SpaceRole[] = ['admin', 'editor', 'viewer'];
 export function MobileSpace() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { spaceId, user, loading: userLoading, refresh: refreshUser } = useCurrentUser();
 
   // space/new 에서 넘어올 때 새 공간 ID를 즉시 표시하기 위한 파라미터
@@ -142,11 +143,32 @@ export function MobileSpace() {
   const handleSaveName = async () => {
     if (!editName.trim() || !displaySpaceId) return;
     setSavingName(true);
-    await updateSpaceName(displaySpaceId, editName.trim());
+    const ok = await updateSpaceName(displaySpaceId, editName.trim());
+    if (ok) {
+      await refresh(); // refresh BEFORE exiting edit mode so new name shows immediately
+    }
     setSavingName(false);
     setIsEditingName(false);
-    await refresh();
   };
+
+  // 다른 페이지(공간 설정)에서 이름 변경 후 돌아왔을 때 재조회
+  const prevPathname = useRef(pathname);
+  const lastRefreshKey = useRef<string | null>(null);
+  useEffect(() => {
+    const pathChanged = prevPathname.current !== pathname && pathname === '/space';
+    let flagChanged = false;
+    try {
+      const flag = localStorage.getItem('gleaum_space_name_updated');
+      if (flag && flag !== lastRefreshKey.current) {
+        lastRefreshKey.current = flag;
+        flagChanged = true;
+      }
+    } catch {}
+    if (pathChanged || flagChanged) {
+      refresh();
+    }
+    prevPathname.current = pathname;
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 커버 이미지 업로드 ────────────────────────────────
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
