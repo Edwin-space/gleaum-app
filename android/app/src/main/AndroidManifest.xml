@@ -84,6 +84,15 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 카메라 & 사진 — 프로필 아바타 업로드, 일정 사진 첨부 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13+ 이미지 접근 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 12 이하 호환 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
     <!-- Firebase Cloud Messaging -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <!-- Firebase Analytics / GA4 광고 ID 사용 선언 (Android 13+) -->
@@ -91,5 +100,7 @@
 
     <!-- 태블릿에서도 설치 가능 (스마트폰 전용 기능 불필요) -->
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
+    <!-- 카메라 하드웨어 없어도 설치 가능 (선택 기능) -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
 </manifest>

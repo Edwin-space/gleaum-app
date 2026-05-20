@@ -8,8 +8,8 @@ android {
         applicationId "com.gleaum.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -17,10 +17,13 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(System.getProperty("user.home") + "/gleaum-release.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias "gleaum"
-            keyPassword System.getenv("KEY_PASSWORD") ?: ""
+            // 환경변수 우선 → fallback: ~/gleaum-release.keystore
+            def ksPath = System.getenv("ANDROID_KEYSTORE_PATH")
+                ?: (System.getProperty("user.home") + "/gleaum-release.keystore")
+            storeFile file(ksPath)
+            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "gleaum"
+            keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: System.getenv("KEY_PASSWORD") ?: ""
         }
     }
     buildTypes {
