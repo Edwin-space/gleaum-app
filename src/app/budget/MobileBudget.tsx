@@ -116,7 +116,7 @@ export function MobileBudget({
       style={{ background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
     >
       {/* ── Hero Header ── */}
-      <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0F1A2E 0%, #0D2A22 50%, #1A3A2E 100%)', paddingTop: 'calc(env(safe-area-inset-top) + 52px)', paddingBottom: '48px', paddingLeft: '20px', paddingRight: '20px' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0F1A2E 0%, #0D2A22 50%, #1A3A2E 100%)', paddingTop: 'calc(env(safe-area-inset-top) + 52px)', paddingBottom: '36px', paddingLeft: '20px', paddingRight: '20px' }}>
         <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(46,232,149,0.22) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-30px', left: '-30px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(12,201,181,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
@@ -138,38 +138,50 @@ export function MobileBudget({
         </div>
       </div>
 
-      {/* ── 탭 스위처: 개인 먼저, 공간 비활성화 가능 ── */}
-      <div style={{ padding: '16px 16px 0', display: 'flex', gap: '8px', position: 'relative', zIndex: 25 }}>
-        {tabs.map(({ key, label, disabled }) => (
-          <button
-            key={key}
-            onClick={() => !disabled && setTab(key)}
-            style={{
-              flex: 1, height: '44px', borderRadius: '14px', fontSize: '13px', fontWeight: 800,
-              border: disabled ? '1.5px dashed #E5E5EA' : 'none',
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s',
-              background: disabled ? 'transparent' : (tab === key ? 'white' : 'rgba(255,255,255,0.45)'),
-              color: disabled ? '#C7C7CC' : (tab === key ? '#1A1B2E' : '#8E8E93'),
-              boxShadow: (!disabled && tab === key) ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
-              opacity: disabled ? 0.55 : 1,
-            }}
-          >
-            {label}
-            {disabled && <span style={{ fontSize: '10px', marginLeft: '4px' }}>공간 필요</span>}
-          </button>
-        ))}
-      </div>
+      {/* ── 바텀 시트: 탭 스위처가 상단, 카드가 하단 ─────────────────────
+           hero 하단을 라운드로 덮어 올라오는 "시트" 패턴.
+           탭과 카드가 별도 레이어에 있어 겹침 없음.
+      ──────────────────────────────────────────────────────────────── */}
+      <div style={{
+        background: '#FAFAFD',
+        borderRadius: '24px 24px 0 0',
+        marginTop: '-20px',
+        position: 'relative',
+        zIndex: 10,
+        paddingTop: '16px',
+      }}>
+        {/* ── 탭 스위처 ── */}
+        <div style={{ padding: '0 16px 0', display: 'flex', gap: '8px' }}>
+          {tabs.map(({ key, label, disabled }) => (
+            <button
+              key={key}
+              onClick={() => !disabled && setTab(key)}
+              style={{
+                flex: 1, height: '44px', borderRadius: '14px', fontSize: '13px', fontWeight: 800,
+                border: disabled ? '1.5px dashed #E5E5EA' : (tab === key ? 'none' : '1.5px solid #E5E5EA'),
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s',
+                background: disabled ? 'transparent' : (tab === key ? 'white' : 'transparent'),
+                color: disabled ? '#C7C7CC' : (tab === key ? '#1A1B2E' : '#8E8E93'),
+                boxShadow: (!disabled && tab === key) ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
+                opacity: disabled ? 0.55 : 1,
+              }}
+            >
+              {label}
+              {disabled && <span style={{ fontSize: '10px', marginLeft: '4px' }}>공간 필요</span>}
+            </button>
+          ))}
+        </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '60px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '60px', paddingBottom: '40px' }}>
           <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '3px solid #0CC9B5', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       ) : (
         <div>
           {/* ── Summary card ── */}
-          <div style={{ padding: '0 16px', marginTop: '-24px', position: 'relative', zIndex: 20 }}>
+          <div style={{ padding: '0 16px', marginTop: '12px', position: 'relative', zIndex: 20 }}>
             <div style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', borderRadius: '28px', padding: '24px 24px 20px', boxShadow: '0 12px 40px rgba(0,132,204,0.30)', overflow: 'hidden', position: 'relative' }}>
               <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px', fontWeight: 600 }}>
@@ -281,6 +293,7 @@ export function MobileBudget({
           </div>
         </div>
       )}
+      </div> {/* ── 바텀 시트 닫기 ── */}
 
       {/* ── 지출 추가 모달 ── */}
       {showAddModal && (

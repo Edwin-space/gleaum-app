@@ -66,6 +66,8 @@ export default function SpaceSettingsPage() {
       // localStorage 플래그 → 공간 메인 페이지에서 이름 재조회 트리거
       try { localStorage.setItem('gleaum_space_name_updated', Date.now().toString()); } catch {}
       toast.success('공간 이름이 변경되었습니다');
+      // 저장 후 공간 메인으로 자동 복귀 (100ms 딜레이로 toast 노출 후)
+      setTimeout(() => router.back(), 100);
     } else {
       toast.error('이름 변경에 실패했습니다');
     }

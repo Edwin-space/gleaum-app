@@ -36,9 +36,10 @@ export function MobileSpace() {
   const [joinError,       setJoinError]          = useState('');
 
   // Inline name editing
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editName,      setEditName]      = useState('');
-  const [savingName,    setSavingName]    = useState(false);
+  const [isEditingName,       setIsEditingName]       = useState(false);
+  const [editName,            setEditName]            = useState('');
+  const [savingName,          setSavingName]          = useState(false);
+  const [optimisticSpaceName, setOptimisticSpaceName] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Cover image
@@ -144,12 +145,26 @@ export function MobileSpace() {
     if (!editName.trim() || !displaySpaceId) return;
     setSavingName(true);
     const ok = await updateSpaceName(displaySpaceId, editName.trim());
-    if (ok) {
-      await refresh(); // refresh BEFORE exiting edit mode so new name shows immediately
-    }
     setSavingName(false);
     setIsEditingName(false);
+    if (ok) {
+      // ★ Optimistic update: 즉시 UI에 반영 (DB round-trip 기다리지 않음)
+      setOptimisticSpaceName(editName.trim());
+      // mySpaces 리스트도 즉시 반영
+      setMySpaces(prev => prev.map(s =>
+        s.id === displaySpaceId ? { ...s, name: editName.trim() } : s
+      ));
+      // localStorage 플래그 설정 (settings 페이지 sync용)
+      try { localStorage.setItem('gleaum_space_name_updated', Date.now().toString()); } catch {}
+      // 백그라운드에서 DB 확인 (awaiting 없이)
+      void refresh();
+    }
   };
+
+  // group 데이터가 갱신되면 optimistic 이름 클리어
+  useEffect(() => {
+    if (group?.name) setOptimisticSpaceName(null);
+  }, [group?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 다른 페이지(공간 설정)에서 이름 변경 후 돌아왔을 때 재조회
   const prevPathname = useRef(pathname);
@@ -385,7 +400,7 @@ export function MobileSpace() {
                       <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                           <h2 style={{ fontSize: '20px', fontWeight: 900, margin: 0, letterSpacing: '-0.4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {group?.name ?? '나의 공간'}
+                            {optimisticSpaceName ?? group?.name ?? '나의 공간'}
                           </h2>
                           {isAdmin && (
                             <button onClick={startEditing}
