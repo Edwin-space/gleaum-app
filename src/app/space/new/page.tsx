@@ -45,11 +45,12 @@ export default function SpaceNewPage() {
     }
     setCreating(true);
     try {
-      const spaceId = await createSpace(spaceName.trim());
-      if (!spaceId) {
-        toast.error('공간 생성에 실패했습니다. 다시 시도해주세요.');
+      const result = await createSpace(spaceName.trim());
+      if (!result.id) {
+        toast.error(`공간 생성 실패: ${result.error ?? '알 수 없는 오류'}`, { duration: 8000 });
         return;
       }
+      const spaceId = result.id;
 
       // settings 저장 — 실패해도 공간 생성은 계속 진행
       await updateSpaceSettings(spaceId, {
@@ -65,7 +66,7 @@ export default function SpaceNewPage() {
       setStep(4);
     } catch (e) {
       console.error('[handleCreate]', e);
-      toast.error('공간 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      toast.error(`오류: ${e instanceof Error ? e.message : String(e)}`, { duration: 8000 });
     } finally {
       setCreating(false);
     }

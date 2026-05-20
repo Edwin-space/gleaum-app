@@ -135,7 +135,8 @@ export default function OnboardingPage() {
 
     // 공간 설정 처리 (step 4에서 선택한 모드)
     if (spaceSetupMode === 'create' && newSpaceName.trim()) {
-      await createSpace(newSpaceName.trim());
+      const _r = await createSpace(newSpaceName.trim());
+      if (!_r.id) console.error('[onboarding] createSpace 실패:', _r.error);
     } else if (spaceSetupMode === 'join' && spaceJoinCode.trim()) {
       const joinResult = await joinSpaceByCode(spaceJoinCode.trim().toUpperCase());
       if (!joinResult.success && !joinResult.alreadyMember) {

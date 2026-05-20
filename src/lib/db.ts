@@ -623,10 +623,10 @@ export async function joinSpaceByCode(inviteCode: string): Promise<{
 }
 
 /** 신규 공간 생성 → space_members admin 등록 + profiles 업데이트 */
-export async function createSpace(name: string): Promise<string | null> {
+export async function createSpace(name: string): Promise<{ id: string; error?: never } | { id: null; error: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return { id: null, error: '로그인이 필요합니다' };
 
   const inviteCode = `GLEAUM-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
 
@@ -638,8 +638,9 @@ export async function createSpace(name: string): Promise<string | null> {
     .single();
 
   if (groupError || !group) {
-    console.error('공간 생성 오류:', groupError?.message);
-    return null;
+    const msg = groupError?.message ?? '알 수 없는 오류';
+    console.error('공간 생성 오류:', groupError);
+    return { id: null, error: `DB 오류: ${msg} (code: ${(groupError as any)?.code ?? '-'})` };
   }
 
   // 2. space_members에 admin으로 등록
@@ -648,7 +649,7 @@ export async function createSpace(name: string): Promise<string | null> {
     .insert({ space_id: group.id, user_id: user.id, role: 'admin' });
 
   if (memberError) {
-    console.error('공간 멤버 등록 오류:', memberError.message);
+    console.error('공간 멤버 등록 오류:', memberError);
     // 공간은 생성됐으므로 계속 진행
   }
 
@@ -664,7 +665,7 @@ export async function createSpace(name: string): Promise<string | null> {
     console.info('[createSpace] 공간 생성 완료:', group.id, '| user:', user.id);
   }
 
-  return group.id;
+  return { id: group.id };
 }
 
 /**
@@ -677,8 +678,9 @@ export async function createPersonalSpace(displayName: string): Promise<string |
   if (!user) return null;
 
   const spaceName = displayName?.trim() ? `${displayName.trim()}의 공간` : '나의 공간';
-  const spaceId = await createSpace(spaceName);
-  if (!spaceId) return null;
+  const result = await createSpace(spaceName);
+  if (!result.id) return null;
+  const spaceId = result.id;
 
   // preferences.personalSpaceId 에 저장 (공유 공간 여부 판별 용도)
   const { data: profileData } = await supabase
