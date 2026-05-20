@@ -268,7 +268,16 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
   const displayName = input.displayName.trim();
   if (!displayName) return false;
 
-  const preferences: OnboardingPreferences = {
+  // 기존 preferences 보존 (personalSpaceId 등 온보딩 외 값 유지)
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('preferences')
+    .eq('id', user.id)
+    .single();
+  const existingPrefs = (existingProfile?.preferences as object) ?? {};
+
+  const preferences = {
+    ...existingPrefs,          // personalSpaceId 등 기존 값 보존
     primaryGoal: input.primaryGoal,
     homeLayout: input.homeLayout,
     enabledModules: input.enabledModules,

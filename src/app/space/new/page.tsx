@@ -96,7 +96,8 @@ export default function SpaceNewPage() {
     }
   };
 
-  const goToSpace = () => router.replace('/space');
+  // 새로 만든 공간 ID를 쿼리 파라미터로 넘겨 MobileSpace가 올바른 공간을 표시하게 함
+  const goToSpace = () => router.replace(createdId ? `/space?sid=${createdId}` : '/space');
   const skip       = () => router.replace('/space');
 
   // ── 공통 레이아웃 ─────────────────────────────────────────

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import {
@@ -20,7 +20,11 @@ const ROLE_OPTIONS: SpaceRole[] = ['admin', 'editor', 'viewer'];
 
 export function MobileSpace() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { spaceId, user, loading: userLoading, refresh: refreshUser } = useCurrentUser();
+
+  // space/new 에서 넘어올 때 새 공간 ID를 즉시 표시하기 위한 파라미터
+  const sidParam = searchParams.get('sid');
 
   // ── 상태 ──────────────────────────────────────────────
   const [showInviteModal, setShowInviteModal]   = useState(false);
@@ -44,7 +48,16 @@ export function MobileSpace() {
   // My spaces (for plan + swipe)
   const [mySpaces,     setMySpaces]     = useState<Space[]>([]);
   const [spaceIndex,   setSpaceIndex]   = useState(0);
-  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(spaceId);
+  // sid 쿼리 파라미터가 있으면 그 공간을 즉시 표시, 없으면 profiles.family_group_id 사용
+  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(sidParam ?? spaceId);
+
+  // ★ spaceId(profiles.family_group_id)가 바뀌면 activeSpaceId도 동기화
+  //    (space/new 에서 새 공간 생성 후 돌아올 때 반영)
+  useEffect(() => {
+    if (spaceId && !activeSpaceId) {
+      setActiveSpaceId(spaceId);
+    }
+  }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ★ 스와이프된 공간 ID 우선 사용 (activeSpaceId) — 없으면 기본 spaceId
   const displaySpaceId = activeSpaceId ?? spaceId;

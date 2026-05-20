@@ -136,7 +136,12 @@ export default function OnboardingPage() {
     // 공간 설정 처리 (step 4에서 선택한 모드)
     if (spaceSetupMode === 'create' && newSpaceName.trim()) {
       const _r = await createSpace(newSpaceName.trim());
-      if (!_r.id) console.error('[onboarding] createSpace 실패:', _r.error);
+      if (!_r.id) {
+        console.error('[onboarding] createSpace 실패:', _r.error);
+      } else {
+        // 캐시 즉시 갱신 — completeOnboarding 이후 /home 이동 시 올바른 공간 표시
+        await refresh().catch(() => {});
+      }
     } else if (spaceSetupMode === 'join' && spaceJoinCode.trim()) {
       const joinResult = await joinSpaceByCode(spaceJoinCode.trim().toUpperCase());
       if (!joinResult.success && !joinResult.alreadyMember) {
