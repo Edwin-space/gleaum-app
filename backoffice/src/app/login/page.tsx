@@ -1,39 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
+/**
+ * 백오피스 로그인 페이지
+ *
+ * 보안 처리:
+ * 1. Supabase 인증 성공 후 클라이언트 측 관리자 이메일 사전 검증 (UX용)
+ * 2. 서버사이드 최종 검증은 middleware.ts 에서 처리
+ */
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
+
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+
+  // 미들웨어가 ?error=unauthorized 로 리다이렉트한 경우 처리
+  useEffect(() => {
+    if (searchParams.get("error") === "unauthorized") {
+      setError("관리자 계정이 아닙니다. 접근 권한이 없습니다.");
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // 클라이언트 사이드에서만 실행되므로 여기서 생성
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
+    // ── 1. Supabase 인증 ──────────────────────────────────
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
       setError("이메일 또는 비밀번호가 올바르지 않습니다.");
       setLoading(false);
-    } else {
-      router.push("/");
-      router.refresh();
+      return;
     }
+
+    // ── 2. 클라이언트 측 관리자 이메일 사전 검증 (UX 개선용) ─
+    //       서버사이드 최종 검증은 middleware.ts 에서 수행
+    const adminEmailsRaw = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
+    const adminEmails    = adminEmailsRaw
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (adminEmails.length > 0 && !adminEmails.includes(email.trim().toLowerCase())) {
+      await supabase.auth.signOut();
+      setError("관리자 계정이 아닙니다. 접근 권한이 없습니다.");
+      setLoading(false);
+      return;
+    }
+
+    // ── 3. 대시보드로 이동 ────────────────────────────────
+    router.push("/");
+    router.refresh();
   };
 
   return (

@@ -89,11 +89,11 @@ export async function POST(req: NextRequest) {
   const spaceNameMap: Record<string, string> = {};
 
   if (needsSpaceName) {
-    const uniqueSpaceIds = [...new Set(
+    const uniqueSpaceIds = Array.from(new Set(
       profiles
         .map((p: { family_group_id: string | null }) => p.family_group_id)
         .filter(Boolean) as string[]
-    )];
+    ));
 
     if (uniqueSpaceIds.length > 0) {
       const { data: spaces } = await supabase
