@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { joinSpaceByCode } from '@/lib/db';
 
-type PageState = 'loading' | 'joining' | 'success' | 'already_member' | 'invalid_code' | 'error';
+type PageState = 'loading' | 'joining' | 'success' | 'already_member' | 'invalid_code' | 'expired_code' | 'rate_limited' | 'error';
 
 export default function InvitePage() {
   const params = useParams();
@@ -26,22 +25,45 @@ export default function InvitePage() {
       return;
     }
 
-    // 로그인 상태 → 자동으로 합류 시도
+    // 로그인 상태 → 서버 API로 합류 시도 (Rate Limit + 만료 검증 포함)
     const doJoin = async () => {
       setPageState('joining');
 
-      const result = await joinSpaceByCode(code);
+      try {
+        const res = await fetch('/api/invite/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
 
-      if (result.alreadyMember) {
-        setSpaceName(result.spaceName ?? '');
-        setPageState('already_member');
-      } else if (result.success) {
-        setSpaceName(result.spaceName ?? '');
-        setPageState('success');
-        // 2초 후 /space(공간관리)로 이동
-        setTimeout(() => router.replace('/space'), 2000);
-      } else {
-        setPageState('invalid_code');
+        if (res.status === 429) {
+          setPageState('rate_limited');
+          return;
+        }
+        if (res.status === 410) {
+          setPageState('expired_code');
+          return;
+        }
+        if (res.status === 404) {
+          setPageState('invalid_code');
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.alreadyMember) {
+          setSpaceName(data.spaceName ?? '');
+          setPageState('already_member');
+        } else if (data.success) {
+          setSpaceName(data.spaceName ?? '');
+          setPageState('success');
+          // 2초 후 /space(공간관리)로 이동
+          setTimeout(() => router.replace('/space'), 2000);
+        } else {
+          setPageState('invalid_code');
+        }
+      } catch {
+        setPageState('error');
       }
     };
 
@@ -223,6 +245,68 @@ export default function InvitePage() {
           </p>
         </div>
 
+        <button
+          onClick={() => router.replace('/home')}
+          className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"
+          style={{ background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)' }}
+        >
+          홈으로 이동
+        </button>
+      </div>
+    );
+  }
+
+  // ── 만료된 코드 ──
+  if (pageState === 'expired_code') {
+    return (
+      <div
+        className="min-h-dvh flex flex-col items-center justify-center px-6 text-center"
+        style={{ background: '#FAFAFD' }}
+      >
+        <div
+          className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+          style={{ background: 'rgba(245,158,11,0.10)' }}
+        >
+          <span className="text-5xl">⏰</span>
+        </div>
+        <h1 className="text-[28px] font-bold mb-2" style={{ color: '#1A1B2E' }}>
+          만료된 초대 코드
+        </h1>
+        <p className="text-[14px] mt-2" style={{ color: '#8E8E93' }}>
+          이 초대 링크는 유효 기간이 지났습니다.<br />
+          공간 관리자에게 새 초대 코드를 요청해 주세요.
+        </p>
+        <button
+          onClick={() => router.replace('/home')}
+          className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"
+          style={{ background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)' }}
+        >
+          홈으로 이동
+        </button>
+      </div>
+    );
+  }
+
+  // ── Rate Limit 초과 ──
+  if (pageState === 'rate_limited') {
+    return (
+      <div
+        className="min-h-dvh flex flex-col items-center justify-center px-6 text-center"
+        style={{ background: '#FAFAFD' }}
+      >
+        <div
+          className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+          style={{ background: 'rgba(239,68,68,0.10)' }}
+        >
+          <span className="text-5xl">🚫</span>
+        </div>
+        <h1 className="text-[28px] font-bold mb-2" style={{ color: '#1A1B2E' }}>
+          잠시 후 시도해주세요
+        </h1>
+        <p className="text-[14px] mt-2" style={{ color: '#8E8E93' }}>
+          너무 많은 시도가 있었습니다.<br />
+          10분 후 다시 시도해 주세요.
+        </p>
         <button
           onClick={() => router.replace('/home')}
           className="mt-10 w-full h-[56px] rounded-[20px] font-bold text-[16px] text-white transition-transform active:scale-[0.97]"

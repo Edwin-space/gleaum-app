@@ -100,6 +100,8 @@ export interface Space {
   name:           string;
   members:        SpaceMember[];
   inviteCode?:    string;
+  /** 초대 코드 만료일 (없으면 무제한) */
+  inviteCodeExpiresAt?: Date;
   createdBy:      string;
   createdAt:      Date;
   /** 커버 이미지 URL (family_groups.cover_url) */

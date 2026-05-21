@@ -6,7 +6,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import {
   getSpaceSettings, updateSpaceSettings, updateSpaceName,
-  getSpaceWithMembers, removeSpaceMember, deleteSpace,
+  getSpaceWithMembers, removeSpaceMember, deleteSpace, regenerateInviteCode,
 } from '@/lib/db';
 import type { SpaceMember } from '@/types';
 import { toast } from 'sonner';
@@ -169,6 +169,9 @@ export default function SpaceSettingsPage() {
   const [membersLoading, setMembersLoading] = useState(false);
   const [removingId,    setRemovingId]    = useState<string | null>(null);
 
+  // ── 초대 코드 재발급 ─────────────────────────────────────
+  const [regenerating, setRegenerating] = useState(false);
+
   // ── 공간 폐쇄 ─────────────────────────────────────────────
   const [showCloseModal, setShowCloseModal] = useState(false);
 
@@ -270,6 +273,20 @@ export default function SpaceSettingsPage() {
   // ── 공간 폐쇄 ─────────────────────────────────────────────
   const otherMembers = members.filter(m => m.userId !== userId);
   const hasOtherMembers = otherMembers.length > 0;
+
+  const handleRegenerateCode = async () => {
+    if (!spaceId) return;
+    setRegenerating(true);
+    const newCode = await regenerateInviteCode(spaceId);
+    setRegenerating(false);
+    if (newCode) {
+      toast.success('초대 코드가 재발급되었습니다');
+      // 공간 정보 새로고침을 위해 페이지 새로 불러오기
+      window.location.reload();
+    } else {
+      toast.error('재발급에 실패했습니다');
+    }
+  };
 
   const handleCloseSpace = async () => {
     if (!spaceId) return;
@@ -476,16 +493,45 @@ export default function SpaceSettingsPage() {
             <>
               <p style={sectionLabel}>초대</p>
               <div style={card}>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: '0 0 8px' }}>공간 초대 코드</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <code style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: '#F7F7FA', fontSize: '16px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.08em', border: '1.5px solid rgba(0,132,204,0.15)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>공간 초대 코드</p>
+                  {space.inviteCodeExpiresAt && (
+                    <p style={{
+                      fontSize: '11px', fontWeight: 600, margin: 0,
+                      color: space.inviteCodeExpiresAt < new Date() ? '#EF4444' : '#AEAEB2',
+                    }}>
+                      {space.inviteCodeExpiresAt < new Date()
+                        ? '⚠️ 만료됨'
+                        : `~${space.inviteCodeExpiresAt.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} 까지`}
+                    </p>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <code style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: '#F7F7FA', fontSize: '15px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.08em', border: '1.5px solid rgba(0,132,204,0.15)' }}>
                     {space.inviteCode}
                   </code>
                   <button
                     onClick={() => { navigator.clipboard.writeText(space.inviteCode!); toast.success('초대 코드가 복사되었습니다'); }}
-                    style={{ padding: '12px 18px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 800 }}
+                    style={{ padding: '12px 14px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap' }}
                   >복사</button>
                 </div>
+                {/* 재발급 (admin 전용) */}
+                {myRole === 'admin' && (
+                  <button
+                    onClick={handleRegenerateCode}
+                    disabled={regenerating}
+                    style={{
+                      marginTop: '10px', width: '100%', padding: '10px',
+                      borderRadius: '12px', border: '1.5px solid rgba(0,132,204,0.20)',
+                      background: 'transparent', color: '#0084CC',
+                      cursor: regenerating ? 'not-allowed' : 'pointer',
+                      fontSize: '13px', fontWeight: 700,
+                      opacity: regenerating ? 0.5 : 1,
+                    }}
+                  >
+                    {regenerating ? '재발급 중...' : '🔄 코드 재발급 (7일 유효)'}
+                  </button>
+                )}
               </div>
             </>
           )}

@@ -365,6 +365,9 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
     id:             group.id,
     name:           group.name,
     inviteCode:     group.invite_code ?? undefined,
+    inviteCodeExpiresAt: (group as any).invite_code_expires_at
+      ? new Date((group as any).invite_code_expires_at)
+      : undefined,
     createdBy:      group.created_by,
     createdAt:      new Date(group.created_at),
     members:        rows.map(rowToSpaceMember),
@@ -444,6 +447,9 @@ export async function getMySpaces(): Promise<Space[]> {
       id:         row.family_groups.id,
       name:       row.family_groups.name,
       inviteCode: row.family_groups.invite_code ?? undefined,
+      inviteCodeExpiresAt: row.family_groups.invite_code_expires_at
+        ? new Date(row.family_groups.invite_code_expires_at)
+        : undefined,
       createdBy:  row.family_groups.created_by,
       createdAt:  new Date(row.family_groups.created_at),
       members:    [],  // 필요 시 별도 조회
@@ -649,18 +655,51 @@ export async function joinSpaceByCode(inviteCode: string): Promise<{
   return { success: true, spaceName: space.name };
 }
 
+/**
+ * 8자리 영숫자 초대 코드 생성
+ * - 모호한 문자(O/0/I/1) 제외, 대문자+숫자 조합
+ * - 32^8 ≈ 1조 가지 조합 (기존 4자리 대비 약 100만배 강화)
+ */
+function generateInviteCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `GLEAUM-${code}`;
+}
+
+/** 초대 코드 재발급 (admin 전용) — 새 코드 + 7일 만료 */
+export async function regenerateInviteCode(spaceId: string): Promise<string | null> {
+  const supabase = createClient();
+  const newCode = generateInviteCode();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabase
+    .from('family_groups')
+    .update({ invite_code: newCode, invite_code_expires_at: expiresAt })
+    .eq('id', spaceId);
+
+  if (error) {
+    console.error('[regenerateInviteCode] 실패:', error.message);
+    return null;
+  }
+  return newCode;
+}
+
 /** 신규 공간 생성 → space_members admin 등록 + profiles 업데이트 */
 export async function createSpace(name: string): Promise<{ id: string; error?: never } | { id: null; error: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { id: null, error: '로그인이 필요합니다' };
 
-  const inviteCode = `GLEAUM-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+  const inviteCode = generateInviteCode();
+  const inviteCodeExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // 1. family_groups 생성
   const { data: group, error: groupError } = await supabase
     .from('family_groups')
-    .insert({ name, invite_code: inviteCode, created_by: user.id })
+    .insert({ name, invite_code: inviteCode, invite_code_expires_at: inviteCodeExpiresAt, created_by: user.id })
     .select()
     .single();
 
