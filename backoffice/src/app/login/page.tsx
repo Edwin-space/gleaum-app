@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +9,27 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 /**
+ * useSearchParams를 쓰는 부분을 별도 컴포넌트로 분리 (Suspense 필수)
+ * 미들웨어가 ?error=unauthorized 로 리다이렉트한 경우 처리
+ */
+function SearchParamsHandler({ onError }: { onError: (msg: string) => void }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("error") === "unauthorized") {
+      onError("관리자 계정이 아닙니다. 접근 권한이 없습니다.");
+    }
+  }, [searchParams, onError]);
+
+  return null;
+}
+
+/**
  * 백오피스 로그인 페이지
  *
  * 보안 처리:
  * 1. Supabase 인증 성공 후 클라이언트 측 관리자 이메일 사전 검증 (UX용)
- * 2. 서버사이드 최종 검증은 middleware.ts 에서 처리
+ * 2. 서버사이드 최종 검증은 proxy.ts 에서 처리
  */
 export default function LoginPage() {
   const [email,    setEmail]    = useState("");
@@ -21,15 +37,7 @@ export default function LoginPage() {
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
 
-  const router       = useRouter();
-  const searchParams = useSearchParams();
-
-  // 미들웨어가 ?error=unauthorized 로 리다이렉트한 경우 처리
-  useEffect(() => {
-    if (searchParams.get("error") === "unauthorized") {
-      setError("관리자 계정이 아닙니다. 접근 권한이 없습니다.");
-    }
-  }, [searchParams]);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +83,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/40">
+      {/* useSearchParams는 Suspense로 감싸야 빌드 통과 */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler onError={setError} />
+      </Suspense>
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2 mb-1">

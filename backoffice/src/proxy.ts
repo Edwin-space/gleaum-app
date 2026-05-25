@@ -1,7 +1,42 @@
+/**
+ * 백오피스 프록시 미들웨어 (Next.js proxy.ts)
+ *
+ * 보호 범위:
+ * - 모든 페이지 라우트 → 미인증/비관리자 → /login 리다이렉트
+ * - 모든 API 라우트  → 미인증/비관리자 → 401/403 JSON 반환
+ *
+ * 관리자 판별:
+ * - ADMIN_EMAILS 환경변수(쉼표 구분)에 포함된 이메일만 허용
+ * - ADMIN_EMAILS 미설정 시 인증된 모든 Supabase 사용자 허용
+ *   (보안상 반드시 설정 권장)
+ */
+
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// 인증 없이 접근 가능한 경로
+const PUBLIC_PREFIXES = ['/_next/', '/favicon', '/_next/static', '/_next/image']
+const PUBLIC_EXACT    = ['/login']
+
+function isPublic(pathname: string): boolean {
+  if (PUBLIC_EXACT.includes(pathname)) return true
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+/** ADMIN_EMAILS 환경변수를 소문자 Set으로 파싱 */
+function adminEmailSet(): Set<string> {
+  const raw = process.env.ADMIN_EMAILS ?? ''
+  return new Set(
+    raw.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
+  )
+}
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // 공개 경로는 통과
+  if (isPublic(pathname)) return NextResponse.next()
+
   let supabaseResponse = NextResponse.next({ request })
 
   try {
@@ -22,30 +57,36 @@ export async function proxy(request: NextRequest) {
       }
     )
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // ── 1. 세션 확인 ──────────────────────────────────────────
+    const { data: { user } } = await supabase.auth.getUser()
 
-    const { pathname } = request.nextUrl
-
-    // /login: 이미 로그인됐으면 대시보드로
-    if (pathname === '/login') {
-      if (user) {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
-      return supabaseResponse
+    if (!user) {
+      return pathname.startsWith('/api/')
+        ? NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        : NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // 그 외 모든 경로: 미인증이면 /login으로
-    if (!user) {
-      const loginUrl = new URL('/login', request.url)
-      return NextResponse.redirect(loginUrl)
+    // ── 2. 관리자 권한 확인 ───────────────────────────────────
+    const adminEmails = adminEmailSet()
+    const userEmail   = (user.email ?? '').toLowerCase()
+
+    if (adminEmails.size > 0 && !adminEmails.has(userEmail)) {
+      await supabase.auth.signOut()
+
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'Forbidden — 관리자 계정이 아닙니다' },
+          { status: 403 }
+        )
+      }
+      const url = new URL('/login', request.url)
+      url.searchParams.set('error', 'unauthorized')
+      return NextResponse.redirect(url)
     }
 
     return supabaseResponse
   } catch {
     // 인증 확인 실패 시 안전하게 /login으로 리다이렉트
-    const { pathname } = request.nextUrl
     if (pathname !== '/login') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -55,6 +96,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
