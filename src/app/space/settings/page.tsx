@@ -493,19 +493,7 @@ export default function SpaceSettingsPage() {
             <>
               <p style={sectionLabel}>초대</p>
               <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>공간 초대 코드</p>
-                  {space.inviteCodeExpiresAt && (
-                    <p style={{
-                      fontSize: '11px', fontWeight: 600, margin: 0,
-                      color: space.inviteCodeExpiresAt < new Date() ? '#EF4444' : '#AEAEB2',
-                    }}>
-                      {space.inviteCodeExpiresAt < new Date()
-                        ? '⚠️ 만료됨'
-                        : `~${space.inviteCodeExpiresAt.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} 까지`}
-                    </p>
-                  )}
-                </div>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: '0 0 8px' }}>공간 초대 코드</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <code style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: '#F7F7FA', fontSize: '15px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.08em', border: '1.5px solid rgba(0,132,204,0.15)' }}>
                     {space.inviteCode}
@@ -529,7 +517,7 @@ export default function SpaceSettingsPage() {
                       opacity: regenerating ? 0.5 : 1,
                     }}
                   >
-                    {regenerating ? '재발급 중...' : '🔄 코드 재발급 (7일 유효)'}
+                    {regenerating ? '재발급 중...' : '🔄 초대 코드 재발급'}
                   </button>
                 )}
               </div>

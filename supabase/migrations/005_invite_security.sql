@@ -23,11 +23,10 @@ BEGIN
   END IF;
 END $$;
 
--- 기존 코드에 30일 만료 설정 (기존 발급 코드 호환성 유지)
-UPDATE family_groups
-SET invite_code_expires_at = now() + interval '30 days'
-WHERE invite_code IS NOT NULL
-  AND invite_code_expires_at IS NULL;
+-- 기존 코드는 만료 없음 (영구 유효) — Rate Limit + 8자리 코드로 충분히 보호됨
+-- invite_code_expires_at = NULL 이면 API에서 만료 체크를 건너뜀
+-- (이미 이 값이 설정되어 있다면 아래 SQL로 초기화 가능)
+-- UPDATE family_groups SET invite_code_expires_at = NULL WHERE invite_code IS NOT NULL;
 
 -- ── 2. invite_attempts 테이블 생성 (Rate Limit 기록용) ────────
 CREATE TABLE IF NOT EXISTS invite_attempts (

@@ -669,15 +669,14 @@ function generateInviteCode(): string {
   return `GLEAUM-${code}`;
 }
 
-/** 초대 코드 재발급 (admin 전용) — 새 코드 + 7일 만료 */
+/** 초대 코드 재발급 (admin 전용) — 영구 유효 */
 export async function regenerateInviteCode(spaceId: string): Promise<string | null> {
   const supabase = createClient();
   const newCode = generateInviteCode();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const { error } = await supabase
     .from('family_groups')
-    .update({ invite_code: newCode, invite_code_expires_at: expiresAt })
+    .update({ invite_code: newCode, invite_code_expires_at: null })
     .eq('id', spaceId);
 
   if (error) {
@@ -694,12 +693,11 @@ export async function createSpace(name: string): Promise<{ id: string; error?: n
   if (!user) return { id: null, error: '로그인이 필요합니다' };
 
   const inviteCode = generateInviteCode();
-  const inviteCodeExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // 1. family_groups 생성
   const { data: group, error: groupError } = await supabase
     .from('family_groups')
-    .insert({ name, invite_code: inviteCode, invite_code_expires_at: inviteCodeExpiresAt, created_by: user.id })
+    .insert({ name, invite_code: inviteCode, created_by: user.id })
     .select()
     .single();
 
