@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 import { trackEvent } from '@/lib/analytics';
+import { isNativeApp } from '@/lib/native';
 
 // ─── Google 아이콘 ────────────────────────────────────────────────────────────
 function GoogleIcon() {
@@ -42,7 +43,52 @@ function LoginForm() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // ── 네이티브 앱 OAuth 콜백 처리 ──────────────────────────────────────────
+  // NativeAppProvider가 발생시키는 인증 결과 이벤트 구독:
+  //   'gleaum:auth-error'   → 스피너 리셋 + 에러 메시지 표시
+  //   'gleaum:auth-success' → 스피너 리셋 (router.replace('/home') 도 이미 호출됨)
+  // 브라우저가 닫힐 때(browserFinished) 도 스피너를 리셋합니다.
+  useEffect(() => {
+    if (!googleLoading || !isNativeApp()) return;
+
+    const handleAuthError = (e: Event) => {
+      setGoogleLoading(false);
+      const msg = (e as CustomEvent<string>).detail;
+      setError(msg === 'invalid request: code verifier does not match'
+        ? '인증 오류가 발생했습니다. 다시 시도해 주세요.'
+        : '구글 로그인에 실패했습니다. 다시 시도해 주세요.');
+    };
+    const handleAuthSuccess = () => setGoogleLoading(false);
+
+    window.addEventListener('gleaum:auth-error', handleAuthError);
+    window.addEventListener('gleaum:auth-success', handleAuthSuccess);
+
+    // 브라우저가 닫혔을 때 (사용자가 직접 닫거나 OAuth 취소)
+    let browserListener: { remove: () => void } | undefined;
+    (async () => {
+      const { Browser } = await import('@capacitor/browser');
+      browserListener = await Browser.addListener('browserFinished', async () => {
+        // appUrlOpen 처리 시간을 위해 잠시 대기
+        await new Promise(r => setTimeout(r, 600));
+        // 이미 성공/실패 이벤트로 처리됐으면 스킵
+        setGoogleLoading(prev => {
+          if (!prev) return prev;
+          // 세션 없음 = 취소 또는 실패
+          return false;
+        });
+        browserListener?.remove();
+      });
+    })();
+
+    return () => {
+      window.removeEventListener('gleaum:auth-error', handleAuthError);
+      window.removeEventListener('gleaum:auth-success', handleAuthSuccess);
+      browserListener?.remove();
+    };
+  }, [googleLoading]);
+
   const handleGoogle = async () => {
+    setError('');
     setGoogleLoading(true);
     trackEvent('login', { method: 'google' });
     await signInWithGoogle(next);

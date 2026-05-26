@@ -110,6 +110,8 @@ export interface Space {
   purpose?:       SpacePurpose;
   /** 공간 일정 유형 목록 (settings.scheduleTypes) */
   scheduleTypes?: string[];
+  /** 공간 기준 시각대 (IANA timezone, 예: 'Asia/Seoul') */
+  timezone?: string;
 }
 
 /**

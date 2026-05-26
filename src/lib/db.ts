@@ -373,6 +373,7 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
     members:        rows.map(rowToSpaceMember),
     // cover_url 컬럼이 있을 때만 값이 채워짐 (DB 마이그레이션 후 활성화)
     coverImageUrl:  (group as any).cover_url ?? undefined,
+    timezone:       (group as any).timezone ?? 'Asia/Seoul',
   };
 }
 
@@ -452,6 +453,7 @@ export async function getMySpaces(): Promise<Space[]> {
         : undefined,
       createdBy:  row.family_groups.created_by,
       createdAt:  new Date(row.family_groups.created_at),
+      timezone:   row.family_groups.timezone ?? 'Asia/Seoul',
       members:    [],  // 필요 시 별도 조회
     }));
 }

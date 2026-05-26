@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
+import { formatTimeTZ } from '@/lib/utils';
 
 // Supabase pg_net은 POST로 호출 → GET과 동일하게 처리
 export async function POST(req: NextRequest) { return GET(req); }
@@ -29,10 +30,10 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
 
-  // ── 1) 리마인더 대상 일정 조회 ────────────────────────────
+  // ── 1) 리마인더 대상 일정 조회 (공간 timezone 포함) ─────────
   const { data: schedules, error } = await supabaseAdmin
     .from('schedules')
-    .select('id, title, start_time, reminder, family_group_id')
+    .select('id, title, start_time, reminder, family_group_id, family_groups(timezone)')
     .eq('status', 'pending')
     .gt('reminder', 0)
     .gte('start_time', now.toISOString());
@@ -83,9 +84,9 @@ export async function GET(req: NextRequest) {
 
     const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
 
-    const startTime = new Date(schedule.start_time).toLocaleTimeString('ko-KR', {
-      hour: '2-digit', minute: '2-digit',
-    });
+    // 공간 timezone (없으면 'Asia/Seoul' 기본값) — 서버는 UTC로 실행되므로 반드시 명시
+    const spaceTZ: string = (schedule.family_groups as any)?.timezone ?? 'Asia/Seoul';
+    const startTime = formatTimeTZ(new Date(schedule.start_time), spaceTZ);
     const title = `⏰ ${schedule.title}`;
     const body  = `${schedule.reminder}분 후 시작 (${startTime})`;
     const url   = `/schedules/${schedule.id}`;
