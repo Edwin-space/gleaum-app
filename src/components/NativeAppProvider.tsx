@@ -97,7 +97,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             console.error('[NativeApp] 세션 교환 오류:', error.message);
-            dispatchAuthEvent('gleaum:auth-error', error.message);
+            dispatchAuthEvent('gleaum:auth-error', `PKCE오류|${error.message}|url=${url}`);
           } else if (data.session) {
             console.log('[NativeApp] 로그인 성공 (PKCE)');
             dispatchAuthEvent('gleaum:auth-success');
@@ -121,7 +121,8 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           console.warn('[NativeApp] 콜백 URL에 인증 파라미터 없음:', url);
-          dispatchAuthEvent('gleaum:auth-error', '인증 정보를 받지 못했습니다');
+          // 디버그: 실제 받은 URL을 에러 메시지에 포함
+          dispatchAuthEvent('gleaum:auth-error', `파라미터없음|url=${url}`);
         }
       } catch (err) {
         console.error('[NativeApp] 딥링크 처리 오류:', err);
