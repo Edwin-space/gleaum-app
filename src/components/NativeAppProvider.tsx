@@ -31,6 +31,19 @@ function dispatchAuthEvent(type: 'gleaum:auth-success' | 'gleaum:auth-error', de
 }
 
 /**
+ * 로그인 전 저장해 둔 next 경로를 꺼내 반환 (1회 소비 후 삭제)
+ * - useAuth.signInWithGoogle 이 네이티브 OAuth 시작 직전에 저장
+ * - 초대 링크 등 로그인 후 이동해야 할 특정 경로를 OAuth 완료 후 복원하는 데 사용
+ */
+function consumePendingRedirect(): string | null {
+  try {
+    const val = sessionStorage.getItem('gleaum_oauth_next');
+    if (val) { sessionStorage.removeItem('gleaum_oauth_next'); return val; }
+  } catch {}
+  return null;
+}
+
+/**
  * OAuth 콜백 URL 수신 즉시 알림 — 로그인 페이지의 browserFinished 타임아웃을 취소시켜
  * exchangeCodeForSession 완료 전에 리스너가 제거되는 타이밍 버그를 방지.
  */
@@ -101,15 +114,21 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           } else if (data.session) {
             console.log('[NativeApp] 로그인 성공 (PKCE)');
             dispatchAuthEvent('gleaum:auth-success');
-            // 신규 유저 온보딩 체크
-            const { data: profileRow } = await supabase
-              .from('profiles')
-              .select('onboarding_completed_at')
-              .eq('id', data.session.user.id)
-              .single();
-            router.replace(
-              profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
-            );
+            // 로그인 전 저장된 next 경로 (초대 링크 등) 우선 사용
+            const pendingRedirect = consumePendingRedirect();
+            if (pendingRedirect) {
+              router.replace(pendingRedirect);
+            } else {
+              // 신규 유저 온보딩 체크
+              const { data: profileRow } = await supabase
+                .from('profiles')
+                .select('onboarding_completed_at')
+                .eq('id', data.session.user.id)
+                .single();
+              router.replace(
+                profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
+              );
+            }
           } else {
             dispatchAuthEvent('gleaum:auth-error', '세션을 가져올 수 없습니다');
           }
@@ -125,15 +144,21 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           } else {
             console.log('[NativeApp] 로그인 성공 (Implicit)');
             dispatchAuthEvent('gleaum:auth-success');
-            // 신규 유저 온보딩 체크
-            const { data: profileRow } = await supabase
-              .from('profiles')
-              .select('onboarding_completed_at')
-              .eq('id', sessionData.session?.user.id ?? '')
-              .single();
-            router.replace(
-              profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
-            );
+            // 로그인 전 저장된 next 경로 (초대 링크 등) 우선 사용
+            const pendingRedirect = consumePendingRedirect();
+            if (pendingRedirect) {
+              router.replace(pendingRedirect);
+            } else {
+              // 신규 유저 온보딩 체크
+              const { data: profileRow } = await supabase
+                .from('profiles')
+                .select('onboarding_completed_at')
+                .eq('id', sessionData.session?.user.id ?? '')
+                .single();
+              router.replace(
+                profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
+              );
+            }
           }
         } else {
           console.warn('[NativeApp] 콜백 URL에 인증 파라미터 없음:', url);

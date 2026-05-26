@@ -41,6 +41,14 @@ export function useAuth() {
       // 3. @capacitor/browser로 OAuth URL 직접 열기
       // ⚠️ Supabase 대시보드 → Authentication → URL Configuration 에서
       //    Redirect URLs 에 gleaum://auth/callback 추가 필요
+
+      // ★ next 파라미터 보존
+      //   네이티브 OAuth는 gleaum://auth/callback 고정 URL을 사용해
+      //   next 를 redirectTo 에 넣을 수 없음. sessionStorage 로 전달.
+      if (next) {
+        try { sessionStorage.setItem('gleaum_oauth_next', next); } catch {}
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
