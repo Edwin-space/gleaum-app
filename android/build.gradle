@@ -23,13 +23,18 @@ allprojects {
         google()
         mavenCentral()
     }
-    // kotlin-stdlib-jdk7/jdk8 이 1.8+ 에서 kotlin-stdlib 에 통합됨.
-    // 구버전(1.6.x)을 당겨오는 의존성이 있을 때 Duplicate class 에러 방지.
+    // Kotlin 2.x 부터는 kotlin-stdlib-jdk7/jdk8 이 kotlin-stdlib 에 완전히 통합되어
+    // 별도 force 설정이 불필요합니다.
+    // 구버전 force (1.8.22)를 유지하면 Kotlin 2.1+ 에서 추가된
+    // kotlin.concurrent.atomics.AtomicsKt 등 신규 클래스를 찾지 못해 빌드 에러가 발생합니다.
     configurations.all {
-        resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin'
+                    && details.requested.name in ['kotlin-stdlib', 'kotlin-stdlib-jdk7', 'kotlin-stdlib-jdk8']) {
+                // Kotlin 플러그인 버전과 stdlib 버전을 자동으로 일치시킴
+                details.useVersion '2.2.10'
+                details.because 'Align kotlin-stdlib with kotlin-gradle-plugin version'
+            }
         }
     }
 }
