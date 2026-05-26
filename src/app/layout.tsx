@@ -1,6 +1,16 @@
 import type { Metadata, Viewport } from 'next';
+import { Outfit } from 'next/font/google';
 import PwaRegistry from '@/components/PwaRegistry';
 import './globals.css';
+
+// ── Outfit: next/font 자동 최적화 (같은 도메인 서빙, 렌더 차단 없음) ──
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-outfit',
+  display: 'swap',
+  preload: true,
+});
 import { FCMProvider } from '@/components/FCMProvider';
 import { PWARegister } from '@/components/PWARegister';
 import { LazyPWABanner } from '@/components/LazyPWABanner';
@@ -88,20 +98,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className="h-full">
       <head>
-        {/* ── 폰트 preconnect (렌더 블로킹 최소화) ── */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* ── Supabase 연결 사전 설정 ── */}
+        <link rel="preconnect" href="https://lbzroynnmcvjnpqopagg.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://lbzroynnmcvjnpqopagg.supabase.co" />
 
-        {/* ── 폰트 로드: Outfit (Google, display=swap) ── */}
+        {/* ── Pretendard: preconnect + non-blocking async load ──────────────
+            Outfit은 next/font로 처리 (같은 도메인, 렌더 차단 없음)
+            Pretendard은 CDN에서 비차단 로드 (rel="preload" as="style" + onload)
+        ──────────────────────────────────────────────────────────────── */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap"
-          rel="stylesheet"
+          rel="preload"
+          as="style"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-        {/* ── 폰트 로드: Pretendard Variable Dynamic Subset (전체 static 대비 ~70% 경량) ── */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
           rel="stylesheet"
+          media="print"
+          // @ts-expect-error onLoad not typed for link
+          onLoad="this.media='all'"
         />
 
         {/* ── Favicon 세트 ── */}
@@ -154,7 +171,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="h-full">
+      <body className={`h-full ${outfit.variable}`}>
         {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
         <div className="mesh-bg">
           <div className="mesh-blob mesh-blob-1" />

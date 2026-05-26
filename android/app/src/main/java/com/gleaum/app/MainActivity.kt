@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsetsController
+import android.webkit.WebSettings
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.getcapacitor.BridgeActivity
 
@@ -19,13 +20,25 @@ class MainActivity : BridgeActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // ── 2. FCM 알림 채널 생성 (Android 8+ 필수) ──────────────────────────
+        // ── 2-a. WebView 성능 최적화 ─────────────────────────────────────────
+        bridge?.webView?.settings?.apply {
+            // 캐시 전략: 네트워크 있을 때는 서버 캐시 정책 따름, 없으면 캐시 사용
+            cacheMode = WebSettings.LOAD_DEFAULT
+            // DOM Storage 활성화 (localStorage 등 사용)
+            domStorageEnabled = true
+            // 불필요한 Safe Browsing 비활성화 (초기 로드 지연 요인)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                safeBrowsingEnabled = false
+            }
+        }
+
+        // ── 2-b. FCM 알림 채널 생성 (Android 8+ 필수) ──────────────────────────
         createNotificationChannels()
 
-        // ── 3. Edge-to-Edge: WebView가 상태바·네비게이션바 뒤까지 확장 ───────
+        // ── 2-c. Edge-to-Edge: WebView가 상태바·네비게이션바 뒤까지 확장 ───────
         setupEdgeToEdge()
 
-        // ── 4. OAuth 딥링크 처리 (앱이 이미 실행 중인 상태에서 딥링크 수신) ──
+        // ── 2-d. OAuth 딥링크 처리 (앱이 이미 실행 중인 상태에서 딥링크 수신) ──
         handleIntent(intent)
     }
 

@@ -4,8 +4,7 @@
    Source 2: DESIGN-apple.md — UI Components
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+/* 폰트는 layout.tsx에서 next/font로 로드 (CSS @import는 렌더링 차단) */
 
 :root {
   /* ── 브랜드 컬러 (gleaum_design_system.html) ── */
@@ -59,9 +58,10 @@
   --color-status-missed:     #EF4444;   /* 미완료 */
 
   /* ── 타이포그래피 (Premium Typography) ── */
-  --font-display:  'Outfit', 'Pretendard', system-ui, -apple-system, sans-serif;
-  --font-korean:   'Pretendard', 'Apple SD Gothic Neo', sans-serif;
-  --font-body:     'Pretendard', 'Outfit', system-ui, -apple-system, sans-serif;
+  /* --font-outfit: next/font이 <body>에 주입하는 CSS 변수 */
+  --font-display:  var(--font-outfit, 'Outfit'), 'Pretendard Variable', system-ui, -apple-system, sans-serif;
+  --font-korean:   'Pretendard Variable', 'Apple SD Gothic Neo', sans-serif;
+  --font-body:     'Pretendard Variable', var(--font-outfit, 'Outfit'), system-ui, -apple-system, sans-serif;
 
   --text-hero:     56px;
   --text-display:  40px;

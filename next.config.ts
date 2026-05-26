@@ -51,8 +51,28 @@ const nextConfig: NextConfig = {
   // Firebase SDK — 동적 임포트로 서버 빌드 안전성 확보, transpile로 ESM 호환
   transpilePackages: ['firebase'],
 
+  // ── 번들 최적화: 사용한 아이콘/함수만 포함 ──
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns', 'sonner'],
+  },
+
   async headers() {
     return [
+      // 정적 자산(JS/CSS/폰트): 1년 불변 캐시 (hash 포함 파일명)
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // 공개 자산: 1일 캐시
+      {
+        source: '/(favicon.*|splash/.*|favicons/.*|manifest.json)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      // 보안 헤더
       {
         source: "/(.*)",
         headers: securityHeaders,

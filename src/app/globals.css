@@ -32,6 +32,35 @@
   padding: 0;
 }
 
+/* ── 300ms 탭 딜레이 완전 제거 (모바일 네이티브 앱 수준 반응속도) ── */
+a, button, [role="button"], label, select,
+input[type="submit"], input[type="button"], input[type="reset"] {
+  touch-action: manipulation;
+}
+
+/* ── 네이티브 앱 페이지 전환 (View Transitions API) ───────────────────
+   크롬 111+ / 안드로이드 WebView 지원. 지원 안 하는 환경은 자동 무시.
+──────────────────────────────────────────────────────────────────── */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: vtFadeOut 0.15s ease forwards;
+}
+::view-transition-new(root) {
+  animation: vtFadeIn 0.15s ease forwards;
+}
+
+@keyframes vtFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes vtFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
@@ -83,6 +112,8 @@ body {
     -webkit-overflow-scrolling: touch;
     max-width: 430px;
     box-shadow: 0 0 40px rgba(0,0,0,0.08);
+    /* 과도한 스크롤(rubber-band) 방지 → 네이티브 앱 느낌 */
+    overscroll-behavior-y: none;
   }
 
   /* 홈 인디케이터 영역을 흰색으로 보장 (BottomNav 하단 갭 방지) */
