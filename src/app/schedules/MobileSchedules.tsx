@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ScheduleCard } from '@/components/ui/Card';
+import { ScheduleCard, ScheduleCardSkeleton } from '@/components/ui/Card';
 import type { Schedule, ScheduleType } from '@/types';
 
 interface MobileSchedulesProps {
@@ -308,18 +308,12 @@ export function MobileSchedules({
         </div>
       </div>
 
-      {/* 로딩 */}
+      {/* 로딩 — 스켈레톤 카드 */}
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            border: '3px solid #0084CC',
-            borderTopColor: 'transparent',
-            animation: 'spin 0.7s linear infinite',
-          }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ padding: '24px 20px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ScheduleCardSkeleton key={i} />
+          ))}
         </div>
       )}
 

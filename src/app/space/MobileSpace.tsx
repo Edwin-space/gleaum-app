@@ -239,9 +239,21 @@ export function MobileSpace() {
 
   // ── 초대 링크 복사 ────────────────────────────────────
   const inviteLink = group?.inviteCode ? `https://gleaum.com/invite/${group.inviteCode}` : '';
-  const copyInviteLink = () => {
+  const copyInviteLink = async () => {
     if (!inviteLink) return;
-    navigator.clipboard.writeText(inviteLink);
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+    } catch {
+      // Android WebView / 구형 브라우저 fallback
+      const el = document.createElement('textarea');
+      el.value = inviteLink;
+      el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      try { document.execCommand('copy'); } catch { /* ignore */ }
+      document.body.removeChild(el);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };

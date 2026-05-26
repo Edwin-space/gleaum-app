@@ -37,10 +37,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 );
 Card.displayName = 'Card';
 
-// ── 일정 카드 (Figma 리뉴얼) ──
+// ── 일정 카드 ──────────────────────────────────────────────────────────────
 import type { Schedule } from '@/types';
 import { formatTime } from '@/lib/utils';
-import { StatusBadge } from './Badge';
 
 interface ScheduleCardProps {
   schedule: Schedule;
@@ -48,72 +47,63 @@ interface ScheduleCardProps {
   compact?: boolean;
 }
 
-// 일정 유형별 아이콘 + 배경색
-const TYPE_ICON_CONFIG = {
-  shared: {
-    bg: 'rgba(0,132,204,0.10)',
-    color: '#0084CC',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-  },
-  personal: {
-    bg: 'rgba(12,201,181,0.10)',
-    color: '#0CC9B5',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-    ),
-  },
-  child: {
-    bg: 'rgba(46,232,149,0.10)',
-    color: '#2EE895',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/>
-        <path d="M12 14c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/>
-      </svg>
-    ),
-  },
-  expense: {
-    bg: 'rgba(245,158,11,0.10)',
-    color: '#F59E0B',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect width="20" height="14" x="2" y="5" rx="2"/>
-        <line x1="2" x2="22" y1="10" y2="10"/>
-      </svg>
-    ),
-  },
+const TYPE_CONFIG: Record<string, { bg: string; color: string; label: string }> = {
+  shared:   { bg: 'rgba(0,132,204,0.10)',   color: '#0084CC', label: '공유일정' },
+  personal: { bg: 'rgba(12,201,181,0.10)',  color: '#0CC9B5', label: '개인일정' },
+  child:    { bg: 'rgba(46,232,149,0.10)',  color: '#2EE895', label: '자녀일정' },
+  expense:  { bg: 'rgba(245,158,11,0.10)', color: '#F59E0B', label: '정기지출' },
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  pending:     '예정',
+  in_progress: '진행 중',
+  completed:   '완료',
+  missed:      '미완료',
+};
+const STATUS_COLOR: Record<string, { bg: string; color: string }> = {
+  pending:     { bg: 'rgba(142,142,147,0.10)', color: '#8E8E93' },
+  in_progress: { bg: 'rgba(0,132,204,0.10)',   color: '#0084CC' },
+  completed:   { bg: 'rgba(46,232,149,0.12)',  color: '#2EE895' },
+  missed:      { bg: 'rgba(239,68,68,0.10)',   color: '#EF4444' },
+};
+
+function fmtHour(d: Date) {
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const hh = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return { ampm, time: `${String(hh).padStart(2, '0')}:${String(m).padStart(2, '0')}` };
+}
+
 export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCardProps) {
-  const cfg = TYPE_ICON_CONFIG[schedule.type];
+  const cfg = TYPE_CONFIG[schedule.type] ?? TYPE_CONFIG.shared;
+  const st  = STATUS_COLOR[schedule.status] ?? STATUS_COLOR.pending;
+  const { ampm, time } = fmtHour(new Date(schedule.startTime));
 
   if (compact) {
     return (
       <div
         onClick={onClick}
-        className="glass-card rounded-[22px] p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-all border border-white/40 shadow-sm"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '12px',
+          padding: '14px 16px', borderRadius: '18px',
+          background: 'white',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          cursor: 'pointer',
+        }}
       >
-        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: cfg.bg, color: cfg.color }}>
-          {cfg.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-[14px] text-[#1A1B2E] truncate">{schedule.title}</p>
-          <p className="text-[11px] font-semibold text-[#8E8E93]">{formatTime(schedule.startTime)}</p>
+        <div style={{
+          width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+          background: cfg.color,
+        }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {schedule.title}
+          </p>
+          <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: '2px 0 0' }}>
+            {formatTime(schedule.startTime)}
+          </p>
         </div>
       </div>
     );
@@ -122,72 +112,127 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
   return (
     <div
       onClick={onClick}
-      className="group relative glass-card rounded-[30px] p-0 overflow-hidden cursor-pointer active:scale-[0.99] transition-all border border-white/60 shadow-[0_12px_32px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_40px_rgba(0,132,204,0.12)]"
+      style={{
+        display: 'flex',
+        background: 'white',
+        borderRadius: '20px',
+        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'transform 0.12s, box-shadow 0.12s',
+      }}
+      onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.985)')}
+      onTouchEnd={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'; }}
     >
-      {/* 배경 글로우 효과 (유형별 컬러) */}
-      <div className="absolute top-0 right-0 w-32 h-32 blur-[60px] opacity-10 pointer-events-none"
-        style={{ background: cfg.color }} />
+      {/* 왼쪽 컬러 바 + 시간 */}
+      <div style={{
+        width: '68px', flexShrink: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '16px 8px',
+        borderRight: '1px solid rgba(0,0,0,0.04)',
+        background: cfg.bg,
+        gap: '2px',
+      }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: cfg.color, letterSpacing: '0.3px' }}>
+          {ampm}
+        </span>
+        <span style={{ fontSize: '17px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.5px', lineHeight: 1 }}>
+          {time}
+        </span>
+      </div>
 
-      <div className="flex">
-        {/* 왼쪽: 시간 표시부 (타임라인 인디케이터) */}
-        <div className="w-[72px] flex flex-col items-center justify-center py-5 border-r border-gray-100/50">
-          <p className="text-[11px] font-black text-[#8E8E93] uppercase tracking-tighter mb-1">
-            {new Date(schedule.startTime).toLocaleTimeString('ko-KR', { hour: 'numeric', hour12: true }).split(' ')[0]}
-          </p>
-          <p className="text-[18px] font-black text-[#1A1B2E] leading-none mb-2">
-            {new Date(schedule.startTime).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: false }).split(':')[0]}
-            <span className="text-[13px] align-top ml-0.5">:</span>
-            {new Date(schedule.startTime).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: false }).split(':')[1]}
-          </p>
-          <div className="w-1 flex-1 rounded-full" style={{ background: `linear-gradient(to bottom, ${cfg.color}, transparent)` }} />
-        </div>
-
-        {/* 오른쪽: 상세 내용부 */}
-        <div className="flex-1 p-5 pl-4">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                style={{ background: cfg.bg, color: cfg.color }}>
-                {cfg.icon}
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: cfg.color }}>
-                {schedule.type}
+      {/* 오른쪽 내용 */}
+      <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }}>
+        {/* 타입 + 상태 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              fontSize: '10px', fontWeight: 800, letterSpacing: '0.3px',
+              padding: '2px 8px', borderRadius: '999px',
+              background: cfg.bg, color: cfg.color,
+            }}>
+              {cfg.label}
+            </span>
+            {schedule.visibility === 'private' && (
+              <span style={{
+                fontSize: '10px', fontWeight: 700,
+                padding: '2px 7px', borderRadius: '999px',
+                background: 'rgba(0,0,0,0.05)', color: '#8E8E93',
+              }}>
+                🔒 나만
               </span>
-              {schedule.visibility === 'private' && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold"
-                  style={{ background: 'rgba(12,201,181,0.10)', color: '#0CC9B5' }}>
-                  🔒 나만
-                </span>
-              )}
-            </div>
-            <StatusBadge status={schedule.status} />
-          </div>
-
-          <h4 className="text-[17px] font-bold text-[#1A1B2E] leading-tight mb-2 group-hover:text-brand-blue transition-colors">
-            {schedule.title}
-          </h4>
-
-          <div className="space-y-1.5">
-            {schedule.location && (
-              <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#8E8E93]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span className="truncate">{schedule.location.address}</span>
-              </div>
             )}
-            
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-[12px] font-medium text-[#8E8E93]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>{formatTime(schedule.startTime)} - {schedule.endTime ? formatTime(schedule.endTime) : '계속'}</span>
-              </div>
-              {schedule.amount !== undefined && (
-                <div className="px-2 py-0.5 rounded-md bg-[#F59E0B]/10 text-[11px] font-bold text-[#F59E0B]">
-                  ₩{schedule.amount.toLocaleString()}
-                </div>
-              )}
-            </div>
           </div>
+          <span style={{
+            fontSize: '10px', fontWeight: 800,
+            padding: '2px 8px', borderRadius: '999px',
+            background: st.bg, color: st.color,
+          }}>
+            {STATUS_LABEL[schedule.status] ?? '예정'}
+          </span>
         </div>
+
+        {/* 제목 */}
+        <p style={{
+          fontSize: '16px', fontWeight: 800, color: '#1A1B2E',
+          margin: '0 0 6px', lineHeight: 1.3,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {schedule.title}
+        </p>
+
+        {/* 시간 범위 + 위치 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93' }}>
+              {formatTime(schedule.startTime)}{schedule.endTime ? ` - ${formatTime(schedule.endTime)}` : ''}
+            </span>
+            {schedule.amount !== undefined && (
+              <span style={{
+                marginLeft: '6px', fontSize: '11px', fontWeight: 700,
+                padding: '1px 7px', borderRadius: '999px',
+                background: 'rgba(245,158,11,0.10)', color: '#F59E0B',
+              }}>
+                ₩{schedule.amount.toLocaleString()}
+              </span>
+            )}
+          </div>
+          {schedule.location && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {schedule.location.address}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 스켈레톤 카드 (로딩 중 플레이스홀더) ──────────────────────────────────
+export function ScheduleCardSkeleton() {
+  return (
+    <div style={{
+      display: 'flex', borderRadius: '20px',
+      border: '1px solid rgba(0,0,0,0.06)',
+      overflow: 'hidden', background: 'white',
+    }}>
+      <div style={{ width: '68px', flexShrink: 0, background: 'rgba(0,0,0,0.04)', padding: '16px 8px' }} />
+      <div style={{ flex: 1, padding: '14px 16px' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ width: '52px', height: '16px', borderRadius: '999px', background: 'rgba(0,0,0,0.06)' }} />
+          <div style={{ width: '32px', height: '16px', borderRadius: '999px', background: 'rgba(0,0,0,0.04)', marginLeft: 'auto' }} />
+        </div>
+        <div style={{ width: '60%', height: '18px', borderRadius: '6px', background: 'rgba(0,0,0,0.07)', marginBottom: '8px' }} />
+        <div style={{ width: '80px', height: '13px', borderRadius: '4px', background: 'rgba(0,0,0,0.05)' }} />
       </div>
     </div>
   );

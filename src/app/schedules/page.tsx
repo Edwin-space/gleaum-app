@@ -46,10 +46,11 @@ export default function SchedulesPage() {
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
 
-    let groupKey = 'Upcoming';
-    if (d.toDateString() === today.toDateString()) groupKey = 'Today';
-    else if (d.toDateString() === tomorrow.toDateString()) groupKey = 'Tomorrow';
-    else groupKey = d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+    const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+    let groupKey: string;
+    if (d.toDateString() === today.toDateString())    groupKey = '오늘';
+    else if (d.toDateString() === tomorrow.toDateString()) groupKey = '내일';
+    else groupKey = `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAY[d.getDay()]})`;
 
     if (!acc[groupKey]) acc[groupKey] = [];
     acc[groupKey].push(s);
