@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { updateMyProfile, updateNotificationSettings, getMyPageInsights } from '@/lib/db';
 import { profileToast } from '@/lib/toast';
+import { useRouter } from 'next/navigation';
 import type { NotificationSettings } from '@/types';
 
 import { MobileMyPage } from './MobileMyPage';
@@ -24,6 +25,7 @@ export default function MyPage() {
   const isDesktop = useIsDesktop();
   const { user, profile, loading, familyGroupId } = useCurrentUser();
   const { signOut, updatePassword } = useAuth();
+  const router = useRouter();
 
   const [insights, setInsights] = useState<{ totalExpense: number; upcomingCount: number; memberCount: number; month: number } | null>(null);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIF);
@@ -42,17 +44,36 @@ export default function MyPage() {
   const [passwordError, setPasswordError] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
 
+  // ── 탈퇴 관련 state ────────────────────────────────────────
+  const [withdrawStep, setWithdrawStep]   = useState<'confirm' | 'reason'>('confirm');
+  const [withdrawReason, setWithdrawReason] = useState('');
+  const [withdrawing, setWithdrawing]     = useState(false);
+  const [withdrawalStatus, setWithdrawalStatus] = useState<{
+    withdrawalPending: boolean;
+    daysLeft?: number;
+    deleteScheduledAt?: string;
+  } | null>(null);
+
+  // 탈퇴 상태 조회
+  const fetchWithdrawalStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/account/status');
+      if (res.ok) setWithdrawalStatus(await res.json());
+    } catch { /* 무시 */ }
+  }, []);
+
   useEffect(() => {
     if (!profile?.id) return;
     const ns = (profile as any).notification_settings;
     if (ns) setNotifSettings({ ...DEFAULT_NOTIF, ...ns });
     setEditName(user?.name ?? '');
     setEditAvatar(user?.avatar ?? '👤');
+    fetchWithdrawalStatus();
 
     if (familyGroupId) {
       getMyPageInsights(familyGroupId).then(setInsights);
     }
-  }, [profile?.id, user?.id, familyGroupId]);
+  }, [profile?.id, user?.id, familyGroupId, fetchWithdrawalStatus]);
 
   const handleToggle = async (key: keyof NotificationSettings) => {
     const updated = { ...notifSettings, [key]: !notifSettings[key] };
@@ -96,6 +117,45 @@ export default function MyPage() {
       setPasswordError('비밀번호 설정에 실패했습니다.');
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  // ── 탈퇴 신청 ──────────────────────────────────────────────
+  const handleWithdraw = async () => {
+    setWithdrawing(true);
+    try {
+      const res = await fetch('/api/account/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: withdrawReason || undefined }),
+      });
+      if (res.ok) {
+        setShowDeleteModal(false);
+        router.replace('/login?message=withdrawn');
+      } else {
+        const data = await res.json();
+        alert(data.error ?? '탈퇴 처리 중 오류가 발생했습니다.');
+      }
+    } catch {
+      alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
+  // ── 탈퇴 취소(복구) ────────────────────────────────────────
+  const handleRestore = async () => {
+    try {
+      const res = await fetch('/api/account/restore', { method: 'POST' });
+      if (res.ok) {
+        await fetchWithdrawalStatus();
+        alert('탈퇴 신청이 취소되었습니다. 서비스를 계속 이용하실 수 있습니다.');
+      } else {
+        const data = await res.json();
+        alert(data.error ?? '복구 처리 중 오류가 발생했습니다.');
+      }
+    } catch {
+      alert('네트워크 오류가 발생했습니다.');
     }
   };
 
@@ -210,16 +270,133 @@ export default function MyPage() {
         </div>
       )}
 
-      {/* ── 공통 모달: 회원탈퇴 확인 ── */}
+      {/* ── 탈퇴 신청 중 배너 ── */}
+      {withdrawalStatus?.withdrawalPending && (
+        <div style={{
+          position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 40, width: 'calc(100% - 32px)', maxWidth: 480,
+          background: '#FFF3CD', border: '1.5px solid #F59E0B',
+          borderRadius: 20, padding: '14px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 800, color: '#92400E', margin: 0 }}>
+              탈퇴 신청 중 — {withdrawalStatus.daysLeft}일 후 계정이 삭제됩니다
+            </p>
+            <p style={{ fontSize: 11, color: '#B45309', margin: '2px 0 0', fontWeight: 600 }}>
+              {withdrawalStatus.daysLeft}일 이내에 복구하실 수 있습니다
+            </p>
+          </div>
+          <button
+            onClick={handleRestore}
+            style={{
+              padding: '8px 14px', borderRadius: 12, border: 'none',
+              background: '#F59E0B', color: 'white', fontSize: 12, fontWeight: 800,
+              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >
+            탈퇴 취소
+          </button>
+        </div>
+      )}
+
+      {/* ── 공통 모달: 회원탈퇴 ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }} onClick={() => setShowDeleteModal(false)}>
-          <div className="w-full max-w-[400px] glass-card rounded-[40px] p-8 animate-slide-up shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[24px] font-black text-center mb-2 text-[#1A1B2E]">정말 탈퇴하시겠어요?</p>
-            <p className="text-[14px] text-center mb-8 font-bold text-[#8E8E93] leading-relaxed">모든 데이터와 일정이 삭제되며<br/>복구할 수 없습니다.</p>
-            <div className="grid grid-cols-2 gap-4">
-              <button onClick={() => setShowDeleteModal(false)} className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50">취소</button>
-              <button className="h-14 rounded-[24px] text-[15px] font-black text-white bg-[#EF4444] shadow-lg shadow-red-200">탈퇴하기</button>
-            </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
+          onClick={() => { setShowDeleteModal(false); setWithdrawStep('confirm'); setWithdrawReason(''); }}
+        >
+          <div className="w-full max-w-[420px] glass-card rounded-[40px] p-8 animate-slide-up shadow-2xl" onClick={(e) => e.stopPropagation()}>
+
+            {/* Step 1: 안내 + 확인 */}
+            {withdrawStep === 'confirm' && (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                  <span style={{ fontSize: 48 }}>😢</span>
+                </div>
+                <p className="text-[22px] font-black text-center mb-3 text-[#1A1B2E]">
+                  탈퇴 전에 확인해 주세요
+                </p>
+                <div style={{
+                  background: '#FFF8F8', border: '1.5px solid rgba(239,68,68,0.2)',
+                  borderRadius: 20, padding: '16px 20px', marginBottom: 20,
+                }}>
+                  {[
+                    '탈퇴 신청 후 30일간 복구가 가능합니다',
+                    '30일 경과 시 모든 개인정보가 완전히 삭제됩니다',
+                    '일정, 가계부, 공간 데이터가 삭제됩니다',
+                    '공간 관리자인 경우 공간은 유지됩니다',
+                  ].map((text, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 3 ? 8 : 0 }}>
+                      <span style={{ color: '#EF4444', fontSize: 13, flexShrink: 0 }}>•</span>
+                      <p style={{ fontSize: 13, color: '#666', margin: 0, fontWeight: 600, lineHeight: 1.5 }}>{text}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setShowDeleteModal(false); setWithdrawStep('confirm'); }}
+                    className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50"
+                  >
+                    계속 이용하기
+                  </button>
+                  <button
+                    onClick={() => setWithdrawStep('reason')}
+                    className="h-14 rounded-[24px] text-[15px] font-black text-white"
+                    style={{ background: '#EF4444' }}
+                  >
+                    탈퇴 진행
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Step 2: 탈퇴 사유 + 최종 확인 */}
+            {withdrawStep === 'reason' && (
+              <>
+                <p className="text-[22px] font-black text-center mb-2 text-[#1A1B2E]">
+                  탈퇴 사유를 알려주세요
+                </p>
+                <p style={{ fontSize: 12, color: '#AEAEB2', textAlign: 'center', marginBottom: 20, fontWeight: 600 }}>
+                  선택 사항이며, 서비스 개선에 활용됩니다
+                </p>
+                <textarea
+                  value={withdrawReason}
+                  onChange={(e) => setWithdrawReason(e.target.value)}
+                  placeholder="탈퇴 사유를 입력해주세요 (선택)"
+                  maxLength={200}
+                  style={{
+                    width: '100%', minHeight: 100, padding: '14px 16px',
+                    borderRadius: 20, border: '1.5px solid #E5E5EA',
+                    fontSize: 14, fontWeight: 600, color: '#1A1B2E',
+                    background: '#F7F7FA', resize: 'none', outline: 'none',
+                    boxSizing: 'border-box', marginBottom: 6,
+                  }}
+                />
+                <p style={{ fontSize: 11, color: '#AEAEB2', textAlign: 'right', marginBottom: 20 }}>
+                  {withdrawReason.length}/200
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setWithdrawStep('confirm')}
+                    className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50"
+                    disabled={withdrawing}
+                  >
+                    이전
+                  </button>
+                  <button
+                    onClick={handleWithdraw}
+                    disabled={withdrawing}
+                    className="h-14 rounded-[24px] text-[15px] font-black text-white"
+                    style={{ background: withdrawing ? 'rgba(239,68,68,0.5)' : '#EF4444' }}
+                  >
+                    {withdrawing ? '처리 중...' : '탈퇴 신청'}
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       )}
