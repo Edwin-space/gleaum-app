@@ -129,31 +129,58 @@ function LoginForm() {
     window.addEventListener('gleaum:auth-error', handleAuthError);
     window.addEventListener('gleaum:auth-success', handleAuthSuccess);
 
-    let browserListener: { remove: () => void } | undefined;
+    // Android: window.open으로 시스템 브라우저 사용 → appStateChange로 복귀 감지
+    // iOS:     CCT 사용 → browserFinished로 취소 감지
+    let cleanupListener: { remove: () => void } | undefined;
+
     (async () => {
-      const { Browser } = await import('@capacitor/browser');
-      browserListener = await Browser.addListener('browserFinished', () => {
-        addLog(`🟠 browserFinished — authProcessing=${authProcessing}, authHandled=${authHandled}`);
-        if (authProcessing) {
-          addLog('   → 딥링크 수신됨, 처리 완료 대기 (15초 안전망)');
+      const { getNativePlatform } = await import('@/lib/native');
+      const platform = getNativePlatform();
+
+      if (platform === 'android') {
+        const { App } = await import('@capacitor/app');
+        cleanupListener = await App.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive) return;
+          addLog(`🟠 appStateChange(active) — authProcessing=${authProcessing}, authHandled=${authHandled}`);
           browserFinishedTimer = setTimeout(() => {
             if (!authHandled) {
-              addLog('❌ 15초 타임아웃 — 네트워크 오류');
-              setGoogleLoading(false);
-              setError('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
-            }
-          }, 15000);
-        } else {
-          addLog('   → 딥링크 미수신 (취소), 800ms 후 스피너 해제');
-          browserFinishedTimer = setTimeout(() => {
-            if (!authHandled) {
-              addLog('   → 스피너 해제 (취소)');
+              if (authProcessing) {
+                addLog('❌ 15초 타임아웃 — 네트워크 오류');
+                setError('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
+              } else {
+                addLog('   → 딥링크 미수신 (취소), 스피너 해제');
+              }
               setGoogleLoading(false);
             }
-          }, 800);
-        }
-        browserListener?.remove();
-      });
+          }, authProcessing ? 15000 : 1000);
+          cleanupListener?.remove();
+        });
+      } else {
+        // iOS: CCT browserFinished
+        const { Browser } = await import('@capacitor/browser');
+        cleanupListener = await Browser.addListener('browserFinished', () => {
+          addLog(`🟠 browserFinished — authProcessing=${authProcessing}, authHandled=${authHandled}`);
+          if (authProcessing) {
+            addLog('   → 딥링크 수신됨, 처리 완료 대기 (15초 안전망)');
+            browserFinishedTimer = setTimeout(() => {
+              if (!authHandled) {
+                addLog('❌ 15초 타임아웃 — 네트워크 오류');
+                setGoogleLoading(false);
+                setError('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
+              }
+            }, 15000);
+          } else {
+            addLog('   → 딥링크 미수신 (취소), 800ms 후 스피너 해제');
+            browserFinishedTimer = setTimeout(() => {
+              if (!authHandled) {
+                addLog('   → 스피너 해제 (취소)');
+                setGoogleLoading(false);
+              }
+            }, 800);
+          }
+          cleanupListener?.remove();
+        });
+      }
     })();
 
     return () => {
@@ -161,7 +188,7 @@ function LoginForm() {
       window.removeEventListener('gleaum:auth-processing', handleAuthProcessing);
       window.removeEventListener('gleaum:auth-error', handleAuthError);
       window.removeEventListener('gleaum:auth-success', handleAuthSuccess);
-      browserListener?.remove();
+      cleanupListener?.remove();
     };
   }, [googleLoading]);
 

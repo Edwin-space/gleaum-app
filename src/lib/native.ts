@@ -173,27 +173,49 @@ export async function setStatusBarLight(): Promise<void> {
 // ── OAuth / 브라우저 ──────────────────────────────────────────────────────────
 
 /**
- * 네이티브 인앱 브라우저로 URL 열기
- * Google OAuth 플로우에 사용 (WKWebView 분리로 쿠키 격리)
+ * OAuth용 브라우저 열기
+ *
+ * ▸ Android: App.openUrl → 시스템 브라우저(일반 Chrome)로 오픈
+ *   Chrome Custom Tab(CCT)은 OAuth 완료 후 gleaum:// 딥링크를 앱에
+ *   전달하지 못하는 버그가 있음. 시스템 브라우저는 커스텀 스킴 Intent를
+ *   정상적으로 처리하므로 appUrlOpen이 올바르게 발화됨.
+ *
+ * ▸ iOS: @capacitor/browser (SFSafariViewController) — 문제 없음
+ * ▸ Web: window.location.href
  */
 export async function openBrowser(url: string): Promise<void> {
-  if (isNativeApp()) {
+  if (!isNativeApp()) {
+    window.location.href = url;
+    return;
+  }
+
+  const platform = getNativePlatform();
+
+  if (platform === 'android') {
+    // Android: CCT(Chrome Custom Tab)가 gleaum:// Intent를 앱에 전달하지 않는 버그 우회.
+    // Browser.open()은 내부적으로 CCT를 사용하므로 동일한 문제 발생.
+    // 대신 window.open으로 열면 Capacitor WebView가 shouldOverrideUrlLoading을 통해
+    // 시스템 Intent(ACTION_VIEW)로 라우팅 → 일반 Chrome에서 열림.
+    window.open(url, '_blank');
+  } else {
+    // iOS: SFSafariViewController (CCT 문제 없음)
     const { Browser } = await import('@capacitor/browser');
     await Browser.open({
       url,
       toolbarColor: '#1A1B2E',
       presentationStyle: 'popover',
     });
-  } else {
-    window.location.href = url;
   }
 }
 
-/** 인앱 브라우저 닫기 */
+/** 인앱 브라우저 닫기 (Android 시스템 브라우저는 닫을 수 없으므로 iOS 전용) */
 export async function closeBrowser(): Promise<void> {
-  if (isNativeApp()) {
+  if (!isNativeApp() || getNativePlatform() === 'android') return;
+  try {
     const { Browser } = await import('@capacitor/browser');
     await Browser.close();
+  } catch {
+    // 이미 닫혀 있으면 무시
   }
 }
 
