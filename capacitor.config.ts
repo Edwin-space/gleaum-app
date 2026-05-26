@@ -37,13 +37,14 @@ const config: CapacitorConfig = {
     scheme: 'gleaum',            // Custom URL scheme: gleaum://
     contentInset: 'never',       // ★ CSS가 safe area를 직접 처리 (env(safe-area-inset-*) 활성화)
     scrollEnabled: true,         // 서버 로드 방식에서는 WebView 스크롤 필요
-    backgroundColor: '#FFFFFF',  // ★ WKWebView 배경: 흰색 (home indicator 영역 갭 방지)
+    backgroundColor: '#FAFAFD',  // ★ WKWebView 배경색 (앱 배경과 일치, 흰 화면 플래시 방지)
     // 'recommended': iPad → tablet 뷰, Mac Catalyst → desktop 뷰
     // 'mobile': 강제 iPhone 뷰 (iPad/Mac에서도 모바일 레이아웃)
     preferredContentMode: 'recommended',
     webContentsDebuggingEnabled: !!devServerUrl,  // 개발 시에만 활성
     limitsNavigationsToAppBoundDomains: true,
     // ⚠️ Info.plist > WKAppBoundDomains 에 gleaum.com 등록 필요
+    allowsLinkPreview: false,    // 링크 길게 누르기 미리보기 비활성화 (네이티브 앱 느낌)
   },
 
   // ── Android 설정 ──────────────────────────────────────────────────────────

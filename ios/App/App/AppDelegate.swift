@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
@@ -10,25 +11,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // ── Firebase 초기화 ───────────────────────────────────────────────────
+        // ── 1. Firebase 초기화 ────────────────────────────────────────────────
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
 
-        // ── 원격 알림 등록 요청 ───────────────────────────────────────────────
-        UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
-        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(
-            options: authOptions,
-            completionHandler: { _, _ in }
-        )
+        // ── 2. APNs 토큰 등록 (권한 팝업 없음 — 토큰만 취득) ─────────────────
+        //    UNUserNotificationCenter.requestAuthorization 은 앱 설정 화면에서
+        //    사용자가 알림을 켤 때 호출합니다 (런치 시 즉시 팝업 X → UX 개선).
         application.registerForRemoteNotifications()
+
+        // ── 3. 알림 센터 delegate 설정 ────────────────────────────────────────
+        UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
 
         return true
     }
 
     // ── FCM 토큰 갱신 시 콜백 ─────────────────────────────────────────────────
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        // FCM 토큰이 갱신될 때마다 호출됨 — Capacitor Firebase Messaging 플러그인이 자동 처리
         NotificationCenter.default.post(
             name: Notification.Name("FCMToken"),
             object: nil,
@@ -39,7 +38,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     // ── URL Scheme 처리 (gleaum:// — Google OAuth 콜백) ──────────────────────
     func application(_ app: UIApplication, open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // Capacitor ApplicationDelegateProxy가 URL을 WebView로 전달
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
@@ -55,9 +53,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     // ── APNs 푸시 알림 등록 성공 ──────────────────────────────────────────────
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        // FCM에 APNs 토큰 전달 (FCM이 내부적으로 APNs 토큰 ↔ FCM 토큰 매핑)
         Messaging.messaging().apnsToken = deviceToken
-        // Capacitor에도 전달
         NotificationCenter.default.post(
             name: .capacitorDidRegisterForRemoteNotifications,
             object: deviceToken
@@ -80,10 +76,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     func applicationWillTerminate(_ application: UIApplication) {}
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        // ── WKWebView 성능 최적화 ────────────────────────────────────────────
+        //    Capacitor Bridge가 준비된 시점이므로 여기서 WebView 설정을 적용합니다.
+        setupWebView()
+
         #if targetEnvironment(macCatalyst)
         // Mac Catalyst: 최소/최대 윈도우 크기 설정
         if let windowScene = application.connectedScenes.first as? UIWindowScene {
-            // 최소 800×600, 최대 무제한 (자유 리사이즈)
             windowScene.sizeRestrictions?.minimumSize = CGSize(width: 800, height: 600)
             windowScene.sizeRestrictions?.maximumSize = CGSize(
                 width: CGFloat.greatestFiniteMagnitude,
@@ -91,5 +90,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             )
         }
         #endif
+    }
+
+    // ── WKWebView 성능 설정 (Android WebView 최적화와 대칭) ─────────────────
+    private func setupWebView() {
+        guard let rootVC = window?.rootViewController as? CAPBridgeViewController,
+              let webView = rootVC.webView else { return }
+
+        let scrollView = webView.scrollView
+
+        // 고무줄 스크롤 비활성화 → 네이티브 앱 느낌
+        scrollView.bounces = false
+        scrollView.alwaysBounceVertical = false
+        scrollView.alwaysBounceHorizontal = false
+
+        // CSS env(safe-area-inset-*) 직접 처리
+        // capacitor.config ios.contentInset = 'never' 와 일관성 유지
+        scrollView.contentInsetAdjustmentBehavior = .never
+
+        // 스크롤바 숨김 (globals.css ::-webkit-scrollbar와 일치)
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.showsHorizontalScrollIndicator = false
+
+        // WebView 배경: 로드 전 흰 화면 플래시 방지
+        // app 배경색 #FAFAFD 와 동일하게 설정
+        webView.isOpaque = false
+        webView.backgroundColor = UIColor(red: 0.980, green: 0.980, blue: 0.992, alpha: 1.0)
+        scrollView.backgroundColor = UIColor(red: 0.980, green: 0.980, blue: 0.992, alpha: 1.0)
     }
 }
