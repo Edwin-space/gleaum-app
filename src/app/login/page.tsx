@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
@@ -30,6 +30,27 @@ function MailIcon({ color = '#8E8E93' }: { color?: string }) {
   );
 }
 
+// ─── 디버그 패널 (로고 5번 탭 → 활성화) ──────────────────────────────────────
+function DebugPanel({ logs }: { logs: string[] }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.92)', borderTop: '1px solid #333',
+      padding: '12px', maxHeight: '40vh', overflowY: 'auto',
+    }}>
+      <div style={{ color: '#0CC9B5', fontSize: '11px', fontWeight: 700, marginBottom: '6px' }}>
+        🔍 AUTH DEBUG LOG
+      </div>
+      {logs.length === 0
+        ? <div style={{ color: '#666', fontSize: '11px' }}>이벤트 없음 — 구글 로그인 시도해보세요</div>
+        : logs.map((l, i) => (
+          <div key={i} style={{ color: l.startsWith('❌') ? '#ff6b6b' : l.startsWith('✅') ? '#51cf66' : '#ccc', fontSize: '11px', marginBottom: '2px', fontFamily: 'monospace' }}>{l}</div>
+        ))
+      }
+    </div>
+  );
+}
+
 // ─── 로그인 폼 ─────────────────────────────────────────────────────────────────
 function LoginForm() {
   const { signInWithGoogle, signInWithEmail } = useAuth();
@@ -43,6 +64,23 @@ function LoginForm() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // 디버그 모드 — 로고 5번 탭
+  const [debugMode, setDebugMode] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const logoTapCount = useRef(0);
+  const addLog = useCallback((msg: string) => {
+    const time = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+    setDebugLogs(prev => [...prev.slice(-30), `[${time}] ${msg}`]);
+  }, []);
+  const handleLogoTap = () => {
+    logoTapCount.current += 1;
+    if (logoTapCount.current >= 5) {
+      logoTapCount.current = 0;
+      setDebugMode(prev => !prev);
+      setDebugLogs([]);
+    }
+  };
+
   // ── 네이티브 앱 OAuth 콜백 처리 ──────────────────────────────────────────
   // NativeAppProvider가 발생시키는 이벤트 구독:
   //   'gleaum:auth-processing' → 딥링크 수신 확인 (browserFinished 타임아웃 취소)
@@ -55,14 +93,17 @@ function LoginForm() {
   useEffect(() => {
     if (!googleLoading || !isNativeApp()) return;
 
-    let authHandled = false; // success/error 이벤트가 처리됐는지 추적
+    addLog('🔵 구글 OAuth 시작 — 이벤트 리스너 등록');
+
+    let authHandled = false;
     let browserFinishedTimer: ReturnType<typeof setTimeout> | null = null;
 
     const handleAuthError = (e: Event) => {
       authHandled = true;
       if (browserFinishedTimer) clearTimeout(browserFinishedTimer);
-      setGoogleLoading(false);
       const msg = (e as CustomEvent<string>).detail;
+      addLog(`❌ auth-error: ${msg}`);
+      setGoogleLoading(false);
       setError(msg === 'invalid request: code verifier does not match'
         ? '인증 오류가 발생했습니다. 다시 시도해 주세요.'
         : '구글 로그인에 실패했습니다. 다시 시도해 주세요.');
@@ -70,14 +111,14 @@ function LoginForm() {
     const handleAuthSuccess = () => {
       authHandled = true;
       if (browserFinishedTimer) clearTimeout(browserFinishedTimer);
+      addLog('✅ auth-success → /home 이동');
       setGoogleLoading(false);
     };
 
-    // 딥링크 URL 수신 확인 → exchangeCodeForSession 처리 중 플래그
     let authProcessing = false;
     const handleAuthProcessing = () => {
       authProcessing = true;
-      // 진행 중이면 기존 browserFinished 타임아웃 취소
+      addLog('🟡 auth-processing: 딥링크 수신 — exchangeCodeForSession 대기');
       if (browserFinishedTimer) {
         clearTimeout(browserFinishedTimer);
         browserFinishedTimer = null;
@@ -88,24 +129,27 @@ function LoginForm() {
     window.addEventListener('gleaum:auth-error', handleAuthError);
     window.addEventListener('gleaum:auth-success', handleAuthSuccess);
 
-    // 브라우저가 닫혔을 때 (사용자가 직접 닫거나 OAuth 취소)
     let browserListener: { remove: () => void } | undefined;
     (async () => {
       const { Browser } = await import('@capacitor/browser');
       browserListener = await Browser.addListener('browserFinished', () => {
+        addLog(`🟠 browserFinished — authProcessing=${authProcessing}, authHandled=${authHandled}`);
         if (authProcessing) {
-          // 딥링크 수신됨 → exchangeCodeForSession 대기 중 → 타임아웃 안 함
-          // 대신 15초 최종 안전망 (네트워크 무응답 대비)
+          addLog('   → 딥링크 수신됨, 처리 완료 대기 (15초 안전망)');
           browserFinishedTimer = setTimeout(() => {
             if (!authHandled) {
+              addLog('❌ 15초 타임아웃 — 네트워크 오류');
               setGoogleLoading(false);
               setError('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
             }
           }, 15000);
         } else {
-          // 딥링크 미수신 → 사용자가 OAuth 취소하고 브라우저를 닫음
+          addLog('   → 딥링크 미수신 (취소), 800ms 후 스피너 해제');
           browserFinishedTimer = setTimeout(() => {
-            if (!authHandled) setGoogleLoading(false);
+            if (!authHandled) {
+              addLog('   → 스피너 해제 (취소)');
+              setGoogleLoading(false);
+            }
           }, 800);
         }
         browserListener?.remove();
@@ -123,9 +167,13 @@ function LoginForm() {
 
   const handleGoogle = async () => {
     setError('');
+    setDebugLogs([]); // 로그 초기화
+    addLog('🔵 구글 로그인 버튼 클릭');
     setGoogleLoading(true);
     trackEvent('login', { method: 'google' });
+    addLog('   → signInWithGoogle 호출 중...');
     await signInWithGoogle(next);
+    addLog('   → 인앱 브라우저 오픈 완료 (대기 중)');
   };
 
   const handleEmail = async (e: React.FormEvent) => {
@@ -165,11 +213,15 @@ function LoginForm() {
         padding: '20px 32px',
         display: 'flex', alignItems: 'center',
       }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+        {/* 로고 5번 탭 → 디버그 모드 토글 */}
+        <div onClick={handleLogoTap} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', cursor: 'pointer' }}>
           <GleaumLogoImg size={30} />
           <GleaumBI variant="white" width={80} />
-        </Link>
+        </div>
       </nav>
+
+      {/* 디버그 패널 */}
+      {debugMode && <DebugPanel logs={debugLogs} />}
 
       {/* 중앙 카드 */}
       <div style={{
