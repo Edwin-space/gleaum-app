@@ -23,6 +23,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
 
   const today = useMemo(() => new Date(), []);
 
@@ -267,11 +268,47 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
             border: '1px solid rgba(0,0,0,0.04)',
           }}>
+            {/* 뷰 탭 전환 */}
+            <div style={{
+              display: 'flex',
+              background: '#F2F2F7',
+              borderRadius: '12px',
+              padding: '3px',
+              marginBottom: '12px',
+              gap: '2px',
+            }}>
+              {(['month', 'week', 'day'] as const).map((v) => {
+                const labels = { month: '월간', week: '주간', day: '일간' };
+                const active = calendarView === v;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setCalendarView(v)}
+                    style={{
+                      flex: 1,
+                      height: '32px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      fontSize: '13px',
+                      fontWeight: active ? 800 : 600,
+                      color: active ? '#1A1B2E' : '#8E8E93',
+                      background: active ? 'white' : 'transparent',
+                      cursor: 'pointer',
+                      boxShadow: active ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
+                      transition: 'all 0.18s',
+                    }}
+                  >
+                    {labels[v]}
+                  </button>
+                );
+              })}
+            </div>
+
             <CalendarView
               schedules={schedules}
               selectedDate={selectedDate}
               onSelectDate={(d) => { setSelectedDate(d); }}
-              view="month"
+              view={calendarView}
             />
           </div>
         )}
