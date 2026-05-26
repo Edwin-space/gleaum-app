@@ -30,6 +30,14 @@ function dispatchAuthEvent(type: 'gleaum:auth-success' | 'gleaum:auth-error', de
   window.dispatchEvent(new CustomEvent(type, { detail }));
 }
 
+/**
+ * OAuth 콜백 URL 수신 즉시 알림 — 로그인 페이지의 browserFinished 타임아웃을 취소시켜
+ * exchangeCodeForSession 완료 전에 리스너가 제거되는 타이밍 버그를 방지.
+ */
+function dispatchAuthProcessing() {
+  window.dispatchEvent(new CustomEvent('gleaum:auth-processing'));
+}
+
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
@@ -51,11 +59,27 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     //   B) getLaunchUrl — Android가 앱 프로세스를 종료한 뒤 딥링크로 재시작될 때
     //      (Chrome Custom Tab 사용 중 메모리 부족 등으로 앱이 kill된 경우)
     //      → 이 경로를 누락하면 OAuth code가 유실되어 로그인 화면으로 돌아옴
+    //
+    // ⚠️ 콜드 스타트 이중 처리 방지:
+    //   일부 Android 기기에서는 getLaunchUrl AND appUrlOpen이 동일 URL로 모두 발화됨.
+    //   code를 두 번 교환하면 두 번째 교환이 "code already used" 오류를 반환하여
+    //   gleaum:auth-error가 발생 → 로그인 화면으로 돌아가는 버그 발생.
+    //   lastProcessedUrl로 중복 처리를 차단.
     let removeUrlListener: (() => void) | undefined;
+    let lastProcessedUrl: string | null = null;
 
     // OAuth 콜백 URL 처리 공통 함수
     async function handleOAuthCallback(url: string) {
+      // 중복 처리 방지: 동일 URL은 한 번만 처리
+      if (lastProcessedUrl === url) {
+        console.log('[NativeApp] 이미 처리된 URL, 건너뜀:', url);
+        return;
+      }
+      lastProcessedUrl = url;
       console.log('[NativeApp] OAuth 콜백 처리:', url);
+
+      // 로그인 페이지에 "처리 중" 알림 → browserFinished 타임아웃 취소
+      dispatchAuthProcessing();
 
       // 인앱 브라우저 닫기 (이미 닫혀 있어도 안전하게 호출 가능)
       await closeBrowser();

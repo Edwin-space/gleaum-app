@@ -44,22 +44,47 @@ function LoginForm() {
   const [error, setError] = useState('');
 
   // ── 네이티브 앱 OAuth 콜백 처리 ──────────────────────────────────────────
-  // NativeAppProvider가 발생시키는 인증 결과 이벤트 구독:
-  //   'gleaum:auth-error'   → 스피너 리셋 + 에러 메시지 표시
-  //   'gleaum:auth-success' → 스피너 리셋 (router.replace('/home') 도 이미 호출됨)
-  // 브라우저가 닫힐 때(browserFinished) 도 스피너를 리셋합니다.
+  // NativeAppProvider가 발생시키는 이벤트 구독:
+  //   'gleaum:auth-processing' → 딥링크 수신 확인 (browserFinished 타임아웃 취소)
+  //   'gleaum:auth-error'      → 스피너 리셋 + 에러 메시지 표시
+  //   'gleaum:auth-success'    → 스피너 리셋 (router.replace('/home') 도 이미 호출됨)
+  //
+  // 타이밍 버그 방지:
+  //   browserFinished(600ms) → exchangeCodeForSession 완료 전 리스너 제거 → 에러 무시 버그
+  //   gleaum:auth-processing 수신 시 browserFinished 타임아웃을 취소해 이 버그를 방지.
   useEffect(() => {
     if (!googleLoading || !isNativeApp()) return;
 
+    let authHandled = false; // success/error 이벤트가 처리됐는지 추적
+    let browserFinishedTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleAuthError = (e: Event) => {
+      authHandled = true;
+      if (browserFinishedTimer) clearTimeout(browserFinishedTimer);
       setGoogleLoading(false);
       const msg = (e as CustomEvent<string>).detail;
       setError(msg === 'invalid request: code verifier does not match'
         ? '인증 오류가 발생했습니다. 다시 시도해 주세요.'
         : '구글 로그인에 실패했습니다. 다시 시도해 주세요.');
     };
-    const handleAuthSuccess = () => setGoogleLoading(false);
+    const handleAuthSuccess = () => {
+      authHandled = true;
+      if (browserFinishedTimer) clearTimeout(browserFinishedTimer);
+      setGoogleLoading(false);
+    };
 
+    // 딥링크 URL 수신 확인 → exchangeCodeForSession 처리 중 플래그
+    let authProcessing = false;
+    const handleAuthProcessing = () => {
+      authProcessing = true;
+      // 진행 중이면 기존 browserFinished 타임아웃 취소
+      if (browserFinishedTimer) {
+        clearTimeout(browserFinishedTimer);
+        browserFinishedTimer = null;
+      }
+    };
+
+    window.addEventListener('gleaum:auth-processing', handleAuthProcessing);
     window.addEventListener('gleaum:auth-error', handleAuthError);
     window.addEventListener('gleaum:auth-success', handleAuthSuccess);
 
@@ -67,20 +92,29 @@ function LoginForm() {
     let browserListener: { remove: () => void } | undefined;
     (async () => {
       const { Browser } = await import('@capacitor/browser');
-      browserListener = await Browser.addListener('browserFinished', async () => {
-        // appUrlOpen 처리 시간을 위해 잠시 대기
-        await new Promise(r => setTimeout(r, 600));
-        // 이미 성공/실패 이벤트로 처리됐으면 스킵
-        setGoogleLoading(prev => {
-          if (!prev) return prev;
-          // 세션 없음 = 취소 또는 실패
-          return false;
-        });
+      browserListener = await Browser.addListener('browserFinished', () => {
+        if (authProcessing) {
+          // 딥링크 수신됨 → exchangeCodeForSession 대기 중 → 타임아웃 안 함
+          // 대신 15초 최종 안전망 (네트워크 무응답 대비)
+          browserFinishedTimer = setTimeout(() => {
+            if (!authHandled) {
+              setGoogleLoading(false);
+              setError('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
+            }
+          }, 15000);
+        } else {
+          // 딥링크 미수신 → 사용자가 OAuth 취소하고 브라우저를 닫음
+          browserFinishedTimer = setTimeout(() => {
+            if (!authHandled) setGoogleLoading(false);
+          }, 800);
+        }
         browserListener?.remove();
       });
     })();
 
     return () => {
+      if (browserFinishedTimer) clearTimeout(browserFinishedTimer);
+      window.removeEventListener('gleaum:auth-processing', handleAuthProcessing);
       window.removeEventListener('gleaum:auth-error', handleAuthError);
       window.removeEventListener('gleaum:auth-success', handleAuthSuccess);
       browserListener?.remove();
