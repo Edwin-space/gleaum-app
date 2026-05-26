@@ -23,6 +23,15 @@ allprojects {
         google()
         mavenCentral()
     }
+    // kotlin-stdlib-jdk7/jdk8 이 1.8+ 에서 kotlin-stdlib 에 통합됨.
+    // 구버전(1.6.x)을 당겨오는 의존성이 있을 때 Duplicate class 에러 방지.
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+        }
+    }
 }
 
 task clean(type: Delete) {
