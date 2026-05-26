@@ -7,6 +7,7 @@ import { useSpace } from '@/hooks/useSpace';
 import {
   joinSpaceByCode, updateSpaceName, removeSpaceMember,
   getMySpaces, updateSpaceMemberRole, updateSpaceCoverImage,
+  regenerateInviteCode,
 } from '@/lib/db';
 import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
 import type { Space, SpaceMember, SpaceRole } from '@/types';
@@ -33,6 +34,8 @@ export function MobileSpace() {
   const [showInviteModal, setShowInviteModal]   = useState(false);
   const [showJoinModal,   setShowJoinModal]      = useState(false);
   const [copied,          setCopied]             = useState(false);
+  const [copyError,       setCopyError]          = useState(false);
+  const [generatingCode,  setGeneratingCode]     = useState(false);
   const [joinCode,        setJoinCode]           = useState('');
   const [joining,         setJoining]            = useState(false);
   const [joinError,       setJoinError]          = useState('');
@@ -238,24 +241,57 @@ export function MobileSpace() {
   };
 
   // ── 초대 링크 복사 ────────────────────────────────────
-  const inviteLink = group?.inviteCode ? `https://gleaum.com/invite/${group.inviteCode}` : '';
+  const [liveInviteCode, setLiveInviteCode] = useState<string | undefined>(undefined);
+  const currentInviteCode = liveInviteCode ?? group?.inviteCode;
+  const inviteLink = currentInviteCode ? `https://gleaum.com/invite/${currentInviteCode}` : '';
+
+  // invite_code 가 없으면 자동 생성 후 복사 (admin 전용)
   const copyInviteLink = async () => {
-    if (!inviteLink) return;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-    } catch {
-      // Android WebView / 구형 브라우저 fallback
-      const el = document.createElement('textarea');
-      el.value = inviteLink;
-      el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
-      document.body.appendChild(el);
-      el.focus();
-      el.select();
-      try { document.execCommand('copy'); } catch { /* ignore */ }
-      document.body.removeChild(el);
+    let link = inviteLink;
+
+    if (!link && isAdmin && displaySpaceId) {
+      // ── invite_code 가 null 인 기존 공간: 자동 생성 ──
+      setGeneratingCode(true);
+      try {
+        const newCode = await regenerateInviteCode(displaySpaceId);
+        if (newCode) {
+          setLiveInviteCode(newCode);
+          link = `https://gleaum.com/invite/${newCode}`;
+          await refresh();
+        }
+      } finally {
+        setGeneratingCode(false);
+      }
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+
+    if (!link) return;
+
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(link);
+      ok = true;
+    } catch {
+      // Android WebView / 구형 브라우저 execCommand fallback
+      try {
+        const el = document.createElement('textarea');
+        el.value = link;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(el);
+      } catch { /* ignore */ }
+    }
+
+    if (ok) {
+      setCopied(true);
+      setCopyError(false);
+      setTimeout(() => setCopied(false), 2500);
+    } else {
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 3000);
+    }
   };
 
   // ── 공간 합류 ─────────────────────────────────────────
@@ -486,21 +522,28 @@ export function MobileSpace() {
                   </div>
                 )}
 
-                {/* Invite code */}
-                {group?.inviteCode && (
-                  <div style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '24px', padding: '20px' }}>
+                {/* Invite code — 코드 있으면 표시, 없으면 admin에게 생성 버튼 */}
+                {(currentInviteCode || isAdmin) && (
+                  <div style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '24px', padding: '20px', marginTop: '12px' }}>
                     <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', marginBottom: '10px' }}>
                       SPACE INVITE CODE
                     </p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                      <span style={{ fontSize: '26px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '6px', color: '#0CC9B5' }}>
-                        {group.inviteCode}
-                      </span>
-                      <button onClick={copyInviteLink}
-                        style={{ padding: '10px 20px', borderRadius: '14px', background: 'white', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 800, color: '#1A1B2E', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                        {copied ? '복사됨 ✓' : '코드 복사'}
+                    {currentInviteCode ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                        <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {currentInviteCode}
+                        </span>
+                        <button onClick={copyInviteLink} disabled={generatingCode}
+                          style={{ padding: '10px 20px', borderRadius: '14px', background: copied ? '#0CC9B5' : copyError ? '#EF4444' : 'white', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 800, color: (copied || copyError) ? 'white' : '#1A1B2E', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', flexShrink: 0, transition: 'background 0.2s' }}>
+                          {copied ? '복사됨 ✓' : copyError ? '복사 실패' : '코드 복사'}
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={copyInviteLink} disabled={generatingCode}
+                        style={{ width: '100%', padding: '12px', borderRadius: '14px', background: 'rgba(12,201,181,0.20)', border: '1px dashed rgba(12,201,181,0.50)', cursor: generatingCode ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 800, color: '#0CC9B5', opacity: generatingCode ? 0.7 : 1 }}>
+                        {generatingCode ? '코드 생성 중...' : '+ 초대 코드 생성하기'}
                       </button>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -688,10 +731,15 @@ export function MobileSpace() {
             <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 12px' }}>
               현재 {memberCount}명 · {FREE_MAX_MEMBERS - memberCount}명 더 초대 가능
             </p>
-            <button onClick={copyInviteLink}
-              style={{ width: '100%', height: '58px', borderRadius: '18px', background: '#1A1B2E', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-              {copied ? '링크 복사 완료 ✓' : '초대 링크 복사하기'}
+            <button onClick={copyInviteLink} disabled={generatingCode}
+              style={{ width: '100%', height: '58px', borderRadius: '18px', background: copied ? '#0CC9B5' : copyError ? '#EF4444' : '#1A1B2E', border: 'none', cursor: generatingCode ? 'wait' : 'pointer', fontSize: '16px', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', transition: 'background 0.2s', opacity: generatingCode ? 0.7 : 1 }}>
+              {generatingCode ? '코드 생성 중...' : copied ? '링크 복사 완료 ✓' : copyError ? '복사 실패 — 직접 입력해주세요' : '초대 링크 복사하기'}
             </button>
+            {copyError && (
+              <p style={{ fontSize: '12px', color: '#EF4444', textAlign: 'center', margin: '-4px 0 12px', fontWeight: 600 }}>
+                {inviteLink}
+              </p>
+            )}
             <button onClick={() => setShowInviteModal(false)}
               style={{ width: '100%', height: '58px', borderRadius: '18px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>
               닫기
