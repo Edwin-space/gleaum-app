@@ -16,7 +16,10 @@
 
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   INSERT INTO profiles (
     id,

@@ -101,13 +101,21 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           } else if (data.session) {
             console.log('[NativeApp] 로그인 성공 (PKCE)');
             dispatchAuthEvent('gleaum:auth-success');
-            router.replace('/home');
+            // 신규 유저 온보딩 체크
+            const { data: profileRow } = await supabase
+              .from('profiles')
+              .select('onboarding_completed_at')
+              .eq('id', data.session.user.id)
+              .single();
+            router.replace(
+              profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
+            );
           } else {
             dispatchAuthEvent('gleaum:auth-error', '세션을 가져올 수 없습니다');
           }
         } else if (accessToken) {
           // Implicit 방식: 토큰 직접 설정 (fallback)
-          const { error } = await supabase.auth.setSession({
+          const { data: sessionData, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken ?? '',
           });
@@ -117,7 +125,15 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           } else {
             console.log('[NativeApp] 로그인 성공 (Implicit)');
             dispatchAuthEvent('gleaum:auth-success');
-            router.replace('/home');
+            // 신규 유저 온보딩 체크
+            const { data: profileRow } = await supabase
+              .from('profiles')
+              .select('onboarding_completed_at')
+              .eq('id', sessionData.session?.user.id ?? '')
+              .single();
+            router.replace(
+              profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
+            );
           }
         } else {
           console.warn('[NativeApp] 콜백 URL에 인증 파라미터 없음:', url);

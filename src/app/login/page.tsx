@@ -64,8 +64,8 @@ function LoginForm() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 디버그 모드 — 임시 강제 활성화
-  const [debugMode, setDebugMode] = useState(true);
+  // 디버그 모드 — 로고 5번 탭으로 활성화
+  const [debugMode, setDebugMode] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const logoTapCount = useRef(0);
   const addLog = useCallback((msg: string) => {
