@@ -194,6 +194,26 @@ export function DesktopMyPage({
         {/* ── 오른쪽: 설정 섹션 ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+          {/* 앱 설정 */}
+          <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>앱 설정</p>
+            </div>
+            <SettingRow
+              icon={<Icon d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" stroke="#0084CC" />}
+              label="홈 레이아웃"
+              description="홈 화면의 구성과 우선 표시 항목을 선택합니다."
+              href="/settings/home-layout"
+            />
+            <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+            <SettingRow
+              icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0084CC" />}
+              label="캘린더 설정"
+              description="기기 캘린더 연동 및 표시 옵션을 설정합니다."
+              href="/settings/calendar"
+            />
+          </div>
+
           {/* 계정 및 보안 */}
           <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
             <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
@@ -221,13 +241,6 @@ export function DesktopMyPage({
             <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
               <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>서비스 연동 및 알림</p>
             </div>
-            <SettingRow
-              icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0CC9B5" />}
-              label="기기 캘린더 연동"
-              value="준비 중"
-              href="/settings/calendar"
-            />
-            <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
             <SettingRow
               icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" stroke="#1A1B2E" />}
               label="푸시 알림 리마인더"
