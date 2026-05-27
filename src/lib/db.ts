@@ -955,7 +955,18 @@ export async function createSchedule(
   // Phase 2: type → category/visibility/automation_policy 자동 매핑
   const autoCategory = input.category ?? inferCategory(input.type);
   const autoVisibility = input.visibility ?? inferVisibility(input.type);
-  const autoPolicy = input.automationPolicy ?? inferAutomationPolicy(input.type);
+
+  // ★ expense 유형 automation_policy 결정:
+  //   - 정기지출(repeat !== 'none'): payment_due  → 결제 기한 초과 알림 활성
+  //   - 일반 지출 기록(repeat === 'none'): reminder_only → 알림 없음
+  //   이렇게 하지 않으면 일반 지출 등록 시 당일 "결제 기한이 지났습니다" FCM 알림이
+  //   즉시 발송되는 버그 발생 (automations 크론이 pending→in_progress→missed 전환을
+  //   같은 실행에서 처리하고, endTime=startTime이면 곧바로 missed 처리됨).
+  const autoPolicy = input.automationPolicy ?? (
+    input.type === 'expense' && (!input.repeat || input.repeat === 'none')
+      ? 'reminder_only'
+      : inferAutomationPolicy(input.type)
+  );
 
   const { data: schedule, error } = await supabase
     .from('schedules')

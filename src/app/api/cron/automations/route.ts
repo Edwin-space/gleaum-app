@@ -128,6 +128,7 @@ export async function GET(req: NextRequest) {
 
   // ────────────────────────────────────────────────────────────
   // 3) payment_due: pending → in_progress (결제 예정일 도달)
+  // ★ repeat = 'none'(일회성 지출) 제외 — 정기지출만 상태 전환
   // ────────────────────────────────────────────────────────────
   {
     const { data: toStart } = await supabaseAdmin
@@ -135,6 +136,7 @@ export async function GET(req: NextRequest) {
       .select('id')
       .eq('automation_policy', 'payment_due')
       .eq('status', 'pending')
+      .not('repeat', 'eq', 'none')   // 일회성 지출 제외
       .lte('start_time', now.toISOString());
 
     if (toStart && toStart.length > 0) {
@@ -148,12 +150,16 @@ export async function GET(req: NextRequest) {
   }
 
   // payment_due: in_progress → missed (기한 경과 & 미납)
+  // ★ repeat = 'none'(일회성 지출 기록)은 제외:
+  //   일반 지출 등록 시 automation_policy 가 잘못 payment_due 로 설정된 레거시 레코드 보호.
+  //   정기지출(repeat != 'none')만 기한 초과 알림 발송.
   {
     const { data: toOverdue } = await supabaseAdmin
       .from('schedules')
-      .select('id, title, family_group_id, created_by')
+      .select('id, title, family_group_id, created_by, repeat')
       .eq('automation_policy', 'payment_due')
       .eq('status', 'in_progress')
+      .not('repeat', 'eq', 'none')   // 일회성 지출 제외 — repeat 있는 정기지출만
       .not('end_time', 'is', null)
       .lte('end_time', now.toISOString());
 

@@ -40,7 +40,8 @@ export default function NewSchedulePage() {
   const [participants, setParticipants] = useState<string[]>([]);
   const [address, setAddress] = useState('');
   const [refUrl, setRefUrl] = useState('');
-  const [reminder, setReminder] = useState(15);
+  // expense 유형은 reminder 0 (알림 없음) — 일반 지출 기록에 리마인더 알림 불필요
+  const [reminder, setReminder] = useState(type === 'expense' ? 0 : 15);
   const [repeat, setRepeat] = useState<RepeatType>('none');
   const [memo, setMemo] = useState('');
 
@@ -59,6 +60,14 @@ export default function NewSchedulePage() {
       setParticipants(members.map(m => m.id));
     }
   }, [members]);
+
+  // 유형이 expense로 변경되면 reminder를 0으로 리셋 (알림 불필요)
+  useEffect(() => {
+    if (type === 'expense') setReminder(0);
+    else if (reminder === 0) setReminder(15);
+  // reminder 값 변화에 반응하지 않도록 의도적으로 의존성 제외
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
 
   const toggleParticipant = (id: string) => {
     setParticipants(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);

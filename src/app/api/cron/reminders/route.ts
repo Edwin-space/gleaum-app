@@ -31,11 +31,13 @@ export async function GET(req: NextRequest) {
   const windowEnd = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
 
   // ── 1) 리마인더 대상 일정 조회 (공간 timezone 포함) ─────────
+  // ★ expense(지출) 유형 제외 — 가계부 지출 기록에 리마인더 FCM 불필요
   const { data: schedules, error } = await supabaseAdmin
     .from('schedules')
     .select('id, title, start_time, reminder, family_group_id, family_groups(timezone)')
     .eq('status', 'pending')
     .gt('reminder', 0)
+    .neq('type', 'expense')          // 지출 유형 제외
     .gte('start_time', now.toISOString());
 
   if (error || !schedules) {
