@@ -2,11 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Associated Domains (Universal Links)는 유료 Apple Developer Program 필요 -->
+	<!-- 계정 업그레이드 후 아래 항목 주석 해제 + Xcode Signing & Capabilities에서 추가 -->
+	<!--
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:gleaum.com</string>
 		<string>applinks:www.gleaum.com</string>
 		<string>webcredentials:gleaum.com</string>
 	</array>
+	-->
 </dict>
 </plist>
