@@ -25,6 +25,14 @@ export interface BlockedBrowserInfo {
  */
 export function getBlockedBrowserInfo(): BlockedBrowserInfo | null {
   if (typeof navigator === 'undefined') return null;
+
+  // Capacitor로 감싼 글리움 네이티브 앱은 Android WebView UA에 `wv`가 포함된다.
+  // 이 환경까지 차단하면 앱 내부의 정상 로그인 화면이 초대 링크용 안내로 막힌다.
+  const isGleaumNativeApp = !!(window as unknown as {
+    Capacitor?: { isNativePlatform?: () => boolean };
+  }).Capacitor?.isNativePlatform?.();
+  if (isGleaumNativeApp) return null;
+
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   // iPhone/iPad/iPod — iOS 13+ iPad는 "Macintosh" UA를 쓰기도 하므로 maxTouchPoints 함께 확인

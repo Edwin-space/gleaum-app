@@ -43,6 +43,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-27 | Android 네이티브 앱 로그인에서 초대 링크용 인앱 브라우저 차단 안내가 뜨던 문제 수정. `getBlockedBrowserInfo()`는 Capacitor 네이티브 앱에서 `null` 반환 |
 | 2026-05-27 | `1a5db08` — iOS 무료 Apple Developer 계정 빌드를 위해 Associated Domains entitlement 제거. Universal Links는 유료 계정 전환 후 재활성화 |
 | 2026-05-27 | `8377d36` — 가계부 지출 등록 시 즉시 FCM 알림이 발송되던 크리티컬 버그 수정 |
 | 2026-05-27 | `e5212f6` — 초대 랜딩 페이지, 딥링크/Universal Links 웹 기반, 페이지 타이틀 추가 |
