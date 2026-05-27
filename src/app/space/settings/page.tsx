@@ -149,7 +149,7 @@ export default function SpaceSettingsPage() {
   const router = useRouter();
   const { spaceId, user, loading: userLoading } = useCurrentUser();
   const userId = user?.id ?? null;
-  const { space, myRole, loading: spaceLoading } = useSpace(spaceId);
+  const { space, myRole, loading: spaceLoading, refresh: refreshSpace } = useSpace(spaceId);
   const isAdmin = myRole === 'admin';
 
   // ── 공간 이름 ──────────────────────────────────────────────
@@ -169,8 +169,10 @@ export default function SpaceSettingsPage() {
   const [membersLoading, setMembersLoading] = useState(false);
   const [removingId,    setRemovingId]    = useState<string | null>(null);
 
-  // ── 초대 코드 재발급 ─────────────────────────────────────
+  // ── 초대 코드 재발급 / 신규 생성 ───────────────────────────
   const [regenerating, setRegenerating] = useState(false);
+  const [liveInviteCode, setLiveInviteCode] = useState<string | undefined>(undefined);
+  const currentSettingsInviteCode = liveInviteCode ?? space?.inviteCode;
 
   // ── 공간 폐쇄 ─────────────────────────────────────────────
   const [showCloseModal, setShowCloseModal] = useState(false);
@@ -280,11 +282,11 @@ export default function SpaceSettingsPage() {
     const newCode = await regenerateInviteCode(spaceId);
     setRegenerating(false);
     if (newCode) {
-      toast.success('초대 코드가 재발급되었습니다');
-      // 공간 정보 새로고침을 위해 페이지 새로 불러오기
-      window.location.reload();
+      setLiveInviteCode(newCode);
+      toast.success(currentSettingsInviteCode ? '초대 코드가 재발급되었습니다' : '초대 코드가 생성되었습니다');
+      await refreshSpace();
     } else {
-      toast.error('재발급에 실패했습니다');
+      toast.error('재발급에 실패했습니다. 다시 시도해 주세요.');
     }
   };
 
@@ -488,36 +490,52 @@ export default function SpaceSettingsPage() {
             </button>
           )}
 
-          {/* ── 초대 코드 ── */}
-          {space?.inviteCode && (
+          {/* ── 초대 코드 (admin 전용, 코드 없어도 표시하여 생성 가능하게) ── */}
+          {isAdmin && (
             <>
               <p style={sectionLabel}>초대</p>
               <div style={card}>
                 <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: '0 0 8px' }}>공간 초대 코드</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <code style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: '#F7F7FA', fontSize: '15px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.08em', border: '1.5px solid rgba(0,132,204,0.15)' }}>
-                    {space.inviteCode}
-                  </code>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(space.inviteCode!); toast.success('초대 코드가 복사되었습니다'); }}
-                    style={{ padding: '12px 14px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap' }}
-                  >복사</button>
-                </div>
-                {/* 재발급 (admin 전용) */}
-                {myRole === 'admin' && (
+                {currentSettingsInviteCode ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <code style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: '#F7F7FA', fontSize: '15px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.08em', border: '1.5px solid rgba(0,132,204,0.15)' }}>
+                        {currentSettingsInviteCode}
+                      </code>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(currentSettingsInviteCode); toast.success('초대 코드가 복사되었습니다'); }}
+                        style={{ padding: '12px 14px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap' }}
+                      >복사</button>
+                    </div>
+                    <button
+                      onClick={handleRegenerateCode}
+                      disabled={regenerating}
+                      style={{
+                        marginTop: '10px', width: '100%', padding: '10px',
+                        borderRadius: '12px', border: '1.5px solid rgba(0,132,204,0.20)',
+                        background: 'transparent', color: '#0084CC',
+                        cursor: regenerating ? 'not-allowed' : 'pointer',
+                        fontSize: '13px', fontWeight: 700,
+                        opacity: regenerating ? 0.5 : 1,
+                      }}
+                    >
+                      {regenerating ? '처리 중...' : '🔄 초대 코드 재발급'}
+                    </button>
+                  </>
+                ) : (
                   <button
                     onClick={handleRegenerateCode}
                     disabled={regenerating}
                     style={{
-                      marginTop: '10px', width: '100%', padding: '10px',
-                      borderRadius: '12px', border: '1.5px solid rgba(0,132,204,0.20)',
-                      background: 'transparent', color: '#0084CC',
+                      width: '100%', padding: '14px',
+                      borderRadius: '14px', border: '1.5px dashed rgba(0,132,204,0.40)',
+                      background: 'rgba(0,132,204,0.05)', color: '#0084CC',
                       cursor: regenerating ? 'not-allowed' : 'pointer',
-                      fontSize: '13px', fontWeight: 700,
+                      fontSize: '14px', fontWeight: 800,
                       opacity: regenerating ? 0.5 : 1,
                     }}
                   >
-                    {regenerating ? '재발급 중...' : '🔄 초대 코드 재발급'}
+                    {regenerating ? '생성 중...' : '+ 초대 코드 생성하기'}
                   </button>
                 )}
               </div>

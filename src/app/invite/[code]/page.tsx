@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getBlockedBrowserInfo, tryOpenInChrome, type BlockedBrowserInfo } from '@/lib/browser';
 
 type PageState = 'loading' | 'joining' | 'success' | 'already_member' | 'invalid_code' | 'expired_code' | 'rate_limited' | 'error';
 
@@ -14,6 +15,19 @@ export default function InvitePage() {
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [spaceName, setSpaceName] = useState<string>('');
+  const [blockedBrowser, setBlockedBrowser] = useState<BlockedBrowserInfo | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  // ★ 인앱 브라우저 감지 — Google OAuth 차단 환경 조기 차단
+  useEffect(() => {
+    const info = getBlockedBrowserInfo();
+    if (!info) return;
+    setBlockedBrowser(info);
+    // Android: Chrome intent: scheme으로 자동 리다이렉트 시도
+    if (info.canAutoRedirect) {
+      setTimeout(() => tryOpenInChrome(window.location.href), 400);
+    }
+  }, []);
 
   useEffect(() => {
     // 유저 로딩 중이면 대기
@@ -69,6 +83,112 @@ export default function InvitePage() {
 
     doJoin();
   }, [user, userLoading, code, router]);
+
+  // ── 인앱 브라우저 차단 안내 (Google OAuth 불가 환경) ──
+  if (blockedBrowser) {
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        background: 'linear-gradient(160deg, #0A0B1E 0%, #1A1B2E 60%, #0D2040 100%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: 'calc(env(safe-area-inset-top) + 32px) 24px calc(env(safe-area-inset-bottom) + 32px)',
+      }}>
+        <style>{`@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`}</style>
+        <div style={{ width: '100%', maxWidth: '400px', animation: 'fadeUp 0.4s ease' }}>
+
+          {/* 경고 아이콘 */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{
+              width: '80px', height: '80px', borderRadius: '24px', margin: '0 auto 16px',
+              background: 'rgba(245,158,11,0.15)',
+              border: '1.5px solid rgba(245,158,11,0.30)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px',
+            }}>🚫</div>
+            <h1 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: '0 0 10px', letterSpacing: '-0.4px', lineHeight: 1.3 }}>
+              {blockedBrowser.appName} 내부 브라우저에서는<br />구글 로그인이 지원되지 않아요
+            </h1>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, margin: 0 }}>
+              Google 정책에 따라 앱 내부 브라우저에서는<br />
+              구글 계정 로그인이 차단됩니다.
+            </p>
+          </div>
+
+          {/* 안내 카드 */}
+          <div style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '24px', padding: '24px',
+            marginBottom: '20px',
+          }}>
+            <p style={{ fontSize: '12px', fontWeight: 800, color: '#F59E0B', margin: '0 0 14px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              해결 방법
+            </p>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '12px', flexShrink: 0,
+                background: 'rgba(245,158,11,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px',
+              }}>📱</div>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, margin: 0 }}>
+                {blockedBrowser.instruction}
+              </p>
+            </div>
+            <div style={{ margin: '16px 0', height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '12px', flexShrink: 0,
+                background: 'rgba(12,201,181,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px',
+              }}>🔗</div>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, margin: 0 }}>
+                아래 버튼으로 링크를 복사하여<br />
+                {blockedBrowser.isIOS ? 'Safari' : 'Chrome 또는 Safari'}에 붙여넣기 하세요
+              </p>
+            </div>
+          </div>
+
+          {/* URL 복사 버튼 */}
+          <button
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(currentUrl);
+              } catch {
+                // fallback: textarea copy
+                const el = document.createElement('textarea');
+                el.value = currentUrl;
+                el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+                document.body.appendChild(el);
+                el.focus(); el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+              }
+              setUrlCopied(true);
+              setTimeout(() => setUrlCopied(false), 3000);
+            }}
+            style={{
+              width: '100%', height: '58px', borderRadius: '18px', marginBottom: '12px',
+              background: urlCopied ? 'rgba(12,201,181,0.25)' : 'linear-gradient(135deg, #0CC9B5, #0084CC)',
+              border: urlCopied ? '1.5px solid rgba(12,201,181,0.50)' : 'none',
+              cursor: 'pointer', fontSize: '16px', fontWeight: 900, color: 'white',
+              boxShadow: urlCopied ? 'none' : '0 8px 24px rgba(0,132,204,0.35)',
+              letterSpacing: '-0.3px', transition: 'all 0.2s',
+            }}
+          >
+            {urlCopied ? '✓ 링크가 복사되었어요!' : '🔗 초대 링크 복사하기'}
+          </button>
+
+          {/* 자동 리다이렉트 안내 (Android) */}
+          {blockedBrowser.canAutoRedirect && (
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.30)', margin: 0, lineHeight: 1.6 }}>
+              Chrome 앱이 설치된 경우 자동으로 열립니다.<br />
+              열리지 않으면 위 버튼으로 링크를 복사해 주세요.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ── 로딩 / 합류 중 ──
   if (pageState === 'loading' || pageState === 'joining') {

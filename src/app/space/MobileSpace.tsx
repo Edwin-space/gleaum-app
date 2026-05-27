@@ -10,6 +10,7 @@ import {
   regenerateInviteCode,
 } from '@/lib/db';
 import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
+import { toast } from 'sonner';
 import type { Space, SpaceMember, SpaceRole } from '@/types';
 
 const FREE_MAX_SPACES  = 2;
@@ -265,6 +266,9 @@ export function MobileSpace() {
           setLiveInviteCode(newCode);
           link = `https://gleaum.com/invite/${newCode}`;
           await refresh();
+        } else {
+          toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
+          return;
         }
       } finally {
         setGeneratingCode(false);
@@ -329,18 +333,28 @@ export function MobileSpace() {
   };
 
   // ── invite_code 확보 유틸 (없으면 자동 생성) ─────────────
-  const ensureInviteCode = async () => {
-    if ((liveInviteCode ?? group?.inviteCode) || !isAdmin || !displaySpaceId) return;
+  const ensureInviteCode = async (): Promise<boolean> => {
+    if ((liveInviteCode ?? group?.inviteCode) || !isAdmin || !displaySpaceId) return true;
     setGeneratingCode(true);
     try {
       const newCode = await regenerateInviteCode(displaySpaceId);
-      if (newCode) { setLiveInviteCode(newCode); await refresh(); }
-    } finally { setGeneratingCode(false); }
+      if (newCode) {
+        setLiveInviteCode(newCode);
+        await refresh();
+        return true;
+      } else {
+        toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
+        return false;
+      }
+    } finally {
+      setGeneratingCode(false);
+    }
   };
 
   // ── 카카오톡 공유 (Web Share API → URL 스킴 폴백) ─────────
   const shareViaKakao = async () => {
-    await ensureInviteCode();
+    const ok = await ensureInviteCode();
+    if (!ok) return;
     setShareKakao(true);
     const message = buildShareMessage();
     const code = liveInviteCode ?? group?.inviteCode ?? '';
@@ -357,7 +371,8 @@ export function MobileSpace() {
 
   // ── SMS 공유 ──────────────────────────────────────────────
   const shareViaSms = async () => {
-    await ensureInviteCode();
+    const ok = await ensureInviteCode();
+    if (!ok) return;
     setShareSms(true);
     const message = buildShareMessage();
     window.open(`sms:?body=${encodeURIComponent(message)}`, '_blank');
@@ -366,7 +381,8 @@ export function MobileSpace() {
 
   // ── 링크+메시지 전체 복사 ──────────────────────────────────
   const copyFullMessage = async () => {
-    await ensureInviteCode();
+    const codeReady = await ensureInviteCode();
+    if (!codeReady) return;
     const message = buildShareMessage();
     let ok = false;
     try {
@@ -625,7 +641,8 @@ export function MobileSpace() {
                 )}
 
                 {/* Invite code — 개인 공간은 초대 불가, 공유 공간만 표시 */}
-                {!isPersonalSpace && (currentInviteCode || isAdmin) && (
+                {/* ★ loading 중에는 섹션 전체 숨김 — 로딩 완료 후 DB 값 기준으로 렌더링 */}
+                {!isPersonalSpace && !loading && (currentInviteCode || isAdmin) && (
                   <div style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '24px', padding: '20px', marginTop: '12px' }}>
                     <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', marginBottom: '10px' }}>
                       SPACE INVITE CODE

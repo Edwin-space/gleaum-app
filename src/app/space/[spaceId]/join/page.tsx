@@ -50,11 +50,8 @@ export default function SpaceJoinPage() {
       });
   }, [params?.spaceId]);
 
-  // 로그인 상태이면 자동 참여 처리
-  useEffect(() => {
-    if (userLoading || !user || !space || joined) return;
-    handleJoin();
-  }, [user, space, userLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ★ 자동 참여 제거: 사용자가 명시적으로 버튼을 눌러야 참여됨
+  // (자동 참여는 사용자 동의 없이 공간에 추가되는 보안 문제 있음)
 
   const handleJoin = async () => {
     if (!space) return;
@@ -92,8 +89,9 @@ export default function SpaceJoinPage() {
   };
 
   const goToLogin = () => {
+    // ★ ?next= 파라미터 사용 (invite/[code]와 동일하게 통일, auth/callback/route.ts가 읽음)
     const returnUrl = encodeURIComponent(`/space/${params?.spaceId}/join`);
-    router.push(`/login?redirect=${returnUrl}`);
+    router.push(`/login?next=${returnUrl}`);
   };
 
   // ── 로딩 ──

@@ -729,7 +729,7 @@ export async function regenerateInviteCode(spaceId: string): Promise<string | nu
 }
 
 /** 신규 공간 생성 → space_members admin 등록 + profiles 업데이트 */
-export async function createSpace(name: string): Promise<{ id: string; error?: never } | { id: null; error: string }> {
+export async function createSpace(name: string): Promise<{ id: string; inviteCode: string; error?: never } | { id: null; inviteCode?: never; error: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { id: null, error: '로그인이 필요합니다' };
@@ -771,7 +771,7 @@ export async function createSpace(name: string): Promise<{ id: string; error?: n
     console.info('[createSpace] 공간 생성 완료:', group.id, '| user:', user.id);
   }
 
-  return { id: group.id };
+  return { id: group.id, inviteCode };
 }
 
 /**

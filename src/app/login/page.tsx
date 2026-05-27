@@ -7,6 +7,7 @@ import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 import { trackEvent } from '@/lib/analytics';
 import { isNativeApp } from '@/lib/native';
+import { getBlockedBrowserInfo, tryOpenInChrome, type BlockedBrowserInfo } from '@/lib/browser';
 
 // ─── Google 아이콘 ────────────────────────────────────────────────────────────
 function GoogleIcon() {
@@ -63,6 +64,18 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // ★ 인앱 브라우저 감지
+  const [blockedBrowser, setBlockedBrowser] = useState<BlockedBrowserInfo | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
+  useEffect(() => {
+    const info = getBlockedBrowserInfo();
+    if (!info) return;
+    setBlockedBrowser(info);
+    if (info.canAutoRedirect) {
+      setTimeout(() => tryOpenInChrome(window.location.href), 400);
+    }
+  }, []);
 
   // 디버그 모드 — 로고 5번 탭으로 활성화
   const [debugMode, setDebugMode] = useState(false);
@@ -270,7 +283,72 @@ function LoginForm() {
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }}>
-          {!showEmail ? (
+          {/* ★ 인앱 브라우저 차단 안내 */}
+          {blockedBrowser ? (
+            <div>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{ fontSize: '44px', marginBottom: '12px' }}>🚫</div>
+                <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'white', margin: '0 0 8px', lineHeight: 1.3 }}>
+                  {blockedBrowser.appName} 내부 브라우저에서는<br />구글 로그인이 지원되지 않아요
+                </h2>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.50)', margin: 0, lineHeight: 1.65 }}>
+                  Google 정책에 따라 앱 내부 브라우저에서는<br />구글 계정 로그인이 차단됩니다.
+                </p>
+              </div>
+
+              <div style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '16px', padding: '16px 18px',
+                marginBottom: '16px',
+              }}>
+                <p style={{ fontSize: '12px', fontWeight: 800, color: '#F59E0B', margin: '0 0 8px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>해결 방법</p>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.80)', lineHeight: 1.65, margin: 0 }}>
+                  📱 {blockedBrowser.instruction}
+                </p>
+                <div style={{ margin: '10px 0', height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.80)', lineHeight: 1.65, margin: 0 }}>
+                  🔗 아래 버튼으로 링크를 복사하여 {blockedBrowser.isIOS ? 'Safari' : 'Chrome 또는 Safari'}에 붙여넣기 하세요
+                </p>
+              </div>
+
+              <button
+                onClick={async () => {
+                  try { await navigator.clipboard.writeText(window.location.href); }
+                  catch {
+                    const el = document.createElement('textarea');
+                    el.value = window.location.href;
+                    el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+                    document.body.appendChild(el);
+                    el.focus(); el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                  }
+                  setUrlCopied(true);
+                  setTimeout(() => setUrlCopied(false), 3000);
+                }}
+                style={{
+                  width: '100%', height: '54px',
+                  borderRadius: '16px',
+                  background: urlCopied ? 'rgba(12,201,181,0.2)' : 'linear-gradient(135deg, #0CC9B5, #0084CC)',
+                  border: urlCopied ? '1.5px solid rgba(12,201,181,0.40)' : 'none',
+                  cursor: 'pointer', fontSize: '15px', fontWeight: 800,
+                  color: 'white', letterSpacing: '-0.2px',
+                  boxShadow: urlCopied ? 'none' : '0 6px 20px rgba(0,132,204,0.30)',
+                  transition: 'all 0.2s',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                {urlCopied ? '✓ 링크가 복사되었어요!' : '🔗 링크 복사하기'}
+              </button>
+
+              {blockedBrowser.canAutoRedirect && (
+                <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.28)', marginTop: '12px', lineHeight: 1.6 }}>
+                  Chrome이 설치된 경우 자동으로 열립니다
+                </p>
+              )}
+            </div>
+          ) : !showEmail ? (
             <>
               {/* 헤더 */}
               <div style={{ marginBottom: '32px' }}>

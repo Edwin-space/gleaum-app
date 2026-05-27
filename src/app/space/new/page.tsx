@@ -51,6 +51,7 @@ export default function SpaceNewPage() {
         return;
       }
       const spaceId = result.id;
+      const inviteCode = result.inviteCode;
 
       // settings 저장 — 실패해도 공간 생성은 계속 진행
       await updateSpaceSettings(spaceId, {
@@ -62,7 +63,8 @@ export default function SpaceNewPage() {
       await refresh().catch(e => console.warn('[onboarding] refresh 실패:', e));
 
       setCreatedId(spaceId);
-      setInviteLink(`https://gleaum.com/space/${spaceId}/join`);
+      // ★ 초대 링크는 invite_code 기반 URL 사용 (보안 + Rate Limit 보장)
+      setInviteLink(`https://gleaum.com/invite/${inviteCode}`);
       setStep(4);
     } catch (e) {
       console.error('[handleCreate]', e);
@@ -98,7 +100,7 @@ export default function SpaceNewPage() {
         content: {
           title: `${spaceName} 공간에 초대합니다`,
           description: '글리움 공간에 참여해서 함께 일정을 공유해보세요!',
-          imageUrl: 'https://gleaum.com/og_image.png',
+          imageUrl: 'https://gleaum.com/img/og_image.png',
           link: { mobileWebUrl: inviteLink, webUrl: inviteLink },
         },
         buttons: [{ title: '공간 참여하기', link: { mobileWebUrl: inviteLink, webUrl: inviteLink } }],

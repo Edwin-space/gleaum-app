@@ -9,6 +9,7 @@ import {
   getMySpaces, updateSpaceMemberRole, regenerateInviteCode,
 } from '@/lib/db';
 import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
+import { toast } from 'sonner';
 import type { Space, SpaceRole } from '@/types';
 
 const FREE_MAX_SPACES  = 2;
@@ -116,13 +117,22 @@ export function DesktopSpace() {
     ].join('\n');
   };
 
-  const ensureInviteCode = async () => {
-    if ((liveInviteCode ?? group?.inviteCode) || !isAdmin || !displaySpaceId) return;
+  const ensureInviteCode = async (): Promise<boolean> => {
+    if ((liveInviteCode ?? group?.inviteCode) || !isAdmin || !displaySpaceId) return true;
     setGeneratingCode(true);
     try {
       const newCode = await regenerateInviteCode(displaySpaceId);
-      if (newCode) { setLiveInviteCode(newCode); await refresh(); }
-    } finally { setGeneratingCode(false); }
+      if (newCode) {
+        setLiveInviteCode(newCode);
+        await refresh();
+        return true;
+      } else {
+        toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
+        return false;
+      }
+    } finally {
+      setGeneratingCode(false);
+    }
   };
 
   const copyInviteLink = async () => {
@@ -135,6 +145,9 @@ export function DesktopSpace() {
           setLiveInviteCode(newCode);
           link = `https://gleaum.com/invite/${newCode}`;
           await refresh();
+        } else {
+          toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
+          return;
         }
       } finally { setGeneratingCode(false); }
     }
@@ -159,7 +172,8 @@ export function DesktopSpace() {
   };
 
   const shareViaKakao = async () => {
-    await ensureInviteCode();
+    const ok = await ensureInviteCode();
+    if (!ok) return;
     setShareKakao(true);
     const message = buildShareMessage();
     const code = liveInviteCode ?? group?.inviteCode ?? '';
@@ -175,7 +189,8 @@ export function DesktopSpace() {
   };
 
   const shareViaSms = async () => {
-    await ensureInviteCode();
+    const ok = await ensureInviteCode();
+    if (!ok) return;
     setShareSms(true);
     const message = buildShareMessage();
     window.open(`sms:?body=${encodeURIComponent(message)}`, '_blank');
@@ -183,7 +198,8 @@ export function DesktopSpace() {
   };
 
   const copyFullMessage = async () => {
-    await ensureInviteCode();
+    const codeReady = await ensureInviteCode();
+    if (!codeReady) return;
     const message = buildShareMessage();
     let ok = false;
     try {
@@ -300,8 +316,8 @@ export function DesktopSpace() {
             </p>
           </div>
 
-          {/* 초대 코드 — 공유 공간만 */}
-          {!isPersonalSpace && currentInviteCode && (
+          {/* 초대 코드 — 공유 공간만, 로딩 완료 후에만 렌더링 */}
+          {!isPersonalSpace && !loading && currentInviteCode && (
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 8px' }}>INVITE CODE</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

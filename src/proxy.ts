@@ -37,14 +37,18 @@ export async function proxy(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
+    // ★ ?next= 파라미터로 원래 목적지 보존 → 로그인 후 auth/callback이 리다이렉트
     url.pathname = '/login';
+    url.searchParams.set('next', pathname + (request.nextUrl.search ?? ''));
     return NextResponse.redirect(url);
   }
 
-  // 로그인 상태에서 /login 접근 시 → /home
+  // 로그인 상태에서 /login 접근 시 → ?next= 파라미터 확인 후 리다이렉트
   if (user && pathname === '/login') {
     const url = request.nextUrl.clone();
-    url.pathname = '/home';
+    const nextParam = request.nextUrl.searchParams.get('next');
+    url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/home';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 
