@@ -23,7 +23,7 @@ export function MobileSpace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { spaceId, user, loading: userLoading, refresh: refreshUser } = useCurrentUser();
+  const { spaceId, user, profile, loading: userLoading, refresh: refreshUser } = useCurrentUser();
 
   // space/new 에서 넘어올 때 새 공간 ID를 즉시 표시하기 위한 파라미터
   const sidParam = searchParams.get('sid');
@@ -36,6 +36,8 @@ export function MobileSpace() {
   const [copied,          setCopied]             = useState(false);
   const [copyError,       setCopyError]          = useState(false);
   const [generatingCode,  setGeneratingCode]     = useState(false);
+  const [shareKakao,      setShareKakao]         = useState(false);
+  const [shareSms,        setShareSms]           = useState(false);
   const [joinCode,        setJoinCode]           = useState('');
   const [joining,         setJoining]            = useState(false);
   const [joinError,       setJoinError]          = useState('');
@@ -101,6 +103,10 @@ export function MobileSpace() {
   // useSpace를 activeSpaceId 기준으로 로드 (스와이프 전환 반영)
   const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
   const isAdmin = myRole === 'admin';
+
+  // ── 개인 공간 여부 (초대/공유 기능 비활성화) ─────────────────
+  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+  const isPersonalSpace = !!displaySpaceId && displaySpaceId === personalSpaceId;
 
   // Role management
   const [editingRole, setEditingRole] = useState<string | null>(null); // memberId
@@ -294,6 +300,92 @@ export function MobileSpace() {
     }
   };
 
+  // ── 공유 메시지 빌더 ──────────────────────────────────────
+  const buildShareMessage = () => {
+    const spaceName  = optimisticSpaceName ?? group?.name ?? '공간';
+    const senderName = user?.displayName ?? user?.name ?? '글리움 사용자';
+    const code = liveInviteCode ?? group?.inviteCode ?? '';
+    const link = code ? `https://gleaum.com/invite/${code}` : 'https://gleaum.com';
+    return [
+      `✨ ${spaceName}에 초대합니다`,
+      '',
+      `안녕하세요! ${senderName}님이 글리움에서 ${spaceName}으로 초대장을 보내드립니다.`,
+      '',
+      `글리움은 나와 가장 소중한 사람들—연인, 가족, 모임—의 일상을 함께 연결하는 네트워크예요. ${senderName}님이 공간 지기로 운영 중인 ${spaceName}에서 일정, 자금, 루틴을 함께 나눠보세요.`,
+      '',
+      `아래 링크로 바로 입장하실 수 있어요 👇`,
+      '',
+      `📎 초대 링크`,
+      link,
+      '',
+      `🔑 초대 코드   ${code}`,
+      '',
+      `글리움 앱이 없으시다면 먼저 설치해 주세요:`,
+      `👉 https://gleaum.com/download`,
+      '',
+      `함께여서 더 빛나는 일상, 글리움에서 만나요 ✨`,
+    ].join('\n');
+  };
+
+  // ── invite_code 확보 유틸 (없으면 자동 생성) ─────────────
+  const ensureInviteCode = async () => {
+    if ((liveInviteCode ?? group?.inviteCode) || !isAdmin || !displaySpaceId) return;
+    setGeneratingCode(true);
+    try {
+      const newCode = await regenerateInviteCode(displaySpaceId);
+      if (newCode) { setLiveInviteCode(newCode); await refresh(); }
+    } finally { setGeneratingCode(false); }
+  };
+
+  // ── 카카오톡 공유 (Web Share API → URL 스킴 폴백) ─────────
+  const shareViaKakao = async () => {
+    await ensureInviteCode();
+    setShareKakao(true);
+    const message = buildShareMessage();
+    const code = liveInviteCode ?? group?.inviteCode ?? '';
+    const link = code ? `https://gleaum.com/invite/${code}` : 'https://gleaum.com';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: '글리움 공간 초대', text: message, url: link });
+      } else {
+        window.open(`kakaotalk://send?msg=${encodeURIComponent(message)}`, '_blank');
+      }
+    } catch { /* 사용자 취소 등 */ }
+    setShareKakao(false);
+  };
+
+  // ── SMS 공유 ──────────────────────────────────────────────
+  const shareViaSms = async () => {
+    await ensureInviteCode();
+    setShareSms(true);
+    const message = buildShareMessage();
+    window.open(`sms:?body=${encodeURIComponent(message)}`, '_blank');
+    setTimeout(() => setShareSms(false), 1500);
+  };
+
+  // ── 링크+메시지 전체 복사 ──────────────────────────────────
+  const copyFullMessage = async () => {
+    await ensureInviteCode();
+    const message = buildShareMessage();
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(message);
+      ok = true;
+    } catch {
+      try {
+        const el = document.createElement('textarea');
+        el.value = message;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus(); el.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(el);
+      } catch { /* ignore */ }
+    }
+    if (ok) { setCopied(true); setCopyError(false); setTimeout(() => setCopied(false), 2500); }
+    else    { setCopyError(true); setTimeout(() => setCopyError(false), 3000); }
+  };
+
   // ── 공간 합류 ─────────────────────────────────────────
   const handleJoin = async () => {
     if (!joinCode.trim()) return;
@@ -311,8 +403,9 @@ export function MobileSpace() {
 
   const memberCount   = members.length;
   const memberAtLimit = memberCount >= FREE_MAX_MEMBERS;
-  const spaceCount    = mySpaces.length;
-  const spaceAtLimit  = spaceCount >= FREE_MAX_SPACES;
+  // 공유 공간만 한도 카운팅 (개인 공간 제외)
+  const sharedSpaceCount = mySpaces.filter(s => s.id !== personalSpaceId).length;
+  const spaceAtLimit     = sharedSpaceCount >= FREE_MAX_SPACES;
 
   // ── 로딩 ─────────────────────────────────────────────
   if (userLoading || (!displaySpaceId && !userLoading)) {
@@ -487,18 +580,26 @@ export function MobileSpace() {
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: memberAtLimit ? '#EF4444' : '#0CC9B5', flexShrink: 0 }} />
-                          <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
-                            {memberCount}명 참여 중
-                          </span>
+                          {isPersonalSpace ? (
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#0CC9B5', padding: '2px 8px', borderRadius: '999px', background: 'rgba(12,201,181,0.15)', border: '1px solid rgba(12,201,181,0.25)' }}>
+                              🔒 개인 공간
+                            </span>
+                          ) : (
+                            <>
+                              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: memberAtLimit ? '#EF4444' : '#0CC9B5', flexShrink: 0 }} />
+                              <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
+                                {memberCount}명 참여 중
+                              </span>
+                            </>
+                          )}
                         </div>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* 멤버 아바타 미리보기 */}
-                {members.length > 0 && (
+                {/* 멤버 아바타 미리보기 — 공유 공간만 */}
+                {!isPersonalSpace && members.length > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
                     {members.slice(0, 5).map(m => (
                       <div key={m.id} style={{
@@ -522,8 +623,8 @@ export function MobileSpace() {
                   </div>
                 )}
 
-                {/* Invite code — 코드 있으면 표시, 없으면 admin에게 생성 버튼 */}
-                {(currentInviteCode || isAdmin) && (
+                {/* Invite code — 개인 공간은 초대 불가, 공유 공간만 표시 */}
+                {!isPersonalSpace && (currentInviteCode || isAdmin) && (
                   <div style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '24px', padding: '20px', marginTop: '12px' }}>
                     <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.38)', marginBottom: '10px' }}>
                       SPACE INVITE CODE
@@ -583,19 +684,21 @@ export function MobileSpace() {
           />
 
           {/* ── 공간 멤버 관리 ── */}
-          <div style={{ padding: '0 16px', marginBottom: '32px' }}>
+          <div style={{ padding: '0 16px', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingLeft: '4px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>공간 멤버</h3>
-              {memberAtLimit ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#EF4444', padding: '5px 12px', borderRadius: '999px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <span>🔒</span> {memberCount}/{FREE_MAX_MEMBERS} 한도
-                </div>
-              ) : (
-                <button onClick={() => setShowInviteModal(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
-                  <span style={{ fontSize: '16px', lineHeight: 1 }}>＋</span>
-                  멤버 초대
-                </button>
+              {!isPersonalSpace && (
+                memberAtLimit ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#EF4444', padding: '5px 12px', borderRadius: '999px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                    <span>🔒</span> {memberCount}/{FREE_MAX_MEMBERS} 한도
+                  </div>
+                ) : (
+                  <button onClick={() => setShowInviteModal(true)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
+                    <span style={{ fontSize: '16px', lineHeight: 1 }}>＋</span>
+                    멤버 초대
+                  </button>
+                )
               )}
             </div>
 
@@ -684,11 +787,53 @@ export function MobileSpace() {
                 );
               })}
 
-              {/* 새로운 공간 합류 */}
-              <button onClick={() => setShowJoinModal(true)}
-                style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px dashed #E5E5EA', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '14px', fontWeight: 800, color: '#8E8E93', cursor: 'pointer' }}>
-                <span style={{ fontSize: '20px' }}>🗝️</span>
-                새로운 공간 합류
+              {/* 멤버 없음 빈 상태 */}
+              {members.length === 0 && (
+                <div style={{
+                  padding: '24px 20px', borderRadius: '20px',
+                  background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+                  boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center',
+                }}>
+                  <span style={{ fontSize: '28px' }}>👥</span>
+                  {isPersonalSpace ? (
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0, lineHeight: 1.5 }}>
+                      개인 공간은 나만 사용하는 공간이에요.<br/>
+                      <span style={{ fontWeight: 600, fontSize: '12px' }}>공유 공간을 만들어 다른 사람과 함께해보세요!</span>
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                      이 공간에는 멤버가 존재하지 않아요!<br/>
+                      <span style={{ fontWeight: 600, fontSize: '12px' }}>멤버를 초대해 함께 공간을 만들어가세요.</span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── 내 공간 관리 (다른 공간 합류·생성) ── */}
+          <div style={{ padding: '0 16px', marginBottom: '32px' }}>
+            <div style={{ paddingLeft: '4px', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#8E8E93', margin: 0 }}>내 공간 관리</h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* 공간 참여하기 */}
+              <button
+                onClick={() => setShowJoinModal(true)}
+                style={{
+                  width: '100%', padding: '18px 20px', borderRadius: '20px',
+                  border: '1.5px solid rgba(0,0,0,0.07)', background: 'white',
+                  display: 'flex', alignItems: 'center', gap: '14px',
+                  cursor: 'pointer', textAlign: 'left',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(12,201,181,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🗝️</div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>공간 참여하기</p>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
               </button>
 
               {/* 새 공간 만들기 */}
@@ -696,52 +841,150 @@ export function MobileSpace() {
                 disabled={spaceAtLimit}
                 onClick={() => !spaceAtLimit && router.push('/space/new')}
                 style={{
-                  width: '100%', padding: '20px', borderRadius: '20px',
-                  border: '2px dashed #E5E5EA',
-                  background: spaceAtLimit ? 'rgba(0,0,0,0.02)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '10px', fontSize: '14px', fontWeight: 800,
-                  color: spaceAtLimit ? '#C7C7CC' : '#8E8E93',
-                  cursor: spaceAtLimit ? 'not-allowed' : 'pointer',
+                  width: '100%', padding: '18px 20px', borderRadius: '20px',
+                  border: `1.5px solid ${spaceAtLimit ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.07)'}`,
+                  background: spaceAtLimit ? 'rgba(0,0,0,0.02)' : 'white',
+                  display: 'flex', alignItems: 'center', gap: '14px',
+                  cursor: spaceAtLimit ? 'not-allowed' : 'pointer', textAlign: 'left',
+                  boxShadow: spaceAtLimit ? 'none' : '0 2px 10px rgba(0,0,0,0.04)',
                 }}>
-                <span style={{ fontSize: '20px' }}>{spaceAtLimit ? '🔒' : '🏡'}</span>
-                새 공간 만들기
-                {spaceAtLimit && (
-                  <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 800, background: 'rgba(239,68,68,0.10)', color: '#EF4444' }}>
-                    {spaceCount}/{FREE_MAX_SPACES} 한도
-                  </span>
-                )}
+                <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: spaceAtLimit ? 'rgba(0,0,0,0.04)' : 'rgba(0,132,204,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
+                  {spaceAtLimit ? '🔒' : '🏡'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: spaceAtLimit ? '#C7C7CC' : '#1A1B2E', margin: '0 0 2px' }}>새 공간 만들기</p>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>
+                    {spaceAtLimit
+                      ? `공유 공간 ${FREE_MAX_SPACES}개 한도 도달 (무료 플랜)`
+                      : `현재 공유 공간 ${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
+                  </p>
+                </div>
+                {!spaceAtLimit && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Invite modal ── */}
+      {/* ── Invite modal (공유 방법 3종) ── */}
       {showInviteModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-          onClick={() => setShowInviteModal(false)}>
-          <div style={{ width: '100%', maxWidth: '600px', background: 'white', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px' }}>
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => setShowInviteModal(false)}
+        >
+          <div
+            style={{ width: '100%', maxWidth: '600px', background: 'white', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 28px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 핸들 */}
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 20px' }}>
               <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: '#E5E5EA' }} />
             </div>
-            <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', margin: '0 auto 20px' }}>🔗</div>
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 8px' }}>멤버 초대하기</h3>
-            <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 12px' }}>
+
+            {/* 아이콘 + 제목 */}
+            <div style={{ width: '64px', height: '64px', borderRadius: '22px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 16px' }}>🔗</div>
+            <h3 style={{ fontSize: '21px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 6px' }}>
+              멤버 초대하기
+            </h3>
+            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', margin: '0 0 4px' }}>
+              {optimisticSpaceName ?? group?.name ?? '이 공간'}
+            </p>
+            <p style={{ fontSize: '12px', color: '#AEAEB2', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>
               현재 {memberCount}명 · {FREE_MAX_MEMBERS - memberCount}명 더 초대 가능
             </p>
-            <button onClick={copyInviteLink} disabled={generatingCode}
-              style={{ width: '100%', height: '58px', borderRadius: '18px', background: copied ? '#0CC9B5' : copyError ? '#EF4444' : '#1A1B2E', border: 'none', cursor: generatingCode ? 'wait' : 'pointer', fontSize: '16px', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', transition: 'background 0.2s', opacity: generatingCode ? 0.7 : 1 }}>
-              {generatingCode ? '코드 생성 중...' : copied ? '링크 복사 완료 ✓' : copyError ? '복사 실패 — 직접 입력해주세요' : '초대 링크 복사하기'}
-            </button>
-            {copyError && (
-              <p style={{ fontSize: '12px', color: '#EF4444', textAlign: 'center', margin: '-4px 0 12px', fontWeight: 600 }}>
-                {inviteLink}
-              </p>
+
+            {/* 초대 코드 표시 */}
+            {currentInviteCode && (
+              <div style={{ background: '#F5F5F7', borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <div>
+                  <p style={{ fontSize: '10px', fontWeight: 800, color: '#8E8E93', margin: '0 0 4px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
+                  <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
+                </div>
+                <button
+                  onClick={copyInviteLink}
+                  style={{ padding: '8px 16px', borderRadius: '12px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                >
+                  코드만 복사
+                </button>
+              </div>
             )}
-            <button onClick={() => setShowInviteModal(false)}
-              style={{ width: '100%', height: '58px', borderRadius: '18px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>
+
+            {/* 3가지 공유 버튼 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
+
+              {/* 카카오톡 */}
+              <button
+                onClick={shareViaKakao}
+                disabled={generatingCode || shareKakao}
+                style={{
+                  width: '100%', height: '58px', borderRadius: '18px',
+                  background: '#FEE500', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  fontSize: '16px', fontWeight: 800, color: '#1A1B2E',
+                  opacity: shareKakao ? 0.7 : 1, transition: 'opacity 0.2s',
+                }}
+              >
+                <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+                  <path d="M24 4C12.95 4 4 11.82 4 21.4c0 6.06 3.84 11.38 9.6 14.44L11.2 44l10.56-5.44c.72.1 1.46.16 2.24.16 11.05 0 20-7.82 20-17.4C44 11.82 35.05 4 24 4z" fill="#1A1B2E"/>
+                </svg>
+                {shareKakao ? '공유 중...' : '카카오톡으로 공유'}
+              </button>
+
+              {/* 문자 메시지 */}
+              <button
+                onClick={shareViaSms}
+                disabled={generatingCode || shareSms}
+                style={{
+                  width: '100%', height: '58px', borderRadius: '18px',
+                  background: 'linear-gradient(135deg, #34C759, #30B050)',
+                  border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  fontSize: '16px', fontWeight: 800, color: 'white',
+                  opacity: shareSms ? 0.7 : 1, transition: 'opacity 0.2s',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {shareSms ? '문자 앱 열기...' : '문자 메시지로 보내기'}
+              </button>
+
+              {/* 링크 복사 */}
+              <button
+                onClick={copyFullMessage}
+                disabled={generatingCode}
+                style={{
+                  width: '100%', height: '58px', borderRadius: '18px',
+                  background: copied ? '#0CC9B5' : copyError ? '#EF4444' : '#1A1B2E',
+                  border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  fontSize: '16px', fontWeight: 800, color: 'white',
+                  transition: 'background 0.2s',
+                  opacity: generatingCode ? 0.7 : 1,
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                {copied ? '복사됨 ✓' : copyError ? '복사 실패' : generatingCode ? '준비 중...' : '초대 메시지 복사'}
+              </button>
+            </div>
+
+            {/* 공유 메시지 미리보기 */}
+            <details style={{ marginBottom: '16px' }}>
+              <summary style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', cursor: 'pointer', padding: '4px 0', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                공유될 메시지 미리보기
+              </summary>
+              <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: '#F5F5F7', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {buildShareMessage()}
+              </div>
+            </details>
+
+            <button
+              onClick={() => setShowInviteModal(false)}
+              style={{ width: '100%', height: '52px', borderRadius: '18px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}
+            >
               닫기
             </button>
           </div>

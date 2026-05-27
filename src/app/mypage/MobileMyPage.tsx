@@ -492,7 +492,45 @@ export function MobileMyPage({
           </MenuCard>
         </div>
 
-        {/* 3. 계정 & 보안 */}
+        {/* 3. 앱 설정 */}
+        <div>
+          <SectionTitle title="앱 설정" />
+          <MenuCard>
+            <MenuItem
+              href="/settings/home-layout"
+              label="홈 레이아웃"
+              sub="홈 화면 구성 변경"
+              icon={
+                <IconBox bg="rgba(0,132,204,0.09)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                  </svg>
+                </IconBox>
+              }
+            />
+            <MenuDivider />
+            <MenuItem
+              href="/settings/calendar"
+              label="캘린더 설정"
+              sub="주 시작일, 시간대 등"
+              icon={
+                <IconBox bg="rgba(12,201,181,0.09)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0CC9B5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="18" height="18" x="3" y="4" rx="2"/>
+                    <line x1="16" x2="16" y1="2" y2="6"/>
+                    <line x1="8" x2="8" y1="2" y2="6"/>
+                    <line x1="3" x2="21" y1="10" y2="10"/>
+                  </svg>
+                </IconBox>
+              }
+            />
+          </MenuCard>
+        </div>
+
+        {/* 4. 계정 & 보안 */}
         <div>
           <SectionTitle title="계정 & 보안" />
           <MenuCard>

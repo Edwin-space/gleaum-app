@@ -10,7 +10,7 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { formatDateShort, isSameDay } from '@/lib/utils';
 import type { Schedule } from '@/types';
 import type { ProfileRow } from '@/lib/db';
-import type { OnboardingPreferences, User } from '@/types';
+import type { HomeLayoutPreference, OnboardingPreferences, User } from '@/types';
 
 interface MobileHomeProps {
   user: User | null;
@@ -22,7 +22,19 @@ interface MobileHomeProps {
 export default function MobileHome({ user, profile, schedules, loading }: MobileHomeProps) {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  // 개인화 인사 (homeLayout 기반 — DesktopHome과 동일한 copy)
+  const preferences = (profile?.preferences ?? {}) as Partial<OnboardingPreferences>;
+  const homeLayout = (preferences.homeLayout ?? 'balanced') as HomeLayoutPreference;
+
+  const layoutCopy: Record<HomeLayoutPreference, string> = {
+    balanced:       '일정, 루틴, 자금, Space를 한 화면에서 확인하세요.',
+    calendar_first: '가장 가까운 약속과 캘린더 흐름을 우선으로 보여드립니다.',
+    routine_first:  '반복되는 습관과 완료 확인이 필요한 일을 놓치지 않게 도와드립니다.',
+    expense_first:  '정기결제와 공동비용 알림을 중심으로 홈을 구성합니다.',
+    space_first:    '친구·연인과 연결된 공간의 일정과 소식을 우선합니다.',
+  };
+
+  const [calendarOpen, setCalendarOpen] = useState(() => homeLayout === 'calendar_first');
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
 
   const today = useMemo(() => new Date(), []);
@@ -54,7 +66,6 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
   );
 
   // 개인화 인사
-  const preferences = (profile?.preferences ?? {}) as Partial<OnboardingPreferences>;
   const displayName = user?.displayName ?? user?.name ?? '사용자';
   const hour = today.getHours();
   const greeting = hour < 12 ? '좋은 아침이에요' : hour < 18 ? '좋은 오후예요' : '좋은 저녁이에요';
@@ -148,10 +159,13 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               fontWeight: 800,
               color: 'white',
               letterSpacing: '-0.5px',
-              margin: '0 0 20px',
+              margin: '0 0 6px',
             }}>
               {displayName}님
             </h1>
+            <p style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.50)', margin: '0 0 16px', lineHeight: 1.5 }}>
+              {layoutCopy[homeLayout]}
+            </p>
 
             {/* 오늘 통계 */}
             {!loading && (

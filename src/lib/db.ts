@@ -257,6 +257,17 @@ export interface CompleteOnboardingInput {
   locale?: string;
 }
 
+/** 온보딩 이후 preferences 일부 항목만 업데이트 (기존 값 보존) */
+export async function updatePreferences(patch: Partial<OnboardingPreferences>): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data: existing } = await supabase.from('profiles').select('preferences').eq('id', user.id).single();
+  const merged = { ...(existing?.preferences as object ?? {}), ...patch };
+  const { error } = await supabase.from('profiles').update({ preferences: merged }).eq('id', user.id);
+  return !error;
+}
+
 /** 최초 온보딩 완료 및 개인화 기본값 저장 */
 export async function completeOnboarding(input: CompleteOnboardingInput): Promise<boolean> {
   const supabase = createClient();
@@ -787,8 +798,8 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
   }
 
   // 공간이 없는 경우 개인 공간 자동 생성
-  // (온보딩 완료 여부와 무관하게 — 온보딩 미완료 사용자도 일정 생성 등을 위해 공간 필요)
-  if (!profile.family_group_id && !hasTriedAutoCreateGroup) {
+  // 온보딩 완료 후에만 실행 — 온보딩 중 createSpace()가 호출되어 이중 생성 방지
+  if (!profile.family_group_id && !hasTriedAutoCreateGroup && profile.onboarding_completed_at) {
     hasTriedAutoCreateGroup = true;
     const displayName = profile.display_name ?? profile.name ?? '나';
     const newSpaceId = await createPersonalSpace(displayName);

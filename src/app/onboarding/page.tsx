@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { completeOnboarding, createSpace, createPersonalSpace, joinSpaceByCode } from '@/lib/db';
@@ -86,6 +86,105 @@ const card = (active: boolean, activeColor = '#0084CC'): React.CSSProperties => 
   gap: '16px',
 });
 
+// ── 레이아웃 미리보기 모의 화면 ────────────────────────────────────────────────
+function LayoutPreviewMock({ layoutKey }: { layoutKey: HomeLayoutPreference }) {
+  const Block = ({ h, bg, label, cols }: { h: number; bg: string; label: string; cols?: number }) => (
+    <div style={{
+      height: `${h}px`, borderRadius: '6px', background: bg,
+      display: cols ? 'grid' : 'flex',
+      alignItems: 'center', justifyContent: 'center',
+      gridTemplateColumns: cols ? `repeat(${cols}, 1fr)` : undefined,
+      gap: cols ? '4px' : undefined,
+    } as React.CSSProperties}>
+      {cols ? Array.from({ length: cols }).map((_, i) => (
+        <div key={i} style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '4px', height: '100%' }} />
+      )) : (
+        <span style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.80)', letterSpacing: '0.2px' }}>{label}</span>
+      )}
+    </div>
+  );
+
+  const sectionsByLayout: Record<HomeLayoutPreference, React.ReactNode> = {
+    balanced: (
+      <>
+        <Block h={28} bg="#1A1B2E" label="오늘 요약" cols={3} />
+        <Block h={52} bg="#0084CC" label="캘린더" />
+        <Block h={22} bg="rgba(12,201,181,0.18)" label="일정 1" />
+        <Block h={22} bg="rgba(12,201,181,0.12)" label="일정 2" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+          <Block h={28} bg="rgba(0,0,0,0.06)" label="루틴" />
+          <Block h={28} bg="rgba(0,0,0,0.06)" label="지출" />
+        </div>
+      </>
+    ),
+    calendar_first: (
+      <>
+        <Block h={76} bg="#0084CC" label="캘린더" />
+        <Block h={22} bg="rgba(12,201,181,0.18)" label="오늘 일정 1" />
+        <Block h={22} bg="rgba(12,201,181,0.14)" label="오늘 일정 2" />
+        <Block h={22} bg="rgba(12,201,181,0.10)" label="오늘 일정 3" />
+        <Block h={18} bg="rgba(0,0,0,0.05)" label="빠른 액션" cols={2} />
+      </>
+    ),
+    routine_first: (
+      <>
+        <Block h={20} bg="rgba(12,201,181,0.20)" label="루틴 1 ✓" />
+        <Block h={20} bg="rgba(12,201,181,0.15)" label="루틴 2 ✓" />
+        <Block h={20} bg="rgba(12,201,181,0.10)" label="루틴 3" />
+        <Block h={24} bg="#1A1B2E" label="오늘 요약" cols={3} />
+        <Block h={42} bg="rgba(0,132,204,0.15)" label="캘린더" />
+        <Block h={18} bg="rgba(0,0,0,0.05)" label="일정" />
+      </>
+    ),
+    expense_first: (
+      <>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+          <Block h={52} bg="rgba(245,158,11,0.25)" label="이번 달 지출" />
+          <Block h={52} bg="rgba(245,158,11,0.15)" label="예산 잔액" />
+        </div>
+        <Block h={20} bg="rgba(245,158,11,0.12)" label="지출 내역 1" />
+        <Block h={20} bg="rgba(245,158,11,0.08)" label="지출 내역 2" />
+        <Block h={24} bg="#1A1B2E" label="오늘 요약" cols={3} />
+        <Block h={32} bg="rgba(0,132,204,0.12)" label="캘린더" />
+      </>
+    ),
+    space_first: (
+      <>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {[0,1,2,3].map(i => (
+            <div key={i} style={{ width: '28px', height: '28px', borderRadius: '50%', background: `rgba(0,132,204,${0.4 - i*0.08})`, flexShrink: 0 }} />
+          ))}
+          <div style={{ flex: 1, background: 'rgba(0,132,204,0.08)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '8px', fontWeight: 700, color: '#0084CC' }}>공간 멤버</span>
+          </div>
+        </div>
+        <Block h={38} bg="rgba(0,132,204,0.14)" label="공간 최신 소식" />
+        <Block h={22} bg="rgba(0,132,204,0.10)" label="공간 일정" />
+        <Block h={24} bg="#1A1B2E" label="오늘 요약" cols={3} />
+        <Block h={32} bg="rgba(0,132,204,0.10)" label="캘린더" />
+      </>
+    ),
+  };
+
+  return (
+    <div style={{
+      padding: '10px', background: '#F5F5F7', borderRadius: '14px 14px 0 0',
+      display: 'flex', flexDirection: 'column', gap: '5px',
+    }}>
+      {/* 앱 상단 바 */}
+      <div style={{
+        height: '28px', borderRadius: '8px', background: '#1A1B2E',
+        display: 'flex', alignItems: 'center', padding: '0 10px', gap: '6px', marginBottom: '2px',
+      }}>
+        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+        <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.1)' }} />
+        <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: 'rgba(0,132,204,0.4)' }} />
+      </div>
+      {sectionsByLayout[layoutKey]}
+    </div>
+  );
+}
+
 // ── 체크 뱃지 ─────────────────────────────────────────────────────────────────
 function Check({ active, color = '#0084CC' }: { active: boolean; color?: string }) {
   return (
@@ -118,6 +217,7 @@ export default function OnboardingPage() {
   const [nameMode, setNameMode] = useState<NameDisplayMode>('nickname');
   const [goal, setGoal] = useState<OnboardingPrimaryGoal>('personal_schedule');
   const [homeLayout, setHomeLayout] = useState<HomeLayoutPreference>('calendar_first');
+  const layoutCarouselRef = useRef<HTMLDivElement>(null);
   const [spaceIntent, setSpaceIntent] = useState<SpaceIntent[]>(['solo']);
 
   type SpaceSetupMode = 'create' | 'join' | 'skip';
@@ -165,6 +265,33 @@ export default function OnboardingPage() {
     else if (nextGoal === 'group') setSpaceIntent(['group']);
     else setSpaceIntent(['solo']);
   };
+
+  // 레이아웃 캐러셀 스크롤 → 중앙 카드 자동 선택
+  const handleCarouselScroll = useCallback(() => {
+    const el = layoutCarouselRef.current;
+    if (!el) return;
+    const center = el.scrollLeft + el.clientWidth / 2;
+    const children = Array.from(el.children) as HTMLElement[];
+    let closest = 0;
+    let minDist = Infinity;
+    children.forEach((child, i) => {
+      const dist = Math.abs(child.offsetLeft + child.offsetWidth / 2 - center);
+      if (dist < minDist) { minDist = dist; closest = i; }
+    });
+    if (layouts[closest]) setHomeLayout(layouts[closest].key);
+  }, []);
+
+  const scrollToLayout = useCallback((key: HomeLayoutPreference) => {
+    const el = layoutCarouselRef.current;
+    if (!el) return;
+    const idx = layouts.findIndex(l => l.key === key);
+    if (idx === -1) return;
+    const child = el.children[idx] as HTMLElement | undefined;
+    if (!child) return;
+    const offset = child.offsetLeft - (el.clientWidth - child.offsetWidth) / 2;
+    el.scrollTo({ left: offset, behavior: 'smooth' });
+    setHomeLayout(key);
+  }, []);
 
   const handleSubmit = async () => {
     setError(null);
@@ -478,38 +605,84 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Step 2: 레이아웃 ── */}
+        {/* ── Step 2: 레이아웃 (스와이프 캐러셀) ── */}
         {step === 2 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {layouts.map((item) => {
-              const active = homeLayout === item.key;
-              return (
+          <div>
+            {/* 캐러셀 */}
+            <div
+              ref={layoutCarouselRef}
+              onScroll={handleCarouselScroll}
+              style={{
+                display: 'flex',
+                overflowX: 'auto',
+                scrollSnapType: 'x mandatory',
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+                gap: '12px',
+                padding: '4px 32px 4px',
+                margin: '0 -24px',
+              } as React.CSSProperties}
+            >
+              <style>{`.layout-carousel::-webkit-scrollbar{display:none}`}</style>
+              {layouts.map((item) => {
+                const active = homeLayout === item.key;
+                return (
+                  <div
+                    key={item.key}
+                    onClick={() => scrollToLayout(item.key)}
+                    style={{
+                      scrollSnapAlign: 'center',
+                      flexShrink: 0,
+                      width: 'calc(100% - 64px)',
+                      borderRadius: '24px',
+                      border: `2px solid ${active ? '#0084CC' : 'rgba(0,0,0,0.07)'}`,
+                      background: 'white',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      boxShadow: active ? '0 6px 24px rgba(0,132,204,0.18)' : '0 2px 12px rgba(0,0,0,0.06)',
+                      transition: 'border-color 0.18s, box-shadow 0.18s',
+                    }}
+                  >
+                    {/* 레이아웃 미리보기 */}
+                    <LayoutPreviewMock layoutKey={item.key} />
+                    {/* 레이블 */}
+                    <div style={{ padding: '14px 18px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '22px' }}>{item.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>{item.title}</p>
+                        <p style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>{item.desc}</p>
+                      </div>
+                      <Check active={active} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 닷 인디케이터 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '16px' }}>
+              {layouts.map((item) => (
                 <button
                   key={item.key}
-                  onClick={() => setHomeLayout(item.key)}
-                  style={card(active)}
-                >
-                  <div style={{
-                    width: '48px', height: '48px', flexShrink: 0,
-                    borderRadius: '14px',
-                    background: active ? 'rgba(0,132,204,0.1)' : 'rgba(0,0,0,0.04)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '24px',
-                  }}>
-                    {item.icon}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px' }}>
-                      {item.title}
-                    </p>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
-                      {item.desc}
-                    </p>
-                  </div>
-                  <Check active={active} />
-                </button>
-              );
-            })}
+                  onClick={() => scrollToLayout(item.key)}
+                  style={{
+                    width: homeLayout === item.key ? '20px' : '6px',
+                    height: '6px',
+                    borderRadius: '999px',
+                    background: homeLayout === item.key ? '#0084CC' : '#E5E5EA',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* 선택 항목 확인 텍스트 */}
+            <p style={{ textAlign: 'center', fontSize: '13px', fontWeight: 700, color: '#0084CC', margin: '12px 0 0' }}>
+              {layouts.find(l => l.key === homeLayout)?.icon} {layouts.find(l => l.key === homeLayout)?.title} 선택됨
+            </p>
           </div>
         )}
 
@@ -761,7 +934,6 @@ export default function OnboardingPage() {
         background: 'rgba(250,250,253,0.95)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        borderTop: '1px solid rgba(0,0,0,0.04)',
         zIndex: 50,
       }}>
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', gap: '10px' }}>

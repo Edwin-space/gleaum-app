@@ -262,31 +262,84 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
           <span style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93' }}>일정 불러오는 중...</span>
         </div>
       ) : displayedDates.length === 0 ? (
-        /* Empty state */
-        <div style={{
-          background: 'white', borderRadius: '20px', padding: '36px 20px',
-          border: '1.5px dashed #E5E5EA', textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '36px', marginBottom: '12px' }}>📅</div>
-          <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px' }}>
-            이 날 공간 일정이 없어요
-          </p>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93', margin: '0 0 20px', lineHeight: 1.5 }}>
-            공간 멤버들과 함께할 일정을 추가해보세요
-          </p>
-          <button
-            onClick={() => router.push('/space/schedule/new')}
-            style={{
-              padding: '10px 24px', borderRadius: '14px',
-              background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-              border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 800, color: 'white',
-              boxShadow: '0 4px 16px rgba(0,132,204,0.25)',
-            }}
-          >
-            공간 일정 추가
-          </button>
-        </div>
+        /* 선택 날짜 일정 없음: 콤팩트 메시지 + 다가오는 일정 미리보기 */
+        (() => {
+          // 오늘 이후 가장 가까운 일정 최대 3개
+          const now = new Date(); now.setHours(0, 0, 0, 0);
+          const upcoming = schedules
+            .filter(s => { const d = new Date(s.startTime); d.setHours(0,0,0,0); return d > now; })
+            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+            .slice(0, 3);
+          return (
+            <div>
+              {/* 콤팩트 빈 상태 메시지 */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '14px 18px', borderRadius: '16px',
+                background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+                boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
+                marginBottom: upcoming.length > 0 ? '20px' : '0',
+              }}>
+                <span style={{ fontSize: '20px' }}>📅</span>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                  이 날 등록된 공간 일정이 없어요
+                </p>
+              </div>
+
+              {/* 다가오는 일정 미리보기 */}
+              {upcoming.length > 0 && (
+                <div>
+                  <p style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', margin: '0 0 10px', paddingLeft: '2px', letterSpacing: '0.3px' }}>
+                    다가오는 일정
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {upcoming.map(s => {
+                      const d = new Date(s.startTime);
+                      const mo = d.getMonth() + 1;
+                      const da = d.getDate();
+                      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                      const wd = weekdays[d.getDay()];
+                      const typeCfg = TYPE_CONFIG[s.type] ?? TYPE_CONFIG.shared;
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => router.push(`/schedules/${s.id}`)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                            padding: '12px 14px', borderRadius: '16px',
+                            background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+                            boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
+                            cursor: 'pointer', textAlign: 'left',
+                          }}
+                        >
+                          {/* 날짜 뱃지 */}
+                          <div style={{
+                            width: '40px', height: '40px', flexShrink: 0,
+                            borderRadius: '12px', background: typeCfg.bg,
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: typeCfg.color, lineHeight: 1 }}>{mo}월</span>
+                            <span style={{ fontSize: '16px', fontWeight: 900, color: typeCfg.color, lineHeight: 1.2 }}>{da}</span>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {s.title}
+                            </p>
+                            <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: '2px 0 0' }}>
+                              {`${mo}월 ${da}일 (${wd})`} {formatTime(new Date(s.startTime))}
+                            </p>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {displayedDates.map(dateKey => (
