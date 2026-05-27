@@ -32,7 +32,7 @@ export async function proxy(request: NextRequest) {
   // 비로그인 → /login 리다이렉트 (공개 경로 제외)
   // API 라우트는 자체 인증 처리 (Cron secret, Supabase session 등)
   // '/' (랜딩 페이지)는 비로그인 사용자도 볼 수 있도록 공개 경로에 포함
-  const publicPaths = ['/', '/login', '/auth/callback', '/invite', '/api', '/legal', '/.well-known', '/ads.txt', '/robots.txt', '/sitemap.xml'];
+  const publicPaths = ['/', '/login', '/auth/callback', '/invite', '/api', '/legal', '/.well-known', '/ads.txt', '/robots.txt', '/sitemap.xml', '/download'];
   const isPublic = publicPaths.some((p) => pathname === p || (p !== '/' && pathname.startsWith(p)));
 
   if (!user && !isPublic) {

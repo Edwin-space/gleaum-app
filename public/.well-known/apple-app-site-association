@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "JBN99YZ7KN.com.gleaum.app",
+        "paths": [
+          "/invite/*",
+          "/space/*/join",
+          "/home",
+          "/schedules/*",
+          "/auth/callback"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["JBN99YZ7KN.com.gleaum.app"]
+  }
+}

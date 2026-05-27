@@ -36,7 +36,7 @@
                 <data android:scheme="gleaum" />
             </intent-filter>
 
-            <!-- App Links: https://www.gleaum.com (Universal Links 동등) -->
+            <!-- App Links: https://www.gleaum.com -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -44,6 +44,16 @@
                 <data
                     android:scheme="https"
                     android:host="www.gleaum.com" />
+            </intent-filter>
+
+            <!-- App Links: https://gleaum.com (www 없는 도메인 — 초대 링크 등) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="gleaum.com" />
             </intent-filter>
 
         </activity>
