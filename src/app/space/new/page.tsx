@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSpace, updateSpaceSettings } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
 import type { SpacePurpose } from '@/types';
 
@@ -18,8 +19,26 @@ const PURPOSES: Array<{ key: SpacePurpose; label: string; desc: string; emoji: s
 
 const TOTAL_STEPS = 4;
 
+type KakaoShareWindow = Window & {
+  Kakao?: {
+    Share?: {
+      sendDefault: (payload: {
+        objectType: 'feed';
+        content: {
+          title: string;
+          description: string;
+          imageUrl: string;
+          link: { mobileWebUrl: string; webUrl: string };
+        };
+        buttons: Array<{ title: string; link: { mobileWebUrl: string; webUrl: string } }>;
+      }) => void;
+    };
+  };
+};
+
 export default function SpaceNewPage() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const { refresh } = useCurrentUser();
 
   const [step,         setStep]         = useState(1);
@@ -94,8 +113,9 @@ export default function SpaceNewPage() {
       } catch {}
     }
     // 2) Kakao SDK 있으면 사용
-    if (typeof window !== 'undefined' && (window as any).Kakao?.Share) {
-      (window as any).Kakao.Share.sendDefault({
+    const kakao = typeof window !== 'undefined' ? (window as KakaoShareWindow).Kakao : undefined;
+    if (kakao?.Share) {
+      kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
           title: `${spaceName} 공간에 초대합니다`,
@@ -120,6 +140,304 @@ export default function SpaceNewPage() {
     router.replace(createdId ? `/space?sid=${createdId}` : '/space');
   };
   const skip = () => router.replace('/space');
+
+  if (isDesktop) {
+    const desktopPurposeColor: Record<SpacePurpose, string> = {
+      family: '#0084CC',
+      couple: '#0CC9B5',
+      friends: '#2EE895',
+      work: '#1A1B2E',
+      other: '#F59E0B',
+    };
+    const selectedPurpose = purpose ? PURPOSES.find(p => p.key === purpose) : null;
+
+    return (
+      <main style={{
+        minHeight: '100dvh',
+        background: '#FAFAFD',
+        padding: '44px 48px 64px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: '-140px', left: '-120px', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(46,232,149,0.16), transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-150px', right: '-120px', width: '460px', height: '460px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,132,204,0.13), transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{
+          maxWidth: '1180px',
+          margin: '0 auto',
+          position: 'relative',
+          zIndex: 1,
+          display: 'grid',
+          gridTemplateColumns: 'minmax(360px, 0.86fr) minmax(520px, 1.14fr)',
+          gap: '28px',
+          alignItems: 'stretch',
+        }}>
+          <aside style={{
+            borderRadius: '32px',
+            background: 'linear-gradient(150deg, #1A1B2E 0%, #2D2E4A 58%, #0D3145 100%)',
+            color: 'white',
+            padding: '36px',
+            minHeight: 'calc(100dvh - 108px)',
+            boxShadow: '0 24px 70px rgba(26,27,46,0.18)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            overflow: 'hidden',
+            position: 'relative',
+          }}>
+            <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '240px', height: '240px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(12,201,181,0.22), transparent 70%)' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <button
+                onClick={skip}
+                style={{
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: 'rgba(255,255,255,0.82)',
+                  borderRadius: '999px',
+                  padding: '9px 15px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  marginBottom: '32px',
+                }}
+              >
+                ← 공간으로 돌아가기
+              </button>
+              <p style={{ fontSize: '11px', fontWeight: 900, color: '#0CC9B5', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+                New Space
+              </p>
+              <h1 style={{ fontSize: '40px', fontWeight: 900, letterSpacing: '-0.05em', lineHeight: 1.08, margin: '0 0 18px' }}>
+                함께 관리할<br />공간을 만드세요.
+              </h1>
+              <p style={{ fontSize: '15px', fontWeight: 600, color: 'rgba(255,255,255,0.62)', lineHeight: 1.75, margin: 0 }}>
+                친구, 연인, 가족, 팀까지. 공간은 일정과 지출을 함께 묶어 관리하는 글리움의 확장 단위입니다.
+              </p>
+            </div>
+
+            <div style={{ position: 'relative', zIndex: 1, display: 'grid', gap: '12px' }}>
+              {[
+                { icon: '📅', title: '공간 일정', desc: '멤버가 함께 보는 일정 흐름' },
+                { icon: '💰', title: '공유 지출', desc: '공동 비용과 정산 맥락 관리' },
+                { icon: '🔗', title: '초대 링크', desc: '코드와 링크로 빠르게 합류' },
+              ].map(item => (
+                <div key={item.title} style={{ display: 'flex', gap: '14px', alignItems: 'center', padding: '15px', borderRadius: '20px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.10)' }}>
+                  <span style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'rgba(255,255,255,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '23px', flexShrink: 0 }}>{item.icon}</span>
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: 900, margin: '0 0 3px' }}>{item.title}</p>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.52)', margin: 0 }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          <section style={{
+            borderRadius: '32px',
+            background: 'rgba(255,255,255,0.84)',
+            border: '1px solid rgba(255,255,255,0.9)',
+            boxShadow: '0 18px 56px rgba(0,132,204,0.09)',
+            padding: '36px',
+            minHeight: 'calc(100dvh - 108px)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            {!createdId ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', marginBottom: '30px' }}>
+                  <div>
+                    <p style={{ fontSize: '11px', fontWeight: 900, color: '#8E8E93', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                      Space Setup
+                    </p>
+                    <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.04em', margin: '0 0 8px' }}>
+                      공간 기본값 설정
+                    </h2>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#8E8E93', lineHeight: 1.65, margin: 0 }}>
+                      이름과 목적만 정하면 바로 초대 링크를 만들 수 있습니다.
+                    </p>
+                  </div>
+                  <span style={{ padding: '8px 13px', borderRadius: '999px', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '12px', fontWeight: 900, whiteSpace: 'nowrap' }}>
+                    빠른 생성
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gap: '26px', flex: 1 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 900, color: '#1A1B2E', marginBottom: '10px' }}>
+                      공간 이름
+                    </label>
+                    <input
+                      ref={nameInputRef}
+                      value={spaceName}
+                      onChange={(e) => setSpaceName(e.target.value)}
+                      placeholder="예: 우리집, 제주 여행 모임, 프로젝트 팀"
+                      maxLength={30}
+                      style={{
+                        width: '100%',
+                        height: '58px',
+                        padding: '0 18px',
+                        borderRadius: '18px',
+                        border: `2px solid ${spaceName.trim() ? '#0CC9B5' : '#E8E8E4'}`,
+                        background: spaceName.trim() ? 'white' : '#F5F5F3',
+                        color: '#1A1B2E',
+                        outline: 'none',
+                        fontSize: '17px',
+                        fontWeight: 800,
+                        boxSizing: 'border-box',
+                        boxShadow: spaceName.trim() ? '0 0 0 4px rgba(12,201,181,0.10)' : 'none',
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                      {['우리집', '커플 공간', '친구 모임', '여행 준비', '프로젝트 팀'].map(s => (
+                        <button
+                          key={s}
+                          onClick={() => setSpaceName(s)}
+                          style={{ height: '34px', padding: '0 14px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'white', color: '#6E6E66', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p style={{ fontSize: '13px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 12px' }}>공간 목적</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+                      {PURPOSES.map(p => {
+                        const active = purpose === p.key;
+                        const color = desktopPurposeColor[p.key];
+                        return (
+                          <button
+                            key={p.key}
+                            onClick={() => setPurpose(p.key)}
+                            style={{
+                              minHeight: '94px',
+                              padding: '18px',
+                              borderRadius: '22px',
+                              textAlign: 'left',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '16px',
+                              cursor: 'pointer',
+                              background: active ? `${color}12` : 'white',
+                              border: `2px solid ${active ? `${color}55` : '#E8E8E4'}`,
+                              boxShadow: active ? `0 8px 24px ${color}18` : '0 2px 10px rgba(0,0,0,0.035)',
+                            }}
+                          >
+                            <span style={{ width: '48px', height: '48px', borderRadius: '17px', background: active ? color : '#F5F5F3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '25px', flexShrink: 0 }}>
+                              {p.emoji}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: '15px', fontWeight: 900, color: active ? color : '#1A1B2E', margin: '0 0 3px' }}>{p.label}</p>
+                              <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0, lineHeight: 1.45 }}>{p.desc}</p>
+                            </div>
+                            {active && (
+                              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'center' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                    {selectedPurpose ? `${selectedPurpose.label} 목적의 공간으로 시작합니다.` : '공간 목적을 선택해 주세요.'}
+                  </p>
+                  <button
+                    onClick={handleCreate}
+                    disabled={!spaceName.trim() || !purpose || creating}
+                    style={{
+                      minWidth: '174px',
+                      height: '54px',
+                      borderRadius: '999px',
+                      border: 'none',
+                      background: spaceName.trim() && purpose && !creating
+                        ? 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)'
+                        : '#E8E8E4',
+                      color: spaceName.trim() && purpose && !creating ? 'white' : '#AEAEA8',
+                      cursor: spaceName.trim() && purpose && !creating ? 'pointer' : 'not-allowed',
+                      boxShadow: spaceName.trim() && purpose && !creating ? '0 10px 28px rgba(0,132,204,0.28)' : 'none',
+                      fontSize: '15px',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {creating ? '공간 생성 중...' : '공간 만들기'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ width: '78px', height: '78px', borderRadius: '26px', background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', boxShadow: '0 12px 32px rgba(0,132,204,0.26)', marginBottom: '26px' }}>
+                  🎉
+                </div>
+                <p style={{ fontSize: '11px', fontWeight: 900, color: '#0CC9B5', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                  Space Created
+                </p>
+                <h2 style={{ fontSize: '32px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.04em', lineHeight: 1.15, margin: '0 0 12px' }}>
+                  <span style={{ color: '#0084CC' }}>{spaceName}</span> 공간이<br />준비되었습니다.
+                </h2>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#8E8E93', lineHeight: 1.7, margin: '0 0 30px' }}>
+                  초대 링크를 공유하거나 바로 공간으로 이동해 첫 일정을 등록해 보세요.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px', marginBottom: '28px' }}>
+                  {[
+                    { title: '초대 링크 복사', desc: linkCopied ? '복사 완료' : '링크를 전달하세요', icon: '🔗', onClick: copyLink },
+                    { title: '카카오톡 공유', desc: '친구에게 바로 전달', icon: '💬', onClick: shareKakao },
+                    {
+                      title: '공유 시트',
+                      desc: '연락처/메신저 선택',
+                      icon: '📱',
+                      onClick: () => {
+                        if (navigator.share) navigator.share({ title: `${spaceName} 공간 초대`, url: inviteLink });
+                        else copyLink();
+                      },
+                    },
+                  ].map(item => (
+                    <button
+                      key={item.title}
+                      onClick={item.onClick}
+                      style={{ minHeight: '132px', borderRadius: '24px', border: '1.5px solid #E8E8E4', background: 'white', cursor: 'pointer', padding: '18px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                    >
+                      <span style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>{item.icon}</span>
+                      <span>
+                        <strong style={{ display: 'block', fontSize: '14px', fontWeight: 900, color: '#1A1B2E', marginBottom: '4px' }}>{item.title}</strong>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>{item.desc}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <code style={{ display: 'block', borderRadius: '20px', background: '#F5F5F3', border: '1.5px solid rgba(0,132,204,0.14)', padding: '18px 20px', color: '#0084CC', fontSize: '13px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 'auto' }}>
+                  {inviteLink}
+                </code>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '30px' }}>
+                  <button
+                    onClick={goToSpace}
+                    style={{ height: '52px', padding: '0 24px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'white', color: '#6E6E66', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
+                  >
+                    나중에 초대
+                  </button>
+                  <button
+                    onClick={goToSpace}
+                    style={{ height: '52px', padding: '0 28px', borderRadius: '999px', border: 'none', background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', color: 'white', cursor: 'pointer', boxShadow: '0 10px 28px rgba(0,132,204,0.28)', fontSize: '14px', fontWeight: 900 }}
+                  >
+                    공간 시작하기
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   // ── 공통 레이아웃 ─────────────────────────────────────────
   return (
