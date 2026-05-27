@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
+import { useIsDesktop } from '@/hooks/useMediaQuery';
 import {
   getSpaceSettings, updateSpaceSettings, updateSpaceName,
   getSpaceWithMembers, removeSpaceMember, deleteSpace, regenerateInviteCode,
@@ -147,6 +148,7 @@ function CloseSpaceModal({
 // ── 메인 페이지 ──────────────────────────────────────────────
 export default function SpaceSettingsPage() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const { spaceId, user, loading: userLoading } = useCurrentUser();
   const userId = user?.id ?? null;
   const { space, myRole, loading: spaceLoading, refresh: refreshSpace } = useSpace(spaceId);
@@ -180,6 +182,8 @@ export default function SpaceSettingsPage() {
   // ── 설정 로드 ─────────────────────────────────────────────
   useEffect(() => {
     if (!spaceId) return;
+    // DB/space 상태가 비동기로 준비된 뒤 폼 기본값을 동기화한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSpaceName(space?.name ?? '');
 
     getSpaceSettings(spaceId).then(settings => {
@@ -198,7 +202,10 @@ export default function SpaceSettingsPage() {
     setMembersLoading(false);
   }, [spaceId]);
 
-  useEffect(() => { loadMembers(); }, [loadMembers]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadMembers();
+  }, [loadMembers]);
 
   // ── 권한 없음 guard ──────────────────────────────────────
   useEffect(() => {
@@ -209,7 +216,7 @@ export default function SpaceSettingsPage() {
   }, [myRole, spaceLoading, userLoading, router]);
 
   // ── 공간 이름 저장 ────────────────────────────────────────
-  const handleSaveName = async () => {
+  const handleSaveName = async (stayOnPage = false) => {
     if (!spaceName.trim() || !spaceId) return;
     setSavingName(true);
     const ok = await updateSpaceName(spaceId, spaceName.trim());
@@ -218,7 +225,7 @@ export default function SpaceSettingsPage() {
     if (ok) {
       try { localStorage.setItem('gleaum_space_name_updated', Date.now().toString()); } catch {}
       toast.success('공간 이름이 변경되었습니다');
-      setTimeout(() => router.back(), 100);
+      if (!stayOnPage) setTimeout(() => router.back(), 100);
     } else {
       toast.error('이름 변경에 실패했습니다');
     }
@@ -325,6 +332,386 @@ export default function SpaceSettingsPage() {
     );
   }
 
+  if (isDesktop) {
+    const desktopCard: React.CSSProperties = {
+      background: 'rgba(255,255,255,0.82)',
+      border: '1px solid rgba(255,255,255,0.85)',
+      borderRadius: '28px',
+      boxShadow: '0 18px 50px rgba(0,132,204,0.08)',
+      padding: '28px',
+    };
+
+    const desktopLabel: React.CSSProperties = {
+      fontSize: '11px',
+      fontWeight: 900,
+      color: '#8E8E93',
+      letterSpacing: '0.12em',
+      textTransform: 'uppercase',
+      margin: '0 0 14px',
+    };
+
+    const mutedText: React.CSSProperties = {
+      fontSize: '13px',
+      fontWeight: 600,
+      color: '#8E8E93',
+      lineHeight: 1.6,
+      margin: 0,
+    };
+
+    return (
+      <>
+        {showCloseModal && (
+          <CloseSpaceModal
+            hasOtherMembers={hasOtherMembers}
+            onConfirm={handleCloseSpace}
+            onCancel={() => setShowCloseModal(false)}
+          />
+        )}
+
+        <main style={{
+          minHeight: '100dvh',
+          background: '#FAFAFD',
+          padding: '44px 48px 64px',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{ position: 'absolute', top: '-120px', right: '-90px', width: '360px', height: '360px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(46,232,149,0.16), transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '-140px', left: '18%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,132,204,0.12), transparent 70%)', pointerEvents: 'none' }} />
+
+          <div style={{ maxWidth: '1180px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', marginBottom: '28px' }}>
+              <div>
+                <button
+                  onClick={() => router.back()}
+                  style={{
+                    border: 'none',
+                    background: 'rgba(0,132,204,0.08)',
+                    color: '#0084CC',
+                    borderRadius: '999px',
+                    padding: '9px 15px',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    marginBottom: '18px',
+                  }}
+                >
+                  ← 공간으로 돌아가기
+                </button>
+                <p style={{ ...desktopLabel, marginBottom: '8px' }}>Space Admin</p>
+                <h1 style={{ fontSize: '34px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.04em', margin: '0 0 10px' }}>
+                  공간 설정
+                </h1>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#6E6E66', lineHeight: 1.7, margin: 0 }}>
+                  이름, 멤버, 초대 코드와 일정 유형을 한 화면에서 관리합니다.
+                </p>
+              </div>
+
+              {isAdmin && settingsLoaded && (
+                <button
+                  onClick={handleSaveSettings}
+                  disabled={savingSettings}
+                  style={{
+                    minWidth: '154px',
+                    height: '48px',
+                    borderRadius: '999px',
+                    border: 'none',
+                    background: savingSettings ? 'rgba(0,132,204,0.45)' : 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 900,
+                    cursor: savingSettings ? 'not-allowed' : 'pointer',
+                    boxShadow: savingSettings ? 'none' : '0 8px 24px rgba(0,132,204,0.24)',
+                  }}
+                >
+                  {savingSettings ? '저장 중...' : '설정 저장'}
+                </button>
+              )}
+            </header>
+
+            <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(360px, 0.85fr)', gap: '24px', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gap: '24px' }}>
+                <div style={desktopCard}>
+                  <p style={desktopLabel}>기본 정보</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '18px', alignItems: 'start' }}>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: 800, color: '#8E8E93', margin: '0 0 8px' }}>공간 이름</p>
+                      {editingName ? (
+                        <div>
+                          <input
+                            value={spaceName}
+                            onChange={e => setSpaceName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleSaveName(true);
+                              if (e.key === 'Escape') { setEditingName(false); setSpaceName(space?.name ?? ''); }
+                            }}
+                            autoFocus
+                            maxLength={30}
+                            placeholder="변경할 공간 이름"
+                            style={{
+                              width: '100%',
+                              height: '52px',
+                              padding: '0 16px',
+                              borderRadius: '16px',
+                              border: '2px solid #0CC9B5',
+                              background: '#FFFFFF',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                              color: '#1A1B2E',
+                              fontSize: '17px',
+                              fontWeight: 800,
+                              boxShadow: '0 0 0 4px rgba(12,201,181,0.10)',
+                              marginBottom: '10px',
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => { setEditingName(false); setSpaceName(space?.name ?? ''); }}
+                              style={{ height: '42px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'white', cursor: 'pointer', color: '#6E6E66', fontSize: '13px', fontWeight: 800 }}
+                            >
+                              취소
+                            </button>
+                            <button
+                              onClick={() => handleSaveName(true)}
+                              disabled={savingName || !spaceName.trim()}
+                              style={{ height: '42px', padding: '0 22px', borderRadius: '999px', border: 'none', background: savingName || !spaceName.trim() ? '#E8E8E4' : '#0084CC', color: savingName || !spaceName.trim() ? '#AEAEA8' : 'white', cursor: savingName || !spaceName.trim() ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 900 }}
+                            >
+                              {savingName ? '저장 중...' : '이름 저장'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#1A1B2E', margin: 0, letterSpacing: '-0.03em' }}>
+                            {space?.name ?? spaceName}
+                          </h2>
+                          {isAdmin && (
+                            <button
+                              onClick={() => { setSpaceName(space?.name ?? ''); setEditingName(true); }}
+                              style={{ height: '36px', padding: '0 14px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.18)', background: 'rgba(0,132,204,0.06)', color: '#0084CC', cursor: 'pointer', fontSize: '12px', fontWeight: 900 }}
+                            >
+                              편집
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ borderRadius: '20px', background: 'linear-gradient(135deg, #1A1B2E, #2D2E4A)', padding: '18px', color: 'white' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.48)', margin: '0 0 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Members</p>
+                      <p style={{ fontSize: '34px', fontWeight: 900, margin: '0 0 4px' }}>{members.length}</p>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.62)', margin: 0 }}>현재 참여 멤버</p>
+                    </div>
+                  </div>
+
+                  <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '24px 0' }} />
+
+                  <p style={{ fontSize: '13px', fontWeight: 800, color: '#8E8E93', margin: '0 0 12px' }}>공간 목적</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '10px' }}>
+                    {PURPOSES.map(p => {
+                      const active = purpose === p.key;
+                      return (
+                        <button
+                          key={p.key}
+                          onClick={() => isAdmin && setPurpose(p.key)}
+                          style={{
+                            minHeight: '78px',
+                            borderRadius: '18px',
+                            border: `1.5px solid ${active ? 'rgba(0,132,204,0.45)' : '#E8E8E4'}`,
+                            background: active ? 'rgba(0,132,204,0.08)' : 'white',
+                            color: active ? '#0084CC' : '#6E6E66',
+                            cursor: isAdmin ? 'pointer' : 'default',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '7px',
+                            fontSize: '13px',
+                            fontWeight: 900,
+                          }}
+                        >
+                          <span style={{ fontSize: '22px' }}>{p.emoji}</span>
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={desktopCard}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '18px' }}>
+                    <div>
+                      <p style={desktopLabel}>일정 유형</p>
+                      <p style={mutedText}>공간 일정 등록 시 사용할 유형을 관리합니다. 최소 1개, 최대 10개까지 등록할 수 있어요.</p>
+                    </div>
+                    <span style={{ padding: '7px 12px', borderRadius: '999px', background: 'rgba(12,201,181,0.10)', color: '#0CC9B5', fontSize: '12px', fontWeight: 900, whiteSpace: 'nowrap' }}>
+                      {scheduleTypes.length}/10
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '18px' }}>
+                    {scheduleTypes.map(t => (
+                      <div
+                        key={t}
+                        style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 14px', borderRadius: '999px', background: 'rgba(0,132,204,0.08)', border: '1.5px solid rgba(0,132,204,0.18)' }}
+                      >
+                        <span style={{ fontSize: '13px', fontWeight: 900, color: '#0084CC' }}>{t}</span>
+                        {isAdmin && (
+                          <button
+                            onClick={() => removeType(t)}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '15px', fontWeight: 900, padding: 0, lineHeight: 1 }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {isAdmin && (
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input
+                        value={newType}
+                        onChange={e => setNewType(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addType()}
+                        placeholder="새 유형 이름 입력"
+                        maxLength={10}
+                        style={{ flex: 1, height: '48px', padding: '0 16px', borderRadius: '16px', border: '1.5px solid #E8E8E4', background: '#F5F5F3', color: '#1A1B2E', outline: 'none', fontSize: '14px', fontWeight: 700 }}
+                      />
+                      <button
+                        onClick={addType}
+                        disabled={!newType.trim()}
+                        style={{ height: '48px', padding: '0 22px', borderRadius: '999px', border: 'none', background: newType.trim() ? '#0084CC' : '#E8E8E4', color: newType.trim() ? 'white' : '#AEAEA8', cursor: newType.trim() ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: 900 }}
+                      >
+                        추가
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <aside style={{ display: 'grid', gap: '24px' }}>
+                {isAdmin && (
+                  <div style={desktopCard}>
+                    <p style={desktopLabel}>초대 코드</p>
+                    <p style={{ ...mutedText, marginBottom: '16px' }}>공유 공간에 멤버를 초대할 때 사용하는 코드입니다.</p>
+                    {currentSettingsInviteCode ? (
+                      <>
+                        <code style={{ display: 'block', padding: '18px 16px', borderRadius: '18px', background: '#F5F5F3', color: '#0084CC', fontSize: '18px', fontWeight: 900, letterSpacing: '0.12em', textAlign: 'center', border: '1.5px solid rgba(0,132,204,0.14)', marginBottom: '12px' }}>
+                          {currentSettingsInviteCode}
+                        </code>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(currentSettingsInviteCode); toast.success('초대 코드가 복사되었습니다'); }}
+                            style={{ height: '44px', borderRadius: '999px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 900 }}
+                          >
+                            코드 복사
+                          </button>
+                          <button
+                            onClick={handleRegenerateCode}
+                            disabled={regenerating}
+                            style={{ height: '44px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.22)', background: 'white', color: '#0084CC', cursor: regenerating ? 'not-allowed' : 'pointer', opacity: regenerating ? 0.55 : 1, fontSize: '13px', fontWeight: 900 }}
+                          >
+                            {regenerating ? '처리 중' : '재발급'}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleRegenerateCode}
+                        disabled={regenerating}
+                        style={{ width: '100%', height: '48px', borderRadius: '999px', border: '1.5px dashed rgba(0,132,204,0.45)', background: 'rgba(0,132,204,0.06)', color: '#0084CC', cursor: regenerating ? 'not-allowed' : 'pointer', opacity: regenerating ? 0.55 : 1, fontSize: '14px', fontWeight: 900 }}
+                      >
+                        {regenerating ? '생성 중...' : '+ 초대 코드 생성'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div style={desktopCard}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '18px' }}>
+                    <div>
+                      <p style={desktopLabel}>멤버</p>
+                      <p style={mutedText}>공간에 참여 중인 사용자와 권한을 확인합니다.</p>
+                    </div>
+                    <span style={{ padding: '7px 12px', borderRadius: '999px', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '12px', fontWeight: 900 }}>
+                      {members.length}명
+                    </span>
+                  </div>
+
+                  {membersLoading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '26px 0' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2.5px solid #0084CC', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                    </div>
+                  ) : members.length === 0 ? (
+                    <p style={{ ...mutedText, textAlign: 'center', padding: '20px 0' }}>멤버 정보를 불러올 수 없습니다</p>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '10px' }}>
+                      {members.map(member => {
+                        const isSelf = member.userId === userId;
+                        const memberAdmin = member.role === 'admin';
+                        const removing = removingId === member.userId;
+                        const initials = (member.user?.name ?? '?').charAt(0).toUpperCase();
+
+                        return (
+                          <div key={member.userId} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '18px', background: isSelf ? 'rgba(0,132,204,0.06)' : '#FAFAFD', border: '1px solid rgba(0,0,0,0.04)' }}>
+                            {member.user?.avatar ? (
+                              <img src={member.user.avatar} alt={member.user.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: isSelf ? 'linear-gradient(135deg, #0CC9B5, #0084CC)' : '#E8E8E4', color: isSelf ? 'white' : '#8E8E93', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '16px', fontWeight: 900 }}>
+                                {initials}
+                              </div>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <p style={{ fontSize: '14px', fontWeight: 900, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {member.user?.name ?? '알 수 없는 사용자'}
+                                </p>
+                                {isSelf && <span style={{ fontSize: '10px', fontWeight: 900, color: '#0084CC', background: 'rgba(0,132,204,0.10)', padding: '2px 7px', borderRadius: '999px' }}>나</span>}
+                              </div>
+                              <p style={{ fontSize: '12px', fontWeight: 800, color: memberAdmin ? '#F59E0B' : '#8E8E93', margin: '2px 0 0' }}>
+                                {memberAdmin ? '관리자' : '멤버'}
+                              </p>
+                            </div>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleRemoveMember(member)}
+                                disabled={removing}
+                                style={{ height: '34px', padding: '0 12px', borderRadius: '999px', border: `1.5px solid ${isSelf ? '#E8E8E4' : 'rgba(239,68,68,0.25)'}`, background: 'white', color: isSelf ? '#8E8E93' : '#EF4444', cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.55 : 1, fontSize: '12px', fontWeight: 900 }}
+                              >
+                                {removing ? '처리 중' : isSelf ? '나가기' : '내보내기'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {isAdmin && (
+                  <div style={{ ...desktopCard, border: '1.5px solid rgba(239,68,68,0.18)', background: 'rgba(255,250,250,0.92)' }}>
+                    <p style={{ ...desktopLabel, color: '#EF4444' }}>위험 구역</p>
+                    <h3 style={{ fontSize: '17px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>공간 폐쇄</h3>
+                    <p style={{ ...mutedText, marginBottom: '16px' }}>
+                      공간과 연결된 일정, 가계부, 설정 데이터가 삭제됩니다. 멤버가 남아 있으면 폐쇄할 수 없습니다.
+                    </p>
+                    <button
+                      onClick={() => setShowCloseModal(true)}
+                      style={{ height: '44px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid rgba(239,68,68,0.35)', background: 'white', color: '#EF4444', cursor: 'pointer', fontSize: '13px', fontWeight: 900 }}
+                    >
+                      공간 폐쇄
+                    </button>
+                  </div>
+                )}
+              </aside>
+            </section>
+          </div>
+        </main>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </>
+    );
+  }
+
   return (
     <>
       {showCloseModal && (
@@ -387,7 +774,7 @@ export default function SpaceSettingsPage() {
                     style={{ flex: 1, height: '46px', borderRadius: '14px', border: '1.5px solid #E0E0E5', background: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: '#8E8E93' }}
                   >취소</button>
                   <button
-                    onClick={handleSaveName}
+                    onClick={() => handleSaveName()}
                     disabled={savingName || !spaceName.trim()}
                     style={{ flex: 2, height: '46px', borderRadius: '14px', border: 'none', background: savingName || !spaceName.trim() ? 'rgba(0,132,204,0.4)' : '#0084CC', color: 'white', cursor: savingName || !spaceName.trim() ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 800 }}
                   >{savingName ? '저장 중...' : '저장'}</button>
