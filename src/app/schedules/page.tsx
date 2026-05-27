@@ -17,6 +17,10 @@ const FILTERS: { key: 'all' | ScheduleType; label: string }[] = [
   { key: 'expense',  label: '정기지출' },
 ];
 
+function isTimelineSchedule(schedule: Schedule): boolean {
+  return !(schedule.type === 'expense' && schedule.repeat === 'none');
+}
+
 export default function SchedulesPage() {
   const isDesktop = useIsDesktop();
   const [filter, setFilter] = useState<'all' | ScheduleType>('all');
@@ -28,7 +32,9 @@ export default function SchedulesPage() {
   const loading = userLoading || schedulesLoading;
 
   // 필터링 및 그룹화 로직
-  const filtered = schedules.filter((s) => {
+  // 일회성 지출은 이미 발생한 돈의 흐름이므로 일정 타임라인에는 노출하지 않는다.
+  const timelineSchedules = schedules.filter(isTimelineSchedule);
+  const filtered = timelineSchedules.filter((s) => {
     const matchType   = filter === 'all' || s.type === filter;
     const q = search.toLowerCase();
     const matchSearch = !search || (
@@ -57,7 +63,7 @@ export default function SchedulesPage() {
     return acc;
   }, {} as Record<string, Schedule[]>);
 
-  const todaySchedules = schedules.filter(s => new Date(s.startTime).toDateString() === new Date().toDateString());
+  const todaySchedules = timelineSchedules.filter(s => new Date(s.startTime).toDateString() === new Date().toDateString());
 
   const commonProps = {
     loading,

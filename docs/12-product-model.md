@@ -149,7 +149,7 @@ Schedule
 | `reminder_only` | 일반 일정, 기념일 | 상태 자동 변경 없음 | 시작 전 리마인더 |
 | `time_window` | 개인 일정, 친구 모임, 데이트, 가족 행사 | `pending` → `in_progress` → `completed/ended` | 시작/종료 알림 |
 | `completion_required` | 루틴, 할 일, 자녀 케어, 심부름 | `pending` → `in_progress` → `missed` | 미완료 시 담당자/관찰자 알림 |
-| `payment_due` | 개인 지출, 정기지출, 공동비용 | `pending` → `due` → `overdue/paid` | 결제 전/미납 알림 |
+| `payment_due` | 정기지출, 예정 공동비용 | `pending` → `due` → `overdue/paid` | 결제 전/미납 알림 |
 | `confirmation_required` | 약속 변경, 초대, 중요한 가족 결정 | 응답 대기 → 확인 완료/미응답 | 미응답자 재알림 |
 
 ### 4.1 자녀 일정의 새 해석
@@ -203,6 +203,17 @@ automation_policy = payment_due
 assignee = payer
 observer = selected members
 ```
+
+### 4.6 일회성 지출 예시
+
+```text
+schedule.category = expense
+repeat = none
+status = completed
+automation_policy = reminder_only
+```
+
+일회성 지출은 이미 발생한 소비 기록이므로 결제 예정/미납 자동화 대상이 아니다. `payment_due`는 앞으로 결제할 정기/예정 지출에만 적용한다.
 
 ---
 
@@ -310,7 +321,7 @@ notification_rules
    - `personal` → `visibility = private`, `category = event`
    - `shared` → `visibility = space`, `category = event`
    - `child` → `category = care`, `automation_policy = completion_required`
-   - `expense` → `category = expense`, `automation_policy = payment_due`
+   - `expense` → `category = expense`, `repeat='none'`은 `completed + reminder_only`, 정기/예정 지출은 `payment_due`
 5. `/api/cron/reminders`를 유지하되, 다음 신규 API는 `/api/cron/automations`로 일반화
 6. 개인 루틴 또는 자녀 일정 중 하나를 `completion_required` 정책 처리의 첫 케이스로 구현
 

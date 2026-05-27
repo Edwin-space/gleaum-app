@@ -66,7 +66,7 @@ repeat_end_date  timestamptz
 memo             text
 family_group_id  uuid REFERENCES family_groups(id) NOT NULL
 created_by       uuid REFERENCES auth.users(id) NOT NULL
--- 정기지출 전용
+-- 지출 전용
 amount           int
 expense_category text                       -- 'education' | 'housing' | 'utility' | 'insurance' | 'subscription' | 'other'
 payment_method   text                       -- 'auto' | 'card' | 'cash' | 'other'
@@ -74,6 +74,8 @@ google_event_id  text                       -- Google Calendar 이벤트 ID
 created_at       timestamptz DEFAULT now()
 updated_at       timestamptz DEFAULT now()
 ```
+
+> 가계부 운영 규칙: `type='expense' AND repeat='none'`은 이미 발생한 일회성 지출이므로 애플리케이션 레이어에서 `status='completed'`, `automation_policy='reminder_only'`로 생성한다. `repeat!='none'`인 정기 지출만 `payment_due`/결제 예정 상태를 사용한다.
 
 ### `schedule_participants` — 일정 참여자 (N:M)
 ```sql

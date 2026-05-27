@@ -955,18 +955,17 @@ export async function createSchedule(
   // Phase 2: type → category/visibility/automation_policy 자동 매핑
   const autoCategory = input.category ?? inferCategory(input.type);
   const autoVisibility = input.visibility ?? inferVisibility(input.type);
+  const autoRepeat = input.repeat ?? 'none';
+  const isOneTimeExpense = input.type === 'expense' && autoRepeat === 'none';
 
   // ★ expense 유형 automation_policy 결정:
   //   - 정기지출(repeat !== 'none'): payment_due  → 결제 기한 초과 알림 활성
-  //   - 일반 지출 기록(repeat === 'none'): reminder_only → 알림 없음
-  //   이렇게 하지 않으면 일반 지출 등록 시 당일 "결제 기한이 지났습니다" FCM 알림이
-  //   즉시 발송되는 버그 발생 (automations 크론이 pending→in_progress→missed 전환을
-  //   같은 실행에서 처리하고, endTime=startTime이면 곧바로 missed 처리됨).
+  //   - 일회성 지출(repeat === 'none'): completed + reminder_only → 이미 발생한 돈의 흐름
+  //   이렇게 하지 않으면 일반 소비 기록이 "결제 예정" 일정처럼 보이거나 크론 대상이 될 수 있음.
   const autoPolicy = input.automationPolicy ?? (
-    input.type === 'expense' && (!input.repeat || input.repeat === 'none')
-      ? 'reminder_only'
-      : inferAutomationPolicy(input.type)
+    isOneTimeExpense ? 'reminder_only' : inferAutomationPolicy(input.type)
   );
+  const autoStatus = input.status ?? (isOneTimeExpense ? 'completed' : 'pending');
 
   const { data: schedule, error } = await supabase
     .from('schedules')
@@ -979,13 +978,13 @@ export async function createSchedule(
       start_time:        input.startTime.toISOString(),
       end_time:          input.endTime?.toISOString() ?? null,
       all_day:           input.allDay ?? false,
-      status:            input.status ?? 'pending',
+      status:            autoStatus,
       location_address:  input.locationAddress ?? null,
       location_lat:      input.locationLat ?? null,
       location_lng:      input.locationLng ?? null,
       reference_url:     input.referenceUrl ?? null,
       reminder:          input.reminder ?? 0,
-      repeat:            input.repeat ?? 'none',
+      repeat:            autoRepeat,
       repeat_end_date:   input.repeatEndDate?.toISOString() ?? null,
       memo:              input.memo ?? null,
       family_group_id:   familyGroupId,
@@ -1271,4 +1270,3 @@ export async function getMyPageInsights(spaceId: string | undefined) {
     month:          now.getMonth() + 1,
   };
 }
-

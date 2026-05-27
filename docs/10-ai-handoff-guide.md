@@ -43,6 +43,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-27 | 가계부 일회성 지출이 `pending`/결제 예정 일정처럼 보이던 문제 수정. 일회성 지출은 `completed + reminder_only`로 저장하고 홈/일정 타임라인에서는 제외 |
 | 2026-05-27 | `/space/new` Desktop 2컬럼 생성 화면 추가. PC에서 공간 설명과 생성 폼, 생성 후 초대 액션을 분리 표시 |
 | 2026-05-27 | `/space/settings` Desktop 2컬럼 레이아웃 추가. PC에서 공간 이름/목적/일정 유형/초대/멤버/위험 구역을 한 화면에서 관리 |
 | 2026-05-27 | Android 네이티브 앱 로그인에서 초대 링크용 인앱 브라우저 차단 안내가 뜨던 문제 수정. `getBlockedBrowserInfo()`는 Capacitor 네이티브 앱에서 `null` 반환 |
@@ -105,6 +106,7 @@ page.tsx (thin router — 상태 + 핸들러)
 | **가계부 — 개인/공간 탭 분리** | `/budget` | ✅ |
 | **가계부 — 개인 지출 공간 불필요** | `budget/page.tsx` | ✅ 신규 |
 | **가계부 — 금액 콤마 포맷 + 만원 힌트** | `MobileBudget`, `DesktopBudget` | ✅ 신규 |
+| **가계부 — 일회성 지출 즉시 반영 처리** | `db.ts`, `budget/*`, `home/page.tsx`, `schedules/page.tsx` | ✅ 신규 |
 | 마이페이지 | `/mypage` | ✅ |
 | 알림 목록 | `/notifications` | ✅ |
 | FCM 푸시 알림 | `FCMProvider`, `useFCM` | ✅ |
@@ -298,6 +300,21 @@ const tabs = [
 // 모달에 visibility 토글 없음 — 탭이 자동 결정
 const visibility = tab === 'personal' ? 'private' : 'space';
 ```
+
+### 일회성 지출 vs 정기 지출 상태 규칙
+
+가계부는 현재 `schedules` 테이블의 `type='expense'`를 사용하지만, 일회성 지출은 일정/결제 예정이 아니라 이미 발생한 돈의 흐름이다.
+
+```typescript
+// src/lib/db.ts / src/app/budget/page.tsx
+repeat === 'none'
+  ? { status: 'completed', automationPolicy: 'reminder_only' }
+  : { status: 'pending',   automationPolicy: 'payment_due' };
+```
+
+- 일회성 지출: 등록 즉시 `completed`, 가계부에서 `지출반영`으로 표시, 홈/일정 타임라인에는 노출하지 않음.
+- 정기 지출: `pending`으로 시작, 가계부에서만 `결제예정/결제완료` 토글 가능, 일정 타임라인의 `정기지출` 필터에 노출 가능.
+- 기존 데이터 보정 SQL: `supabase/migrations/009_fix_one_time_expense_status.sql`
 
 ### 금액 입력 포맷
 

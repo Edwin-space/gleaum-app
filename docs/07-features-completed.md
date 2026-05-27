@@ -379,6 +379,26 @@ npm run cap:open:android # Android Studio 열기
 - 공간 지출: `visibility !== 'private'` (공간 전체 공유 지출)
 - 내 지출: `createdBy === userId && visibility === 'private'` (나만 보는 지출)
 
+### #3-1 가계부 일회성 지출 상태/타임라인 보정 (2026-05-27)
+
+**문제**: 가계부에서 `일회성`으로 등록한 소비가 `status='pending'`으로 저장되어 `결제 예정`처럼 표시되고, 일정 타임라인에도 정기지출처럼 노출될 수 있었음.
+
+**수정 파일들**:
+
+| 파일 | 변경 내용 |
+|------|---------|
+| `src/lib/db.ts` | `type='expense' AND repeat='none'` 기본값을 `status='completed'`, `automation_policy='reminder_only'`로 중앙 보정 |
+| `src/app/budget/page.tsx` | 일회성 지출을 반영 완료 금액/건수로 집계, 정기 지출만 예정 건수에 포함 |
+| `src/app/budget/MobileBudget.tsx` | 일회성 배지/`지출반영` 의미로 표시, 일회성 지출의 결제 예정 토글 비활성화 |
+| `src/app/budget/DesktopBudget.tsx` | 동일 규칙을 데스크탑 지출 목록/요약 카드에 적용 |
+| `src/app/home/page.tsx` | 일회성 지출을 홈 일정/캘린더 데이터에서 제외 |
+| `src/app/schedules/page.tsx` | 일회성 지출을 일정 목록/오늘 일정에서 제외 |
+| `supabase/migrations/009_fix_one_time_expense_status.sql` | 기존 운영 데이터 중 일회성 지출이 pending/payment_due로 남은 건을 completed/reminder_only로 보정 |
+
+**운영 규칙**:
+- 일회성 지출: 이미 소비한 돈의 흐름 → 등록 즉시 `completed`, 자동화/크론 결제 대상 아님.
+- 정기 지출: 앞으로 결제/납부할 항목 → `pending`, `payment_due`, 가계부에서 `결제예정/결제완료` 전환 가능.
+
 ### #4 공간 권한 시스템 UI 적용
 
 **`useSpace` 훅 확장** (`src/hooks/useSpace.ts`):

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
-import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS, REPEAT_LABELS } from '@/types';
+import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS } from '@/types';
 import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 import type { BudgetTab, AddExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
@@ -49,7 +49,6 @@ export function DesktopBudget({
   viewDate,
   prevMonth,
   nextMonth,
-  isCurrentMonth,
   hasSpace,
   tab,
   setTab,
@@ -177,15 +176,15 @@ export function DesktopBudget({
                 <h2 style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '-1px', margin: '0 0 24px', lineHeight: 1 }}>{formatAmount(total)}</h2>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, marginBottom: '8px' }}>
-                    <span>납부 진행률</span><span>{Math.round(completePct)}%</span>
+                    <span>지출 반영률</span><span>{Math.round(completePct)}%</span>
                   </div>
                   <div style={{ height: '6px', borderRadius: '999px', background: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: '999px', background: 'white', transition: 'width 1s ease', width: `${completePct}%` }} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-                  <div><p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>완료</p><p style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{completedCnt}건</p></div>
-                  <div><p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>예정</p><p style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{pendingCnt}건</p></div>
+                  <div><p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>반영</p><p style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{completedCnt}건</p></div>
+                  <div><p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>정기 예정</p><p style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>{pendingCnt}건</p></div>
                 </div>
               </div>
             </div>
@@ -261,6 +260,7 @@ export function DesktopBudget({
                 <div>
                   {expenses.map((e, idx) => {
                     const isRecurring = e.repeat && e.repeat !== 'none';
+                    const isCompleted = !isRecurring || e.status === 'completed';
                     return (
                       <div key={e.id} style={{ padding: '18px 28px', display: 'flex', alignItems: 'center', gap: '16px', borderBottom: idx < expenses.length - 1 ? '1px solid #F7F7FA' : 'none', transition: 'background 0.15s' }}>
                         <div style={{ width: '44px', height: '44px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', background: `${getCategoryColor(e.expenseCategory ?? 'other')}15`, flexShrink: 0 }}>
@@ -269,7 +269,7 @@ export function DesktopBudget({
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
                             <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
-                            {isRecurring && <span style={{ fontSize: '10px', fontWeight: 800, color: '#0084CC', background: 'rgba(0,132,204,0.08)', padding: '2px 7px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>정기</span>}
+                            <span style={{ fontSize: '10px', fontWeight: 800, color: isRecurring ? '#0084CC' : '#10B981', background: isRecurring ? 'rgba(0,132,204,0.08)' : 'rgba(46,232,149,0.12)', padding: '2px 7px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>{isRecurring ? '정기' : '일회성'}</span>
                             {e.visibility === 'private' && <span style={{ fontSize: '10px', fontWeight: 800, color: '#8E8E93', background: '#F5F5F7', padding: '2px 7px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>🔒 나만</span>}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -281,9 +281,13 @@ export function DesktopBudget({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: '16px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 2px' }}>{formatAmount(e.amount ?? 0)}</p>
-                            <p style={{ fontSize: '11px', fontWeight: 700, margin: 0, color: e.status === 'completed' ? '#10B981' : '#0084CC' }}>{e.status === 'completed' ? '결제완료' : '결제예정'}</p>
+                            <p style={{ fontSize: '11px', fontWeight: 700, margin: 0, color: isCompleted ? '#10B981' : '#0084CC' }}>{isRecurring ? (isCompleted ? '결제완료' : '결제예정') : '지출반영'}</p>
                           </div>
-                          <button onClick={() => handleToggleStatus(e.id, e.status)} style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: e.status === 'completed' ? '#10B981' : '#F0F0F5', color: e.status === 'completed' ? 'white' : '#D0D0D0', boxShadow: e.status === 'completed' ? '0 4px 12px rgba(16,185,129,0.3)' : 'none' }}>
+                          <button
+                            onClick={() => isRecurring && handleToggleStatus(e.id, e.status)}
+                            aria-label={isRecurring ? '정기 지출 상태 변경' : '일회성 지출 반영됨'}
+                            style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: isRecurring ? 'pointer' : 'default', transition: 'all 0.2s', background: isCompleted ? '#10B981' : '#F0F0F5', color: isCompleted ? 'white' : '#D0D0D0', boxShadow: isCompleted ? '0 4px 12px rgba(16,185,129,0.3)' : 'none', opacity: isRecurring ? 1 : 0.85 }}
+                          >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                           </button>
                         </div>

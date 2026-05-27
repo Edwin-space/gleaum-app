@@ -5,12 +5,20 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
-import type { ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
+import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
 
 export type BudgetTab = 'personal' | 'space';
+
+function isRecurringExpense(expense: Schedule): boolean {
+  return expense.repeat !== 'none';
+}
+
+function isReflectedExpense(expense: Schedule): boolean {
+  return !isRecurringExpense(expense) || expense.status === 'completed';
+}
 
 /** 지출 추가 입력값 — visibility는 탭에서 자동 결정 */
 export interface AddExpenseInput {
@@ -66,9 +74,9 @@ export default function BudgetPage() {
   const diff           = total - lastMonthTotal;
   const isLess         = diff < 0;
 
-  const completed    = expenses.filter((e) => e.status === 'completed').reduce((sum, e) => sum + (e.amount ?? 0), 0);
-  const completedCnt = expenses.filter((e) => e.status === 'completed').length;
-  const pendingCnt   = expenses.filter((e) => e.status === 'pending').length;
+  const completed    = expenses.filter(isReflectedExpense).reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const completedCnt = expenses.filter(isReflectedExpense).length;
+  const pendingCnt   = expenses.filter((e) => isRecurringExpense(e) && e.status !== 'completed').length;
   const completePct  = total > 0 ? Math.min((completed / total) * 100, 100) : 0;
 
   const byCategory = expenses.reduce<Record<string, number>>((acc, e) => {
@@ -107,12 +115,15 @@ export default function BudgetPage() {
     try {
       // visibility는 현재 탭에서 자동 결정
       const visibility = tab === 'personal' ? 'private' : 'space';
+      const isOneTime = input.repeat === 'none';
 
       const result = await create({
         title:           input.title,
         type:            'expense',
         startTime:       input.date,
         endTime:         input.date,
+        status:          isOneTime ? 'completed' : 'pending',
+        automationPolicy: isOneTime ? 'reminder_only' : 'payment_due',
         amount:          input.amount,
         expenseCategory: input.category,
         paymentMethod:   input.paymentMethod,

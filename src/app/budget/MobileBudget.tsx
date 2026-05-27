@@ -192,8 +192,8 @@ export function MobileBudget({
                 <div style={{ height: '100%', borderRadius: '999px', background: 'rgba(255,255,255,0.85)', width: `${Math.min(completePct, 100)}%`, transition: 'width 0.7s ease' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>완료 {completedCnt}건 ({Math.round(completePct)}%)</span>
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>예정 {pendingCnt}건</span>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>반영 {completedCnt}건 ({Math.round(completePct)}%)</span>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>정기 예정 {pendingCnt}건</span>
               </div>
             </div>
           </div>
@@ -258,8 +258,8 @@ export function MobileBudget({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {expenses.length > 0 ? expenses.map((e) => {
                 const catColor = getCategoryColor(e.expenseCategory ?? 'other');
-                const isCompleted = e.status === 'completed';
                 const isRecurring = e.repeat && e.repeat !== 'none';
+                const isCompleted = !isRecurring || e.status === 'completed';
                 return (
                   <div key={e.id} style={{ background: 'white', borderRadius: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', background: `${catColor}18`, flexShrink: 0 }}>
@@ -268,7 +268,7 @@ export function MobileBudget({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                         <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
-                        {isRecurring && <span style={{ fontSize: '10px', fontWeight: 800, color: '#0084CC', background: 'rgba(0,132,204,0.1)', padding: '2px 6px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>정기</span>}
+                        <span style={{ fontSize: '10px', fontWeight: 800, color: isRecurring ? '#0084CC' : '#10B981', background: isRecurring ? 'rgba(0,132,204,0.1)' : 'rgba(46,232,149,0.12)', padding: '2px 6px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>{isRecurring ? '정기' : '일회성'}</span>
                       </div>
                       <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0, fontWeight: 500 }}>
                         {e.startTime.getDate()}일 · {PAYMENT_METHOD_LABELS[e.paymentMethod ?? 'card']}
@@ -276,7 +276,11 @@ export function MobileBudget({
                     </div>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                       <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>{formatAmount(e.amount ?? 0)}</p>
-                      <button onClick={() => handleToggleStatus(e.id, e.status)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isCompleted ? '#10B981' : '#F5F5F7', color: isCompleted ? 'white' : '#C7C7CC', transition: 'background 0.2s' }}>
+                      <button
+                        onClick={() => isRecurring && handleToggleStatus(e.id, e.status)}
+                        aria-label={isRecurring ? '정기 지출 상태 변경' : '일회성 지출 반영됨'}
+                        style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: isRecurring ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isCompleted ? '#10B981' : '#F5F5F7', color: isCompleted ? 'white' : '#C7C7CC', transition: 'background 0.2s', opacity: isRecurring ? 1 : 0.85 }}
+                      >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                       </button>
                     </div>

@@ -7,6 +7,11 @@ import { useSchedules } from '@/hooks/useSchedules';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import MobileHome from './MobileHome';
 import DesktopHome from './DesktopHome';
+import type { Schedule } from '@/types';
+
+function isTimelineSchedule(schedule: Schedule): boolean {
+  return !(schedule.type === 'expense' && schedule.repeat === 'none');
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -15,6 +20,7 @@ export default function HomePage() {
   const { user, profile, familyGroupId, loading: userLoading } = useCurrentUser();
   const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
   const loading = userLoading || schedulesLoading;
+  const timelineSchedules = schedules.filter(isTimelineSchedule);
 
   // 온보딩 미완료 시 리다이렉트
   useEffect(() => {
@@ -29,7 +35,7 @@ export default function HomePage() {
       <DesktopHome
         user={user}
         profile={profile}
-        schedules={schedules}
+        schedules={timelineSchedules}
         loading={loading}
       />
     );
@@ -39,7 +45,7 @@ export default function HomePage() {
     <MobileHome
       user={user}
       profile={profile}
-      schedules={schedules}
+      schedules={timelineSchedules}
       loading={loading}
     />
   );
