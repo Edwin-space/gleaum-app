@@ -25,6 +25,7 @@ export function useSchedules(spaceId: string | null): SchedulesState {
 
   const load = useCallback(async () => {
     if (!spaceId) {
+      setSchedules([]);
       setLoading(false);
       return;
     }
@@ -62,4 +63,3 @@ export function useSchedules(spaceId: string | null): SchedulesState {
 
   return { schedules, loading, refresh: load, create, updateStatus, remove };
 }
-

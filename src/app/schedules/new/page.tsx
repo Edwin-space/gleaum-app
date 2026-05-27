@@ -17,8 +17,16 @@ export default function NewSchedulePage() {
   const isDesktop = useIsDesktop();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { familyGroupId, loading: userLoading, refresh } = useCurrentUser();
-  const { members, myRole } = useSpace(familyGroupId);
+  const {
+    familyGroupId,
+    loading: userLoading,
+    refresh,
+    hasSharedSpace,
+    personalSpaceId,
+    sharedSpaceId,
+    user,
+  } = useCurrentUser();
+  const { members, myRole } = useSpace(sharedSpaceId);
 
   // 로딩 완료 후에도 familyGroupId 가 null 이면 공간 생성 재시도
   useEffect(() => {
@@ -57,7 +65,7 @@ export default function NewSchedulePage() {
 
   useEffect(() => {
     if (members.length > 0 && participants.length === 0) {
-      setParticipants(members.map(m => m.id));
+      setParticipants(members.map(m => m.userId));
     }
   }, [members]);
 
@@ -98,15 +106,23 @@ export default function NewSchedulePage() {
       toast.error('일정 제목을 입력해주세요');
       return;
     }
-    if (!familyGroupId) {
+    const isPrivateExpense = type === 'expense' && expenseVisibility === 'private';
+    const targetPersonalSpaceId = personalSpaceId ?? (!hasSharedSpace ? familyGroupId : null);
+    const targetSpaceId = (type === 'personal' || isPrivateExpense)
+      ? targetPersonalSpaceId
+      : sharedSpaceId;
+
+    if (!targetSpaceId) {
       // 아직 로딩 중이거나 공간 생성 중 — refresh() 재시도 트리거
       refresh();
-      toast.error('스페이스 초기화 중입니다. 잠시 후 다시 시도해주세요 (3~5초)');
+      toast.error(type === 'personal' || isPrivateExpense
+        ? '개인 공간을 준비하는 중입니다. 잠시 후 다시 시도해주세요.'
+        : '공유 공간이 필요합니다. 먼저 공간을 만들거나 초대에 참여해 주세요.');
       return;
     }
 
-    // viewer 역할은 일정 생성 불가
-    if (myRole === 'viewer') {
+    // 공유 공간 viewer 역할은 일정 생성 불가
+    if (targetSpaceId === sharedSpaceId && myRole === 'viewer') {
       toast.error('조회 권한만 있어 일정을 생성할 수 없습니다');
       return;
     }
@@ -116,12 +132,14 @@ export default function NewSchedulePage() {
       const start = new Date(`${date}T${startTime}`);
       const end   = new Date(`${date}T${endTime}`);
 
-      await createSchedule(familyGroupId, {
+      await createSchedule(targetSpaceId, {
         title: title.trim(),
         type,
         startTime: start,
         endTime: end,
-        participantIds: participants,
+        participantIds: targetSpaceId === targetPersonalSpaceId
+          ? (user?.id ? [user.id] : [])
+          : participants,
         locationAddress: address || undefined,
         referenceUrl: refUrl || undefined,
         reminder,
@@ -130,8 +148,8 @@ export default function NewSchedulePage() {
         amount: type === 'expense' ? Number(amount) : undefined,
         expenseCategory: type === 'expense' ? category : undefined,
         paymentMethod: type === 'expense' ? paymentMethod : undefined,
-        // expense 유형일 때 공유/개인 선택 적용
-        visibility: type === 'expense' ? expenseVisibility : undefined,
+        // 개인 일정/개인 지출은 개인 공간에 private으로, 공유 일정/공간 지출은 공유 공간에 저장
+        visibility: type === 'personal' || isPrivateExpense ? 'private' : (type === 'expense' ? 'space' : undefined),
       });
 
       trackEvent('schedule_create', {

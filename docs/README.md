@@ -37,7 +37,7 @@
 - **현재 단계**: 웹 서비스 운영 + 네이티브 앱/스토어 출시 준비 + 초대/공간 정책 안정화
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 기준 커밋**: `1a5db08` (2026-05-27) — iOS Associated Domains entitlement 제거
+- **최근 기준 커밋**: `작업 중` (2026-05-28) — 공간 데이터 경계 보정 및 private 데이터 개인 공간 이동 SQL 추가
 
 ---
 
@@ -63,8 +63,9 @@
 ✅ 2026-05-27 초대 링크/로그인/인앱 브라우저/AdSense ads.txt 관련 버그 수정
 ✅ 2026-05-27 가계부 지출 등록 시 즉시 FCM 발송되는 크리티컬 버그 수정
 ✅ 2026-05-27 iOS 무료 Apple Developer 빌드를 위해 Associated Domains entitlement 임시 제거
+✅ 2026-05-28 개인/공유 공간 데이터 경계 보정, 공간 멤버 조회 안정화, private 데이터 개인 공간 이동 SQL 추가
 
-🔜 다음 단계  문서 기준 최신화 유지 → Apple Developer 유료 계정 연결 → iOS Push/Universal Links 재활성화 → TestFlight 배포
+🔜 다음 단계  Supabase `010_move_private_records_to_personal_space.sql` 실행 → 공간 경계 회귀 테스트 → Apple Developer 유료 계정 연결 → iOS Push/Universal Links 재활성화 → TestFlight 배포
 ```
 
 ---
@@ -82,4 +83,4 @@
 
 ---
 
-마지막 업데이트: 2026-05-27
+마지막 업데이트: 2026-05-28

@@ -67,6 +67,8 @@ PersonalContext
 
 개인 데이터는 Space에 속하지 않을 수 있습니다. DB 구현상 `space_id`를 nullable로 두거나, 시스템이 자동 생성한 personal Space를 사용할 수 있습니다. 중요한 것은 UX와 제품 개념에서 **개인이 기본값**이라는 점입니다.
 
+현재 구현에서는 호환성을 위해 시스템이 자동 생성한 개인 공간을 사용합니다. 개인 데이터의 저장 대상은 `profiles.preferences.personalSpaceId`이고, 공유 데이터의 저장 대상은 현재 활성 공유 공간인 `sharedSpaceId`입니다. `profiles.family_group_id`는 공유 공간 참여 후 현재 공간 포인터처럼 동작할 수 있으므로, 개인 일정/지출 저장 대상으로 직접 사용하면 안 됩니다.
+
 ### 3.2 Space
 
 Space는 개인 사용자가 특정 관계/생활 맥락을 함께 관리하기 위해 만드는 확장 단위입니다. Space는 일정을 소유하는 최상위 본체가 아니라, 공유와 협업이 필요한 데이터에 연결되는 컨텍스트입니다.
@@ -245,6 +247,8 @@ NotificationRule
 | `/family` | 가족 관리 | Space/멤버 관리. family Space일 때 가족 UI 노출 |
 | `/schedules/children` | 자녀 일정 대시보드 | family Space의 care/completion_required 뷰 |
 | `/budget` | 가족 정기지출 | 개인 지출 + Space 확장형 공동 expense 뷰 |
+| `profiles.preferences.personalSpaceId` | 자동 생성 개인 공간 | 개인 일정/지출의 안정적 저장 경계 |
+| `sharedSpaceId` | 현재 공유 공간 | 공간 일정/공동 지출의 저장/조회 경계 |
 | `/invite/[code]` | 가족 초대 | Space 초대 |
 | `notifications` | 알림 기록 | Space/Rule 기반 알림 기록 |
 | `schedule_participants` | 참여자 | participant/assignee/observer로 확장 필요 |
@@ -305,6 +309,8 @@ notification_rules
 ### 해야 할 것
 
 - 개인 단독 사용을 기본값으로 두고 Space는 선택적 확장으로 설계
+- 개인 데이터는 `personalSpaceId`, 공유 데이터는 `sharedSpaceId`에 저장하고 서로 섞지 않기
+- 공유 공간 화면에서는 `visibility='private'` 데이터를 노출하지 않기
 - 자동화 API를 `automation_policy` 중심으로 설계
 - 현재 `child` 일정은 `completion_required` 정책의 한 사례로 취급
 - 개인 루틴, 연인 할 일, 가족 케어가 같은 상태 전이 엔진을 공유하게 만들기

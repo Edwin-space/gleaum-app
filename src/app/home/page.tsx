@@ -20,7 +20,11 @@ export default function HomePage() {
   const { user, profile, familyGroupId, loading: userLoading } = useCurrentUser();
   const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
   const loading = userLoading || schedulesLoading;
-  const timelineSchedules = schedules.filter(isTimelineSchedule);
+  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+  const isPersonalSpace = !!familyGroupId && familyGroupId === personalSpaceId;
+  const timelineSchedules = schedules
+    .filter(isTimelineSchedule)
+    .filter((schedule) => isPersonalSpace || schedule.visibility !== 'private');
 
   // 온보딩 미완료 시 리다이렉트
   useEffect(() => {

@@ -180,6 +180,14 @@ export function rowToSpaceMember(row: SpaceMemberRow): SpaceMember {
   };
 }
 
+function mergeMemberProfiles(rows: SpaceMemberRow[], profiles: ProfileRow[] | null | undefined): SpaceMemberRow[] {
+  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+  return rows.map((row) => ({
+    ...row,
+    profiles: row.profiles ?? profileMap.get(row.user_id) ?? null,
+  }));
+}
+
 export function rowToNotification(row: NotificationRow): Notification {
   return {
     id: row.id,
@@ -335,12 +343,14 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
 
   const { data: memberRows, error: membersError } = await supabase
     .from('space_members')
-    .select('*, profiles(*)')
+    .select('*')
     .eq('space_id', spaceId);
 
-  if (membersError) return null;
+  if (membersError) {
+    console.error('[getSpaceWithMembers] 멤버 조회 오류:', membersError.message);
+  }
 
-  const rows = memberRows as SpaceMemberRow[];
+  const rows = (memberRows ?? []) as SpaceMemberRow[];
 
   // ── 마이그레이션 보정: 공간 생성자가 space_members에 없으면 admin으로 자동 등록 ──
   const creatorInMembers = rows.some((r) => r.user_id === group.created_by);
@@ -372,6 +382,12 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
     }
   }
 
+  const userIds = [...new Set(rows.map((row) => row.user_id))];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase.from('profiles').select('*').in('id', userIds)
+    : { data: [] as ProfileRow[] };
+  const rowsWithProfiles = mergeMemberProfiles(rows, profiles as ProfileRow[]);
+
   return {
     id:             group.id,
     name:           group.name,
@@ -381,7 +397,7 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
       : undefined,
     createdBy:      group.created_by,
     createdAt:      new Date(group.created_at),
-    members:        rows.map(rowToSpaceMember),
+    members:        rowsWithProfiles.map(rowToSpaceMember),
     // cover_url 컬럼이 있을 때만 값이 채워짐 (DB 마이그레이션 후 활성화)
     coverImageUrl:  (group as any).cover_url ?? undefined,
     timezone:       (group as any).timezone ?? 'Asia/Seoul',
@@ -394,11 +410,16 @@ export async function getSpaceMembers(spaceId: string): Promise<SpaceMember[]> {
 
   const { data, error } = await supabase
     .from('space_members')
-    .select('*, profiles(*)')
+    .select('*')
     .eq('space_id', spaceId);
 
   if (error || !data) return [];
-  return (data as SpaceMemberRow[]).map(rowToSpaceMember);
+  const rows = data as SpaceMemberRow[];
+  const userIds = [...new Set(rows.map((row) => row.user_id))];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase.from('profiles').select('*').in('id', userIds)
+    : { data: [] as ProfileRow[] };
+  return mergeMemberProfiles(rows, profiles as ProfileRow[]).map(rowToSpaceMember);
 }
 
 /** 현재 사용자가 특정 공간에서 가진 역할 조회
@@ -446,25 +467,36 @@ export async function getMySpaces(): Promise<Space[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const { data: memberships, error } = await supabase
     .from('space_members')
-    .select('space_id, role, joined_at, family_groups(*)')
+    .select('space_id, role, joined_at')
     .eq('user_id', user.id);
 
-  if (error || !data) return [];
+  if (error || !memberships) return [];
 
-  return data
-    .filter((row: any) => row.family_groups)
-    .map((row: any) => ({
-      id:         row.family_groups.id,
-      name:       row.family_groups.name,
-      inviteCode: row.family_groups.invite_code ?? undefined,
-      inviteCodeExpiresAt: row.family_groups.invite_code_expires_at
-        ? new Date(row.family_groups.invite_code_expires_at)
+  const spaceIds = [...new Set(memberships.map((row) => row.space_id))];
+  if (spaceIds.length === 0) return [];
+
+  const { data: groups, error: groupsError } = await supabase
+    .from('family_groups')
+    .select('*')
+    .in('id', spaceIds);
+
+  if (groupsError || !groups) return [];
+
+  const orderMap = new Map(spaceIds.map((id, index) => [id, index]));
+  return groups
+    .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+    .map((group) => ({
+      id:         group.id,
+      name:       group.name,
+      inviteCode: group.invite_code ?? undefined,
+      inviteCodeExpiresAt: group.invite_code_expires_at
+        ? new Date(group.invite_code_expires_at)
         : undefined,
-      createdBy:  row.family_groups.created_by,
-      createdAt:  new Date(row.family_groups.created_at),
-      timezone:   row.family_groups.timezone ?? 'Asia/Seoul',
+      createdBy:  group.created_by,
+      createdAt:  new Date(group.created_at),
+      timezone:   group.timezone ?? 'Asia/Seoul',
       members:    [],  // 필요 시 별도 조회
     }));
 }
@@ -504,8 +536,8 @@ export async function deleteSpace(spaceId: string): Promise<boolean> {
   // 1. space_settings
   await supabase.from('space_settings').delete().eq('space_id', spaceId);
 
-  // 2. schedules (space_id 컬럼 기준)
-  await supabase.from('schedules').delete().eq('space_id', spaceId);
+  // 2. schedules (현재 스키마는 family_group_id 기준)
+  await supabase.from('schedules').delete().eq('family_group_id', spaceId);
 
   // 3. space_members
   await supabase.from('space_members').delete().eq('space_id', spaceId);
@@ -728,13 +760,17 @@ export async function regenerateInviteCode(spaceId: string): Promise<string | nu
   return retry.invite_code;
 }
 
-/** 신규 공간 생성 → space_members admin 등록 + profiles 업데이트 */
-export async function createSpace(name: string): Promise<{ id: string; inviteCode: string; error?: never } | { id: null; inviteCode?: never; error: string }> {
+/** 신규 공간 생성 → space_members admin 등록 + 필요 시 profiles.family_group_id 업데이트 */
+export async function createSpace(
+  name: string,
+  options: { setAsCurrent?: boolean } = {},
+): Promise<{ id: string; inviteCode: string; error?: never } | { id: null; inviteCode?: never; error: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { id: null, error: '로그인이 필요합니다' };
 
   const inviteCode = generateInviteCode();
+  const setAsCurrent = options.setAsCurrent ?? true;
 
   // 1. family_groups 생성
   const { data: group, error: groupError } = await supabase
@@ -760,15 +796,20 @@ export async function createSpace(name: string): Promise<{ id: string; inviteCod
   }
 
   // 3. profiles.family_group_id 업데이트 (하위 호환)
-  const { error: profileUpdateError } = await supabase
-    .from('profiles')
-    .update({ family_group_id: group.id })
-    .eq('id', user.id);
+  // 개인 공간을 뒤늦게 생성하는 경우에는 현재 공유 공간을 덮어쓰지 않는다.
+  if (setAsCurrent) {
+    const { error: profileUpdateError } = await supabase
+      .from('profiles')
+      .update({ family_group_id: group.id })
+      .eq('id', user.id);
 
-  if (profileUpdateError) {
-    console.error('[createSpace] profiles 업데이트 실패:', profileUpdateError.message, '| spaceId:', group.id);
+    if (profileUpdateError) {
+      console.error('[createSpace] profiles 업데이트 실패:', profileUpdateError.message, '| spaceId:', group.id);
+    } else {
+      console.info('[createSpace] 공간 생성 완료:', group.id, '| user:', user.id);
+    }
   } else {
-    console.info('[createSpace] 공간 생성 완료:', group.id, '| user:', user.id);
+    console.info('[createSpace] 공간 생성 완료(현재 공간 유지):', group.id, '| user:', user.id);
   }
 
   return { id: group.id, inviteCode };
@@ -783,19 +824,20 @@ export async function createPersonalSpace(displayName: string): Promise<string |
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('family_group_id, preferences')
+    .eq('id', user.id)
+    .single();
+
+  const currentSpaceId = currentProfile?.family_group_id ?? null;
   const spaceName = displayName?.trim() ? `${displayName.trim()}의 공간` : '나의 공간';
-  const result = await createSpace(spaceName);
+  const result = await createSpace(spaceName, { setAsCurrent: !currentSpaceId });
   if (!result.id) return null;
   const spaceId = result.id;
 
   // preferences.personalSpaceId 에 저장 (공유 공간 여부 판별 용도)
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('preferences')
-    .eq('id', user.id)
-    .single();
-
-  const existingPrefs = (profileData?.preferences as object) ?? {};
+  const existingPrefs = (currentProfile?.preferences as object) ?? {};
   await supabase
     .from('profiles')
     .update({ preferences: { ...existingPrefs, personalSpaceId: spaceId } })
@@ -826,9 +868,11 @@ export async function ensureUserSetup(): Promise<ProfileRow | null> {
     return null;
   }
 
-  // 공간이 없는 경우 개인 공간 자동 생성
-  // 온보딩 완료 후에만 실행 — 온보딩 중 createSpace()가 호출되어 이중 생성 방지
-  if (!profile.family_group_id && !hasTriedAutoCreateGroup && profile.onboarding_completed_at) {
+  const personalSpaceId = (profile.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+
+  // 온보딩 완료 후 개인 공간이 없으면 자동 생성.
+  // 이미 공유 공간에 들어간 사용자라면 현재 공간은 유지하고 personalSpaceId만 별도로 만든다.
+  if (!personalSpaceId && !hasTriedAutoCreateGroup && profile.onboarding_completed_at) {
     hasTriedAutoCreateGroup = true;
     const displayName = profile.display_name ?? profile.name ?? '나';
     const newSpaceId = await createPersonalSpace(displayName);

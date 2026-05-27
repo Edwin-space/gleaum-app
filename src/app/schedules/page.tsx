@@ -26,14 +26,18 @@ export default function SchedulesPage() {
   const [filter, setFilter] = useState<'all' | ScheduleType>('all');
   const [search, setSearch] = useState('');
 
-  const { familyGroupId, loading: userLoading } = useCurrentUser();
+  const { familyGroupId, profile, loading: userLoading } = useCurrentUser();
   const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
 
   const loading = userLoading || schedulesLoading;
 
   // 필터링 및 그룹화 로직
   // 일회성 지출은 이미 발생한 돈의 흐름이므로 일정 타임라인에는 노출하지 않는다.
-  const timelineSchedules = schedules.filter(isTimelineSchedule);
+  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+  const isPersonalSpace = !!familyGroupId && familyGroupId === personalSpaceId;
+  const timelineSchedules = schedules
+    .filter(isTimelineSchedule)
+    .filter((s) => isPersonalSpace || s.visibility !== 'private');
   const filtered = timelineSchedules.filter((s) => {
     const matchType   = filter === 'all' || s.type === filter;
     const q = search.toLowerCase();

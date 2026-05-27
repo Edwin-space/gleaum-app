@@ -468,7 +468,7 @@ export function MobileSpace() {
           {/* 공간 설정 버튼 (admin) */}
           {isAdmin && (
             <button
-              onClick={() => router.push('/space/settings')}
+              onClick={() => router.push(`/space/settings${displaySpaceId ? `?sid=${displaySpaceId}` : ''}`)}
               style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer' }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1B2E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

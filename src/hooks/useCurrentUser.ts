@@ -15,6 +15,10 @@ export interface CurrentUserState {
   /** @deprecated Use spaceId instead */
   familyGroupId: string | null;
   spaceId: string | null;
+  /** 자동 생성된 개인 전용 공간 ID */
+  personalSpaceId: string | null;
+  /** 현재 주 소속 공간이 공유 공간일 때의 ID */
+  sharedSpaceId: string | null;
   /**
    * 공유 공간 여부 — 자동 생성된 개인 공간(personalSpaceId)이 아닌
    * 명시적으로 만들거나 참여한 공간이 있을 때 true.
@@ -31,8 +35,10 @@ export function useCurrentUser(): CurrentUserState {
 
   const load = useCallback(async (force = false) => {
     // 캐시가 있고 공간도 있으면 즉시 반환 (속도 최적화)
-    // family_group_id 가 null 이면 공간 자동 생성을 위해 서버 재조회 필요
-    const cacheValid = !force && !!cachedProfile && !!cachedProfile.family_group_id;
+    // family_group_id 가 null 이거나 온보딩 완료 후 개인 공간 ID가 없으면 서버 재조회 필요
+    const cachedPrefs = cachedProfile?.preferences as { personalSpaceId?: string } | null | undefined;
+    const cacheNeedsPersonalSpace = !!cachedProfile?.onboarding_completed_at && !cachedPrefs?.personalSpaceId;
+    const cacheValid = !force && !!cachedProfile && !!cachedProfile.family_group_id && !cacheNeedsPersonalSpace;
     if (cacheValid) {
       setProfile(cachedProfile);
       setLoading(false);
@@ -109,15 +115,17 @@ export function useCurrentUser(): CurrentUserState {
   // preferences.personalSpaceId 와 비교: 다르면 공유 공간을 갖고 있는 것
   const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
   const hasSharedSpace = !!spaceId && spaceId !== personalSpaceId;
+  const sharedSpaceId = hasSharedSpace ? spaceId : null;
 
   return {
     user,
     profile,
     spaceId,
     familyGroupId: spaceId,
+    personalSpaceId,
+    sharedSpaceId,
     hasSharedSpace,
     loading,
     refresh: () => load(true),
   };
 }
-

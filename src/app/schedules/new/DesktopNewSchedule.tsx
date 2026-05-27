@@ -400,9 +400,9 @@ export function DesktopNewSchedule({
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {members.map(u => {
-                  const selected = participants.includes(u.id);
+                  const selected = participants.includes(u.userId);
                   return (
-                    <button key={u.id} onClick={() => toggleParticipant(u.id)} style={{
+                    <button key={u.userId} onClick={() => toggleParticipant(u.userId)} style={{
                       display: 'flex', alignItems: 'center', gap: '8px',
                       padding: '9px 16px', borderRadius: '999px',
                       background: selected ? '#1A1B2E' : '#F5F5F9',

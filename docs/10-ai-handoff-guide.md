@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-05-27
+> **최종 업데이트**: 2026-05-28
 
 ---
 
@@ -27,11 +27,12 @@
 11. **NAS 자동 동기화** — `git push` 후 `.git/hooks/post-push` 훅이 자동으로 NAS 동기화. 훅이 없는 경우: `bash scripts/install-hooks.sh` 실행.
 12. **`/family` 경로 폐기** — `/family`는 `/space`로 영구 리다이렉트. 새 코드에서 `/family` 참조 금지.
 13. **Space 용어 통일** — 코드/문서에서 "가족(family)" → "공간(space)" 용어 사용. DB 테이블명(`family_groups`)은 하위 호환으로 유지.
-14. **개인 공간 / 공유 공간 구분** — 모든 사용자는 `family_group_id`를 가짐 (개인 공간 자동 생성). `hasSharedSpace`로 공유 공간 여부 판단. 자세한 내용은 아래 "공간 아키텍처" 섹션 참고.
+14. **개인 공간 / 공유 공간 구분** — 모든 사용자는 `preferences.personalSpaceId`로 개인 공간을 식별. 공유 공간은 `sharedSpaceId`/현재 `family_group_id`로 분리 판단. 자세한 내용은 아래 "공간 아키텍처" 섹션 참고.
+15. **공간 데이터 경계 절대 보장** — 개인 일정/지출은 반드시 개인 공간에만 저장하고, 공유 공간 화면은 `visibility='private'` 데이터를 절대 표시하지 않음.
 
 ---
 
-## 현재 앱 상태 (2026-05-27 기준)
+## 현재 앱 상태 (2026-05-28 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
@@ -43,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-28 | 공간 데이터 경계 보정. 개인 가계부/개인 일정은 `personalSpaceId`에만 저장하고, 공유 공간/홈/일정 화면에서는 `visibility='private'` 데이터를 제외. `getSpaceWithMembers()`/`getMySpaces()`의 Supabase 조인 의존 제거 |
 | 2026-05-27 | 가계부 일회성 지출이 `pending`/결제 예정 일정처럼 보이던 문제 수정. 일회성 지출은 `completed + reminder_only`로 저장하고 홈/일정 타임라인에서는 제외 |
 | 2026-05-27 | `/space/new` Desktop 2컬럼 생성 화면 추가. PC에서 공간 설명과 생성 폼, 생성 후 초대 액션을 분리 표시 |
 | 2026-05-27 | `/space/settings` Desktop 2컬럼 레이아웃 추가. PC에서 공간 이름/목적/일정 유형/초대/멤버/위험 구역을 한 화면에서 관리 |
@@ -125,8 +127,6 @@ page.tsx (thin router — 상태 + 핸들러)
 
 | 기능 | 우선순위 | 비고 |
 |------|---------|------|
-| **일정 추가 개인/공간 탭 구분** | 🔴 | `/schedules/new` — 가계부처럼 탭으로 개인/공간 선택. 아래 상세 설명 참고 |
-| **공유 공간 이전 시 개인 일정 유지** | 🔴 | 개인 공간 → 공유 공간 전환 시 개인 공간 일정이 사라짐. 다중 공간 쿼리 필요 |
 | 이미지 첨부 실제 업로드 | 🟡 | UI만 있음, Supabase Storage 연동 필요 |
 | 기기 캘린더 연동 | 🟡 | Google Calendar/Drive 연동은 제거됨. 네이티브 기기 캘린더 방식으로 재설계 필요 |
 | 통계/분석 페이지 | 🟢 | 신규 개발 필요 |
@@ -136,22 +136,15 @@ page.tsx (thin router — 상태 + 핸들러)
 
 ---
 
-## 🔴 다음 우선 작업: 일정 추가 개인/공간 구분
+## 🔴 다음 우선 작업 후보: 공간 경계 회귀 테스트
 
-현재 `/schedules/new` 는 공간 일정을 기본으로 동작. 가계부처럼 "개인 일정 / 공간 일정" 탭을 추가해야 함.
+공간 데이터 경계는 2026-05-28에 코드 보정 완료. 다음에는 Supabase 실제 데이터 기준으로 회귀 테스트를 자동화하는 것이 좋음.
 
-### 설계 방향
-- 탭: **👤 개인 일정** (기본) / **🏠 공간 일정** (공유 공간 있을 때만 활성)
-- 개인 일정: `visibility = 'private'`, 내 개인 공간에 저장
-- 공간 일정: `visibility = 'space'`, 공유 공간에 저장 (멤버 전체 공유)
-- 탭 로직은 `budget/page.tsx`의 패턴 그대로 재사용 가능
-
-### 관련 파일
-- `src/app/schedules/new/page.tsx` — 탭 상태 추가
-- `src/app/schedules/new/MobileNewSchedule.tsx` — 탭 UI
-- `src/app/schedules/new/DesktopNewSchedule.tsx` — 탭 UI
-
----
+### 테스트해야 할 핵심 케이스
+- 초대받은 사용자가 개인 지출을 등록해도 공유 공간 가계부/타임라인에 보이지 않음
+- 공유 공간 지출은 공유 공간에만 보이고 개인 가계부에는 섞이지 않음
+- 공유 공간 설정/멤버 화면은 `space_members` 기준으로 모든 멤버를 표시
+- 개인 일정/지출은 `personalSpaceId`에 저장, 공유 일정/지출은 `sharedSpaceId`에 저장
 
 ## 핵심 파일 맵
 
@@ -166,7 +159,7 @@ src/
 │   └── index.ts           ← 모든 TypeScript 타입 정의
 │                            OnboardingPreferences.personalSpaceId 포함
 ├── hooks/
-│   ├── useCurrentUser.ts  ← 현재 사용자 (spaceId, hasSharedSpace, refresh)
+│   ├── useCurrentUser.ts  ← 현재 사용자 (spaceId, personalSpaceId, sharedSpaceId, hasSharedSpace, refresh)
 │   ├── useSpace.ts        ← 공간 데이터 (space, members, myRole, refresh)
 │   ├── useSchedules.ts    ← 일정 목록 + CRUD
 │   └── useMediaQuery.ts   ← useIsDesktop() — 반드시 이 파일에서 import
@@ -220,6 +213,15 @@ const hasSharedSpace = !!spaceId && spaceId !== personalSpaceId;
 - 혼자 사용하는 사용자: `spaceId === personalSpaceId` → `hasSharedSpace = false`
 - 공간 만들거나 참여한 사용자: `spaceId !== personalSpaceId` → `hasSharedSpace = true`
 
+### 공간 데이터 경계 규칙 (2026-05-28 보정)
+
+- 개인 일정/지출 저장 대상: `personalSpaceId`
+- 공유 일정/지출 저장 대상: `sharedSpaceId` 또는 명시적으로 선택한 공유 공간 ID
+- `profiles.family_group_id`는 현재 활성/공유 공간 포인터로 취급. 공유 공간 참여 후 개인 데이터 저장 대상에 사용하면 안 됨
+- `visibility='private'` 데이터는 공유 공간 화면, 공유 공간 타임라인, 공유 공간 가계부에서 제외
+- `getSpaceWithMembers()`/`getSpaceMembers()`/`getMySpaces()`는 Supabase nested join에 의존하지 말고 멤버십과 프로필/공간을 분리 조회
+- 기존 잘못 저장된 private 데이터 보정 SQL: `supabase/migrations/010_move_private_records_to_personal_space.sql`
+
 ### `useCurrentUser` 반환값
 
 ```typescript
@@ -228,6 +230,8 @@ const {
   profile,        // ProfileRow (raw DB data)
   familyGroupId,  // string | null — 현재 소속 공간 ID (하위 호환)
   spaceId,        // string | null — familyGroupId 와 동일 (신규 코드용)
+  personalSpaceId,// string | null — 개인 일정/지출 저장 대상
+  sharedSpaceId,  // string | null — 공유 일정/지출 저장 대상
   hasSharedSpace, // boolean — 공유 공간 여부 (가계부/일정 탭 활성화 판단)
   loading,
   refresh,
@@ -288,9 +292,12 @@ if (group?.created_by === user.id) {
 
 ```typescript
 // budget/page.tsx
+const personalSchedulesState = useSchedules(personalSpaceId);
+const spaceSchedulesState = useSchedules(sharedSpaceId);
+
 const tabs = [
-  { key: 'personal', label: '👤 개인 지출' },         // 기본 탭
-  { key: 'space',    label: '🏠 공간 지출', disabled: !hasSpace }, // hasSharedSpace
+  { key: 'personal', label: '👤 개인 지출' },
+  { key: 'space',    label: '🏠 공간 지출', disabled: !hasSharedSpace },
 ];
 ```
 
@@ -298,6 +305,7 @@ const tabs = [
 
 ```typescript
 // 모달에 visibility 토글 없음 — 탭이 자동 결정
+const targetSpaceId = tab === 'personal' ? personalSpaceId : sharedSpaceId;
 const visibility = tab === 'personal' ? 'private' : 'space';
 ```
 

@@ -88,10 +88,12 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
     if (!spaceId) return;
     setLoading(true);
     const data = await getSchedules(spaceId);
-    setSchedules(data);
+    // 공간 타임라인은 공유 컨텍스트만 보여준다. 개인/private 기록은 가계부/개인 홈에만 표시.
+    const sharedData = data.filter((schedule) => schedule.visibility !== 'private');
+    setSchedules(sharedData);
     // init local participants map
     const map: Record<string, Set<string>> = {};
-    data.forEach(s => { map[s.id] = new Set(s.participants); });
+    sharedData.forEach(s => { map[s.id] = new Set(s.participants); });
     setLocalParticipants(map);
     setLoading(false);
   }, [spaceId]);

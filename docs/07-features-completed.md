@@ -567,3 +567,18 @@ npm run cap:open:android # Android Studio 열기
 - 회원/공간 상세 페이지
 - CRM 실제 발송 API
 - 광고 설정 DB 저장
+
+---
+
+## 공간 데이터 경계 보정 (완료 — 2026-05-28)
+
+> 핵심 원칙: 개인 공간과 공유 공간은 데이터 저장/조회 경계가 완전히 분리되어야 한다. 사용자가 의도하지 않은 공간에 개인 일정/지출이 저장되거나 표시되면 안 된다.
+
+- [x] `src/hooks/useCurrentUser.ts` — `personalSpaceId`, `sharedSpaceId` 반환 추가. 온보딩 완료 사용자의 캐시 프로필에 `personalSpaceId`가 없으면 `ensureUserSetup()` 재실행
+- [x] `src/lib/db.ts` — `createPersonalSpace()`가 기존 공유 공간 포인터를 덮어쓰지 않도록 수정, `ensureUserSetup()`이 공유 공간 사용자에게도 개인 공간을 보정 생성
+- [x] `src/app/budget/page.tsx` — 개인 지출은 `personalSpaceId`, 공간 지출은 `sharedSpaceId` 기준으로 완전 분리 조회/등록
+- [x] `src/app/schedules/new/page.tsx` — 개인 일정/개인 지출은 개인 공간에 저장, 공유 일정/공간 지출은 공유 공간에 저장
+- [x] `src/app/home/page.tsx`, `src/app/schedules/page.tsx`, `src/app/space/SpaceScheduleTimeline.tsx` — 공유 공간 화면에서 `visibility='private'` 데이터 제외
+- [x] `src/lib/db.ts` — `getSpaceWithMembers()`, `getSpaceMembers()`, `getMySpaces()`의 Supabase nested join 의존 제거. 멤버십/프로필/공간을 분리 조회해 공간 멤버 누락 방지
+- [x] `src/app/space/settings/page.tsx`, `src/app/space/MobileSpace.tsx` — 현재 보고 있는 공간의 설정을 열 수 있도록 `?sid=` 기반 설정 대상 지정
+- [x] `supabase/migrations/010_move_private_records_to_personal_space.sql` — 과거 공유 공간에 잘못 저장된 private 일정/지출을 개인 공간으로 이동하는 보정 SQL 추가

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
@@ -148,10 +148,12 @@ function CloseSpaceModal({
 // ── 메인 페이지 ──────────────────────────────────────────────
 export default function SpaceSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isDesktop = useIsDesktop();
   const { spaceId, user, loading: userLoading } = useCurrentUser();
+  const targetSpaceId = searchParams.get('sid') ?? spaceId;
   const userId = user?.id ?? null;
-  const { space, myRole, loading: spaceLoading, refresh: refreshSpace } = useSpace(spaceId);
+  const { space, myRole, loading: spaceLoading, refresh: refreshSpace } = useSpace(targetSpaceId);
   const isAdmin = myRole === 'admin';
 
   // ── 공간 이름 ──────────────────────────────────────────────
@@ -181,26 +183,26 @@ export default function SpaceSettingsPage() {
 
   // ── 설정 로드 ─────────────────────────────────────────────
   useEffect(() => {
-    if (!spaceId) return;
+    if (!targetSpaceId) return;
     // DB/space 상태가 비동기로 준비된 뒤 폼 기본값을 동기화한다.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSpaceName(space?.name ?? '');
 
-    getSpaceSettings(spaceId).then(settings => {
+    getSpaceSettings(targetSpaceId).then(settings => {
       if (settings.purpose) setPurpose(settings.purpose);
       if (settings.scheduleTypes?.length) setScheduleTypes(settings.scheduleTypes);
       setSettingsLoaded(true);
     });
-  }, [spaceId, space?.name]);
+  }, [targetSpaceId, space?.name]);
 
   // ── 멤버 로드 ─────────────────────────────────────────────
   const loadMembers = useCallback(async () => {
-    if (!spaceId) return;
+    if (!targetSpaceId) return;
     setMembersLoading(true);
-    const spaceData = await getSpaceWithMembers(spaceId);
+    const spaceData = await getSpaceWithMembers(targetSpaceId);
     setMembers(spaceData?.members ?? []);
     setMembersLoading(false);
-  }, [spaceId]);
+  }, [targetSpaceId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -217,9 +219,9 @@ export default function SpaceSettingsPage() {
 
   // ── 공간 이름 저장 ────────────────────────────────────────
   const handleSaveName = async (stayOnPage = false) => {
-    if (!spaceName.trim() || !spaceId) return;
+    if (!spaceName.trim() || !targetSpaceId) return;
     setSavingName(true);
-    const ok = await updateSpaceName(spaceId, spaceName.trim());
+    const ok = await updateSpaceName(targetSpaceId, spaceName.trim());
     setSavingName(false);
     setEditingName(false);
     if (ok) {
@@ -233,9 +235,9 @@ export default function SpaceSettingsPage() {
 
   // ── 설정 저장 ─────────────────────────────────────────────
   const handleSaveSettings = async () => {
-    if (!spaceId) return;
+    if (!targetSpaceId) return;
     setSavingSettings(true);
-    const ok = await updateSpaceSettings(spaceId, { purpose, scheduleTypes });
+    const ok = await updateSpaceSettings(targetSpaceId, { purpose, scheduleTypes });
     setSavingSettings(false);
     if (ok) toast.success('설정이 저장되었습니다');
     else    toast.error('설정 저장에 실패했습니다');
@@ -258,13 +260,13 @@ export default function SpaceSettingsPage() {
 
   // ── 멤버 내보내기 ─────────────────────────────────────────
   const handleRemoveMember = async (member: SpaceMember) => {
-    if (!spaceId) return;
+    if (!targetSpaceId) return;
     const isSelf = member.userId === userId;
     const label  = isSelf ? '공간에서 나가시겠습니까?' : `${member.user?.name ?? '멤버'}를 내보내시겠습니까?`;
     if (!window.confirm(label)) return;
 
     setRemovingId(member.userId);
-    const ok = await removeSpaceMember(spaceId, member.userId);
+    const ok = await removeSpaceMember(targetSpaceId, member.userId);
     setRemovingId(null);
 
     if (ok) {
@@ -284,9 +286,9 @@ export default function SpaceSettingsPage() {
   const hasOtherMembers = otherMembers.length > 0;
 
   const handleRegenerateCode = async () => {
-    if (!spaceId) return;
+    if (!targetSpaceId) return;
     setRegenerating(true);
-    const newCode = await regenerateInviteCode(spaceId);
+    const newCode = await regenerateInviteCode(targetSpaceId);
     setRegenerating(false);
     if (newCode) {
       setLiveInviteCode(newCode);
@@ -298,8 +300,8 @@ export default function SpaceSettingsPage() {
   };
 
   const handleCloseSpace = async () => {
-    if (!spaceId) return;
-    const ok = await deleteSpace(spaceId);
+    if (!targetSpaceId) return;
+    const ok = await deleteSpace(targetSpaceId);
     if (ok) {
       toast.success('공간이 폐쇄되었습니다');
       try { localStorage.removeItem('gleaum_space_name_updated'); } catch {}

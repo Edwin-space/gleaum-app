@@ -439,11 +439,11 @@ export function MobileNewSchedule({
           <SectionLabel>참여자</SectionLabel>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {members.map((u) => {
-              const selected = participants.includes(u.id);
+              const selected = participants.includes(u.userId);
               return (
                 <button
-                  key={u.id}
-                  onClick={() => toggleParticipant(u.id)}
+                  key={u.userId}
+                  onClick={() => toggleParticipant(u.userId)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
