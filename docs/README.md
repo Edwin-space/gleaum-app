@@ -34,10 +34,10 @@
 
 - **서비스명**: 글리움 (Gleaum)
 - **성격**: 개인 중심 + 친구/연인/가족 Space 확장형 토털 라이프 관리 서비스
-- **현재 단계**: 웹 서비스 완성 → 네이티브 앱 확장 준비 중
+- **현재 단계**: 웹 서비스 운영 + 네이티브 앱/스토어 출시 준비 + 초대/공간 정책 안정화
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최신 커밋**: `f304a95` (2026-05-08)
+- **최근 기준 커밋**: `1a5db08` (2026-05-27) — iOS Associated Domains entitlement 제거
 
 ---
 
@@ -56,8 +56,15 @@
 ✅ 2026-05-08 네이티브 앱 계획서 수립 (14-native-app-plan.md)
 ✅ 2026-05-08 Capacitor 네이티브 앱 기반 구축 (iOS + Android 플랫폼 추가)
 ✅ 2026-05-08 native.ts 유틸리티 레이어, NativeAppProvider, Info.plist, AndroidManifest 설정 완료
+✅ 2026-05-14 Google Play 내부 테스트 버전 업로드 완료
+✅ 2026-05-26 온보딩 직접 진입/신규 유저 플로우 개선, 네이티브 성능 최적화
+✅ 2026-05-26 Android Kotlin stdlib 충돌 해결, iOS WKWebView/알림 권한 타이밍 개선
+✅ 2026-05-27 공간 정책 개편, 초대 공유 3종, 다운로드 페이지 추가
+✅ 2026-05-27 초대 링크/로그인/인앱 브라우저/AdSense ads.txt 관련 버그 수정
+✅ 2026-05-27 가계부 지출 등록 시 즉시 FCM 발송되는 크리티컬 버그 수정
+✅ 2026-05-27 iOS 무료 Apple Developer 빌드를 위해 Associated Domains entitlement 임시 제거
 
-🔜 다음 단계  Xcode 설치 → iOS 시뮬레이터 테스트 → Apple Developer 연결 → TestFlight 배포
+🔜 다음 단계  문서 기준 최신화 유지 → Apple Developer 유료 계정 연결 → iOS Push/Universal Links 재활성화 → TestFlight 배포
 ```
 
 ---
@@ -75,4 +82,4 @@
 
 ---
 
-마지막 업데이트: 2026-05-08
+마지막 업데이트: 2026-05-27

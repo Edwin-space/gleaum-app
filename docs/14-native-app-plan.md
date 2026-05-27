@@ -517,6 +517,9 @@ export async function registerPushNotifications() {
 
 ### 3-6. Universal Links (URL Scheme 보안 강화)
 
+> 2026-05-27 현재 상태: Universal Links용 웹 파일(`public/.well-known/apple-app-site-association`)은 준비되었지만, 무료 Apple Developer 계정에서는 Associated Domains capability가 지원되지 않아 iOS entitlement 연결은 임시 제거되었습니다. 유료 Apple Developer Program 전환 후 이 섹션의 capability를 다시 활성화하세요.
+
+
 Custom URL Scheme(`gleaum://`) 대신 Universal Links 사용:
 - **이유**: Custom URL Scheme은 다른 앱이 동일 scheme 등록 시 가로채기 가능 (보안 취약)
 - Universal Links는 `https://gleaum.com/.well-known/apple-app-site-association` 도메인 검증으로 보안

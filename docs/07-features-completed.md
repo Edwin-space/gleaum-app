@@ -411,6 +411,37 @@ npm run cap:open:android # Android Studio 열기
 
 ---
 
+## 2026-05-26~27 — 초대/공간 정책/네이티브 안정화 (완료)
+
+### 신규 유저 및 온보딩
+- [x] 신규 유저가 온보딩으로 직접 진입하도록 플로우 개선
+- [x] 온보딩 UI 교체 및 네이티브 앱 감각에 맞춘 초기 경험 개선
+- [x] 네이티브 앱 수준 성능 최적화 적용
+
+### 초대/공간 정책
+- [x] 초대 링크 로그인 후 공간 합류 경로 유실 버그 수정
+- [x] 초대 링크 복사 문제 수정 및 `invite_code` null 자동 생성 처리
+- [x] 초대 랜딩 페이지 추가 및 초대 정보 조회 API 추가
+- [x] 공간 정책 개편, 초대 공유 3종, 다운로드 페이지 추가
+- [x] PC 화면 파리티 보강 — 공간 정책, 초대 공유, 앱 설정 섹션
+
+### 광고/SEO/공개 접근
+- [x] `ads.txt` 추가 및 Google AdSense 크롤러 접근 허용
+- [x] 페이지 타이틀/OG 이미지 경로 개선
+- [x] `/download` 페이지 추가
+
+### 네이티브 앱 안정화
+- [x] iOS WKWebView 성능 최적화, 세로 고정, 알림 권한 타이밍 개선
+- [x] Android Kotlin stdlib 버전 충돌 해결
+- [x] iOS 무료 Apple Developer 계정 빌드를 위해 Associated Domains entitlement 임시 제거
+- [x] Universal Links 웹 기반 파일(`apple-app-site-association`)은 준비됨. iOS capability는 유료 Apple Developer 계정 전환 후 재활성화 필요
+
+### 버그 수정
+- [x] 가계부 지출 등록 시 즉시 FCM 알림이 발송되던 크리티컬 버그 수정
+- [x] 초대/로그인 플로우 및 iOS 인앱 브라우저 대응 개선
+
+---
+
 ## Google Play 스토어 출시 준비 (완료 — 2026-05-14)
 
 ### Firebase SDK 네이티브 연동

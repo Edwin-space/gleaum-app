@@ -18,7 +18,8 @@
 | ~~Google Calendar 연동~~ | ✅ 제거 — 기기 캘린더 방식으로 전환 결정 | — |
 | 이미지 첨부 미구현 | UI는 있으나 실제 업로드 로직 없음 | `src/app/schedules/new/page.tsx` |
 | Google OAuth 앱 게시 | email+profile 스코프만 사용 → 간소화 검수 대상 (정식 출시 전 완료 필요) | Google Cloud Console |
-| R8 난독화 미적용 | `minifyEnabled false` 상태 — 정식 출시 전 `true`로 변경 후 mapping.txt 업로드 필요 | `android/app/build.gradle` |
+| R8 난독화 미적용 | `minifyEnabled false` 상태 — 정식 출시 전 `true`로 변경 후 `mapping.txt` 업로드 필요 | `android/app/build.gradle` |
+| iOS Associated Domains 비활성 | 무료 Apple Developer 계정 빌드를 위해 entitlement 제거됨. 유료 계정 전환 후 Universal Links 재활성화 필요 | `ios/App/App/App.entitlements` |
 
 ---
 
@@ -49,6 +50,18 @@
 | `READ_MEDIA_IMAGES` | 갤러리 이미지 첨부 | `@capacitor/camera` 플러그인 |
 | `READ/WRITE_EXTERNAL_STORAGE` | 파일 첨부 저장 | Android 버전별 조건부 처리 |
 | `USE_BIOMETRIC` / `USE_FINGERPRINT` | 앱 잠금, 민감 데이터 보호 | `@capacitor-community/biometric-auth` |
+
+---
+
+## 🔴 iOS 출시 전 필수 처리 사항
+
+| 항목 | 내용 |
+|------|------|
+| **유료 Apple Developer Program** | Associated Domains, Push Notifications, TestFlight/App Store 배포를 위해 필요 |
+| **Associated Domains 재활성화** | `applinks:www.gleaum.com` 또는 실제 운영 도메인 기준 entitlement 복구 |
+| **APNs Auth Key** | Apple Developer Center에서 생성 후 Firebase Console 업로드 |
+| **iOS Capabilities** | Push Notifications + Background Modes + Associated Domains 추가 |
+| **Supabase Redirect URL** | `gleaum://auth/callback` 및 필요한 Universal Link redirect 등록 확인 |
 
 ---
 
@@ -121,12 +134,11 @@
 **전략**: 동일 Capacitor 코드베이스에서 Android 타겟 추가
 **배포**: Google Play Store
 
-주요 작업:
-- [ ] Android Studio 설정 및 Android 타겟 추가
-- [ ] FCM 이미 연동되어 있어 푸시 알림 추가 작업 최소
-- [ ] `@capacitor/splash-screen` Android 스플래시 설정
-- [ ] Google Play Console 등록 및 심사 제출
-- [ ] 키스토어 생성 + APK/AAB 서명
+진행 상태:
+- [x] Android 플랫폼 추가 및 Gradle/Kotlin 충돌 해결
+- [x] Firebase FCM 네이티브 분기 처리 완료
+- [x] Google Play Console 패키지명 인증 및 내부 테스트 AAB 업로드 완료
+- [ ] 정식 출시 전 R8 매핑 파일, 네이티브 디버그 기호, 스토어 등록정보, 데이터 안전 섹션 작성
 
 ---
 
@@ -151,4 +163,4 @@
 - [ ] 광고 전략 설정 DB 저장 (`app_settings` 테이블 생성)
 - [ ] 배너 CRUD API 및 Supabase Storage 이미지 업로드
 
-마지막 업데이트: 2026-05-12
+마지막 업데이트: 2026-05-27

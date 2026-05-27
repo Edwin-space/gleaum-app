@@ -36,8 +36,9 @@ UI 작업 전 반드시 아래 두 파일을 읽으세요:
 - Dark Navy: `#1A1B2E` / `#2D2E4A`
 - Background: `#FAFAFD`
 
-## 현재 최신 커밋
-- `8377d36` (2026-05-27) — 가계부 지출 알림 버그 수정 + 초대 랜딩 + Universal Links + 페이지 타이틀
+## 최신 상태 확인
+- 작업 시작 시 `git log --oneline -5`와 `git status -sb`로 실제 최신 커밋/미커밋 변경을 먼저 확인하세요.
+- 2026-05-27 기준 주요 최근 커밋: `1a5db08` — iOS 무료 Apple Developer 계정 빌드를 위해 Associated Domains entitlement 제거
 
 ## 상세 문서 위치
 - `/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/docs/`

@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-05-14
+> **최종 업데이트**: 2026-05-27
 
 ---
 
@@ -31,18 +31,24 @@
 
 ---
 
-## 현재 앱 상태 (2026-05-14 기준)
+## 현재 앱 상태 (2026-05-27 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app` (main 브랜치)
-- **최신 배포**: 2026-05-14
+- **최신 배포**: GitHub `main` 자동 배포 기준. 작업 전 Vercel 상태 확인 권장
 - **Google Play**: 내부 테스트 버전 업로드 완료 (`com.gleaum.app`, versionCode: 1)
 
 ### 최근 변경 이력
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-27 | `1a5db08` — iOS 무료 Apple Developer 계정 빌드를 위해 Associated Domains entitlement 제거. Universal Links는 유료 계정 전환 후 재활성화 |
+| 2026-05-27 | `8377d36` — 가계부 지출 등록 시 즉시 FCM 알림이 발송되던 크리티컬 버그 수정 |
+| 2026-05-27 | `e5212f6` — 초대 랜딩 페이지, 딥링크/Universal Links 웹 기반, 페이지 타이틀 추가 |
+| 2026-05-27 | `ff1cfbb` / `67297e1` — 초대/로그인 플로우, iOS 인앱 브라우저 대응, AdSense `ads.txt` 접근 문제 수정 |
+| 2026-05-27 | `68a2c29` / `105f52b` — 공간 정책 개편, 초대 공유 3종, 다운로드 페이지, PC 파리티 보강 |
+| 2026-05-26 | `a498f14`~`d6f5db5` — 신규 유저 온보딩 직접 진입, 네이티브 성능 최적화, iOS WKWebView 개선, Android Kotlin stdlib 충돌 해결 |
 | 2026-05-14 | Firebase SDK 네이티브 연동 (iOS AppDelegate + Package.swift) |
 | 2026-05-14 | Google Calendar/Drive 연동 완전 제거 → 기기 캘린더 전환 준비 |
 | 2026-05-14 | Google OAuth 스코프 축소 (email+profile만 요청) |
@@ -117,9 +123,9 @@ page.tsx (thin router — 상태 + 핸들러)
 | **일정 추가 개인/공간 탭 구분** | 🔴 | `/schedules/new` — 가계부처럼 탭으로 개인/공간 선택. 아래 상세 설명 참고 |
 | **공유 공간 이전 시 개인 일정 유지** | 🔴 | 개인 공간 → 공유 공간 전환 시 개인 공간 일정이 사라짐. 다중 공간 쿼리 필요 |
 | 이미지 첨부 실제 업로드 | 🟡 | UI만 있음, Supabase Storage 연동 필요 |
-| Google Calendar 동기화 | 🟡 | 코드 완성, GCP API 활성화 대기 |
+| 기기 캘린더 연동 | 🟡 | Google Calendar/Drive 연동은 제거됨. 네이티브 기기 캘린더 방식으로 재설계 필요 |
 | 통계/분석 페이지 | 🟢 | 신규 개발 필요 |
-| 네이티브 앱 (iOS → Android) | 🔴 | Capacitor 기반 완료, Xcode 빌드 대기 |
+| 네이티브 앱 출시 마무리 | 🔴 | Android 내부 테스트 업로드 완료. iOS는 APNs/유료 Apple Developer/Associated Domains 재활성화 필요 |
 | Space 타입 확장 | 🟢 | `family_groups.type` 컬럼 추가 → 개인/연인/가족/모임 구분 |
 | 일정 단건 외부 공유 | 🟢 | `/share/[scheduleId]` 공개 읽기 전용 뷰 |
 
@@ -525,6 +531,8 @@ git log --oneline -5
 
 # 2. 타입 확인 및 로컬 빌드 테스트
 npm run build
+# 필요 시 네이티브 동기화
+npm run cap:sync
 
 # 3. 배포
 npx vercel --prod
@@ -538,6 +546,15 @@ git add [파일들] && git commit -m "feat: ..." && git push origin main
 
 | 커밋 | 날짜 | 내용 |
 |------|------|------|
+| `1a5db08` | 2026-05-27 | fix(ios): Associated Domains entitlement 제거 — 무료 Apple Developer 빌드 복구 |
+| `8377d36` | 2026-05-27 | fix: 가계부 지출 등록 시 즉시 FCM 발송 버그 수정 |
+| `e5212f6` | 2026-05-27 | feat: 초대 랜딩 페이지 + 딥링크/Universal Links 웹 기반 + 페이지 타이틀 |
+| `ff1cfbb` | 2026-05-27 | feat: 초대/로그인 플로우 버그 수정 + iOS 인앱 브라우저 대응 + AdSense ads.txt |
+| `105f52b` | 2026-05-27 | feat(desktop): PC 파리티 — 공간 정책 + 초대 공유 3종 + 앱 설정 섹션 |
+| `68a2c29` | 2026-05-27 | feat: 공간 정책 개편, 초대 공유 3종, 다운로드 페이지, UX 버그 수정 |
+| `d6f5db5` | 2026-05-26 | fix(android): Kotlin stdlib 버전 충돌 해결 |
+| `ee29c39` | 2026-05-26 | feat(ios): WKWebView 성능 최적화, 세로 고정, 알림 권한 타이밍 개선 |
+| `a498f14` | 2026-05-26 | fix: 신규 유저 온보딩 직접 진입 + 온보딩 UI 교체 |
 | `04fe0ca` | 2026-05-12 | feat: 개인 공간 자동 생성 + hasSharedSpace 도입 |
 | `46e8985` | 2026-05-12 | refactor(budget): DesktopBudget UX 3종 개선 |
 | `d0711c9` | 2026-05-11 | fix: Space Admin 미표시 버그 + 가계부 지출 추가 |
@@ -558,8 +575,8 @@ git add [파일들] && git commit -m "feat: ..." && git push origin main
 
 | 플랫폼 | 상태 | 비고 |
 |--------|------|------|
-| iOS | 시뮬레이터 빌드 성공 | Apple Developer 계정 연결 후 TestFlight 배포 가능 |
-| Android | 기반 구축 완료 | Android Studio에서 실행 가능 |
+| iOS | Capacitor 기반 및 WKWebView 최적화 완료 | 무료 Apple Developer 계정에서는 Associated Domains 불가. 유료 계정 전환 후 Push Notifications/Associated Domains 재활성화 필요 |
+| Android | Google Play 내부 테스트 업로드 완료 | 정식 출시 전 R8 매핑, 네이티브 디버그 기호, 데이터 안전/스토어 등록정보 필요 |
 | macOS | "Designed for iPad" 방식 | Mac Catalyst 대신 |
 
 - **기술**: Capacitor.js (`server.url = 'https://www.gleaum.com'` — 웹 래핑 방식)
