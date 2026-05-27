@@ -1,10 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GleaumBI } from '@/components/ui/GleaumLogo';
+import { getAppVersionInfo, isNativeApp, getNativePlatform } from '@/lib/native';
 import type { NotificationSettings } from '@/types';
+
+// ── 최신 앱 버전 (새 버전 출시 시 이 값만 업데이트) ──
+// Vercel 환경변수 NEXT_PUBLIC_APP_LATEST_VERSION 이 있으면 그것을 우선 사용
+const LATEST_VERSION = process.env.NEXT_PUBLIC_APP_LATEST_VERSION ?? '1.0.2';
+
+const STORE_URL = {
+  android: 'https://play.google.com/store/apps/details?id=com.gleaum.app',
+  ios:     null as string | null, // App Store 등록 후 URL 교체
+};
+
+/** semver 간단 비교: a < b 이면 true */
+function isOutdated(installed: string, latest: string): boolean {
+  const toNum = (v: string) => v.split('.').map(Number);
+  const [a, b] = [toNum(installed), toNum(latest)];
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const ai = a[i] ?? 0, bi = b[i] ?? 0;
+    if (ai < bi) return true;
+    if (ai > bi) return false;
+  }
+  return false;
+}
 
 interface MobileMyPageProps {
   user: any;
@@ -140,6 +162,20 @@ export function MobileMyPage({
   setShowDeleteModal,
 }: MobileMyPageProps) {
   const router = useRouter();
+
+  // ── 앱 버전 감지 ──────────────────────────────────────────
+  const [installedVersion, setInstalledVersion] = useState<string | null>(null);
+  const [appPlatform, setAppPlatform] = useState<'ios' | 'android' | 'web'>('web');
+
+  useEffect(() => {
+    getAppVersionInfo().then(info => {
+      setInstalledVersion(info.installedVersion);
+      setAppPlatform(info.platform);
+    });
+  }, []);
+
+  const needsUpdate = !!installedVersion && isOutdated(installedVersion, LATEST_VERSION);
+  const storeUrl = appPlatform === 'android' ? STORE_URL.android : appPlatform === 'ios' ? STORE_URL.ios : null;
 
   return (
     <div style={{
@@ -590,8 +626,35 @@ export function MobileMyPage({
         <div>
           <SectionTitle title="앱 정보" />
           <MenuCard>
+            {/* 업데이트 필요 배너 */}
+            {needsUpdate && storeUrl && (
+              <a
+                href={storeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'block', textDecoration: 'none' }}
+              >
+                <div style={{
+                  margin: '0', padding: '14px 20px',
+                  background: 'linear-gradient(135deg, rgba(0,132,204,0.08) 0%, rgba(12,201,181,0.08) 100%)',
+                  borderBottom: '1px solid rgba(0,132,204,0.10)',
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(0,132,204,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '18px' }}>🆕</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 800, color: '#0084CC', margin: '0 0 2px' }}>업데이트가 있어요</p>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>
+                      현재 v{installedVersion} → 최신 v{LATEST_VERSION}
+                    </p>
+                  </div>
+                  <div style={{ padding: '6px 14px', borderRadius: '999px', background: '#0084CC', fontSize: '12px', fontWeight: 800, color: 'white', flexShrink: 0 }}>
+                    업데이트
+                  </div>
+                </div>
+              </a>
+            )}
             <MenuItem
-              label="버전 정보"
+              label="앱 버전"
               icon={
                 <IconBox bg="rgba(142,142,147,0.10)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
@@ -601,7 +664,22 @@ export function MobileMyPage({
                   </svg>
                 </IconBox>
               }
-              right={<span style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>v1.0.2</span>}
+              right={
+                installedVersion ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '13px', color: needsUpdate ? '#EF4444' : '#8E8E93', fontWeight: 600 }}>v{installedVersion}</span>
+                    {needsUpdate ? (
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: '#EF4444', background: 'rgba(239,68,68,0.10)', padding: '2px 7px', borderRadius: '999px' }}>구버전</span>
+                    ) : (
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: '#0CC9B5', background: 'rgba(12,201,181,0.10)', padding: '2px 7px', borderRadius: '999px' }}>최신</span>
+                    )}
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>
+                    {isNativeApp() ? '확인 중...' : `웹 v${LATEST_VERSION}`}
+                  </span>
+                )
+              }
             />
             <MenuDivider />
             <MenuItem

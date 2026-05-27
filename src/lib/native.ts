@@ -253,3 +253,37 @@ export async function onAndroidBackButton(callback: () => void): Promise<() => v
   }
   return () => {};
 }
+
+// ── 앱 버전 ───────────────────────────────────────────────────────────────────
+
+export interface AppVersionInfo {
+  /** 설치된 네이티브 앱 버전 (예: "1.0.2"). 웹이면 null. */
+  installedVersion: string | null;
+  /** 빌드 번호 (예: "102"). 웹이면 null. */
+  buildNumber: string | null;
+  /** 실행 환경 */
+  platform: 'ios' | 'android' | 'web';
+}
+
+/**
+ * 설치된 앱 버전 정보 조회
+ * - 네이티브(iOS/Android): @capacitor/app App.getInfo() 사용
+ * - 웹: installedVersion = null
+ */
+export async function getAppVersionInfo(): Promise<AppVersionInfo> {
+  const platform = getNativePlatform();
+  if (!isNativeApp()) {
+    return { installedVersion: null, buildNumber: null, platform: 'web' };
+  }
+  try {
+    const { App } = await import('@capacitor/app');
+    const info = await App.getInfo();
+    return {
+      installedVersion: info.version,
+      buildNumber: info.build,
+      platform: platform as 'ios' | 'android',
+    };
+  } catch {
+    return { installedVersion: null, buildNumber: null, platform: platform as 'ios' | 'android' };
+  }
+}

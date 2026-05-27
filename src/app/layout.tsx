@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     siteName: '글리움 (Gleaum)',
     images: [
       {
-        url: '/og_image.png',
+        url: '/img/og_image.png',
         width: 1024,
         height: 541,
         alt: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
     description: '나, 그리고 연인, 가족 등 공간을 통한 일상 네트워크를 한 곳에서 도와 드립니다.',
-    images: ['/og_image.png'],
+    images: ['/img/og_image.png'],
   },
   robots: {
     index: true,

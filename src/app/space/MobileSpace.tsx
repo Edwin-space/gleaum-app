@@ -77,12 +77,13 @@ export function MobileSpace() {
     }
   }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ★ activeSpaceId 변경 시 localStorage 저장 + optimistic 이름 초기화
-  //    스와이프로 공간 전환 시 이전 공간의 수정된 이름이 남지 않도록
+  // ★ activeSpaceId 변경 시 localStorage 저장 + optimistic 이름/초대코드 초기화
+  //    스와이프로 공간 전환 시 이전 공간의 liveInviteCode 가 다른 공간에 노출되는 버그 수정
   useEffect(() => {
     if (!activeSpaceId) return;
     try { localStorage.setItem('gleaum_lastSpaceId', activeSpaceId); } catch {}
     setOptimisticSpaceName(null);
+    setLiveInviteCode(undefined); // ★ 공간 전환 시 이전 공간의 초대 코드 초기화
   }, [activeSpaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ★ 모바일 앱/PWA 포그라운드 복귀 시 최신 데이터 재조회

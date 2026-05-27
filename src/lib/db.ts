@@ -682,21 +682,50 @@ function generateInviteCode(): string {
   return `GLEAUM-${code}`;
 }
 
-/** 초대 코드 재발급 (admin 전용) — 영구 유효 */
+/** 초대 코드 재발급 (admin 전용) — 영구 유효
+ *
+ * `.select()` 로 DB에 실제 반영됐는지 검증.
+ * RLS가 차단한 경우(data === null) → space_members backfill 후 재시도.
+ * Silent fail 방지: 이전에는 error 없이 0 rows 갱신돼도 newCode 를 반환하는 버그가 있었음.
+ */
 export async function regenerateInviteCode(spaceId: string): Promise<string | null> {
   const supabase = createClient();
   const newCode = generateInviteCode();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('family_groups')
     .update({ invite_code: newCode, invite_code_expires_at: null })
-    .eq('id', spaceId);
+    .eq('id', spaceId)
+    .select('invite_code')
+    .single();
 
-  if (error) {
-    console.error('[regenerateInviteCode] 실패:', error.message);
+  if (!error && data?.invite_code) return data.invite_code;
+
+  if (error) console.error('[regenerateInviteCode] 오류:', error.message);
+
+  // RLS 차단(data null) → 공간 생성자를 space_members 에 admin으로 backfill 후 재시도
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  await supabase
+    .from('space_members')
+    .upsert(
+      { space_id: spaceId, user_id: user.id, role: 'admin' },
+      { onConflict: 'space_id,user_id', ignoreDuplicates: true },
+    );
+
+  const { data: retry, error: retryErr } = await supabase
+    .from('family_groups')
+    .update({ invite_code: newCode, invite_code_expires_at: null })
+    .eq('id', spaceId)
+    .select('invite_code')
+    .single();
+
+  if (retryErr || !retry?.invite_code) {
+    console.error('[regenerateInviteCode] 재시도 실패:', retryErr?.message ?? 'no data');
     return null;
   }
-  return newCode;
+  return retry.invite_code;
 }
 
 /** 신규 공간 생성 → space_members admin 등록 + profiles 업데이트 */
