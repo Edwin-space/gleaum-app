@@ -10,22 +10,24 @@ import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatTy
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
 
-function isRecurringExpense(expense: Schedule): boolean {
-  return expense.repeat !== 'none';
-}
-
-function isReflectedExpense(expense: Schedule): boolean {
-  return !isRecurringExpense(expense) || expense.status === 'completed';
-}
-
-/** 지출 추가 입력값 — 가계부는 개인 전용(private) */
+/** 지출 추가 입력값 */
 export interface AddExpenseInput {
   title: string;
   amount: number;
   date: Date;
   category: ExpenseCategory;
   paymentMethod: PaymentMethod;
-  repeat: RepeatType; // 'none' = 일회성, 그 외 = 정기
+  repeat: RepeatType;
+}
+
+/** 지출 수정 입력값 */
+export interface EditExpenseInput {
+  id: string;
+  title: string;
+  amount: number;
+  date: Date;
+  category: ExpenseCategory;
+  paymentMethod: PaymentMethod;
 }
 
 export default function BudgetPage() {
@@ -35,19 +37,24 @@ export default function BudgetPage() {
 
   const { familyGroupId, user, personalSpaceId } = useCurrentUser();
   const effectivePersonalSpaceId = personalSpaceId ?? familyGroupId;
-  const { schedules, loading, updateStatus, create } = useSchedules(effectivePersonalSpaceId);
+  const { schedules, loading, updateStatus, create, update, remove } = useSchedules(effectivePersonalSpaceId);
   const userId = user?.id;
 
-  // 현재 선택된 달의 지출 전체
+  // 현재 달 개인 지출
   const allExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
       s.startTime.getFullYear() === viewDate.getFullYear() &&
       s.startTime.getMonth()    === viewDate.getMonth()
   );
-
   const expenses = allExpenses.filter((s) => s.createdBy === userId && s.visibility === 'private');
 
-  // 지난달 지출 (비교용)
+  // 고정 / 변동 분리 (repeat !== 'none' = 고정)
+  const fixedExpenses    = expenses.filter((s) => s.repeat && s.repeat !== 'none');
+  const variableExpenses = expenses.filter((s) => !s.repeat || s.repeat === 'none');
+  const fixedTotal       = fixedExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+  const variableTotal    = variableExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+
+  // 지난달 비교
   const lastMonthDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
   const lastMonthExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
@@ -62,10 +69,9 @@ export default function BudgetPage() {
   const diff           = total - lastMonthTotal;
   const isLess         = diff < 0;
 
-  const completed    = expenses.filter(isReflectedExpense).reduce((sum, e) => sum + (e.amount ?? 0), 0);
-  const completedCnt = expenses.filter(isReflectedExpense).length;
-  const pendingCnt   = expenses.filter((e) => isRecurringExpense(e) && e.status !== 'completed').length;
-  const completePct  = total > 0 ? Math.min((completed / total) * 100, 100) : 0;
+  const completedCnt = expenses.filter((e) => e.status === 'completed').length;
+  const pendingCnt   = fixedExpenses.filter((e) => e.status !== 'completed').length;
+  const completePct  = total > 0 ? Math.min((expenses.filter((e) => e.status === 'completed').reduce((s, e) => s + (e.amount ?? 0), 0) / total) * 100, 100) : 0;
 
   const byCategory = expenses.reduce<Record<string, number>>((acc, e) => {
     if (!e.expenseCategory) return acc;
@@ -81,7 +87,7 @@ export default function BudgetPage() {
   const handleToggleStatus = async (id: string, currentStatus: ScheduleStatus) => {
     const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
     await updateStatus(id, nextStatus);
-    toast.success(nextStatus === 'completed' ? '납부 완료로 변경되었습니다' : '결제 예정으로 변경되었습니다', {
+    toast.success(nextStatus === 'completed' ? '결제 완료로 변경되었습니다' : '결제 예정으로 변경되었습니다', {
       position: isDesktop ? 'bottom-right' : 'top-center',
       duration: 1500,
     });
@@ -92,26 +98,24 @@ export default function BudgetPage() {
       toast.error('개인 공간을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.');
       return false;
     }
-
     try {
       const isOneTime = input.repeat === 'none';
       const result = await create({
-        title:           input.title,
-        type:            'expense',
-        category:        'expense',
-        startTime:       input.date,
-        endTime:         input.date,
-        status:          isOneTime ? 'completed' : 'pending',
+        title:            input.title,
+        type:             'expense',
+        category:         'expense',
+        startTime:        input.date,
+        endTime:          input.date,
+        status:           isOneTime ? 'completed' : 'pending',
         automationPolicy: isOneTime ? 'reminder_only' : 'payment_due',
-        amount:          input.amount,
-        expenseCategory: input.category,
-        paymentMethod:   input.paymentMethod,
-        repeat:          input.repeat,
-        visibility:      'private',
+        amount:           input.amount,
+        expenseCategory:  input.category,
+        paymentMethod:    input.paymentMethod,
+        repeat:           input.repeat,
+        visibility:       'private',
       });
-
       if (result) {
-        toast.success('개인 지출이 등록되었습니다', {
+        toast.success('지출이 등록되었습니다', {
           position: isDesktop ? 'bottom-right' : 'top-center',
           duration: 1500,
         });
@@ -124,6 +128,37 @@ export default function BudgetPage() {
     }
   };
 
+  const handleUpdateExpense = async (input: EditExpenseInput): Promise<boolean> => {
+    try {
+      const ok = await update(input.id, {
+        title:           input.title,
+        amount:          input.amount,
+        startTime:       input.date,
+        endTime:         input.date,
+        expenseCategory: input.category,
+        paymentMethod:   input.paymentMethod,
+      });
+      if (ok) {
+        toast.success('지출이 수정되었습니다', {
+          position: isDesktop ? 'bottom-right' : 'top-center',
+          duration: 1500,
+        });
+      }
+      return ok;
+    } catch {
+      toast.error('지출 수정에 실패했습니다');
+      return false;
+    }
+  };
+
+  const handleDeleteExpense = async (id: string): Promise<void> => {
+    await remove(id);
+    toast.success('지출이 삭제되었습니다', {
+      position: isDesktop ? 'bottom-right' : 'top-center',
+      duration: 1500,
+    });
+  };
+
   const commonProps = {
     loading,
     viewDate,
@@ -131,6 +166,8 @@ export default function BudgetPage() {
     nextMonth,
     isCurrentMonth,
     total,
+    fixedTotal,
+    variableTotal,
     completePct,
     completedCnt,
     pendingCnt,
@@ -141,11 +178,12 @@ export default function BudgetPage() {
     expenses,
     handleToggleStatus,
     handleAddExpense,
+    handleUpdateExpense,
+    handleDeleteExpense,
   };
 
   if (isDesktop) {
     return <DesktopBudget {...commonProps} />;
   }
-
   return <MobileBudget {...commonProps} />;
 }

@@ -79,14 +79,24 @@ export function getStatusBadgeClass(status: ScheduleStatus): string {
 // ── 카테고리 컬러 (가계부) ──
 export function getCategoryColor(category: ExpenseCategory): string {
   const colors: Record<ExpenseCategory, string> = {
-    education:    '#0084CC',
+    // 고정
     housing:      '#0CC9B5',
-    utility:      '#2EE895',
     insurance:    '#8B5CF6',
     subscription: '#F59E0B',
+    education:    '#0084CC',
+    // 변동
+    food:         '#EF4444',
+    daily:        '#10B981',
+    fashion:      '#EC4899',
+    transport:    '#6366F1',
+    culture:      '#F97316',
+    medical:      '#14B8A6',
+    social:       '#A855F7',
+    // 레거시
+    utility:      '#2EE895',
     other:        '#AEAEA8',
   };
-  return colors[category];
+  return colors[category] ?? '#AEAEA8';
 }
 
 // ── 타임존 안전 포맷 (서버/크론잡 사용) ──

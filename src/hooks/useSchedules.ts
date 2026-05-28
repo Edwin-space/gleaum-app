@@ -5,6 +5,7 @@ import {
   getSchedules,
   createSchedule,
   updateScheduleStatus,
+  updateSchedule,
   deleteSchedule,
   type CreateScheduleInput,
 } from '@/lib/db';
@@ -16,6 +17,7 @@ export interface SchedulesState {
   refresh: () => Promise<void>;
   create:  (input: CreateScheduleInput) => Promise<Schedule | null>;
   updateStatus: (id: string, status: ScheduleStatus) => Promise<void>;
+  update:  (id: string, updates: Partial<CreateScheduleInput>) => Promise<boolean>;
   remove:  (id: string) => Promise<void>;
 }
 
@@ -56,10 +58,30 @@ export function useSchedules(spaceId: string | null): SchedulesState {
     );
   }, []);
 
+  const update = useCallback(async (id: string, updates: Partial<CreateScheduleInput>): Promise<boolean> => {
+    const ok = await updateSchedule(id, updates);
+    if (ok) {
+      setSchedules((prev) =>
+        prev.map((s) => {
+          if (s.id !== id) return s;
+          return {
+            ...s,
+            ...(updates.title             !== undefined && { title:           updates.title }),
+            ...(updates.amount            !== undefined && { amount:          updates.amount }),
+            ...(updates.startTime         !== undefined && { startTime:       updates.startTime }),
+            ...(updates.expenseCategory   !== undefined && { expenseCategory: updates.expenseCategory }),
+            ...(updates.paymentMethod     !== undefined && { paymentMethod:   updates.paymentMethod }),
+          };
+        })
+      );
+    }
+    return ok;
+  }, []);
+
   const remove = useCallback(async (id: string) => {
     await deleteSchedule(id);
     setSchedules((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  return { schedules, loading, refresh: load, create, updateStatus, remove };
+  return { schedules, loading, refresh: load, create, updateStatus, update, remove };
 }

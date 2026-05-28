@@ -141,12 +141,22 @@ export type ScheduleStatus = 'pending' | 'in_progress' | 'completed' | 'missed';
 export type RepeatType     = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export type ExpenseCategory =
-  | 'education'
-  | 'housing'
-  | 'utility'
-  | 'insurance'
-  | 'subscription'
-  | 'other';
+  // ── 고정 지출 ─────────────────────────────────────────────
+  | 'housing'       // 주거 / 통신
+  | 'insurance'     // 보험 / 세금
+  | 'subscription'  // 구독 / 정기결제
+  | 'education'     // 교육 / 육아
+  // ── 변동 지출 ─────────────────────────────────────────────
+  | 'food'          // 식비
+  | 'daily'         // 생활 / 마트
+  | 'fashion'       // 패션 / 잡화
+  | 'transport'     // 교통 / 차량
+  | 'culture'       // 문화 / 여가
+  | 'medical'       // 의료 / 건강
+  | 'social'        // 경조사 / 선물
+  // ── 레거시 (하위 호환) ─────────────────────────────────────
+  | 'utility'       // @deprecated → housing 으로 통합
+  | 'other';        // @deprecated → 용도에 맞는 카테고리로 이전
 
 export type PaymentMethod = 'auto' | 'card' | 'cash' | 'other';
 export type ExpenseReflectionType = 'actual_paid' | 'final_share' | 'manual';
@@ -263,11 +273,21 @@ export const AUTOMATION_POLICY_LABELS: Record<AutomationPolicy, string> = {
 };
 
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
-  education:    '교육비',
-  housing:      '주거비',
+  // 고정
+  housing:      '주거/통신',
+  insurance:    '보험/세금',
+  subscription: '구독/정기결제',
+  education:    '교육/육아',
+  // 변동
+  food:         '식비',
+  daily:        '생활/마트',
+  fashion:      '패션/잡화',
+  transport:    '교통/차량',
+  culture:      '문화/여가',
+  medical:      '의료/건강',
+  social:       '경조사/선물',
+  // 레거시
   utility:      '공과금',
-  insurance:    '보험료',
-  subscription: '구독서비스',
   other:        '기타',
 };
 
@@ -296,10 +316,30 @@ export const REMINDER_OPTIONS = [
 ];
 
 export const EXPENSE_CATEGORY_ICONS: Record<ExpenseCategory, string> = {
-  education:    '📚',
+  // 고정
   housing:      '🏠',
-  utility:      '💡',
   insurance:    '🛡️',
   subscription: '📱',
+  education:    '📚',
+  // 변동
+  food:         '🍽️',
+  daily:        '🛒',
+  fashion:      '👗',
+  transport:    '🚗',
+  culture:      '🎬',
+  medical:      '💊',
+  social:       '🎁',
+  // 레거시
+  utility:      '💡',
   other:        '💳',
 };
+
+/** 고정 지출 카테고리 (반복 지출에 주로 사용) */
+export const FIXED_EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'housing', 'insurance', 'subscription', 'education',
+];
+
+/** 변동 지출 카테고리 (일회성 지출에 주로 사용) */
+export const VARIABLE_EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'food', 'daily', 'fashion', 'transport', 'culture', 'medical', 'social',
+];
