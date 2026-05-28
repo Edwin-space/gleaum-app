@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { trackEvent } from '@/lib/analytics';
+import { AdBanner } from '@/components/AdBanner';
 import { ScheduleCard } from '@/components/ui/Card';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { formatDateShort, isSameDay } from '@/lib/utils';
@@ -231,6 +232,9 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             )}
           </div>
         </div>
+
+        {/* ── AdMob 배너 (인사 카드 아래) ── */}
+        <AdBanner />
 
         {/* ── 캘린더 토글 ── */}
         <button

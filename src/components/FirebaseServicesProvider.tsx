@@ -20,6 +20,7 @@ import { initAppCheck } from '@/lib/app-check';
 import { initRemoteConfig } from '@/lib/remote-config';
 import { setUserId, setCrashlyticsEnabled } from '@/lib/crashlytics';
 import { setAnalyticsUserId } from '@/lib/analytics';
+import { initAdMob } from '@/lib/admob';
 
 export function FirebaseServicesProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -28,6 +29,9 @@ export function FirebaseServicesProvider({ children }: { children: React.ReactNo
 
     // ── 2. Remote Config 초기화 (기능 플래그 로드) ──
     void initRemoteConfig();
+
+    // ── 3. AdMob 초기화 (광고 로딩 준비) ──
+    void initAdMob();
 
     // ── 3. Crashlytics 사용자 ID 연동 ──
     // 로그인 상태 변화를 감지하여 Crashlytics에 사용자 ID를 연결/해제합니다.
