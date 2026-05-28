@@ -67,7 +67,7 @@ export default function TermsPage() {
           <ul style={{ paddingLeft: '20px', lineHeight: '1.9' }}>
             <li>개인 일정 등록·수정·삭제·조회</li>
             <li>공간(Space) 생성·참여·관리 및 공유 일정 관리</li>
-            <li>가계부(개인·공간 지출) 등록·조회</li>
+            <li>개인 가계부 및 공간 내 공동 지출 등록·조회</li>
             <li>일정 리마인더 및 FCM 푸시 알림</li>
             <li>기기 캘린더 연동 (향후 업데이트 예정)</li>
           </ul>

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSchedules, addScheduleParticipant, removeScheduleParticipant } from '@/lib/db';
+import { toast } from 'sonner';
+import { getSchedules, addScheduleParticipant, removeScheduleParticipant, reflectSpaceExpenseToPersonalBudget } from '@/lib/db';
+import { formatAmount } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { Schedule, SpaceMember } from '@/types';
 
@@ -81,6 +83,8 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
   const [selectedDate, setSelectedDate] = useState<string>(toDateKey(new Date()));
   // scheduleId → loading state for bell button
   const [bellLoading,  setBellLoading]  = useState<Record<string, boolean>>({});
+  const [reflecting,   setReflecting]   = useState<Record<string, boolean>>({});
+  const [reflectedIds, setReflectedIds] = useState<Set<string>>(new Set());
   // locally tracked participant sets (optimistic)
   const [localParticipants, setLocalParticipants] = useState<Record<string, Set<string>>>({});
 
@@ -110,6 +114,9 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
     const d = new Date(s.startTime); d.setHours(0, 0, 0, 0);
     return d >= today && d <= cutoff;
   });
+  const spaceExpenses = filteredSchedules
+    .filter((s) => s.type === 'expense' && s.visibility !== 'private')
+    .sort((a, b) => +new Date(b.startTime) - +new Date(a.startTime));
 
   // ── 날짜별 그루핑 ────────────────────────────────────
   const groupedByDate: Record<string, Schedule[]> = {};
@@ -152,6 +159,21 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
     else            await addScheduleParticipant(schedule.id);
 
     setBellLoading(prev => ({ ...prev, [schedule.id]: false }));
+  };
+
+  const reflectExpense = async (schedule: Schedule) => {
+    setReflecting((prev) => ({ ...prev, [schedule.id]: true }));
+    const result = await reflectSpaceExpenseToPersonalBudget(schedule, {
+      reflectionType: 'actual_paid',
+    });
+    setReflecting((prev) => ({ ...prev, [schedule.id]: false }));
+
+    if (result) {
+      setReflectedIds((prev) => new Set(prev).add(schedule.id));
+      toast.success('개인 가계부에 반영했습니다');
+    } else {
+      toast.error('개인 가계부 반영에 실패했습니다');
+    }
   };
 
   // ── 멤버 맵 (userId → member) ─────────────────────────
@@ -197,6 +219,93 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
           >{opt.label}</button>
         ))}
       </div>
+
+      {/* Space expenses */}
+      {spaceExpenses.length > 0 && (
+        <div style={{
+          background: 'white',
+          borderRadius: '22px',
+          padding: '18px',
+          marginBottom: '18px',
+          boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+          border: '1px solid rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <p style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1.2px', color: '#D97706', margin: '0 0 4px', textTransform: 'uppercase' }}>
+                Space Expenses
+              </p>
+              <h4 style={{ fontSize: '16px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+                공간 지출
+              </h4>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', background: '#F5F5F7', padding: '4px 9px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+              {spaceExpenses.length}건
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {spaceExpenses.slice(0, 5).map((expense) => {
+              const isReflected = reflectedIds.has(expense.id);
+              const isBusy = reflecting[expense.id] ?? false;
+              return (
+                <div key={expense.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: '16px',
+                  background: 'rgba(245,158,11,0.06)',
+                  border: '1px solid rgba(245,158,11,0.12)',
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '14px',
+                    background: 'rgba(217,119,6,0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    flexShrink: 0,
+                  }}>
+                    💰
+                  </div>
+                  <button
+                    onClick={() => router.push(`/schedules/${expense.id}`)}
+                    style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer' }}
+                  >
+                    <p style={{ fontSize: '14px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {expense.title}
+                    </p>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                      {formatAmount(expense.amount ?? 0)} · {formatDateHeader(toDateKey(expense.startTime))}
+                    </p>
+                  </button>
+                  <button
+                    onClick={() => reflectExpense(expense)}
+                    disabled={isBusy || isReflected}
+                    style={{
+                      minWidth: '92px',
+                      height: '36px',
+                      borderRadius: '999px',
+                      border: 'none',
+                      background: isReflected ? 'rgba(46,232,149,0.14)' : '#1A1B2E',
+                      color: isReflected ? '#059669' : 'white',
+                      fontSize: '12px',
+                      fontWeight: 900,
+                      cursor: isBusy || isReflected ? 'default' : 'pointer',
+                      opacity: isBusy ? 0.7 : 1,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {isBusy ? '반영 중...' : isReflected ? '반영됨' : '내 가계부'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Date strip */}
       <div

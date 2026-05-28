@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS space_members (
 );
 
 COMMENT ON TABLE  space_members         IS '공간 멤버십 및 역할 (admin/editor/viewer)';
-COMMENT ON COLUMN space_members.role    IS 'admin=관리자, editor=편집자, viewer=조회만';
+COMMENT ON COLUMN space_members.role    IS 'admin=공간 지기, editor=공간 운영자, viewer=공간 멤버';
 
 
 -- ── 4. schedules ─────────────────────────────────────────
@@ -87,6 +87,10 @@ CREATE TABLE IF NOT EXISTS schedules (
   amount           int,
   expense_category text        CHECK (expense_category IN ('education','housing','utility','insurance','subscription','other')),
   payment_method   text        CHECK (payment_method IN ('auto','card','cash','other')),
+  source_space_expense_id uuid REFERENCES schedules(id) ON DELETE SET NULL,
+  source_space_id uuid REFERENCES family_groups(id) ON DELETE SET NULL,
+  expense_reflection_type text CHECK (expense_reflection_type IN ('actual_paid','final_share','manual')),
+  expense_reflected_at timestamptz,
   google_event_id  text,
   created_at       timestamptz DEFAULT now(),
   updated_at       timestamptz DEFAULT now()

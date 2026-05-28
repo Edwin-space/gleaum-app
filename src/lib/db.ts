@@ -14,6 +14,7 @@ import type {
   RepeatType,
   ExpenseCategory,
   PaymentMethod,
+  ExpenseReflectionType,
   User,
   Notification,
   NameDisplayMode,
@@ -100,6 +101,10 @@ export interface ScheduleRow {
   amount: number | null;
   expense_category: ExpenseCategory | null;
   payment_method: PaymentMethod | null;
+  source_space_expense_id: string | null;
+  source_space_id: string | null;
+  expense_reflection_type: ExpenseReflectionType | null;
+  expense_reflected_at: string | null;
   created_at: string;
   updated_at: string;
   schedule_participants?: { user_id: string }[];
@@ -150,6 +155,10 @@ export function rowToSchedule(row: ScheduleRow): Schedule {
     amount: row.amount ?? undefined,
     expenseCategory: row.expense_category ?? undefined,
     paymentMethod: row.payment_method ?? undefined,
+    sourceSpaceExpenseId: row.source_space_expense_id ?? undefined,
+    sourceSpaceId: row.source_space_id ?? undefined,
+    expenseReflectionType: row.expense_reflection_type ?? undefined,
+    expenseReflectedAt: row.expense_reflected_at ? new Date(row.expense_reflected_at) : undefined,
   };
 }
 
@@ -986,6 +995,10 @@ export interface CreateScheduleInput {
   amount?: number;
   expenseCategory?: ExpenseCategory;
   paymentMethod?: PaymentMethod;
+  sourceSpaceExpenseId?: string;
+  sourceSpaceId?: string;
+  expenseReflectionType?: ExpenseReflectionType;
+  expenseReflectedAt?: Date;
 }
 
 export async function createSchedule(
@@ -1036,6 +1049,10 @@ export async function createSchedule(
       amount:            input.amount ?? null,
       expense_category:  input.expenseCategory ?? null,
       payment_method:    input.paymentMethod ?? null,
+      source_space_expense_id: input.sourceSpaceExpenseId ?? null,
+      source_space_id: input.sourceSpaceId ?? null,
+      expense_reflection_type: input.expenseReflectionType ?? null,
+      expense_reflected_at: input.expenseReflectedAt?.toISOString() ?? null,
     })
     .select()
     .single();
@@ -1071,6 +1088,74 @@ export async function updateScheduleStatus(id: string, status: ScheduleStatus): 
   return true;
 }
 
+export async function reflectSpaceExpenseToPersonalBudget(
+  sourceExpense: Schedule,
+  options: {
+    amount?: number;
+    reflectionType?: ExpenseReflectionType;
+  } = {}
+): Promise<Schedule | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  if (sourceExpense.type !== 'expense' || sourceExpense.visibility === 'private') {
+    console.error('개인 가계부 반영 오류: 공간 지출만 반영할 수 있습니다.');
+    return null;
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('preferences')
+    .eq('id', user.id)
+    .single();
+
+  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId;
+  if (!personalSpaceId) {
+    console.error('개인 가계부 반영 오류: personalSpaceId가 없습니다.');
+    return null;
+  }
+
+  const { data: existing } = await supabase
+    .from('schedules')
+    .select(`
+      *,
+      schedule_participants (user_id)
+    `)
+    .eq('source_space_expense_id', sourceExpense.id)
+    .eq('created_by', user.id)
+    .maybeSingle();
+
+  if (existing) return rowToSchedule(existing as ScheduleRow);
+
+  const reflectedAmount = options.amount ?? sourceExpense.amount ?? 0;
+  const reflectedAt = new Date();
+
+  return createSchedule(personalSpaceId, {
+    title: sourceExpense.title,
+    type: 'expense',
+    category: 'expense',
+    visibility: 'private',
+    automationPolicy: 'reminder_only',
+    startTime: sourceExpense.startTime,
+    endTime: sourceExpense.endTime ?? sourceExpense.startTime,
+    status: 'completed',
+    reminder: 0,
+    repeat: 'none',
+    amount: reflectedAmount,
+    expenseCategory: sourceExpense.expenseCategory ?? 'other',
+    paymentMethod: sourceExpense.paymentMethod ?? 'card',
+    memo: sourceExpense.memo
+      ? `${sourceExpense.memo}\n\n공간 지출에서 개인 가계부로 반영됨`
+      : '공간 지출에서 개인 가계부로 반영됨',
+    participantIds: [user.id],
+    sourceSpaceExpenseId: sourceExpense.id,
+    sourceSpaceId: sourceExpense.spaceId ?? sourceExpense.familyGroupId,
+    expenseReflectionType: options.reflectionType ?? 'actual_paid',
+    expenseReflectedAt: reflectedAt,
+  });
+}
+
 /** 일정 수정 */
 export async function updateSchedule(
   id: string,
@@ -1099,6 +1184,10 @@ export async function updateSchedule(
   if (updates.amount !== undefined)            dbUpdates.amount            = updates.amount ?? null;
   if (updates.expenseCategory !== undefined)   dbUpdates.expense_category  = updates.expenseCategory ?? null;
   if (updates.paymentMethod !== undefined)     dbUpdates.payment_method    = updates.paymentMethod ?? null;
+  if (updates.sourceSpaceExpenseId !== undefined) dbUpdates.source_space_expense_id = updates.sourceSpaceExpenseId ?? null;
+  if (updates.sourceSpaceId !== undefined)        dbUpdates.source_space_id = updates.sourceSpaceId ?? null;
+  if (updates.expenseReflectionType !== undefined) dbUpdates.expense_reflection_type = updates.expenseReflectionType ?? null;
+  if (updates.expenseReflectedAt !== undefined)   dbUpdates.expense_reflected_at = updates.expenseReflectedAt?.toISOString() ?? null;
 
   const { error } = await supabase.from('schedules').update(dbUpdates).eq('id', id);
   if (error) return false;

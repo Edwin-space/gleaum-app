@@ -16,6 +16,7 @@ Supabase 대시보드 → SQL Editor → New Query
 | `001_space_members.sql` | space_members 테이블 신설, 역할 기반 RLS 강화 | ⬜ 환경별 확인 필요 |
 | `009_fix_one_time_expense_status.sql` | 일회성 지출을 `completed + reminder_only`로 보정 | ⬜ Supabase SQL Editor 실행 필요 |
 | `010_move_private_records_to_personal_space.sql` | 공유 공간에 잘못 저장된 private 일정/지출을 개인 공간으로 이동 | ⬜ Supabase SQL Editor 실행 필요 |
+| `011_add_expense_reflection_columns.sql` | 공간 지출 → 개인 가계부 반영 연결 컬럼 추가 | ⬜ Supabase SQL Editor 실행 필요 |
 
 ## 001_space_members.sql 상세
 
@@ -67,3 +68,30 @@ WHERE s.visibility = 'private'
 ```
 
 결과가 `0`이면 공유 공간에 남아 있는 private 일정/지출이 없는 상태입니다.
+
+
+## 011_add_expense_reflection_columns.sql 상세
+
+### 변경 내용
+- `schedules.source_space_expense_id`: 개인 가계부 항목이 어떤 공간 지출에서 반영됐는지 연결
+- `schedules.source_space_id`: 원본 공간 ID 보관
+- `schedules.expense_reflection_type`: 반영 기준(`actual_paid`, `final_share`, `manual`) 보관
+- `schedules.expense_reflected_at`: 개인 가계부 반영 시각 보관
+- 같은 사용자가 같은 공간 지출을 중복 반영하지 않도록 partial unique index 추가
+
+### 실행 후 확인사항
+```sql
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'schedules'
+  AND column_name IN (
+    'source_space_expense_id',
+    'source_space_id',
+    'expense_reflection_type',
+    'expense_reflected_at'
+  )
+ORDER BY column_name;
+```
+
+위 4개 컬럼이 모두 보이면 적용 완료입니다.

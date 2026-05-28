@@ -10,8 +10,6 @@ import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatTy
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
 
-export type BudgetTab = 'personal' | 'space';
-
 function isRecurringExpense(expense: Schedule): boolean {
   return expense.repeat !== 'none';
 }
@@ -20,7 +18,7 @@ function isReflectedExpense(expense: Schedule): boolean {
   return !isRecurringExpense(expense) || expense.status === 'completed';
 }
 
-/** 지출 추가 입력값 — visibility는 탭에서 자동 결정 */
+/** 지출 추가 입력값 — 가계부는 개인 전용(private) */
 export interface AddExpenseInput {
   title: string;
   amount: number;
@@ -35,44 +33,28 @@ export default function BudgetPage() {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
-  // 개인 탭이 기본 (공간 없는 사용자도 사용 가능)
-  const [tab, setTab] = useState<BudgetTab>('personal');
-
-  const { familyGroupId, user, hasSharedSpace, personalSpaceId, sharedSpaceId } = useCurrentUser();
-  // 공간 지출 탭은 공유 공간(명시적으로 만들거나 참여한 공간)이 있을 때만 활성화
-  const hasSpace = hasSharedSpace;
-  const effectivePersonalSpaceId = personalSpaceId ?? (!hasSharedSpace ? familyGroupId : null);
-  const personalSchedulesState = useSchedules(effectivePersonalSpaceId);
-  const spaceSchedulesState = useSchedules(sharedSpaceId);
-  const loading = personalSchedulesState.loading || (hasSpace && spaceSchedulesState.loading);
-  const activeSchedules = tab === 'personal'
-    ? personalSchedulesState.schedules
-    : spaceSchedulesState.schedules;
+  const { familyGroupId, user, personalSpaceId } = useCurrentUser();
+  const effectivePersonalSpaceId = personalSpaceId ?? familyGroupId;
+  const { schedules, loading, updateStatus, create } = useSchedules(effectivePersonalSpaceId);
   const userId = user?.id;
 
   // 현재 선택된 달의 지출 전체
-  const allExpenses = activeSchedules.filter(
+  const allExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
       s.startTime.getFullYear() === viewDate.getFullYear() &&
       s.startTime.getMonth()    === viewDate.getMonth()
   );
 
-  // 탭 필터
-  // 개인: 내가 만든 private 지출
-  // 공간: private이 아닌 공유 지출
-  const expenses = tab === 'personal'
-    ? allExpenses.filter((s) => s.createdBy === userId)
-    : allExpenses.filter((s) => s.visibility !== 'private');
+  const expenses = allExpenses.filter((s) => s.createdBy === userId && s.visibility === 'private');
 
   // 지난달 지출 (비교용)
   const lastMonthDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
-  const lastMonthExpenses = activeSchedules.filter(
+  const lastMonthExpenses = schedules.filter(
     (s) => s.type === 'expense' &&
       s.startTime.getFullYear() === lastMonthDate.getFullYear() &&
       s.startTime.getMonth()    === lastMonthDate.getMonth() &&
-      (tab === 'personal'
-        ? s.createdBy === userId && s.visibility === 'private'
-        : s.visibility !== 'private')
+      s.createdBy === userId &&
+      s.visibility === 'private'
   );
 
   const total          = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
@@ -98,9 +80,6 @@ export default function BudgetPage() {
 
   const handleToggleStatus = async (id: string, currentStatus: ScheduleStatus) => {
     const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
-    const updateStatus = tab === 'personal'
-      ? personalSchedulesState.updateStatus
-      : spaceSchedulesState.updateStatus;
     await updateStatus(id, nextStatus);
     toast.success(nextStatus === 'completed' ? '납부 완료로 변경되었습니다' : '결제 예정으로 변경되었습니다', {
       position: isDesktop ? 'bottom-right' : 'top-center',
@@ -109,29 +88,17 @@ export default function BudgetPage() {
   };
 
   const handleAddExpense = async (input: AddExpenseInput): Promise<boolean> => {
-    // 공간 지출은 공유 공간이 있어야 함
-    if (tab === 'space' && !sharedSpaceId) {
-      toast.error('공간 지출을 등록하려면 공유 공간이 필요합니다. 공간 탭에서 멤버를 초대해 보세요.');
-      return false;
-    }
-
-    const targetSpaceId = tab === 'personal' ? effectivePersonalSpaceId : sharedSpaceId;
-    if (!targetSpaceId) {
+    if (!effectivePersonalSpaceId) {
       toast.error('개인 공간을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.');
       return false;
     }
 
     try {
-      // visibility는 현재 탭에서 자동 결정
-      const visibility = tab === 'personal' ? 'private' : 'space';
       const isOneTime = input.repeat === 'none';
-      const create = tab === 'personal'
-        ? personalSchedulesState.create
-        : spaceSchedulesState.create;
-
       const result = await create({
         title:           input.title,
         type:            'expense',
+        category:        'expense',
         startTime:       input.date,
         endTime:         input.date,
         status:          isOneTime ? 'completed' : 'pending',
@@ -140,11 +107,11 @@ export default function BudgetPage() {
         expenseCategory: input.category,
         paymentMethod:   input.paymentMethod,
         repeat:          input.repeat,
-        visibility,
+        visibility:      'private',
       });
 
       if (result) {
-        toast.success('지출이 등록되었습니다', {
+        toast.success('개인 지출이 등록되었습니다', {
           position: isDesktop ? 'bottom-right' : 'top-center',
           duration: 1500,
         });
@@ -163,9 +130,6 @@ export default function BudgetPage() {
     prevMonth,
     nextMonth,
     isCurrentMonth,
-    hasSpace,
-    tab,
-    setTab,
     total,
     completePct,
     completedCnt,

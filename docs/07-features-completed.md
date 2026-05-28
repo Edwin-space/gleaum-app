@@ -592,3 +592,14 @@ npm run cap:open:android # Android Studio 열기
 - [x] 역할 명칭 변경: `admin → 공간 지기`, `editor → 공간 운영자`, `viewer → 공간 멤버`
 - [x] `src/components/ui/UserAvatar.tsx` — Google 프로필 이미지 URL이 텍스트로 렌더링되어 레이아웃을 침범하던 문제 방지용 공통 아바타 컴포넌트 추가
 - [x] 공간/마이페이지/공간 설정/공간 타임라인의 아바타 표시를 URL 이미지와 이모지 모두 안전하게 처리하도록 보정
+
+
+---
+
+## 개인 가계부 / 공간 지출 분리 (완료 — 2026-05-28)
+
+- [x] `/budget`을 개인 가계부 전용으로 고정하고 공간 지출 탭 제거
+- [x] 개인 가계부 조회/생성 기준을 `personalSpaceId + visibility='private'`로 고정
+- [x] 공간 내부 `SpaceScheduleTimeline`에 공간 지출 섹션과 `내 가계부` 반영 버튼 추가
+- [x] `reflectSpaceExpenseToPersonalBudget()` 추가: 공간 지출을 개인 가계부 private expense로 복사
+- [x] `supabase/migrations/011_add_expense_reflection_columns.sql` 추가: 원본 공간 지출 연결 컬럼과 중복 반영 방지 인덱스

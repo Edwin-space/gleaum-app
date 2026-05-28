@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS } from '@/types';
 import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
-import type { BudgetTab, AddExpenseInput } from './page';
+import type { AddExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
 
 interface MobileBudgetProps {
@@ -13,9 +13,6 @@ interface MobileBudgetProps {
   prevMonth: () => void;
   nextMonth: () => void;
   isCurrentMonth: boolean;
-  hasSpace: boolean;
-  tab: BudgetTab;
-  setTab: (t: BudgetTab) => void;
   total: number;
   completePct: number;
   completedCnt: number;
@@ -51,9 +48,6 @@ export function MobileBudget({
   prevMonth,
   nextMonth,
   isCurrentMonth,
-  hasSpace,
-  tab,
-  setTab,
   total,
   completePct,
   completedCnt,
@@ -105,11 +99,6 @@ export function MobileBudget({
   };
 
   // 탭 레이블: 개인 먼저, 공간 두 번째
-  const tabs: { key: BudgetTab; label: string; disabled?: boolean }[] = [
-    { key: 'personal', label: '👤 개인 지출' },
-    { key: 'space',    label: '🏠 공간 지출', disabled: !hasSpace },
-  ];
-
   return (
     <div
       className="min-h-dvh"
@@ -150,28 +139,7 @@ export function MobileBudget({
         zIndex: 10,
         paddingTop: '16px',
       }}>
-        {/* ── 탭 스위처 ── */}
-        <div style={{ padding: '0 16px 0', display: 'flex', gap: '8px' }}>
-          {tabs.map(({ key, label, disabled }) => (
-            <button
-              key={key}
-              onClick={() => !disabled && setTab(key)}
-              style={{
-                flex: 1, height: '44px', borderRadius: '14px', fontSize: '13px', fontWeight: 800,
-                border: disabled ? '1.5px dashed #E5E5EA' : (tab === key ? 'none' : '1.5px solid #E5E5EA'),
-                cursor: disabled ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s',
-                background: disabled ? 'transparent' : (tab === key ? 'white' : 'transparent'),
-                color: disabled ? '#C7C7CC' : (tab === key ? '#1A1B2E' : '#8E8E93'),
-                boxShadow: (!disabled && tab === key) ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
-                opacity: disabled ? 0.55 : 1,
-              }}
-            >
-              {label}
-              {disabled && <span style={{ fontSize: '10px', marginLeft: '4px' }}>공간 필요</span>}
-            </button>
-          ))}
-        </div>
+
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '60px', paddingBottom: '40px' }}>
@@ -181,11 +149,11 @@ export function MobileBudget({
       ) : (
         <div>
           {/* ── Summary card ── */}
-          <div style={{ padding: '0 16px', marginTop: '12px', position: 'relative', zIndex: 20 }}>
+          <div style={{ padding: '0 16px', marginTop: '0', position: 'relative', zIndex: 20 }}>
             <div style={{ background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)', borderRadius: '28px', padding: '24px 24px 20px', boxShadow: '0 12px 40px rgba(0,132,204,0.30)', overflow: 'hidden', position: 'relative' }}>
               <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px', fontWeight: 600 }}>
-                {tab === 'personal' ? '개인 지출' : '공간 지출'}
+                개인 지출
               </p>
               <p style={{ fontSize: '36px', fontWeight: 800, color: 'white', letterSpacing: '-1.5px', margin: 0, lineHeight: 1.1 }}>{formatAmount(total)}</p>
               <div style={{ marginTop: '16px', height: '6px', borderRadius: '999px', background: 'rgba(255,255,255,0.20)', overflow: 'hidden' }}>
@@ -289,7 +257,7 @@ export function MobileBudget({
               }) : (
                 <button onClick={openAddModal} style={{ width: '100%', padding: '32px', borderRadius: '20px', border: '2px dashed #E5E5EA', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                   <span style={{ fontSize: '32px' }}>💰</span>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>{tab === 'personal' ? '개인 지출을 추가해 보세요' : '공간 지출을 추가해 보세요'}</p>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>개인 지출을 추가해 보세요</p>
                   <p style={{ fontSize: '12px', color: '#C7C7CC', margin: 0 }}>일회성 및 정기 지출 모두 관리</p>
                 </button>
               )}
@@ -316,10 +284,10 @@ export function MobileBudget({
             {/* 제목 + 탭 표시 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
-                {tab === 'personal' ? '개인 지출 추가' : '공간 지출 추가'}
+                개인 지출 추가
               </h3>
-              <span style={{ fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', background: tab === 'personal' ? '#F5F5F7' : 'rgba(0,132,204,0.08)', color: tab === 'personal' ? '#8E8E93' : '#0084CC' }}>
-                {tab === 'personal' ? '🔒 나만 보기' : '🏠 공간 공유'}
+              <span style={{ fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '8px', background: '#F5F5F7', color: '#8E8E93' }}>
+                🔒 나만 보기
               </span>
             </div>
 

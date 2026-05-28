@@ -149,6 +149,7 @@ export type ExpenseCategory =
   | 'other';
 
 export type PaymentMethod = 'auto' | 'card' | 'cash' | 'other';
+export type ExpenseReflectionType = 'actual_paid' | 'final_share' | 'manual';
 
 export interface Location {
   address: string;
@@ -192,6 +193,14 @@ export interface Schedule {
   amount?:          number;
   expenseCategory?: ExpenseCategory;
   paymentMethod?:   PaymentMethod;
+  /** 개인 가계부에 반영된 경우 원본 공간 지출 ID */
+  sourceSpaceExpenseId?: string;
+  /** 개인 가계부에 반영된 경우 원본 공간 ID */
+  sourceSpaceId?: string;
+  /** 공간 지출을 개인 가계부에 반영한 기준 */
+  expenseReflectionType?: ExpenseReflectionType;
+  /** 공간 지출을 개인 가계부에 반영한 시각 */
+  expenseReflectedAt?: Date;
   googleEventId?:   string;
 }
 

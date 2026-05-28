@@ -65,6 +65,7 @@
 ✅ 2026-05-27 iOS 무료 Apple Developer 빌드를 위해 Associated Domains entitlement 임시 제거
 ✅ 2026-05-28 개인/공유 공간 데이터 경계 보정, 공간 멤버 조회 안정화, private 데이터 개인 공간 이동 SQL 추가
 ✅ 2026-05-28 공간 초대 코드 복사, 신규 참여 기본 권한, 역할 명칭, 프로필 이미지 URL 렌더링 안정화
+✅ 2026-05-28 개인 가계부와 공간 지출 개념 분리, 공간 지출 → 개인 가계부 반영 모델 추가
 
 🔜 다음 단계  Supabase `010_move_private_records_to_personal_space.sql` 실행 → 공간 경계 회귀 테스트 → Apple Developer 유료 계정 연결 → iOS Push/Universal Links 재활성화 → TestFlight 배포
 ```

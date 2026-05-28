@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS, PAYMENT_METHOD_LABELS } from '@/types';
 import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
-import type { BudgetTab, AddExpenseInput } from './page';
+import type { AddExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
 
 interface DesktopBudgetProps {
@@ -13,9 +13,6 @@ interface DesktopBudgetProps {
   prevMonth: () => void;
   nextMonth: () => void;
   isCurrentMonth: boolean;
-  hasSpace: boolean;
-  tab: BudgetTab;
-  setTab: (t: BudgetTab) => void;
   total: number;
   completePct: number;
   completedCnt: number;
@@ -49,9 +46,6 @@ export function DesktopBudget({
   viewDate,
   prevMonth,
   nextMonth,
-  hasSpace,
-  tab,
-  setTab,
   total,
   completePct,
   completedCnt,
@@ -119,30 +113,6 @@ export function DesktopBudget({
             >
               <span style={{ fontSize: '18px', lineHeight: 1 }}>＋</span> 지출 추가
             </button>
-
-            {/* 탭 스위처 */}
-            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.10)', borderRadius: '14px', padding: '4px', border: '1px solid rgba(255,255,255,0.12)' }}>
-              {([
-                { key: 'personal' as BudgetTab, label: '👤 개인', disabled: false },
-                { key: 'space'    as BudgetTab, label: '🏠 공간', disabled: !hasSpace },
-              ]).map(({ key, label, disabled }) => (
-                <button
-                  key={key}
-                  onClick={() => !disabled && setTab(key)}
-                  style={{
-                    padding: '7px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 800,
-                    border: disabled ? '1px dashed rgba(255,255,255,0.25)' : 'none',
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.15s',
-                    background: tab === key && !disabled ? 'rgba(255,255,255,0.18)' : 'transparent',
-                    color: disabled ? 'rgba(255,255,255,0.28)' : tab === key ? 'white' : 'rgba(255,255,255,0.50)',
-                    opacity: disabled ? 0.55 : 1,
-                  }}
-                >
-                  {label}{disabled ? ' (공간 필요)' : ''}
-                </button>
-              ))}
-            </div>
 
             {/* 월 네비게이션 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '18px', padding: '6px', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
@@ -321,10 +291,10 @@ export function DesktopBudget({
             {/* 모달 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
-                {tab === 'personal' ? '개인 지출 추가' : '공간 지출 추가'}
+                개인 지출 추가
               </h3>
-              <span style={{ fontSize: '12px', fontWeight: 800, padding: '5px 12px', borderRadius: '20px', background: tab === 'personal' ? 'rgba(142,142,147,0.10)' : 'rgba(0,132,204,0.08)', color: tab === 'personal' ? '#8E8E93' : '#0084CC' }}>
-                {tab === 'personal' ? '🔒 나만 보기' : '🏠 공간 공유'}
+              <span style={{ fontSize: '12px', fontWeight: 800, padding: '5px 12px', borderRadius: '20px', background: 'rgba(142,142,147,0.10)', color: '#8E8E93' }}>
+                🔒 나만 보기
               </span>
             </div>
 

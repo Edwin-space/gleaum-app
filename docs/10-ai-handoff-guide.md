@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-28 | 가계부/공간 지출 개념 분리. `/budget`은 개인 가계부 전용으로 고정하고, 공간 지출은 공간 내부에서 관리하며 `내 가계부` 버튼으로 개인 가계부에 반영 |
 | 2026-05-28 | 공간 초대/역할/아바타 안정화. 코드 복사는 순수 초대 코드만 복사, 신규 참여 기본 역할은 viewer, 역할 표시명은 공간 지기/공간 운영자/공간 멤버로 변경, Google avatar URL 레이아웃 깨짐 방지 |
 | 2026-05-28 | 공간 데이터 경계 보정. 개인 가계부/개인 일정은 `personalSpaceId`에만 저장하고, 공유 공간/홈/일정 화면에서는 `visibility='private'` 데이터를 제외. `getSpaceWithMembers()`/`getMySpaces()`의 Supabase 조인 의존 제거 |
 | 2026-05-27 | 가계부 일회성 지출이 `pending`/결제 예정 일정처럼 보이던 문제 수정. 일회성 지출은 `completed + reminder_only`로 저장하고 홈/일정 타임라인에서는 제외 |
@@ -292,33 +293,29 @@ if (group?.created_by === user.id) {
 
 ## 가계부 (Budget) 시스템 상세
 
-### 탭 구조
+### 제품 기준
 
-```typescript
-// budget/page.tsx
-const personalSchedulesState = useSchedules(personalSpaceId);
-const spaceSchedulesState = useSchedules(sharedSpaceId);
+`/budget`은 개인 가계부 전용입니다. 공간 지출을 가계부 안에서 탭으로 함께 보여주지 않습니다.
 
-const tabs = [
-  { key: 'personal', label: '👤 개인 지출' },
-  { key: 'space',    label: '🏠 공간 지출', disabled: !hasSharedSpace },
-];
+```text
+개인 가계부 = 내가 실제 소비했거나 내 기록으로 남길 돈의 흐름
+공간 지출   = 공간 안에서 함께 관리하는 공동비/모임비/가족비/데이트비
+반영        = 공간 지출 중 내가 낸 금액 또는 내 부담분을 개인 가계부로 복사
 ```
 
-### visibility 자동 결정
+### 저장 규칙
 
-```typescript
-// 모달에 visibility 토글 없음 — 탭이 자동 결정
-const targetSpaceId = tab === 'personal' ? personalSpaceId : sharedSpaceId;
-const visibility = tab === 'personal' ? 'private' : 'space';
-```
+- 개인 가계부 항목: `family_group_id = personalSpaceId`, `visibility = 'private'`
+- 공간 지출 항목: `family_group_id = sharedSpaceId`, `visibility = 'space'`
+- 공간 지출을 개인 가계부로 반영하면 새 private expense를 만들고 원본 연결 컬럼을 채움
+- 원본 연결 컬럼: `source_space_expense_id`, `source_space_id`, `expense_reflection_type`, `expense_reflected_at`
+- 같은 사용자가 같은 공간 지출을 중복 반영하지 않도록 DB unique index 사용
 
 ### 일회성 지출 vs 정기 지출 상태 규칙
 
 가계부는 현재 `schedules` 테이블의 `type='expense'`를 사용하지만, 일회성 지출은 일정/결제 예정이 아니라 이미 발생한 돈의 흐름이다.
 
 ```typescript
-// src/lib/db.ts / src/app/budget/page.tsx
 repeat === 'none'
   ? { status: 'completed', automationPolicy: 'reminder_only' }
   : { status: 'pending',   automationPolicy: 'payment_due' };
@@ -327,30 +324,18 @@ repeat === 'none'
 - 일회성 지출: 등록 즉시 `completed`, 가계부에서 `지출반영`으로 표시, 홈/일정 타임라인에는 노출하지 않음.
 - 정기 지출: `pending`으로 시작, 가계부에서만 `결제예정/결제완료` 토글 가능, 일정 타임라인의 `정기지출` 필터에 노출 가능.
 - 기존 데이터 보정 SQL: `supabase/migrations/009_fix_one_time_expense_status.sql`
+- 공간 지출 반영 컬럼 SQL: `supabase/migrations/011_add_expense_reflection_columns.sql`
 
-### 금액 입력 포맷
-
-```typescript
-function formatInputAmount(raw: string): string {
-  const digits = raw.replace(/[^0-9]/g, '');
-  if (!digits) return '';
-  return Number(digits).toLocaleString('ko-KR'); // 1,000,000
-}
-// type="text" inputMode="numeric" 사용 (type="number" ❌)
-// 10,000원 이상 시 "X만원" 힌트 표시
-```
-
-### `AddExpenseInput` 타입 (visibility 없음)
+### `AddExpenseInput` 타입
 
 ```typescript
 export interface AddExpenseInput {
-  title:         string;
-  amount:        number;
-  date:          Date;
-  category:      ExpenseCategory;
+  title: string;
+  amount: number;
+  date: Date;
+  category: ExpenseCategory;
   paymentMethod: PaymentMethod;
-  repeat:        RepeatType;
-  // visibility는 탭에서 자동 결정 — 이 타입에 없음
+  repeat: RepeatType;
 }
 ```
 
