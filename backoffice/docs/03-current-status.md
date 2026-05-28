@@ -1,6 +1,6 @@
 # 03. 현재 상태 및 다음 작업 (Current Status)
 
-> 마지막 업데이트: 2026-05-13
+> 마지막 업데이트: 2026-05-28
 > 이 문서는 다음 AI 에이전트가 작업을 이어받기 위한 핵심 인수인계 문서입니다.
 
 ---
@@ -28,6 +28,8 @@
 - [x] `/users` — 회원 관리 (Supabase `profiles` 테이블 실데이터 연동)
 - [x] `/spaces` — 공간 관리 (Supabase `family_groups` 테이블 실데이터 연동)
 - [x] `/campaigns` — CRM 캠페인 빌더 (5채널 탭, 실시간 메시지 미리보기)
+- [x] `/releases` — 릴리즈 관리 (Firebase App Distribution 빌드 목록 + 내부 테스터 추가/제거)
+- [x] `/settings` — Remote Config 기능 플래그 편집기 추가 (스위치 토글, 즉시 Firebase 반영)
 - [x] `/ads` — 광고 매니저 (RadioGroup 전략 선택, 앱 목업 시뮬레이터)
 - [x] `/settings` — 시스템 설정 (API 키 관리 폼, 비밀번호 변경, GA4 연동 상태 표시)
 - [x] `/login` — 관리자 로그인 페이지 (Supabase Auth 기반)
