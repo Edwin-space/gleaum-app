@@ -45,3 +45,7 @@
 
 # ── Gleaum 앱 패키지 ───────────────────────────────────────
 -keep class com.gleaum.app.** { *; }
+
+# ── Google Mobile Ads (AdMob) ──────────────────────────────
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
