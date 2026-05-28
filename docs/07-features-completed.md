@@ -603,3 +603,20 @@ npm run cap:open:android # Android Studio 열기
 - [x] 공간 내부 `SpaceScheduleTimeline`에 공간 지출 섹션과 `내 가계부` 반영 버튼 추가
 - [x] `reflectSpaceExpenseToPersonalBudget()` 추가: 공간 지출을 개인 가계부 private expense로 복사
 - [x] `supabase/migrations/011_add_expense_reflection_columns.sql` 추가: 원본 공간 지출 연결 컬럼과 중복 반영 방지 인덱스
+
+
+---
+
+## Claude 작업 반영 — 알림/Firebase/백오피스 (완료 — 2026-05-28)
+
+- [x] 고정지출 연체 알림 API 추가: `/api/cron/overdue-expenses`
+- [x] 주간 소비 다이제스트 API 추가: `/api/cron/weekly-digest`
+- [x] Supabase 크론 등록 SQL 추가: `supabase/migrations/012_cron_overdue_and_digest.sql`
+- [x] 가계부 PC/모바일 D-day UI 추가: D-N, 내일 결제, 오늘 결제일, N일 경과
+- [x] 모바일 홈 가계부 카드 미결제 고정지출 배지 추가
+- [x] Firebase Crashlytics, Remote Config, App Check, App Distribution 기반 추가
+- [x] Android Firebase App Distribution 배포 스크립트 추가: `scripts/distribute-android.sh`
+- [x] 백오피스 릴리즈 관리 + Remote Config 편집기 추가
+- [x] 중복 사용자 앱 `/admin` 대시보드 제거 후 백오피스로 통합
+- [x] Android AGP 9.x 호환 문제로 Firebase Performance Gradle plugin 제거
+- [x] 지출 카테고리 가이드 초안 추가: `docs/Guide/expenses.md`

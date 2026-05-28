@@ -27,6 +27,7 @@
 | `12-product-model.md`      | ⭐ 개인 중심 + Space 확장형 제품 모델 재정의 | **최우선** |
 | `13-gcp-account-migration.md` | GCP/Firebase 계정 이관 기록 | 참고 |
 | `14-native-app-plan.md`    | ⭐ **네이티브 앱 확장 계획** (macOS → iOS → Android) | **최우선** |
+| `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
 ---
 
@@ -37,7 +38,7 @@
 - **현재 단계**: 웹 서비스 운영 + 네이티브 앱/스토어 출시 준비 + 초대/공간 정책 안정화
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 기준 커밋**: `작업 중` (2026-05-28) — 공간 데이터 경계 보정 및 private 데이터 개인 공간 이동 SQL 추가
+- **최근 기준 커밋**: `d915bfb` (2026-05-28) — Android Firebase Performance 플러그인 제거(AGP 9.x 호환)까지 반영
 
 ---
 
@@ -66,8 +67,12 @@
 ✅ 2026-05-28 개인/공유 공간 데이터 경계 보정, 공간 멤버 조회 안정화, private 데이터 개인 공간 이동 SQL 추가
 ✅ 2026-05-28 공간 초대 코드 복사, 신규 참여 기본 권한, 역할 명칭, 프로필 이미지 URL 렌더링 안정화
 ✅ 2026-05-28 개인 가계부와 공간 지출 개념 분리, 공간 지출 → 개인 가계부 반영 모델 추가
+✅ 2026-05-28 고정지출 연체 알림, 주간 소비 다이제스트, D-day UI 추가
+✅ 2026-05-28 Firebase Crashlytics/Remote Config/App Check/App Distribution 기반 추가
+✅ 2026-05-28 백오피스 릴리즈 관리 + Remote Config 편집기 추가
+✅ 2026-05-28 Android AGP 9.x 호환 문제로 Firebase Performance Gradle 플러그인 제거
 
-🔜 다음 단계  Supabase `010_move_private_records_to_personal_space.sql` 실행 → 공간 경계 회귀 테스트 → Apple Developer 유료 계정 연결 → iOS Push/Universal Links 재활성화 → TestFlight 배포
+🔜 다음 단계  Supabase `012_cron_overdue_and_digest.sql` 실행 여부 확인 → Firebase Remote Config 실값 등록 → Android 내부 배포 검증 → Apple Developer 유료 계정 연결
 ```
 
 ---

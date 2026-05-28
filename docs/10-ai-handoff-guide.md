@@ -44,6 +44,10 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-28 | Android Firebase Performance Gradle 플러그인 제거. AGP 9.x에서 Transform API 제거로 빌드 호환 불가하여 SDK dependency는 유지하되 Gradle perf-plugin 적용은 제거 |
+| 2026-05-28 | 백오피스 릴리즈 관리 + Remote Config 편집기 추가. Firebase App Distribution 릴리즈 조회/테스터 관리, Remote Config 플래그 토글 기능 반영 |
+| 2026-05-28 | Firebase 통합 기반 추가. Crashlytics, Remote Config, App Check, App Distribution 스크립트/설정 추가. Performance SDK는 의존성 유지, Gradle 플러그인은 제거됨 |
+| 2026-05-28 | 고정지출 연체 알림 + 주간 소비 다이제스트 + D-day UI 추가. `/api/cron/overdue-expenses`, `/api/cron/weekly-digest`, `012_cron_overdue_and_digest.sql` 추가 |
 | 2026-05-28 | 가계부/공간 지출 개념 분리. `/budget`은 개인 가계부 전용으로 고정하고, 공간 지출은 공간 내부에서 관리하며 `내 가계부` 버튼으로 개인 가계부에 반영 |
 | 2026-05-28 | 공간 초대/역할/아바타 안정화. 코드 복사는 순수 초대 코드만 복사, 신규 참여 기본 역할은 viewer, 역할 표시명은 공간 지기/공간 운영자/공간 멤버로 변경, Google avatar URL 레이아웃 깨짐 방지 |
 | 2026-05-28 | 공간 데이터 경계 보정. 개인 가계부/개인 일정은 `personalSpaceId`에만 저장하고, 공유 공간/홈/일정 화면에서는 `visibility='private'` 데이터를 제외. `getSpaceWithMembers()`/`getMySpaces()`의 Supabase 조인 의존 제거 |
@@ -76,6 +80,10 @@
 | 백오피스 배포 | ✅ 운영 중 (별도 Vercel 프로젝트) |
 | GA4 데이터 수집 | ✅ 정상 (서비스 계정 뷰어 권한 부여 완료) |
 | Firebase FCM | ✅ 웹/네이티브 분기 처리 완료 |
+| Firebase Crashlytics | ✅ 네이티브 사용자 ID 연동 기반 추가 |
+| Firebase Remote Config | ✅ 웹/네이티브 유틸 + 백오피스 편집기 추가 |
+| Firebase App Check | ✅ 초기화 유틸 추가 |
+| Firebase App Distribution | ✅ Android 배포 스크립트 + 백오피스 릴리즈 관리 추가 |
 | Google Play | ✅ 내부 테스트 버전 등록 완료 |
 | App Store (iOS) | ❌ 미등록 (APNs 설정 후 진행 필요) |
 | 2026-05-11 | `5446976` | space_members 테이블 + 역할 기반 RLS |
@@ -147,6 +155,33 @@ page.tsx (thin router — 상태 + 핸들러)
 - 공유 공간 지출은 공유 공간에만 보이고 개인 가계부에는 섞이지 않음
 - 공유 공간 설정/멤버 화면은 `space_members` 기준으로 모든 멤버를 표시
 - 개인 일정/지출은 `personalSpaceId`에 저장, 공유 일정/지출은 `sharedSpaceId`에 저장
+
+## 최신 Claude 작업 확인 (2026-05-28)
+
+Claude가 진행한 뒤 문서 반영이 누락되어 있던 핵심 변경입니다.
+
+### 지출/알림
+- `/api/cron/overdue-expenses`: 고정지출 미결제 D+0/3/7 FCM + in-app 알림
+- `/api/cron/weekly-digest`: 매주 월요일 09:00 KST 지난 7일 개인 지출 다이제스트
+- `supabase/migrations/012_cron_overdue_and_digest.sql`: Supabase pg_cron 등록 SQL. 실행 전 `app_url`, `cron_secret` 수정 필수
+- 가계부 PC/모바일 D-day UI: D-N, 내일 결제, 오늘 결제일, N일 경과 표시
+- 모바일 홈 가계부 카드: 미결제 고정지출 건수 배지 표시
+
+### Firebase/Android
+- `FirebaseServicesProvider`: App Check, Remote Config, Crashlytics 사용자 ID 초기화
+- `src/lib/remote-config.ts`: feature flag 기본값 및 웹/네이티브 Remote Config fetch
+- `src/lib/crashlytics.ts`, `src/lib/app-check.ts`, `src/lib/firebase-performance.ts` 추가
+- `scripts/distribute-android.sh`: release APK 빌드 후 Firebase App Distribution 배포
+- `firebase.json`: Firebase 프로젝트/App Distribution 설정
+- AGP 9.x 호환 문제로 Firebase Performance Gradle plugin은 제거됨. `@capacitor-firebase/performance` 의존성은 유지
+
+### 백오피스
+- `/backoffice/releases`: Firebase App Distribution 릴리즈 관리
+- `/backoffice/settings`: Remote Config 편집기
+- 중복 사용자 앱 `/admin` 대시보드는 제거되고 백오피스 프로젝트로 통합
+
+### 지출 카테고리 가이드
+- `docs/Guide/expenses.md`: 고정지출/변동지출 1~3차 카테고리 설계 초안
 
 ## 핵심 파일 맵
 

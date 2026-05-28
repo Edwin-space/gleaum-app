@@ -96,3 +96,25 @@ ORDER BY column_name;
 ```
 
 위 4개 컬럼이 모두 보이면 적용 완료입니다.
+
+
+## 012_cron_overdue_and_digest.sql 상세
+
+### 변경 내용
+- `gleaum-overdue-expenses`: 매일 09:00 KST, 고정지출 미결제 D+0/3/7 알림
+- `gleaum-weekly-digest`: 매주 월요일 09:00 KST, 지난 7일 개인 지출 다이제스트
+
+### 실행 전 필수 수정
+SQL 파일 내부의 아래 값을 실제 운영값으로 바꾼 뒤 실행해야 합니다.
+
+```sql
+app_url     TEXT := 'https://www.gleaum.com';
+cron_secret TEXT := 'your-cron-secret-here';
+```
+
+### 실행 후 확인사항
+```sql
+SELECT jobname, schedule, active
+FROM cron.job
+WHERE jobname IN ('gleaum-overdue-expenses', 'gleaum-weekly-digest');
+```
