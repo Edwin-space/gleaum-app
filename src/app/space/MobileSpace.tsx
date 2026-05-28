@@ -12,12 +12,13 @@ import {
 import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
 import { toast } from 'sonner';
 import type { Space, SpaceMember, SpaceRole } from '@/types';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 const FREE_MAX_SPACES  = 2;
 const FREE_MAX_MEMBERS = 10;
 
 // ── 역할 레이블 ────────────────────────────────────────────
-const ROLE_LABELS: Record<SpaceRole, string> = { admin: '관리자', editor: '편집자', viewer: '조회자' };
+const ROLE_LABELS: Record<SpaceRole, string> = { admin: '공간 지기', editor: '공간 운영자', viewer: '공간 멤버' };
 const ROLE_OPTIONS: SpaceRole[] = ['admin', 'editor', 'viewer'];
 
 export function MobileSpace() {
@@ -296,6 +297,39 @@ export function MobileSpace() {
     }
 
     if (ok) {
+      setCopied(true);
+      setCopyError(false);
+      setTimeout(() => setCopied(false), 2500);
+    } else {
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 3000);
+    }
+  };
+
+
+  const copyInviteCode = async () => {
+    const ok = await ensureInviteCode();
+    if (!ok) return;
+    const code = liveInviteCode ?? group?.inviteCode ?? '';
+    if (!code) return;
+
+    let copiedCode = false;
+    try {
+      await navigator.clipboard.writeText(code);
+      copiedCode = true;
+    } catch {
+      try {
+        const el = document.createElement('textarea');
+        el.value = code;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus(); el.select();
+        copiedCode = document.execCommand('copy');
+        document.body.removeChild(el);
+      } catch { /* ignore */ }
+    }
+
+    if (copiedCode) {
       setCopied(true);
       setCopyError(false);
       setTimeout(() => setCopied(false), 2500);
@@ -625,7 +659,7 @@ export function MobileSpace() {
                         background: 'rgba(255,255,255,0.08)',
                         border: '1px solid rgba(255,255,255,0.10)',
                       }}>
-                        <span style={{ fontSize: '11px' }}>{m.user?.avatar ?? '👤'}</span>
+                        <UserAvatar avatar={m.user?.avatar} name={m.user?.name} size={18} radius={999} fontSize={11} style={{ background: 'rgba(255,255,255,0.12)' }} />
                         <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>
                           {m.userId === user?.id ? '나' : (m.user?.name ?? '멤버')}
                         </span>
@@ -652,7 +686,7 @@ export function MobileSpace() {
                         <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5', flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {currentInviteCode}
                         </span>
-                        <button onClick={copyInviteLink} disabled={generatingCode}
+                        <button onClick={copyInviteCode} disabled={generatingCode}
                           style={{ padding: '10px 20px', borderRadius: '14px', background: copied ? '#0CC9B5' : copyError ? '#EF4444' : 'white', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 800, color: (copied || copyError) ? 'white' : '#1A1B2E', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', flexShrink: 0, transition: 'background 0.2s' }}>
                           {copied ? '복사됨 ✓' : copyError ? '복사 실패' : '코드 복사'}
                         </button>
@@ -730,9 +764,14 @@ export function MobileSpace() {
                   }}>
                     <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
                       {/* Avatar */}
-                      <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', flexShrink: 0, border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                        {member.user?.avatar ?? '👤'}
-                      </div>
+                      <UserAvatar
+                        avatar={member.user?.avatar}
+                        name={member.user?.name}
+                        size={52}
+                        radius={18}
+                        fontSize={26}
+                        style={{ border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                      />
 
                       {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -919,7 +958,7 @@ export function MobileSpace() {
                   <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
                 </div>
                 <button
-                  onClick={copyInviteLink}
+                  onClick={copyInviteCode}
                   style={{ padding: '8px 16px', borderRadius: '12px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
                 >
                   코드만 복사

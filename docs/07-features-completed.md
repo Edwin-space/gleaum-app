@@ -582,3 +582,13 @@ npm run cap:open:android # Android Studio 열기
 - [x] `src/lib/db.ts` — `getSpaceWithMembers()`, `getSpaceMembers()`, `getMySpaces()`의 Supabase nested join 의존 제거. 멤버십/프로필/공간을 분리 조회해 공간 멤버 누락 방지
 - [x] `src/app/space/settings/page.tsx`, `src/app/space/MobileSpace.tsx` — 현재 보고 있는 공간의 설정을 열 수 있도록 `?sid=` 기반 설정 대상 지정
 - [x] `supabase/migrations/010_move_private_records_to_personal_space.sql` — 과거 공유 공간에 잘못 저장된 private 일정/지출을 개인 공간으로 이동하는 보정 SQL 추가
+
+---
+
+## 공간 초대/역할/아바타 안정화 (완료 — 2026-05-28)
+
+- [x] `src/app/space/DesktopSpace.tsx`, `src/app/space/MobileSpace.tsx` — `코드 복사`/`코드만 복사` 액션이 초대 URL이 아니라 순수 초대 코드만 복사하도록 수정
+- [x] `src/lib/db.ts`, `src/app/api/invite/join/route.ts`, `src/app/space/[spaceId]/join/page.tsx` — 초대/공간 참여자의 기본 역할을 `editor`에서 `viewer`로 변경
+- [x] 역할 명칭 변경: `admin → 공간 지기`, `editor → 공간 운영자`, `viewer → 공간 멤버`
+- [x] `src/components/ui/UserAvatar.tsx` — Google 프로필 이미지 URL이 텍스트로 렌더링되어 레이아웃을 침범하던 문제 방지용 공통 아바타 컴포넌트 추가
+- [x] 공간/마이페이지/공간 설정/공간 타임라인의 아바타 표시를 URL 이미지와 이모지 모두 안전하게 처리하도록 보정

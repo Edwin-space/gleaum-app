@@ -11,11 +11,12 @@ import {
 import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
 import { toast } from 'sonner';
 import type { Space, SpaceRole } from '@/types';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 const FREE_MAX_SPACES  = 2;
 const FREE_MAX_MEMBERS = 10;
 
-const ROLE_LABELS: Record<SpaceRole, string> = { admin: '관리자', editor: '편집자', viewer: '조회자' };
+const ROLE_LABELS: Record<SpaceRole, string> = { admin: '공간 지기', editor: '공간 운영자', viewer: '공간 멤버' };
 const ROLE_OPTIONS: SpaceRole[] = ['admin', 'editor', 'viewer'];
 
 export function DesktopSpace() {
@@ -135,6 +136,39 @@ export function DesktopSpace() {
     }
   };
 
+  const writeClipboard = async (value: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      try {
+        const el = document.createElement('textarea');
+        el.value = value;
+        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+        document.body.appendChild(el);
+        el.focus(); el.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(el);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  const showCopyResult = (ok: boolean) => {
+    if (ok) { setCopied(true); setCopyError(false); setTimeout(() => setCopied(false), 2500); }
+    else    { setCopyError(true); setTimeout(() => setCopyError(false), 3000); }
+  };
+
+  const copyInviteCode = async () => {
+    const ok = await ensureInviteCode();
+    if (!ok) return;
+    const code = liveInviteCode ?? group?.inviteCode ?? '';
+    if (!code) return;
+    showCopyResult(await writeClipboard(code));
+  };
+
   const copyInviteLink = async () => {
     let link = inviteLink;
     if (!link && isAdmin && displaySpaceId) {
@@ -152,23 +186,7 @@ export function DesktopSpace() {
       } finally { setGeneratingCode(false); }
     }
     if (!link) return;
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(link);
-      ok = true;
-    } catch {
-      try {
-        const el = document.createElement('textarea');
-        el.value = link;
-        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
-        document.body.appendChild(el);
-        el.focus(); el.select();
-        ok = document.execCommand('copy');
-        document.body.removeChild(el);
-      } catch { /* ignore */ }
-    }
-    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2500); }
-    else    { setCopyError(true); setTimeout(() => setCopyError(false), 3000); }
+    showCopyResult(await writeClipboard(link));
   };
 
   const shareViaKakao = async () => {
@@ -201,23 +219,7 @@ export function DesktopSpace() {
     const codeReady = await ensureInviteCode();
     if (!codeReady) return;
     const message = buildShareMessage();
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(message);
-      ok = true;
-    } catch {
-      try {
-        const el = document.createElement('textarea');
-        el.value = message;
-        el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
-        document.body.appendChild(el);
-        el.focus(); el.select();
-        ok = document.execCommand('copy');
-        document.body.removeChild(el);
-      } catch { /* ignore */ }
-    }
-    if (ok) { setCopied(true); setCopyError(false); setTimeout(() => setCopied(false), 2500); }
-    else    { setCopyError(true); setTimeout(() => setCopyError(false), 3000); }
+    showCopyResult(await writeClipboard(message));
   };
 
   const handleJoin = async () => {
@@ -322,7 +324,7 @@ export function DesktopSpace() {
               <p style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 8px' }}>INVITE CODE</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '24px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '0.12em', color: '#0CC9B5' }}>{currentInviteCode}</span>
-                <button onClick={copyInviteLink} style={{
+                <button onClick={copyInviteCode} style={{
                   padding: '10px 18px', borderRadius: '14px',
                   background: copied ? 'rgba(12,201,181,0.25)' : 'rgba(255,255,255,0.12)',
                   color: 'white', fontSize: '13px', fontWeight: 800,
@@ -420,12 +422,14 @@ export function DesktopSpace() {
                     border: '1px solid rgba(0,0,0,0.03)',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 20px' }}>
-                      <div style={{
-                        width: '52px', height: '52px', borderRadius: '18px',
-                        background: 'white', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: '28px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.07)', flexShrink: 0,
-                      }}>{member.user?.avatar}</div>
+                      <UserAvatar
+                        avatar={member.user?.avatar}
+                        name={member.user?.name}
+                        size={52}
+                        radius={18}
+                        fontSize={28}
+                        style={{ background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.07)' }}
+                      />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {member.userId === user?.id ? `${member.user?.name} (나)` : member.user?.name}
@@ -517,7 +521,7 @@ export function DesktopSpace() {
                     <p style={{ fontSize: '9px', fontWeight: 800, color: '#8E8E93', margin: '0 0 3px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
                     <span style={{ fontSize: '20px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
                   </div>
-                  <button onClick={copyInviteLink} style={{ padding: '8px 14px', borderRadius: '10px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap' }}>
+                  <button onClick={copyInviteCode} style={{ padding: '8px 14px', borderRadius: '10px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap' }}>
                     코드만 복사
                   </button>
                 </div>
@@ -556,7 +560,7 @@ export function DesktopSpace() {
           {/* 안내 */}
           <div style={{ padding: '18px 20px', borderRadius: '20px', background: 'rgba(0,132,204,0.04)', border: '1px solid rgba(0,132,204,0.08)' }}>
             <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.75, margin: 0 }}>
-              💡 공간 관리자는 멤버를 관리하고 공간의 이름을 수정할 수 있습니다. 더 많은 공간 기능이 곧 업데이트됩니다.
+              💡 공간 지기는 멤버를 관리하고 공간의 이름을 수정할 수 있습니다. 더 많은 공간 기능이 곧 업데이트됩니다.
             </p>
           </div>
         </div>
@@ -639,7 +643,7 @@ export function DesktopSpace() {
                   <p style={{ fontSize: '10px', fontWeight: 800, color: '#8E8E93', margin: '0 0 4px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
                   <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
                 </div>
-                <button onClick={copyInviteLink} style={{ padding: '8px 16px', borderRadius: '12px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <button onClick={copyInviteCode} style={{ padding: '8px 16px', borderRadius: '12px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                   코드만 복사
                 </button>
               </div>

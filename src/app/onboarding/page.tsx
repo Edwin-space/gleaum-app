@@ -725,7 +725,7 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {([
-              { mode: 'create' as const, icon: '✨', label: '새 공간 만들기', desc: '내가 관리자로 공간을 시작합니다' },
+              { mode: 'create' as const, icon: '✨', label: '새 공간 만들기', desc: '내가 공간 지기로 공간을 시작합니다' },
               { mode: 'join'   as const, icon: '🗝️', label: '초대 코드로 참여', desc: '공유받은 코드로 기존 공간에 합류합니다' },
               { mode: 'skip'  as const, icon: '👤', label: '혼자 시작하기', desc: '지금은 개인 공간으로 시작합니다' },
             ]).map(({ mode, icon, label, desc }) => {

@@ -326,7 +326,7 @@ export default function MyPage() {
                     '탈퇴 신청 후 30일간 복구가 가능합니다',
                     '30일 경과 시 모든 개인정보가 완전히 삭제됩니다',
                     '일정, 가계부, 공간 데이터가 삭제됩니다',
-                    '공간 관리자인 경우 공간은 유지됩니다',
+                    '공간 지기인 경우 공간은 유지됩니다',
                   ].map((text, i) => (
                     <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 3 ? 8 : 0 }}>
                       <span style={{ color: '#EF4444', fontSize: 13, flexShrink: 0 }}>•</span>

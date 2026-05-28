@@ -63,7 +63,7 @@ export default function SpaceJoinPage() {
       setJoining(true);
       const { error: insertErr } = await supabase
         .from('space_members')
-        .insert({ space_id: space.id, user_id: authUser.id, role: 'editor' });
+        .insert({ space_id: space.id, user_id: authUser.id, role: 'viewer' });
       if (!insertErr) {
         await supabase.from('profiles').update({ family_group_id: space.id }).eq('id', authUser.id);
         await refresh();

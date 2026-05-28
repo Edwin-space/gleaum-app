@@ -230,7 +230,7 @@ export function DesktopFamily() {
           {/* 안내 */}
           <div style={{ padding: '18px 20px', borderRadius: '20px', background: 'rgba(0,132,204,0.04)', border: '1px solid rgba(0,132,204,0.08)' }}>
             <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.75, margin: 0 }}>
-              💡 공간 관리자는 멤버를 관리하고 공간의 이름을 수정할 수 있습니다. 더 많은 공간 기능이 곧 업데이트됩니다.
+              💡 공간 지기는 멤버를 관리하고 공간의 이름을 수정할 수 있습니다. 더 많은 공간 기능이 곧 업데이트됩니다.
             </p>
           </div>
         </div>

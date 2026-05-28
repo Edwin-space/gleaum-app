@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSchedules, addScheduleParticipant, removeScheduleParticipant } from '@/lib/db';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { Schedule, SpaceMember } from '@/types';
 
 // ── 상수 ──────────────────────────────────────────────────
@@ -491,15 +492,14 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
                   >
                     {/* Creator chip */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {creator?.user?.avatar ? (
-                        <span style={{ fontSize: '16px', lineHeight: 1 }}>{creator.user.avatar}</span>
-                      ) : (
-                        <div style={{
-                          width: '20px', height: '20px', borderRadius: '50%',
-                          background: '#F0F0F5', fontSize: '10px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>?</div>
-                      )}
+                      <UserAvatar
+                        avatar={creator?.user?.avatar ?? '?'}
+                        name={creator?.user?.name}
+                        size={20}
+                        radius={999}
+                        fontSize={10}
+                        style={{ background: '#F0F0F5' }}
+                      />
                       <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>
                         {isMe ? '나' : (creator?.user?.name ?? '멤버')}
                       </span>

@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-28 | 공간 초대/역할/아바타 안정화. 코드 복사는 순수 초대 코드만 복사, 신규 참여 기본 역할은 viewer, 역할 표시명은 공간 지기/공간 운영자/공간 멤버로 변경, Google avatar URL 레이아웃 깨짐 방지 |
 | 2026-05-28 | 공간 데이터 경계 보정. 개인 가계부/개인 일정은 `personalSpaceId`에만 저장하고, 공유 공간/홈/일정 화면에서는 `visibility='private'` 데이터를 제외. `getSpaceWithMembers()`/`getMySpaces()`의 Supabase 조인 의존 제거 |
 | 2026-05-27 | 가계부 일회성 지출이 `pending`/결제 예정 일정처럼 보이던 문제 수정. 일회성 지출은 `completed + reminder_only`로 저장하고 홈/일정 타임라인에서는 제외 |
 | 2026-05-27 | `/space/new` Desktop 2컬럼 생성 화면 추가. PC에서 공간 설명과 생성 폼, 생성 후 초대 액션을 분리 표시 |
@@ -219,6 +220,7 @@ const hasSharedSpace = !!spaceId && spaceId !== personalSpaceId;
 - 공유 일정/지출 저장 대상: `sharedSpaceId` 또는 명시적으로 선택한 공유 공간 ID
 - `profiles.family_group_id`는 현재 활성/공유 공간 포인터로 취급. 공유 공간 참여 후 개인 데이터 저장 대상에 사용하면 안 됨
 - `visibility='private'` 데이터는 공유 공간 화면, 공유 공간 타임라인, 공유 공간 가계부에서 제외
+- Google OAuth 프로필 이미지 URL은 텍스트로 렌더링하지 말고 `UserAvatar` 컴포넌트로 이미지/이모지를 분기 처리
 - `getSpaceWithMembers()`/`getSpaceMembers()`/`getMySpaces()`는 Supabase nested join에 의존하지 말고 멤버십과 프로필/공간을 분리 조회
 - 기존 잘못 저장된 private 데이터 보정 SQL: `supabase/migrations/010_move_private_records_to_personal_space.sql`
 
@@ -262,12 +264,14 @@ preferences      jsonb                      -- personalSpaceId 포함
 
 ### 역할별 권한 매트릭스
 
-| 기능 | admin | editor | viewer |
+| 기능 | admin / 공간 지기 | editor / 공간 운영자 | viewer / 공간 멤버 |
 |------|:-----:|:------:|:------:|
 | 일정/지출 조회 | ✅ | ✅ | ✅ |
 | 일정/지출 생성 | ✅ | ✅ | ❌ |
 | 공간 이름 변경 | ✅ | ❌ | ❌ |
 | 멤버 제거 | ✅ | ❌ | ❌ |
+
+초대 링크/코드로 처음 참여한 사용자의 기본 역할은 `viewer`(공간 멤버)입니다. 공간 지기가 필요할 때만 `editor` 또는 `admin`으로 승격합니다.
 
 ### 마이그레이션 보정 (Phase 1 이전 생성자 처리)
 

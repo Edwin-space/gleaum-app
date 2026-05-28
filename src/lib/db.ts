@@ -681,10 +681,10 @@ export async function joinSpaceByCode(inviteCode: string): Promise<{
     return { success: true, alreadyMember: true, spaceName: space.name };
   }
 
-  // space_members INSERT (role: editor — 초대로 참여한 사용자)
+  // space_members INSERT (role: viewer — 초대로 참여한 사용자 기본 권한)
   const { error: memberError } = await supabase
     .from('space_members')
-    .insert({ space_id: space.id, user_id: user.id, role: 'editor' });
+    .insert({ space_id: space.id, user_id: user.id, role: 'viewer' });
 
   if (memberError) {
     console.error('공간 합류 오류:', memberError.message);

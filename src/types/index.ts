@@ -211,9 +211,9 @@ export interface Notification {
 // ── UI 상수 레이블 ─────────────────────────────────────────
 
 export const SPACE_ROLE_LABELS: Record<SpaceRole, string> = {
-  admin:  '관리자',
-  editor: '편집자',
-  viewer: '조회자',
+  admin:  '공간 지기',
+  editor: '공간 운영자',
+  viewer: '공간 멤버',
 };
 
 export const SPACE_ROLE_DESCRIPTIONS: Record<SpaceRole, string> = {

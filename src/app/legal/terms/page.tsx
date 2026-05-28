@@ -95,9 +95,9 @@ export default function TermsPage() {
 
         <Section title="제8조 (공간(Space) 이용)">
           <ul style={{ paddingLeft: '20px', lineHeight: '1.9' }}>
-            <li>공간을 생성한 이용자는 관리자(Admin) 역할을 가지며 멤버를 초대·제거할 수 있습니다.</li>
+            <li>공간을 생성한 이용자는 공간 지기(Admin) 역할을 가지며 멤버를 초대·제거할 수 있습니다.</li>
             <li>공간 내에서 공유된 일정·가계부 정보는 해당 공간의 멤버 전체에게 공개됩니다.</li>
-            <li>공간 관리자가 탈퇴하는 경우, 다른 멤버에게 관리자 권한이 자동 이전될 수 있습니다.</li>
+            <li>공간 지기가 탈퇴하는 경우, 다른 멤버에게 공간 지기 권한이 자동 이전될 수 있습니다.</li>
           </ul>
         </Section>
 

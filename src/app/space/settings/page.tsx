@@ -10,6 +10,7 @@ import {
   getSpaceWithMembers, removeSpaceMember, deleteSpace, regenerateInviteCode,
 } from '@/lib/db';
 import type { SpaceMember } from '@/types';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { toast } from 'sonner';
 
 const PURPOSES = [
@@ -212,7 +213,7 @@ export default function SpaceSettingsPage() {
   // ── 권한 없음 guard ──────────────────────────────────────
   useEffect(() => {
     if (!spaceLoading && !userLoading && myRole && myRole !== 'admin') {
-      toast.error('관리자만 설정을 변경할 수 있습니다');
+      toast.error('공간 지기만 설정을 변경할 수 있습니다');
       router.back();
     }
   }, [myRole, spaceLoading, userLoading, router]);
@@ -656,13 +657,18 @@ export default function SpaceSettingsPage() {
 
                         return (
                           <div key={member.userId} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '18px', background: isSelf ? 'rgba(0,132,204,0.06)' : '#FAFAFD', border: '1px solid rgba(0,0,0,0.04)' }}>
-                            {member.user?.avatar ? (
-                              <img src={member.user.avatar} alt={member.user.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                            ) : (
-                              <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: isSelf ? 'linear-gradient(135deg, #0CC9B5, #0084CC)' : '#E8E8E4', color: isSelf ? 'white' : '#8E8E93', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '16px', fontWeight: 900 }}>
-                                {initials}
-                              </div>
-                            )}
+                            <UserAvatar
+                              avatar={member.user?.avatar ?? initials}
+                              name={member.user?.name}
+                              size={42}
+                              radius={999}
+                              fontSize={16}
+                              style={{
+                                background: isSelf ? 'linear-gradient(135deg, #0CC9B5, #0084CC)' : '#E8E8E4',
+                                color: isSelf ? 'white' : '#8E8E93',
+                                fontWeight: 900,
+                              }}
+                            />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                                 <p style={{ fontSize: '14px', fontWeight: 900, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -671,7 +677,7 @@ export default function SpaceSettingsPage() {
                                 {isSelf && <span style={{ fontSize: '10px', fontWeight: 900, color: '#0084CC', background: 'rgba(0,132,204,0.10)', padding: '2px 7px', borderRadius: '999px' }}>나</span>}
                               </div>
                               <p style={{ fontSize: '12px', fontWeight: 800, color: memberAdmin ? '#F59E0B' : '#8E8E93', margin: '2px 0 0' }}>
-                                {memberAdmin ? '관리자' : '멤버'}
+                                {memberAdmin ? '공간 지기' : '공간 멤버'}
                               </p>
                             </div>
                             {isAdmin && (
@@ -959,23 +965,19 @@ export default function SpaceSettingsPage() {
                       }}
                     >
                       {/* 아바타 */}
-                      {member.user?.avatar ? (
-                        <img
-                          src={member.user.avatar}
-                          alt={member.user.name}
-                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                      <UserAvatar
+                        avatar={member.user?.avatar ?? initials}
+                        name={member.user?.name}
+                        size={40}
+                        radius={999}
+                        fontSize={16}
+                        style={{
+                          flexShrink: 0,
                           background: isSelf ? 'linear-gradient(135deg, #0CC9B5, #0084CC)' : '#E5E5EA',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '16px', fontWeight: 800,
+                          fontWeight: 800,
                           color: isSelf ? 'white' : '#8E8E93',
-                        }}>
-                          {initials}
-                        </div>
-                      )}
+                        }}
+                      />
 
                       {/* 이름 + 역할 */}
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -988,7 +990,7 @@ export default function SpaceSettingsPage() {
                           )}
                         </div>
                         <span style={{ fontSize: '12px', color: memberAdmin ? '#F59E0B' : '#8E8E93', fontWeight: 600 }}>
-                          {memberAdmin ? '관리자' : '멤버'}
+                          {memberAdmin ? '공간 지기' : '공간 멤버'}
                         </span>
                       </div>
 

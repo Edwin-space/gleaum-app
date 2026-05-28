@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { NotificationSettings } from '@/types';
 
 // ── 아이콘 헬퍼 ──
@@ -132,14 +133,18 @@ export function DesktopMyPage({
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <div style={{ position: 'relative', marginBottom: '20px' }}>
-                  <div style={{
-                    width: '96px', height: '96px', borderRadius: '32px',
-                    background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '48px', border: '1.5px solid rgba(255,255,255,0.15)',
-                  }}>
-                    {user?.avatar ?? '👤'}
-                  </div>
+                  <UserAvatar
+                    avatar={user?.avatar}
+                    name={user?.name}
+                    size={96}
+                    radius={32}
+                    fontSize={48}
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1.5px solid rgba(255,255,255,0.15)',
+                    }}
+                  />
                   <button
                     onClick={() => setShowEditModal(true)}
                     style={{

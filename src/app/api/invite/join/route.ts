@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
   // ── 6. 공간 합류 ─────────────────────────────────────────
   const { error: memberError } = await admin
     .from('space_members')
-    .insert({ space_id: group.id, user_id: user.id, role: 'editor' });
+    .insert({ space_id: group.id, user_id: user.id, role: 'viewer' });
 
   if (memberError) {
     console.error('[invite/join] 공간 합류 오류:', memberError.message);

@@ -428,7 +428,7 @@ export default function InvitePage() {
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
         <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'rgba(245,158,11,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', marginBottom: '24px' }}>⏰</div>
         <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>만료된 초대 코드</h1>
-        <p style={{ fontSize: '14px', color: '#8E8E93' }}>이 초대 링크는 유효 기간이 지났습니다.<br />공간 관리자에게 새 초대 코드를 요청해 주세요.</p>
+        <p style={{ fontSize: '14px', color: '#8E8E93' }}>이 초대 링크는 유효 기간이 지났습니다.<br />공간 지기에게 새 초대 코드를 요청해 주세요.</p>
         <button onClick={() => router.replace('/home')} style={{ marginTop: '40px', width: '100%', maxWidth: '360px', height: '56px', borderRadius: '20px', background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: 'white' }}>
           홈으로 이동
         </button>
