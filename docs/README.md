@@ -71,6 +71,7 @@
 ✅ 2026-05-28 Firebase Crashlytics/Remote Config/App Check/App Distribution 기반 추가
 ✅ 2026-05-28 백오피스 릴리즈 관리 + Remote Config 편집기 추가
 ✅ 2026-05-28 Android AGP 9.x 호환 문제로 Firebase Performance Gradle 플러그인 제거
+✅ 2026-05-28 Firebase App Distribution Gradle DSL 제거로 Android Studio Sync 오류 수정
 
 🔜 다음 단계  Supabase `012_cron_overdue_and_digest.sql` 실행 여부 확인 → Firebase Remote Config 실값 등록 → Android 내부 배포 검증 → Apple Developer 유료 계정 연결
 ```

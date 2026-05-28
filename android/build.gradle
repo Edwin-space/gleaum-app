@@ -14,7 +14,8 @@ buildscript {
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.3'
         // perf-plugin은 AGP 8+ 의 Transform API 제거로 호환 불가 — 제거
         // 커스텀 트레이스(firebase-perf-ktx)는 플러그인 없이도 동작함
-        classpath 'com.google.firebase:firebase-appdistribution-gradle:5.1.1'
+        // App Distribution은 Gradle 플러그인 DSL 대신 scripts/distribute-android.sh의
+        // Firebase CLI 배포로 처리한다. AGP/Android Studio sync 안정성을 위해 플러그인 미적용.
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files

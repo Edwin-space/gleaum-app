@@ -38,21 +38,8 @@ android {
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
-            // ── Firebase App Distribution (release 빌드 배포) ──────────
-            firebaseAppDistribution {
-                appId = "1:913127709928:android:c4334b982b98b282febd5d"
-                releaseNotesFile = "release-notes.txt"
-                groups = "internal-testers"    // Firebase 콘솔에서 그룹 생성 필요
-            }
         }
-        debug {
-            // 디버그 빌드도 App Distribution 배포 가능
-            firebaseAppDistribution {
-                appId = "1:913127709928:android:c4334b982b98b282febd5d"
-                releaseNotesFile = "release-notes.txt"
-                groups = "internal-testers"
-            }
-        }
+        debug {}
     }
     kotlinOptions {
         jvmTarget = '21'

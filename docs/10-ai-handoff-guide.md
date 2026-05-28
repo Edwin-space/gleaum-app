@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-28 | Android Studio Sync 오류 수정. Firebase App Distribution Gradle DSL 제거, 배포는 `scripts/distribute-android.sh` Firebase CLI 방식으로 유지. `:app:tasks`, `:app:assembleDebug` 통과 확인 |
 | 2026-05-28 | Android Firebase Performance Gradle 플러그인 제거. AGP 9.x에서 Transform API 제거로 빌드 호환 불가하여 SDK dependency는 유지하되 Gradle perf-plugin 적용은 제거 |
 | 2026-05-28 | 백오피스 릴리즈 관리 + Remote Config 편집기 추가. Firebase App Distribution 릴리즈 조회/테스터 관리, Remote Config 플래그 토글 기능 반영 |
 | 2026-05-28 | Firebase 통합 기반 추가. Crashlytics, Remote Config, App Check, App Distribution 스크립트/설정 추가. Performance SDK는 의존성 유지, Gradle 플러그인은 제거됨 |
@@ -173,7 +174,7 @@ Claude가 진행한 뒤 문서 반영이 누락되어 있던 핵심 변경입니
 - `src/lib/crashlytics.ts`, `src/lib/app-check.ts`, `src/lib/firebase-performance.ts` 추가
 - `scripts/distribute-android.sh`: release APK 빌드 후 Firebase App Distribution 배포
 - `firebase.json`: Firebase 프로젝트/App Distribution 설정
-- AGP 9.x 호환 문제로 Firebase Performance Gradle plugin은 제거됨. `@capacitor-firebase/performance` 의존성은 유지
+- AGP 9.x 호환 문제로 Firebase Performance Gradle plugin은 제거됨. Firebase App Distribution Gradle plugin/DSL도 Android Studio Sync 안정성을 위해 제거됨. `@capacitor-firebase/performance` 의존성은 유지하고, App Distribution 배포는 `scripts/distribute-android.sh`의 Firebase CLI 방식 사용
 
 ### 백오피스
 - `/backoffice/releases`: Firebase App Distribution 릴리즈 관리

@@ -620,3 +620,13 @@ npm run cap:open:android # Android Studio 열기
 - [x] 중복 사용자 앱 `/admin` 대시보드 제거 후 백오피스로 통합
 - [x] Android AGP 9.x 호환 문제로 Firebase Performance Gradle plugin 제거
 - [x] 지출 카테고리 가이드 초안 추가: `docs/Guide/expenses.md`
+
+
+---
+
+## Android Studio Sync 안정화 (완료 — 2026-05-28)
+
+- [x] `android/app/build.gradle`의 `firebaseAppDistribution { ... }` DSL 제거
+- [x] `android/build.gradle`의 Firebase App Distribution Gradle plugin classpath 제거
+- [x] Firebase App Distribution 배포는 Gradle 플러그인이 아니라 `scripts/distribute-android.sh` Firebase CLI 방식으로 유지
+- [x] `:app:tasks`, `:app:assembleDebug` 통과 확인
