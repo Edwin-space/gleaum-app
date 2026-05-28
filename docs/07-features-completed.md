@@ -617,6 +617,7 @@ npm run cap:open:android # Android Studio 열기
 - [x] Firebase Crashlytics, Remote Config, App Check, App Distribution 기반 추가
 - [x] Android Firebase App Distribution 배포 스크립트 추가: `scripts/distribute-android.sh`
 - [x] 백오피스 릴리즈 관리 + Remote Config 편집기 추가
+- [x] 백오피스 App Distribution REST API projectNumber 경로 보정 및 테스터 그룹 필터 조회 수정
 - [x] 중복 사용자 앱 `/admin` 대시보드 제거 후 백오피스로 통합
 - [x] Android AGP 9.x 호환 문제로 Firebase Performance Gradle plugin 제거
 - [x] 지출 카테고리 가이드 초안 추가: `docs/Guide/expenses.md`

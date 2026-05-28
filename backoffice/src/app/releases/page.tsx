@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Package, Users, Plus, Trash2, RefreshCw,
-  ExternalLink, AlertCircle, CheckCircle2, Loader2,
+  ExternalLink, AlertCircle, CheckCircle2, Loader2, Info, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,16 @@ interface Release {
 interface Tester {
   name: string;
   email: string;
+  displayName?: string;
+  lastActivityTime?: string;
+}
+
+interface FirebaseGroup {
+  name: string;
+  alias: string;
+  displayName: string;
+  testerCount: number;
+  releaseCount: number;
 }
 
 export default function ReleasesPage() {
@@ -31,6 +41,8 @@ export default function ReleasesPage() {
   const [releases,   setReleases]   = useState<Release[]>([]);
   const [testers,    setTesters]    = useState<Tester[]>([]);
   const [groupName,  setGroupName]  = useState("");
+  const [groupAlias, setGroupAlias] = useState("internal-testers");
+  const [groups, setGroups] = useState<FirebaseGroup[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,13 +54,19 @@ export default function ReleasesPage() {
   const [alert, setAlert] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const load = useCallback(async (isRefresh = false) => {
-    isRefresh ? setRefreshing(true) : setLoading(true);
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const res  = await fetch("/api/releases");
       const data = await res.json() as {
         releases?: Release[];
         testers?:  Tester[];
         groupName?: string;
+        groupAlias?: string;
+        groups?: FirebaseGroup[];
         error?: string;
       };
       if (!res.ok || data.error) {
@@ -58,8 +76,14 @@ export default function ReleasesPage() {
       setReleases(data.releases ?? []);
       setTesters(data.testers   ?? []);
       setGroupName(data.groupName ?? "");
+      setGroupAlias(data.groupAlias ?? "internal-testers");
+      setGroups(data.groups ?? []);
     } finally {
-      isRefresh ? setRefreshing(false) : setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -154,6 +178,26 @@ export default function ReleasesPage() {
         </div>
       )}
 
+      <Card className="mb-6 border-blue-100 bg-blue-50/60">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+            <div className="space-y-2 text-sm text-blue-950">
+              <p className="font-semibold">이 페이지에서 하는 일</p>
+              <p>
+                Firebase App Distribution의 Android 릴리즈와 <code className="rounded bg-white/70 px-1.5 py-0.5">{groupAlias}</code> 그룹 테스터를 불러옵니다.
+                테스터를 추가하면 해당 그룹에 들어가며, 이후 배포되는 내부 테스트 빌드를 Firebase App Tester 앱에서 받을 수 있습니다.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1 text-xs text-blue-800">
+                <span className="rounded-full bg-white/70 px-2.5 py-1">빌드 목록: 최근 10개 릴리즈</span>
+                <span className="rounded-full bg-white/70 px-2.5 py-1">테스터 관리: 그룹 가입/제거</span>
+                <span className="rounded-full bg-white/70 px-2.5 py-1">배포 방식: Firebase CLI 스크립트</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {loading ? (
         <div className="flex items-center justify-center py-24 text-muted-foreground gap-2">
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -192,6 +236,22 @@ export default function ReleasesPage() {
             </Card>
           </div>
 
+          <Card className="mb-6">
+            <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span>
+                연결 대상 그룹: <strong className="text-foreground">{groupName ? groupName.split('/').pop() : `${groupAlias} 미발견`}</strong>
+              </span>
+              <span>·</span>
+              <span>Firebase 그룹 {groups.length}개 확인</span>
+              {!groupName && (
+                <span className="text-destructive">
+                  Firebase Console의 그룹 alias/display name이 <strong>{groupAlias}</strong>인지 확인하세요.
+                </span>
+              )}
+            </CardContent>
+          </Card>
+
           {/* 탭 */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "builds" | "testers")}>
             <TabsList className="mb-6">
@@ -213,11 +273,11 @@ export default function ReleasesPage() {
                     <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
                     <p className="font-medium">업로드된 빌드가 없습니다</p>
                     <p className="text-sm mt-1">
-                      main 브랜치에 push하면 GitHub Actions가 자동으로 빌드하고 배포합니다.
+                      Firebase Console에 릴리즈가 있는데 여기가 비어 있다면 서비스 계정 권한 또는 App Distribution API 응답 오류를 확인해야 합니다.
                     </p>
                     <div className="mt-4 text-xs bg-muted rounded-lg p-3 text-left inline-block">
                       <p className="font-mono">$ git push origin main</p>
-                      <p className="font-mono">$ ./scripts/distribute-android.sh "릴리즈 노트"</p>
+                      <p className="font-mono">$ ./scripts/distribute-android.sh &quot;릴리즈 노트&quot;</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -306,14 +366,18 @@ export default function ReleasesPage() {
                 </CardHeader>
                 <CardContent>
                   {testers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">
-                      등록된 테스터가 없습니다.
-                    </p>
+                    <div className="text-sm text-muted-foreground text-center py-6 space-y-1">
+                      <p>등록된 테스터가 없습니다.</p>
+                      <p className="text-xs">Firebase Console에 테스터가 보인다면 해당 테스터가 <strong>{groupAlias}</strong> 그룹에 포함되어 있는지 확인하세요.</p>
+                    </div>
                   ) : (
                     <div className="divide-y">
                       {testers.map((t) => (
                         <div key={t.name} className="flex items-center justify-between py-3">
-                          <span className="text-sm font-medium">{t.email}</span>
+                          <div>
+                            <span className="text-sm font-medium">{t.email}</span>
+                            {t.displayName && <p className="text-xs text-muted-foreground">{t.displayName}</p>}
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"

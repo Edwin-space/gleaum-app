@@ -328,3 +328,25 @@ APK 또는 Android App Bundle에서 개인정보처리방침이 필요한 권한
 - 유지: `INTERNET`, `ACCESS_NETWORK_STATE`, `VIBRATE`, `RECEIVE_BOOT_COMPLETED`, `POST_NOTIFICATIONS`, `c2dm.RECEIVE`
 
 **향후**: 카메라/생체인증 기능 구현 시 해당 권한 복원 + Play Console 데이터 안전 섹션 업데이트 필요. (`docs/08-features-pending.md` 참조)
+
+---
+
+## [2026-05-28] Firebase App Distribution 백오피스 데이터 미표시
+
+**증상**: Firebase Console에는 `internal-testers` 그룹과 테스터가 존재하지만, 백오피스 `/releases` 페이지에서는 릴리즈/테스터가 모두 비어 보임.
+
+**원인**:
+1. App Distribution REST API 경로에 `projects/{projectNumber}`가 필요하지만 기존 코드는 Firebase project id(`gleaum-firebase`)를 사용함.
+2. 그룹 상세 조회 응답에는 테스터 목록이 포함되지 않는데, 기존 코드는 `groups.get?view=FULL`에서 `testers` 배열을 기대함.
+3. Firebase API 실패 응답을 빈 배열로 처리해서 실제 오류가 관리자 화면에 노출되지 않음.
+
+**해결**:
+- `PROJECT_NUMBER`를 Android app id에서 파생하거나 `FIREBASE_PROJECT_NUMBER` 환경변수로 받을 수 있게 수정.
+- 릴리즈/그룹/테스터 조회 경로를 `projects/{projectNumber}` 기준으로 변경.
+- 테스터 목록은 `projects/{projectNumber}/testers`를 조회한 뒤 `tester.groups`에 대상 그룹이 포함된 항목만 필터링.
+- Firebase API 오류를 숨기지 않고 상태 코드와 메시지를 백오피스 화면에 전달.
+- `/releases` 페이지에 기능 설명 및 연결 대상 그룹 진단 UI 추가.
+
+**검증**:
+- 로컬 `npm run build` 통과.
+- 실제 Firebase API 확인 결과: groups 1개(`internal-testers`, testerCount 1), testers 1명, releases 0개.

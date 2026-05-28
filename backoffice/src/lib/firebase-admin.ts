@@ -8,8 +8,11 @@
 import { GoogleAuth } from 'google-auth-library';
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gleaum-firebase';
+const DEFAULT_ANDROID_APP_ID = '1:913127709928:android:c4334b982b98b282febd5d';
+const ANDROID_APP_ID = process.env.FIREBASE_ANDROID_APP_ID || DEFAULT_ANDROID_APP_ID;
+const PROJECT_NUMBER = process.env.FIREBASE_PROJECT_NUMBER || ANDROID_APP_ID.split(':')[1];
 
-export { PROJECT_ID };
+export { PROJECT_ID, PROJECT_NUMBER };
 
 /** Firebase 서비스 계정으로 Google OAuth 액세스 토큰 발급 */
 export async function getFirebaseAccessToken(scope: string): Promise<string> {
@@ -25,7 +28,7 @@ export async function getFirebaseAccessToken(scope: string): Promise<string> {
 }
 
 // ── App Distribution ────────────────────────────────────────────────
-export const ANDROID_APP_ID = '1:913127709928:android:c4334b982b98b282febd5d';
+export { ANDROID_APP_ID };
 export const DIST_BASE = `https://firebaseappdistribution.googleapis.com/v1`;
 export const DIST_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 
