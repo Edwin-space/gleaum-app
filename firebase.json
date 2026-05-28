@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "gleaum-firebase"
+  },
+  "appDistribution": {
+    "androidPackageName": "com.gleaum.app"
+  }
+}

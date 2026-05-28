@@ -22,6 +22,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { NativeAppProvider } from '@/components/NativeAppProvider';
 import { AppFooter } from '@/components/layout/AppFooter';
+import { FirebaseServicesProvider } from '@/components/FirebaseServicesProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
@@ -179,16 +180,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mesh-blob mesh-blob-3" />
         </div>
         <NativeAppProvider>
-          <div id="app-shell">
-            <DesktopSidebar />
-            <div className="pc-content-area w-full">
-              <PWARegister />
-              <LazyPWABanner />
-              <FCMProvider>
-                {children}
-              </FCMProvider>
+          <FirebaseServicesProvider>
+            <div id="app-shell">
+              <DesktopSidebar />
+              <div className="pc-content-area w-full">
+                <PWARegister />
+                <LazyPWABanner />
+                <FCMProvider>
+                  {children}
+                </FCMProvider>
+              </div>
             </div>
-          </div>
+          </FirebaseServicesProvider>
         </NativeAppProvider>
         {/* 최상위 루트 네비게이션 (z-index: 9999) */}
         <BottomNav />

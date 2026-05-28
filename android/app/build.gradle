@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.google.firebase.crashlytics'
+apply plugin: 'com.google.firebase.firebase-perf'
 
 android {
     namespace = "com.gleaum.app"
@@ -8,8 +10,8 @@ android {
         applicationId "com.gleaum.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.7"
+        versionCode 8
+        versionName "1.0.8"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -31,9 +33,23 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
-            // 네이티브 디버그 심볼 — Play Console 크래시 분석용
+            // 네이티브 디버그 심볼 — Play Console + Crashlytics 크래시 분석용
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'
+            }
+            // ── Firebase App Distribution (release 빌드 배포) ──────────
+            firebaseAppDistribution {
+                appId = "1:913127709928:android:c4334b982b98b282febd5d"
+                releaseNotesFile = "release-notes.txt"
+                groups = "internal-testers"    // Firebase 콘솔에서 그룹 생성 필요
+            }
+        }
+        debug {
+            // 디버그 빌드도 App Distribution 배포 가능
+            firebaseAppDistribution {
+                appId = "1:913127709928:android:c4334b982b98b282febd5d"
+                releaseNotesFile = "release-notes.txt"
+                groups = "internal-testers"
             }
         }
     }
@@ -62,6 +78,16 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    // ── Firebase BoM (버전 일괄 관리) ──────────────────────────────────
+    implementation platform('com.google.firebase:firebase-bom:33.14.0')
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-perf-ktx'
+    implementation 'com.google.firebase:firebase-config-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    // App Check — Play Integrity (프로덕션) + Debug (개발)
+    implementation 'com.google.firebase:firebase-appcheck-playintegrity'
+    debugImplementation 'com.google.firebase:firebase-appcheck-debug'
 }
 
 apply from: 'capacitor.build.gradle'
