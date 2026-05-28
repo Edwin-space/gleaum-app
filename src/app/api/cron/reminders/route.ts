@@ -30,18 +30,20 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
 
-  // ── 1) 리마인더 대상 일정 조회 (공간 timezone 포함) ─────────
+  // ── 1) 리마인더 대상 일정 조회 ──────────────────────────────
   // ★ expense(지출) 유형 제외 — 가계부 지출 기록에 리마인더 FCM 불필요
+  // ★ family_groups 조인 제거 → timezone은 'Asia/Seoul' 기본값 사용 (모든 사용자 한국 기준)
   const { data: schedules, error } = await supabaseAdmin
     .from('schedules')
-    .select('id, title, start_time, reminder, family_group_id, family_groups(timezone)')
+    .select('id, title, start_time, reminder, family_group_id')
     .eq('status', 'pending')
     .gt('reminder', 0)
-    .neq('type', 'expense')          // 지출 유형 제외
+    .neq('type', 'expense')
     .gte('start_time', now.toISOString());
 
   if (error || !schedules) {
-    return NextResponse.json({ error: '일정 조회 실패' }, { status: 500 });
+    console.error('[reminders] 일정 조회 실패:', error?.message);
+    return NextResponse.json({ error: '일정 조회 실패', detail: error?.message }, { status: 500 });
   }
 
   // 리마인더 시각 = start_time - reminder분 이 현재 윈도우(5분) 안에 있는 것
@@ -86,8 +88,8 @@ export async function GET(req: NextRequest) {
 
     const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
 
-    // 공간 timezone (없으면 'Asia/Seoul' 기본값) — 서버는 UTC로 실행되므로 반드시 명시
-    const spaceTZ: string = (schedule.family_groups as any)?.timezone ?? 'Asia/Seoul';
+    // timezone: 모든 사용자 한국 기준 'Asia/Seoul' 고정
+    const spaceTZ = 'Asia/Seoul';
     const startTime = formatTimeTZ(new Date(schedule.start_time), spaceTZ);
     const title = `⏰ ${schedule.title}`;
     const body  = `${schedule.reminder}분 후 시작 (${startTime})`;
