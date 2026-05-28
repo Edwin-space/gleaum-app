@@ -17,6 +17,7 @@ Supabase 대시보드 → SQL Editor → New Query
 | `009_fix_one_time_expense_status.sql` | 일회성 지출을 `completed + reminder_only`로 보정 | ⬜ Supabase SQL Editor 실행 필요 |
 | `010_move_private_records_to_personal_space.sql` | 공유 공간에 잘못 저장된 private 일정/지출을 개인 공간으로 이동 | ⬜ Supabase SQL Editor 실행 필요 |
 | `011_add_expense_reflection_columns.sql` | 공간 지출 → 개인 가계부 반영 연결 컬럼 추가 | ⬜ Supabase SQL Editor 실행 필요 |
+| `012_cron_overdue_and_digest.sql` | 고정지출 연체 알림(D+0/3/7) + 주간 소비 다이제스트 크론잡 등록 | ⬜ **실행 전 app_url·cron_secret 수정 필요** |
 
 ## 001_space_members.sql 상세
 

@@ -179,6 +179,20 @@ export function DesktopBudget({
 
   const isFixed = (e: Schedule) => !!(e.repeat && e.repeat !== 'none');
 
+  // ── D-day 계산 (고정지출 전용) ──
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  function getDDay(e: Schedule): { label: string; color: string; bg: string } | null {
+    if (!isFixed(e) || e.status === 'completed') return null;
+    const payDate = new Date(e.startTime.getFullYear(), e.startTime.getMonth(), e.startTime.getDate());
+    const diffDays = Math.round((payDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays > 1)   return { label: `D-${diffDays}`,          color: '#0084CC', bg: 'rgba(0,132,204,0.10)' };
+    if (diffDays === 1) return { label: '내일 결제',               color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' };
+    if (diffDays === 0) return { label: '오늘 결제일',             color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' };
+    return               { label: `${Math.abs(diffDays)}일 경과`, color: '#EF4444', bg: 'rgba(239,68,68,0.10)' };
+  }
+
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
 
@@ -337,11 +351,13 @@ export function DesktopBudget({
               {filteredExpenses.length > 0 ? (
                 <div>
                   {filteredExpenses.map((e, idx) => {
-                    const fixed = isFixed(e);
-                    const done  = e.status === 'completed';
-                    const catColor = getCategoryColor(e.expenseCategory ?? 'other');
+                    const fixed     = isFixed(e);
+                    const done      = e.status === 'completed';
+                    const catColor  = getCategoryColor(e.expenseCategory ?? 'other');
+                    const ddayInfo  = getDDay(e);
+                    const isOverdue = ddayInfo?.color === '#EF4444';
                     return (
-                      <div key={e.id} style={{ padding: '16px 28px', display: 'flex', alignItems: 'center', gap: '16px', borderBottom: idx < filteredExpenses.length - 1 ? '1px solid #F7F7FA' : 'none' }}>
+                      <div key={e.id} style={{ padding: '16px 28px', display: 'flex', alignItems: 'center', gap: '16px', borderBottom: idx < filteredExpenses.length - 1 ? '1px solid #F7F7FA' : 'none', background: isOverdue ? 'rgba(239,68,68,0.015)' : 'transparent', borderLeft: isOverdue ? '3px solid #EF4444' : '3px solid transparent' }}>
                         <div style={{ width: '44px', height: '44px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', background: `${catColor}15`, flexShrink: 0 }}>
                           {EXPENSE_CATEGORY_ICONS[e.expenseCategory ?? 'other']}
                         </div>
@@ -349,6 +365,11 @@ export function DesktopBudget({
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
                             <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
                             <span style={{ fontSize: '10px', fontWeight: 800, color: fixed ? '#0084CC' : '#10B981', background: fixed ? 'rgba(0,132,204,0.08)' : 'rgba(46,232,149,0.12)', padding: '2px 7px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>{fixed ? '고정' : '변동'}</span>
+                            {ddayInfo && (
+                              <span style={{ fontSize: '10px', fontWeight: 800, color: ddayInfo.color, background: ddayInfo.bg, padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                {ddayInfo.label}
+                              </span>
+                            )}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93' }}>{EXPENSE_CATEGORY_LABELS[e.expenseCategory ?? 'other']}</span>
@@ -362,8 +383,8 @@ export function DesktopBudget({
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontSize: '16px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 2px' }}>{formatAmount(e.amount ?? 0)}</p>
                             {fixed && (
-                              <button onClick={() => handleToggleStatus(e.id, e.status)} style={{ fontSize: '11px', fontWeight: 700, color: done ? '#10B981' : '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                                {done ? '✓ 결제완료' : '결제예정'}
+                              <button onClick={() => handleToggleStatus(e.id, e.status)} style={{ fontSize: '11px', fontWeight: 700, color: done ? '#10B981' : isOverdue ? '#EF4444' : '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                                {done ? '✓ 결제완료' : isOverdue ? '미결제' : '결제예정'}
                               </button>
                             )}
                             {!fixed && <p style={{ fontSize: '11px', fontWeight: 700, margin: 0, color: '#10B981' }}>지출반영</p>}

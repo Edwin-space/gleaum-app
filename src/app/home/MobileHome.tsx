@@ -22,6 +22,17 @@ interface MobileHomeProps {
 export default function MobileHome({ user, profile, schedules, loading }: MobileHomeProps) {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // ── 미결제 고정지출 배지 ──
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const overdueFixedCount = schedules.filter((s) =>
+    s.type === 'expense' &&
+    s.repeat !== 'none' &&
+    s.status !== 'completed' &&
+    s.startTime < todayMidnight
+  ).length;
+
   // 개인화 인사 (homeLayout 기반 — DesktopHome과 동일한 copy)
   const preferences = (profile?.preferences ?? {}) as Partial<OnboardingPreferences>;
   const homeLayout = (preferences.homeLayout ?? 'balanced') as HomeLayoutPreference;
@@ -538,6 +549,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
           </Link>
 
           <Link href="/budget" style={{
+            position: 'relative',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -546,9 +558,30 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             borderRadius: '20px',
             textDecoration: 'none',
             background: 'white',
-            border: '1px solid rgba(0,0,0,0.04)',
+            border: overdueFixedCount > 0 ? '1px solid rgba(239,68,68,0.18)' : '1px solid rgba(0,0,0,0.04)',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
           }}>
+            {overdueFixedCount > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '-6px',
+                right: '-6px',
+                background: '#EF4444',
+                color: 'white',
+                borderRadius: '999px',
+                minWidth: '20px',
+                height: '20px',
+                fontSize: '10px',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 5px',
+                boxShadow: '0 2px 6px rgba(239,68,68,0.4)',
+              }}>
+                {overdueFixedCount}
+              </div>
+            )}
             <div style={{
               width: '44px',
               height: '44px',
@@ -556,14 +589,17 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(12,201,181,0.08)',
+              background: overdueFixedCount > 0 ? 'rgba(239,68,68,0.08)' : 'rgba(12,201,181,0.08)',
             }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0CC9B5" strokeWidth="2.5" strokeLinecap="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={overdueFixedCount > 0 ? '#EF4444' : '#0CC9B5'} strokeWidth="2.5" strokeLinecap="round">
                 <rect width="20" height="14" x="2" y="5" rx="2"/>
                 <line x1="2" x2="22" y1="10" y2="10"/>
               </svg>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E' }}>가계부</span>
+            {overdueFixedCount > 0 && (
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#EF4444', marginTop: '-4px' }}>미결제 {overdueFixedCount}건</span>
+            )}
           </Link>
         </div>
       </div>
