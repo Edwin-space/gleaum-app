@@ -152,7 +152,7 @@ export default function NewSchedulePage() {
         visibility: type === 'personal' || isPrivateExpense ? 'private' : (type === 'expense' ? 'space' : undefined),
       });
 
-      trackEvent('schedule_create', {
+      void trackEvent('schedule_create', {
         schedule_type: type,
         has_participants: participants.length > 0,
         has_reminder: reminder > 0,

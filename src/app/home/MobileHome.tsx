@@ -237,7 +237,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
           onClick={() => {
             const next = !calendarOpen;
             setCalendarOpen(next);
-            trackEvent('calendar_toggle', { action: next ? 'open' : 'close' });
+            void trackEvent('calendar_toggle', { action: next ? 'open' : 'close' });
           }}
           style={{
             width: '100%',

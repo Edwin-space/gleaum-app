@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/client';
 import { initAppCheck } from '@/lib/app-check';
 import { initRemoteConfig } from '@/lib/remote-config';
 import { setUserId, setCrashlyticsEnabled } from '@/lib/crashlytics';
+import { setAnalyticsUserId } from '@/lib/analytics';
 
 export function FirebaseServicesProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -38,6 +39,7 @@ export function FirebaseServicesProvider({ children }: { children: React.ReactNo
       if (session?.user?.id) {
         void setUserId(session.user.id);
         void setCrashlyticsEnabled(true);
+        void setAnalyticsUserId(session.user.id);
       }
     });
 
@@ -46,9 +48,11 @@ export function FirebaseServicesProvider({ children }: { children: React.ReactNo
       if (event === 'SIGNED_IN' && session?.user?.id) {
         void setUserId(session.user.id);
         void setCrashlyticsEnabled(true);
+        void setAnalyticsUserId(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         // 로그아웃 시 Crashlytics 수집 비활성화 (개인정보 보호)
         void setCrashlyticsEnabled(false);
+        void setAnalyticsUserId(null);
       }
     });
 

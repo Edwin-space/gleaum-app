@@ -6,6 +6,7 @@ import { createSpace, updateSpaceSettings } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
 import type { SpacePurpose } from '@/types';
 
 // ── 공간 목적 옵션 ─────────────────────────────────────────
@@ -80,6 +81,9 @@ export default function SpaceNewPage() {
 
       // 캐시 갱신
       await refresh().catch(e => console.warn('[onboarding] refresh 실패:', e));
+
+      // Analytics: 공간 생성 이벤트
+      void trackEvent('space_create', { space_intent: purpose });
 
       setCreatedId(spaceId);
       // ★ 초대 링크는 invite_code 기반 URL 사용 (보안 + Rate Limit 보장)

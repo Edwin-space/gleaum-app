@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { trackEvent } from '@/lib/analytics';
 
 const NAV_ITEMS = [
   {
@@ -117,6 +118,9 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => {
+                  if (!active) void trackEvent('navigation_click', { destination: item.href });
+                }}
                 style={{
                   flex: 1,
                   display: 'flex',

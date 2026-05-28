@@ -210,7 +210,7 @@ function LoginForm() {
     setDebugLogs([]); // 로그 초기화
     addLog('🔵 구글 로그인 버튼 클릭');
     setGoogleLoading(true);
-    trackEvent('login', { method: 'google' });
+    void trackEvent('login', { method: 'google' });
     addLog('   → signInWithGoogle 호출 중...');
     await signInWithGoogle(next);
     addLog('   → 인앱 브라우저 오픈 완료 (대기 중)');
@@ -223,7 +223,7 @@ function LoginForm() {
     setError('');
     try {
       await signInWithEmail(email, password);
-      trackEvent('login', { method: 'email' });
+      void trackEvent('login', { method: 'email' });
       window.location.href = next || '/home';
     } catch {
       setError('이메일 또는 비밀번호가 일치하지 않습니다.');

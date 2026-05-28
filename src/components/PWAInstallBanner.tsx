@@ -50,7 +50,7 @@ export function PWAInstallBanner() {
     if (plat === 'ios') {
       setTimeout(() => {
         setShowBanner(true);
-        trackEvent('pwa_banner_show', { platform: 'ios' });
+        void trackEvent('pwa_banner_show', { platform: 'ios' });
       }, 1500);
     } else if (plat === 'android') {
       const handler = (e: Event) => {
@@ -58,7 +58,7 @@ export function PWAInstallBanner() {
         setDeferredPrompt(e as BeforeInstallPromptEvent);
         setTimeout(() => {
           setShowBanner(true);
-          trackEvent('pwa_banner_show', { platform: 'android' });
+          void trackEvent('pwa_banner_show', { platform: 'android' });
         }, 1000);
       };
       window.addEventListener('beforeinstallprompt', handler);
@@ -68,7 +68,7 @@ export function PWAInstallBanner() {
 
   const handleDismiss = () => {
     if (platform === 'ios' || platform === 'android') {
-      trackEvent('pwa_install_dismiss', { platform });
+      void trackEvent('pwa_install_dismiss', { platform });
     }
     setShowBanner(false);
     sessionStorage.setItem(DISMISSED_KEY, '1');
@@ -77,11 +77,11 @@ export function PWAInstallBanner() {
   const handleInstallAndroid = async () => {
     if (!deferredPrompt) return;
     setInstalling(true);
-    trackEvent('pwa_install_accept', { platform: 'android' });
+    void trackEvent('pwa_install_accept', { platform: 'android' });
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      trackEvent('pwa_installed', { platform: 'android' });
+      void trackEvent('pwa_installed', { platform: 'android' });
       setShowBanner(false);
     }
     setInstalling(false);

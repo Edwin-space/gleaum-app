@@ -242,9 +242,16 @@ export default function OnboardingPage() {
       router.replace('/home');
       return;
     }
-    const timer = setTimeout(() => setShowSplash(false), 2500);
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+      // 신규 유저만 온보딩에 진입 → sign_up 이벤트
+      const provider = user?.app_metadata?.provider ?? 'email';
+      void trackEvent('sign_up', {
+        method: provider === 'google' ? 'google' : 'email',
+      });
+    }, 2500);
     return () => clearTimeout(timer);
-  }, [profile, router]);
+  }, [profile, router, user]);
 
   const suggestedDisplayName = user?.displayName ?? user?.name ?? user?.email.split('@')[0] ?? '사용자';
   const effectiveDisplayName = hasEditedName ? displayName : suggestedDisplayName;
@@ -329,7 +336,7 @@ export default function OnboardingPage() {
     setSaving(false);
 
     if (ok) {
-      trackEvent('onboarding_complete', {
+      void trackEvent('onboarding_complete', {
         goal: goal ?? 'personal_schedule',
         space_intent: (spaceIntent.length > 0 ? spaceIntent[0] : 'solo') as string,
         space_setup: spaceSetupMode,

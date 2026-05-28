@@ -42,7 +42,7 @@ export default function ScheduleDetailPage() {
     getScheduleById(id).then((s) => {
       setSchedule(s ?? null);
       if (s) {
-        trackEvent('schedule_view', {
+        void trackEvent('schedule_view', {
           schedule_type: s.type,
           status: s.status,
         });
@@ -55,13 +55,14 @@ export default function ScheduleDetailPage() {
     await updateScheduleStatus(schedule.id, status);
     setSchedule({ ...schedule, status });
     if (status === 'completed') {
-      trackEvent('schedule_complete', { schedule_type: schedule.type });
+      void trackEvent('schedule_complete', { schedule_type: schedule.type });
     }
     setShowCompletionModal(false);
   };
 
   const handleDelete = async () => {
     if (!schedule) return;
+    void trackEvent('schedule_delete', { schedule_type: schedule.type });
     await deleteSchedule(schedule.id);
     router.back();
   };
