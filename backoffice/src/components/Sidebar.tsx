@@ -10,6 +10,7 @@ import {
   MonitorPlay,
   LogOut,
   Clock,
+  Package,
 } from "lucide-react";
 import { useSession } from "@/components/SessionProvider";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function Sidebar() {
     { href: "/users",     label: "회원 및 공간 관리",    icon: Users       },
     { href: "/campaigns", label: "마케팅 센터 (CRM)",    icon: Megaphone   },
     { href: "/ads",       label: "광고 매니저",          icon: MonitorPlay },
+    { href: "/releases",  label: "릴리즈 관리",          icon: Package     },
     { href: "/settings",  label: "시스템 설정",          icon: Settings    },
   ];
 

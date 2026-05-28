@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Key, CheckCircle2, AlertCircle, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Key, CheckCircle2, AlertCircle, ShieldCheck, Eye, EyeOff, Sliders, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { createBrowserClient } from "@supabase/ssr";
 
 const GA4_ENV_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? "";
@@ -150,6 +151,177 @@ function PasswordChangeCard() {
   );
 }
 
+// ── Remote Config 편집 카드 ─────────────────────────────────────────
+type RCEntry = { value: string; source: "remote" | "default" };
+
+const RC_LABELS: Record<string, string> = {
+  weekly_digest_enabled:  "주간 소비 다이제스트 알림",
+  overdue_badge_enabled:  "홈 미결제 뱃지",
+  budget_dday_enabled:    "가계부 D-day UI",
+  onboarding_new_flow:    "새 온보딩 플로우 (A/B 테스트)",
+  maintenance_mode:       "점검 모드",
+  max_expense_categories: "최대 지출 카테고리 수",
+  maintenance_message:    "점검 공지 메시지",
+};
+
+const BOOLEAN_KEYS = [
+  "weekly_digest_enabled", "overdue_badge_enabled", "budget_dday_enabled",
+  "onboarding_new_flow", "maintenance_mode",
+];
+
+function RemoteConfigCard() {
+  const [config,  setConfig]  = useState<Record<string, RCEntry>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState<string | null>(null);
+  const [msg,     setMsg]     = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/remote-config");
+      if (res.ok) setConfig((await res.json()).config ?? {});
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const update = async (key: string, value: string) => {
+    setSaving(key);
+    setMsg(null);
+    try {
+      const res  = await fetch("/api/remote-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates: { [key]: value } }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setConfig((prev) => ({ ...prev, [key]: { value, source: "remote" } }));
+        setMsg({ type: "success", text: `${RC_LABELS[key] ?? key} 업데이트 완료` });
+      } else {
+        setMsg({ type: "error", text: data.error ?? "업데이트 실패" });
+      }
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center gap-2">
+        <Sliders className="w-4 h-4 text-primary" />
+        <CardTitle className="text-base">Firebase Remote Config (기능 플래그)</CardTitle>
+        <Badge variant="outline" className="ml-auto text-xs">
+          변경 즉시 반영 · 앱 1시간 내 적용
+        </Badge>
+      </CardHeader>
+      <CardContent>
+        {msg && (
+          <div className={`mb-4 flex items-center gap-2 rounded-md p-3 text-sm ${
+            msg.type === "success"
+              ? "bg-green-50 text-green-800"
+              : "bg-destructive/5 text-destructive"
+          }`}>
+            {msg.type === "success"
+              ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+              : <AlertCircle  className="h-4 w-4 shrink-0" />
+            }
+            {msg.text}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Firebase 연결 중...</span>
+          </div>
+        ) : (
+          <div className="space-y-0 divide-y">
+            {/* Boolean 토글 */}
+            {BOOLEAN_KEYS.map((key) => {
+              const entry = config[key];
+              const isOn  = entry?.value === "true" || entry?.value === "1";
+              return (
+                <div key={key} className="flex items-center justify-between py-3.5">
+                  <div>
+                    <p className="text-sm font-medium">{RC_LABELS[key]}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry?.source === "default" ? "기본값 (Firebase 미설정)" : "Firebase 설정값"}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isOn}
+                    disabled={saving === key}
+                    onCheckedChange={(v) => update(key, String(v))}
+                  />
+                </div>
+              );
+            })}
+
+            <Separator className="my-2" />
+
+            {/* 최대 카테고리 수 */}
+            <div className="py-3.5">
+              <Label className="text-sm font-medium mb-2 block">
+                {RC_LABELS.max_expense_categories}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number" min={1} max={20}
+                  defaultValue={config.max_expense_categories?.value ?? "7"}
+                  id="rc-max-categories"
+                  className="w-28"
+                />
+                <Button
+                  variant="outline" size="sm"
+                  disabled={saving === "max_expense_categories"}
+                  onClick={() => {
+                    const el = document.getElementById("rc-max-categories") as HTMLInputElement;
+                    if (el) update("max_expense_categories", el.value);
+                  }}
+                >
+                  {saving === "max_expense_categories"
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : "저장"}
+                </Button>
+              </div>
+            </div>
+
+            {/* 점검 공지 메시지 */}
+            <div className="py-3.5">
+              <Label className="text-sm font-medium mb-2 block">
+                {RC_LABELS.maintenance_message}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  defaultValue={config.maintenance_message?.value ?? "서비스 점검 중입니다."}
+                  id="rc-maintenance-msg"
+                  placeholder="점검 안내 메시지"
+                />
+                <Button
+                  variant="outline" size="sm"
+                  disabled={saving === "maintenance_message"}
+                  onClick={() => {
+                    const el = document.getElementById("rc-maintenance-msg") as HTMLInputElement;
+                    if (el) update("maintenance_message", el.value);
+                  }}
+                >
+                  {saving === "maintenance_message"
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : "저장"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const [ga4Id, setGa4Id] = useState(GA4_ENV_ID);
   const [saved, setSaved]  = useState(false);
@@ -171,6 +343,9 @@ export default function SettingsPage() {
       <div className="max-w-2xl space-y-6">
         {/* 비밀번호 변경 */}
         <PasswordChangeCard />
+
+        {/* Remote Config */}
+        <RemoteConfigCard />
 
         {/* API 키 카드 */}
         <Card>
