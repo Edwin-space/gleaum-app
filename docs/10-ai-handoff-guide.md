@@ -636,3 +636,101 @@ git add [파일들] && git commit -m "feat: ..." && git push origin main
 
 - **기술**: Capacitor.js (`server.url = 'https://www.gleaum.com'` — 웹 래핑 방식)
 - **DB**: 웹과 동일한 Supabase 공유, 별도 백엔드 불필요
+
+---
+
+## Codex 작업 인수인계 — 2026-05-28 오후
+
+### 1. 백오피스 Firebase App Distribution 연동 보정
+
+**문제**
+- Firebase Console에는 `internal-testers` 그룹과 테스터가 존재했지만, 백오피스 `/releases` 페이지에는 데이터가 비어 보였음.
+
+**원인**
+- App Distribution REST API 경로는 `projects/{projectNumber}` 기준인데 기존 코드는 `projects/gleaum-firebase`처럼 Firebase project id를 사용함.
+- 그룹 상세 조회 응답에 테스터 배열이 포함된다고 가정했지만 실제로는 `projects/{projectNumber}/testers`를 별도 조회한 뒤 `tester.groups`로 필터링해야 함.
+- 실패 응답을 빈 배열로 삼켜서 운영 화면에서는 단순 “데이터 없음”처럼 보였음.
+
+**수정 파일**
+- `backoffice/src/lib/firebase-admin.ts`
+- `backoffice/src/app/api/releases/route.ts`
+- `backoffice/src/app/releases/page.tsx`
+- `backoffice/docs/03-current-status.md`
+- `backoffice/docs/04-trouble-log.md`
+- `docs/07-features-completed.md`
+- `docs/10-ai-handoff-guide.md`
+
+**검증**
+- 실제 Firebase API 확인 결과: `internal-testers` 그룹 1개, 테스터 1명 확인, 릴리즈는 현재 API 기준 0개.
+- `backoffice`에서 `npm run build` 통과.
+- `npm run lint`는 기존 백오피스 lint 설정이 `.next` 산출물까지 검사하는 문제와 기존 lint 이슈 때문에 실패. 이번 수정의 빌드 검증은 통과.
+
+**커밋**
+- `7362e0c fix(backoffice): repair app distribution sync`
+
+### 2. Android Studio Gradle Sync 오류 수정
+
+**문제**
+- Android Studio에서 `firebaseAppDistribution()` 메서드를 찾지 못해 Gradle sync/debug가 실패.
+
+**원인**
+- `android/app/build.gradle`에 Firebase App Distribution Gradle DSL이 남아 있었지만 Gradle plugin은 제거/미적용 상태였음.
+
+**수정**
+- App Distribution Gradle DSL 제거.
+- 배포는 `scripts/distribute-android.sh`의 Firebase CLI 방식으로 유지.
+
+**검증**
+- `cd android && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew :app:tasks --quiet` 통과.
+- `cd android && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew :app:assembleDebug --quiet` 통과.
+
+**커밋**
+- `7a37e08 fix(android): remove app distribution gradle DSL`
+
+### 3. 공간 초대 코드/초대문 유효성 보강
+
+**문제**
+- 공유된 초대문에 포함된 `GLEAUM-QL7NG86K` 링크가 `/invite/GLEAUM-QL7NG86K`에서 “유효하지 않은 초대 코드”로 표시됨.
+
+**확인 결과**
+- 프로덕션 API 직접 확인: `https://www.gleaum.com/api/invite/info?code=GLEAUM-QL7NG86K`가 404 반환.
+- 즉 해당 코드는 현재 운영 DB 기준 존재하지 않는 코드였음.
+
+**수정 방향**
+- 초대 코드/초대 링크/전체 초대문을 복사 또는 공유하기 전에 `/api/invite/info`로 실제 서버 유효성을 확인.
+- 유효하지 않은 오래된 코드면 공간 지기 권한에서 자동 재발급 후, 재발급된 코드가 서버에서 확인될 때만 공유.
+- 공간 설정 페이지의 “코드 복사”도 동일한 검증 로직 적용.
+
+**수정 파일**
+- `src/app/space/DesktopSpace.tsx`
+- `src/app/space/MobileSpace.tsx`
+- `src/app/space/settings/page.tsx`
+- `docs/07-features-completed.md`
+- `docs/10-ai-handoff-guide.md`
+- `docs/README.md`
+
+**검증**
+- `npm run build` 통과.
+
+**커밋**
+- `6d36c17 fix(space): validate invite codes before sharing`
+
+### 4. 현재 작업트리 주의사항
+
+아래 Android 관련 파일 4개가 아직 미커밋 변경으로 남아 있음. Codex가 만든 변경은 아니며, Android Studio/Capacitor sync 또는 Firebase 네이티브 연동 과정에서 생긴 변경으로 보임.
+
+- `android/app/build.gradle`
+  - `versionCode 8 → 9`
+  - `versionName 1.0.8 → 1.0.9`
+- `android/app/capacitor.build.gradle`
+  - `@capacitor-firebase/app-check`, `crashlytics`, `performance`, `remote-config` Android dependency 추가
+- `android/capacitor.settings.gradle`
+  - 위 Capacitor Firebase plugin project include 추가
+- `android/release-notes.txt`
+  - 기존 문구가 `릴리즈 노트` 한 줄로 변경됨. 임시 입력값일 가능성이 높음.
+
+**다음 AI에게 권장**
+- Android 변경 4개는 사용자가 의도한 릴리즈 준비 변경인지 먼저 확인할 것.
+- `android/release-notes.txt`는 임시 문구라면 정리 필요.
+- 초대 링크 문제는 새 배포 반영 후 새 초대문을 다시 복사/발송해야 기존에 발송된 죽은 코드 문제를 피할 수 있음.
+- Firebase App Distribution 릴리즈가 백오피스에 0개로 보이는 것은 현재 Firebase API 기준 릴리즈가 0개였기 때문. 새 APK를 `scripts/distribute-android.sh`로 배포한 뒤 `/releases`에서 다시 확인할 것.
