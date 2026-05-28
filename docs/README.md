@@ -66,6 +66,7 @@
 ✅ 2026-05-27 iOS 무료 Apple Developer 빌드를 위해 Associated Domains entitlement 임시 제거
 ✅ 2026-05-28 개인/공유 공간 데이터 경계 보정, 공간 멤버 조회 안정화, private 데이터 개인 공간 이동 SQL 추가
 ✅ 2026-05-28 공간 초대 코드 복사, 신규 참여 기본 권한, 역할 명칭, 프로필 이미지 URL 렌더링 안정화
+✅ 2026-05-28 공간 초대문/링크 공유 전 코드 유효성 검증 및 자동 재발급 보강
 ✅ 2026-05-28 개인 가계부와 공간 지출 개념 분리, 공간 지출 → 개인 가계부 반영 모델 추가
 ✅ 2026-05-28 고정지출 연체 알림, 주간 소비 다이제스트, D-day UI 추가
 ✅ 2026-05-28 Firebase Crashlytics/Remote Config/App Check/App Distribution 기반 추가

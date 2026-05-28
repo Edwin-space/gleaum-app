@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-28 | 공간 초대문/링크 생성 안정화. 복사/공유 전 `/api/invite/info`로 코드 유효성을 확인하고, DB에 없는 오래된 코드면 자동 재발급 후 최신 코드로 초대문 생성 |
 | 2026-05-28 | 백오피스 Firebase App Distribution 연동 보정. REST API 경로를 projectNumber 기준으로 수정하고, 테스터는 `projects.testers.list` + 그룹 필터로 조회. `/releases` 페이지에 사용 안내/진단 UI 추가 |
 | 2026-05-28 | Android Studio Sync 오류 수정. Firebase App Distribution Gradle DSL 제거, 배포는 `scripts/distribute-android.sh` Firebase CLI 방식으로 유지. `:app:tasks`, `:app:assembleDebug` 통과 확인 |
 | 2026-05-28 | Android Firebase Performance Gradle 플러그인 제거. AGP 9.x에서 Transform API 제거로 빌드 호환 불가하여 SDK dependency는 유지하되 Gradle perf-plugin 적용은 제거 |

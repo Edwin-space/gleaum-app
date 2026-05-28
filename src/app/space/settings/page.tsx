@@ -300,6 +300,39 @@ export default function SpaceSettingsPage() {
     }
   };
 
+
+  const isInviteCodeValid = async (code: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/invite/info?code=${encodeURIComponent(code)}`, { cache: 'no-store' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopyInviteCode = async () => {
+    if (!targetSpaceId) return;
+    let code = currentSettingsInviteCode;
+
+    if (!code || !(await isInviteCodeValid(code))) {
+      setRegenerating(true);
+      const newCode = await regenerateInviteCode(targetSpaceId);
+      setRegenerating(false);
+
+      if (!newCode || !(await isInviteCodeValid(newCode))) {
+        toast.error('초대 코드 확인에 실패했습니다. 다시 시도해 주세요.');
+        return;
+      }
+
+      code = newCode;
+      setLiveInviteCode(newCode);
+      await refreshSpace();
+    }
+
+    await navigator.clipboard.writeText(code);
+    toast.success('초대 코드가 복사되었습니다');
+  };
+
   const handleCloseSpace = async () => {
     if (!targetSpaceId) return;
     const ok = await deleteSpace(targetSpaceId);
@@ -604,7 +637,7 @@ export default function SpaceSettingsPage() {
                         </code>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                           <button
-                            onClick={() => { navigator.clipboard.writeText(currentSettingsInviteCode); toast.success('초대 코드가 복사되었습니다'); }}
+                            onClick={handleCopyInviteCode}
                             style={{ height: '44px', borderRadius: '999px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 900 }}
                           >
                             코드 복사
@@ -898,7 +931,7 @@ export default function SpaceSettingsPage() {
                         {currentSettingsInviteCode}
                       </code>
                       <button
-                        onClick={() => { navigator.clipboard.writeText(currentSettingsInviteCode); toast.success('초대 코드가 복사되었습니다'); }}
+                        onClick={handleCopyInviteCode}
                         style={{ padding: '12px 14px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap' }}
                       >복사</button>
                     </div>

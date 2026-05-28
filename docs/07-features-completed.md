@@ -588,6 +588,7 @@ npm run cap:open:android # Android Studio 열기
 ## 공간 초대/역할/아바타 안정화 (완료 — 2026-05-28)
 
 - [x] `src/app/space/DesktopSpace.tsx`, `src/app/space/MobileSpace.tsx` — `코드 복사`/`코드만 복사` 액션이 초대 URL이 아니라 순수 초대 코드만 복사하도록 수정
+- [x] 초대문/링크 복사 전 초대 코드 실서버 유효성 확인. DB에 없는 오래된 코드는 자동 재발급 후 최신 코드로 공유
 - [x] `src/lib/db.ts`, `src/app/api/invite/join/route.ts`, `src/app/space/[spaceId]/join/page.tsx` — 초대/공간 참여자의 기본 역할을 `editor`에서 `viewer`로 변경
 - [x] 역할 명칭 변경: `admin → 공간 지기`, `editor → 공간 운영자`, `viewer → 공간 멤버`
 - [x] `src/components/ui/UserAvatar.tsx` — Google 프로필 이미지 URL이 텍스트로 렌더링되어 레이아웃을 침범하던 문제 방지용 공통 아바타 컴포넌트 추가

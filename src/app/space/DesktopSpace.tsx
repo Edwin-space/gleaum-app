@@ -65,7 +65,14 @@ export function DesktopSpace() {
   const [editingRole, setEditingRole] = useState<string | null>(null);
 
   const currentInviteCode = liveInviteCode ?? group?.inviteCode;
-  const inviteLink = currentInviteCode ? `https://gleaum.com/invite/${currentInviteCode}` : '';
+  const isInviteCodeValid = async (code: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/invite/info?code=${encodeURIComponent(code)}`, { cache: 'no-store' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
 
   // ── 데이터 로드 ────────────────────────────────────────────
   useEffect(() => {
@@ -92,11 +99,10 @@ export function DesktopSpace() {
   }, [group?.inviteCode]);
 
   // ── 공유 메시지 빌더 ───────────────────────────────────────
-  const buildShareMessage = () => {
+  const buildShareMessage = (inviteCode: string) => {
     const spaceName  = group?.name ?? '공간';
     const senderName = user?.displayName ?? user?.name ?? '글리움 사용자';
-    const code = liveInviteCode ?? group?.inviteCode ?? '';
-    const link = code ? `https://gleaum.com/invite/${code}` : 'https://gleaum.com';
+    const link = `https://gleaum.com/invite/${inviteCode}`;
     return [
       `✨ ${spaceName}에 초대합니다`,
       '',
@@ -109,7 +115,7 @@ export function DesktopSpace() {
       `📎 초대 링크`,
       link,
       '',
-      `🔑 초대 코드   ${code}`,
+      `🔑 초대 코드   ${inviteCode}`,
       '',
       `글리움 앱이 없으시다면 먼저 설치해 주세요:`,
       `👉 https://gleaum.com/download`,
@@ -118,19 +124,25 @@ export function DesktopSpace() {
     ].join('\n');
   };
 
-  const ensureInviteCode = async (): Promise<boolean> => {
-    if ((liveInviteCode ?? group?.inviteCode) || !isAdmin || !displaySpaceId) return true;
+  const ensureInviteCode = async (): Promise<string | null> => {
+    const existingCode = liveInviteCode ?? group?.inviteCode;
+    if (existingCode && await isInviteCodeValid(existingCode)) return existingCode;
+
+    if (!isAdmin || !displaySpaceId) {
+      toast.error('유효한 초대 코드를 찾을 수 없습니다. 공간 지기에게 새 초대 코드를 요청해 주세요.');
+      return null;
+    }
+
     setGeneratingCode(true);
     try {
       const newCode = await regenerateInviteCode(displaySpaceId);
-      if (newCode) {
+      if (newCode && await isInviteCodeValid(newCode)) {
         setLiveInviteCode(newCode);
         await refresh();
-        return true;
-      } else {
-        toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
-        return false;
+        return newCode;
       }
+      toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
+      return null;
     } finally {
       setGeneratingCode(false);
     }
@@ -162,40 +174,23 @@ export function DesktopSpace() {
   };
 
   const copyInviteCode = async () => {
-    const ok = await ensureInviteCode();
-    if (!ok) return;
-    const code = liveInviteCode ?? group?.inviteCode ?? '';
+    const code = await ensureInviteCode();
     if (!code) return;
     showCopyResult(await writeClipboard(code));
   };
 
   const copyInviteLink = async () => {
-    let link = inviteLink;
-    if (!link && isAdmin && displaySpaceId) {
-      setGeneratingCode(true);
-      try {
-        const newCode = await regenerateInviteCode(displaySpaceId);
-        if (newCode) {
-          setLiveInviteCode(newCode);
-          link = `https://gleaum.com/invite/${newCode}`;
-          await refresh();
-        } else {
-          toast.error('초대 코드 생성에 실패했습니다. 다시 시도해 주세요.');
-          return;
-        }
-      } finally { setGeneratingCode(false); }
-    }
-    if (!link) return;
-    showCopyResult(await writeClipboard(link));
+    const code = await ensureInviteCode();
+    if (!code) return;
+    showCopyResult(await writeClipboard(`https://gleaum.com/invite/${code}`));
   };
 
   const shareViaKakao = async () => {
-    const ok = await ensureInviteCode();
-    if (!ok) return;
+    const code = await ensureInviteCode();
+    if (!code) return;
     setShareKakao(true);
-    const message = buildShareMessage();
-    const code = liveInviteCode ?? group?.inviteCode ?? '';
-    const link = code ? `https://gleaum.com/invite/${code}` : 'https://gleaum.com';
+    const message = buildShareMessage(code);
+    const link = `https://gleaum.com/invite/${code}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: '글리움 공간 초대', text: message, url: link });
@@ -207,18 +202,18 @@ export function DesktopSpace() {
   };
 
   const shareViaSms = async () => {
-    const ok = await ensureInviteCode();
-    if (!ok) return;
+    const code = await ensureInviteCode();
+    if (!code) return;
     setShareSms(true);
-    const message = buildShareMessage();
+    const message = buildShareMessage(code);
     window.open(`sms:?body=${encodeURIComponent(message)}`, '_blank');
     setTimeout(() => setShareSms(false), 1500);
   };
 
   const copyFullMessage = async () => {
-    const codeReady = await ensureInviteCode();
-    if (!codeReady) return;
-    const message = buildShareMessage();
+    const code = await ensureInviteCode();
+    if (!code) return;
+    const message = buildShareMessage(code);
     showCopyResult(await writeClipboard(message));
   };
 
@@ -686,7 +681,7 @@ export function DesktopSpace() {
                 공유될 메시지 미리보기
               </summary>
               <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: '#F5F5F7', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {buildShareMessage()}
+                {currentInviteCode ? buildShareMessage(currentInviteCode) : '초대 코드가 준비되면 최신 링크와 함께 초대문이 생성됩니다.'}
               </div>
             </details>
 
