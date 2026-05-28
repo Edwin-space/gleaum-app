@@ -244,11 +244,11 @@ export default function OnboardingPage() {
     }
     const timer = setTimeout(() => {
       setShowSplash(false);
-      // 신규 유저만 온보딩에 진입 → sign_up 이벤트
-      const provider = user?.app_metadata?.provider ?? 'email';
-      void trackEvent('sign_up', {
-        method: provider === 'google' ? 'google' : 'email',
-      });
+      // 신규 유저만 온보딩에 진입 → sign_up + tutorial_begin (GA4 추천 이벤트)
+      // googleId 존재 여부로 가입 방법 판별
+      const method = user?.googleId ? 'google' : 'email' as const;
+      void trackEvent('sign_up', { method });
+      void trackEvent('tutorial_begin', { method });
     }, 2500);
     return () => clearTimeout(timer);
   }, [profile, router, user]);
@@ -336,9 +336,12 @@ export default function OnboardingPage() {
     setSaving(false);
 
     if (ok) {
-      void trackEvent('onboarding_complete', {
-        goal: goal ?? 'personal_schedule',
-        space_intent: (spaceIntent.length > 0 ? spaceIntent[0] : 'solo') as string,
+      const eventGoal        = goal ?? 'personal_schedule';
+      const eventSpaceIntent = (spaceIntent.length > 0 ? spaceIntent[0] : 'solo') as string;
+      // GA4 추천 이벤트 (tutorial_complete) + 글리움 커스텀 이벤트 동시 발송
+      void trackEvent('tutorial_complete', {
+        goal: eventGoal,
+        space_intent: eventSpaceIntent,
         space_setup: spaceSetupMode,
       });
       await refresh();

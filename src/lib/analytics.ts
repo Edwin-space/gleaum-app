@@ -6,16 +6,31 @@
  * ▸ 웹 브라우저:
  *     window.gtag → GA4 Measurement Protocol
  *
- * ── 이벤트 카테고리 ─────────────────────────────────────────
- * [퍼널]     login / sign_up / onboarding_complete
- * [일정]     schedule_create / schedule_view / schedule_complete
- *            schedule_edit / schedule_delete
- * [가계부]   budget_entry_add / budget_view
- * [Space]   space_create / space_join / space_invite_send
- * [알림]     notification_view / notification_click / fcm_permission_grant
- * [PWA]     pwa_banner_show / pwa_install_accept / pwa_install_dismiss / pwa_installed
- * [UI]      calendar_toggle / quick_action_click / navigation_click
- * ────────────────────────────────────────────────────────────
+ * ── GA4 추천 이벤트(Recommended Events) 매핑 ────────────────────
+ *
+ *  GA4 표준 이름          글리움 사용 이름          비고
+ *  ─────────────────────────────────────────────────────────────
+ *  login                 login                    ✅ 동일
+ *  sign_up               sign_up                  ✅ 동일
+ *  tutorial_begin        tutorial_begin           ✅ 온보딩 시작 시
+ *  tutorial_complete     tutorial_complete        ✅ 온보딩 완료 시
+ *  join_group            join_group               ✅ 공간 참여 시
+ *  share                 share                    ✅ 초대 링크 공유 시
+ *  screen_view           (trackScreen 함수로 처리)
+ *
+ * ── 글리움 커스텀 이벤트 ─────────────────────────────────────────
+ *  [일정]     schedule_create / schedule_view / schedule_complete
+ *             schedule_edit / schedule_delete
+ *  [가계부]   budget_entry_add / budget_view
+ *  [Space]   space_create
+ *  [알림]     notification_view / notification_click / fcm_permission_grant
+ *  [PWA]     pwa_banner_show / pwa_install_accept / pwa_install_dismiss / pwa_installed
+ *  [UI]      calendar_toggle / quick_action_click / navigation_click
+ *
+ * ── GA4 Key Events (주요 이벤트 / 구 전환) ──────────────────────
+ *  GA4 콘솔 → 이벤트 탭에서 직접 '주요 이벤트로 표시' 클릭 필요:
+ *  sign_up, tutorial_complete, schedule_create, space_create, join_group, pwa_installed
+ * ────────────────────────────────────────────────────────────────
  */
 
 import { isNativeApp } from '@/lib/native';
@@ -35,12 +50,19 @@ declare global {
 // ── 이벤트 파라미터 타입 정의 ──────────────────────────────────
 
 export type GleaumEventParams = {
-  // 퍼널
-  login:                { method: 'google' | 'email' };
-  sign_up:              { method: 'google' | 'email' };
-  onboarding_complete:  { goal: string; space_intent: string; space_setup?: string };
+  // ── GA4 추천 이벤트 (Recommended Events) ──────────────────────
+  login:              { method: 'google' | 'email' };
+  sign_up:            { method: 'google' | 'email' };
+  /** 온보딩 첫 화면 진입 시 */
+  tutorial_begin:     { method: 'google' | 'email' };
+  /** 온보딩 완료 시 (GA4 표준 + 글리움 파라미터 확장) */
+  tutorial_complete:  { goal: string; space_intent: string; space_setup?: string };
+  /** 공간 참여 시 (GA4 표준: group_id 파라미터) */
+  join_group:         { group_id: string };
+  /** 초대 링크 공유 시 (GA4 표준: method, content_type, item_id) */
+  share:              { method: 'copy_link' | 'kakao' | 'other'; content_type: 'space_invite'; item_id: string };
 
-  // 일정
+  // ── 글리움 커스텀 이벤트 — 일정 ─────────────────────────────
   schedule_create: {
     schedule_type: 'shared' | 'personal' | 'child' | 'expense';
     has_participants: boolean;
@@ -53,41 +75,43 @@ export type GleaumEventParams = {
   schedule_edit:     { schedule_type: string };
   schedule_delete:   { schedule_type: string };
 
-  // 가계부
+  // ── 글리움 커스텀 이벤트 — 가계부 ──────────────────────────
   budget_entry_add: { category: string; payment_method: string };
   budget_view:      Record<string, never>;
 
-  // Space / 가족
-  space_create:      { space_intent: string };
-  space_join:        Record<string, never>;
-  space_invite_send: Record<string, never>;
+  // ── 글리움 커스텀 이벤트 — Space ────────────────────────────
+  space_create: { space_intent: string };
 
-  // 알림
+  // ── 글리움 커스텀 이벤트 — 알림 ─────────────────────────────
   notification_view:    Record<string, never>;
   notification_click:   { notification_type: string };
   fcm_permission_grant: Record<string, never>;
 
-  // PWA
+  // ── 글리움 커스텀 이벤트 — PWA ──────────────────────────────
   pwa_banner_show:    { platform: 'ios' | 'android' };
   pwa_install_accept: { platform: 'ios' | 'android' };
   pwa_install_dismiss:{ platform: 'ios' | 'android' };
   pwa_installed:      { platform: 'ios' | 'android' };
 
-  // UI
+  // ── 글리움 커스텀 이벤트 — UI ────────────────────────────────
   calendar_toggle:    { action: 'open' | 'close' };
   quick_action_click: { action: string };
   navigation_click:   { destination: string };
 };
 
-// ── GA4 핵심 전환 이벤트 목록 (Key Event 등록 권장) ───────────
+/**
+ * GA4 Key Events (주요 이벤트) 목록
+ *
+ * GA4 콘솔 → 관리 → 이벤트 탭에서 해당 이벤트 행의
+ * '주요 이벤트로 표시' 토글을 활성화해야 실제로 적용됩니다.
+ */
 export const KEY_EVENTS: (keyof GleaumEventParams)[] = [
-  'login',
-  'sign_up',
-  'onboarding_complete',
-  'schedule_create',
-  'space_create',
-  'space_join',
-  'pwa_installed',
+  'sign_up',           // 신규 가입 (가장 중요한 전환)
+  'tutorial_complete', // 온보딩 완료 (활성화 지표)
+  'schedule_create',   // 핵심 기능 최초 사용
+  'space_create',      // 공간 개설 (리텐션 예측 지표)
+  'join_group',        // 공간 참여 (바이럴 전파 지표)
+  'pwa_installed',     // 앱 설치 전환
 ];
 
 // ── GA4 Measurement ID ────────────────────────────────────────
@@ -112,8 +136,9 @@ function toFirebaseParams(
 // ─────────────────────────────────────────────────────────────
 
 /**
- * 화면(스크린) 추적 — 네이티브 앱 전용
- * SPA 라우트 전환 시 호출해 Firebase Analytics에 screen_view 이벤트 전송
+ * 화면(스크린) 추적
+ * 네이티브: FirebaseAnalytics.setCurrentScreen → screen_view 이벤트 자동 생성
+ * 웹: gtag screen_view 이벤트 수동 전송
  */
 export async function trackScreen(screenName: string): Promise<void> {
   if (typeof window === 'undefined') return;
@@ -128,7 +153,6 @@ export async function trackScreen(screenName: string): Promise<void> {
     return;
   }
 
-  // 웹: gtag page_view
   if (GA_ID && window.gtag) {
     window.gtag('event', 'screen_view', {
       firebase_screen: screenName,
@@ -179,8 +203,6 @@ export async function trackEvent<K extends keyof GleaumEventParams>(
 
 /**
  * Firebase Analytics 사용자 ID 설정 (로그인 후 호출)
- * 네이티브: FirebaseAnalytics.setUserId
- * 웹: gtag set user_id
  */
 export async function setAnalyticsUserId(userId: string | null): Promise<void> {
   if (typeof window === 'undefined') return;

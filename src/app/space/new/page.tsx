@@ -101,6 +101,8 @@ export default function SpaceNewPage() {
     navigator.clipboard.writeText(inviteLink);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2500);
+    // GA4 추천 이벤트: share
+    void trackEvent('share', { method: 'copy_link', content_type: 'space_invite', item_id: createdId ?? '' });
   };
 
   const shareKakao = async () => {
@@ -113,6 +115,7 @@ export default function SpaceNewPage() {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share(shareData);
+        void trackEvent('share', { method: 'other', content_type: 'space_invite', item_id: createdId ?? '' });
         return;
       } catch {}
     }
@@ -129,6 +132,7 @@ export default function SpaceNewPage() {
         },
         buttons: [{ title: '공간 참여하기', link: { mobileWebUrl: inviteLink, webUrl: inviteLink } }],
       });
+      void trackEvent('share', { method: 'kakao', content_type: 'space_invite', item_id: createdId ?? '' });
       return;
     }
     // 3) fallback: 링크 복사

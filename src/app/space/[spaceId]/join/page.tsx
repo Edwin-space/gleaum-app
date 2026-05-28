@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { joinSpaceByCode, getSpaceByCode } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { trackEvent } from '@/lib/analytics';
 
 interface SpaceInfo {
   id: string;
@@ -68,6 +69,7 @@ export default function SpaceJoinPage() {
         await supabase.from('profiles').update({ family_group_id: space.id }).eq('id', authUser.id);
         await refresh();
         try { localStorage.setItem('gleaum_lastSpaceId', space.id); } catch {}
+        void trackEvent('join_group', { group_id: space.id });
         setJoined(true);
         setTimeout(() => router.replace(`/space?sid=${space.id}`), 1500);
       }
@@ -80,6 +82,7 @@ export default function SpaceJoinPage() {
     if (result.success || result.alreadyMember) {
       await refresh();
       try { localStorage.setItem('gleaum_lastSpaceId', space.id); } catch {}
+      if (result.success) void trackEvent('join_group', { group_id: space.id });
       setJoined(true);
       setTimeout(() => router.replace(`/space?sid=${space.id}`), 1500);
     } else {
