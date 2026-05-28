@@ -105,9 +105,12 @@ export default function BudgetPage() {
         type:             'expense',
         category:         'expense',
         startTime:        input.date,
-        endTime:          input.date,
+        // 정기 지출은 endTime 미설정 → 크론 in_progress→missed 전환 방지
+        // 일회성 지출은 이미 발생한 지출이므로 startTime과 동일하게 설정
+        endTime:          isOneTime ? input.date : undefined,
         status:           isOneTime ? 'completed' : 'pending',
-        automationPolicy: isOneTime ? 'reminder_only' : 'payment_due',
+        // 지출은 크론 자동화 불필요 — 사용자가 직접 결제완료 토글
+        automationPolicy: 'reminder_only',
         amount:           input.amount,
         expenseCategory:  input.category,
         paymentMethod:    input.paymentMethod,

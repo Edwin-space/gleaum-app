@@ -49,6 +49,14 @@ function formatInputAmount(raw: string): string {
   return Number(digits).toLocaleString('ko-KR');
 }
 
+/** 로컬 날짜 문자열 반환 (YYYY-MM-DD) — UTC 기준 toISOString() 대신 사용 */
+function localDateString(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 type ListTab = 'all' | 'fixed' | 'variable';
 type ExpenseTypeTab = 'fixed' | 'variable';
 
@@ -83,7 +91,7 @@ export function MobileBudget({
   const [saving, setSaving]                   = useState(false);
   const [newTitle, setNewTitle]               = useState('');
   const [newAmountRaw, setNewAmountRaw]       = useState('');
-  const [newDate, setNewDate]                 = useState(new Date().toISOString().split('T')[0]);
+  const [newDate, setNewDate]                 = useState(localDateString());
   const [newCategory, setNewCategory]         = useState<ExpenseCategory>('food');
   const [newPayment, setNewPayment]           = useState<PaymentMethod>('card');
   const [newRepeat, setNewRepeat]             = useState<RepeatType>('monthly');
@@ -120,7 +128,7 @@ export function MobileBudget({
   // ── 추가 모달 열기 ──
   const openAddModal = () => {
     setNewTitle(''); setNewAmountRaw('');
-    setNewDate(new Date().toISOString().split('T')[0]);
+    setNewDate(localDateString());
     setAddType('variable'); setNewCategory('food');
     setNewPayment('card'); setNewRepeat('none');
     setShowAddModal(true);
@@ -148,7 +156,7 @@ export function MobileBudget({
     setEditTarget(e);
     setEditTitle(e.title);
     setEditAmountRaw(String(e.amount ?? ''));
-    setEditDate(e.startTime.toISOString().split('T')[0]);
+    setEditDate(localDateString(e.startTime));
     setEditCategory(e.expenseCategory ?? 'other');
     setEditPayment(e.paymentMethod ?? 'card');
   };
