@@ -1,7 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.firebase.crashlytics'
-apply plugin: 'com.google.firebase.firebase-perf'
+// firebase-perf 플러그인 제거 (AGP 9.x Transform API 호환 불가)
+// firebase-perf-ktx 런타임 라이브러리는 유지 → 커스텀 트레이스 정상 동작
 
 android {
     namespace = "com.gleaum.app"
