@@ -64,6 +64,15 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberEmail, setRememberEmail] = useState(false);
+
+  // 저장된 이메일 불러오기
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('gleaum_saved_email');
+      if (saved) { setEmail(saved); setRememberEmail(true); setShowEmail(true); }
+    } catch {}
+  }, []);
 
   // ★ 인앱 브라우저 감지
   const [blockedBrowser, setBlockedBrowser] = useState<BlockedBrowserInfo | null>(null);
@@ -223,6 +232,11 @@ function LoginForm() {
     setError('');
     try {
       await signInWithEmail(email, password);
+      // 아이디 저장 처리
+      try {
+        if (rememberEmail) localStorage.setItem('gleaum_saved_email', email);
+        else localStorage.removeItem('gleaum_saved_email');
+      } catch {}
       void trackEvent('login', { method: 'email' });
       window.location.href = next || '/home';
     } catch {
@@ -436,7 +450,7 @@ function LoginForm() {
               {/* 헤더 */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
                 <button
-                  onClick={() => { setShowEmail(false); setError(''); setEmail(''); setPassword(''); }}
+                  onClick={() => { setShowEmail(false); setError(''); setPassword(''); if (!rememberEmail) setEmail(''); }}
                   style={{
                     width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -499,6 +513,32 @@ function LoginForm() {
                     }}
                   />
                 </div>
+
+                {/* 아이디 저장 */}
+                <label style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  cursor: 'pointer', padding: '2px 0',
+                }}>
+                  <div
+                    onClick={() => setRememberEmail(v => !v)}
+                    style={{
+                      width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                      border: `1.5px solid ${rememberEmail ? '#0084CC' : 'rgba(255,255,255,0.25)'}`,
+                      background: rememberEmail ? '#0084CC' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {rememberEmail && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', userSelect: 'none' }}>
+                    아이디 저장
+                  </span>
+                </label>
 
                 {/* 에러 메시지 */}
                 {error && (
