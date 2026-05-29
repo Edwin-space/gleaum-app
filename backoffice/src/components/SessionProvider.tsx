@@ -11,8 +11,8 @@ import {
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter, usePathname } from "next/navigation";
 
-/** 비활동 허용 시간: 10분 */
-const IDLE_LIMIT_SEC = 10 * 60;
+/** 비활동 허용 시간: 30분 */
+const IDLE_LIMIT_SEC = 30 * 60;
 /** sessionStorage 키: 마지막 활동 시각 (ms) */
 const STORAGE_KEY = "gleaum_admin_last_active";
 /** 활동 이벤트마다 storage 갱신하면 부하가 크므로 최소 간격(ms) */
