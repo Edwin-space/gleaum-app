@@ -33,7 +33,7 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
 
   // ── 1. 자체 광고 조회 ────────────────────────────────────────
   useEffect(() => {
-    fetch(`/api/ads?slot=${encodeURIComponent(slotId)}`)
+    fetch(`/api/ads?slot=${encodeURIComponent(slotId)}&platform=web`)
       .then(async (res) => {
         if (res.status === 204) { setAd(null); return; }  // 광고 없음 → AdSense
         const json = await res.json();

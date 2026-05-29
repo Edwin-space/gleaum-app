@@ -8,14 +8,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { ActiveAd } from '@/types/ads';
 
 export async function GET(req: NextRequest) {
-  const slotId = req.nextUrl.searchParams.get('slot');
+  const slotId   = req.nextUrl.searchParams.get('slot');
+  const platform = req.nextUrl.searchParams.get('platform') ?? 'web';
   if (!slotId) {
     return NextResponse.json({ error: 'slot 파라미터 필요' }, { status: 400 });
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase
-    .rpc('get_active_ad', { p_slot_id: slotId });
+    .rpc('get_active_ad', { p_slot_id: slotId, p_platform: platform });
 
   if (error) {
     console.error('[ads] DB 오류:', error);

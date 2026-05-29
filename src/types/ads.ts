@@ -9,23 +9,24 @@ export interface AdSlotDef {
 }
 
 export interface Ad {
-  id:          string;
-  slot_id:     string;
-  title:       string;
-  description: string | null;
-  image_url:   string | null;
-  link_url:    string;
-  cta_text:    string;
-  is_active:   boolean;
-  priority:    number;
-  starts_at:   string;
-  ends_at:     string | null;
-  budget_type: 'cpc' | 'cpm' | 'flat' | null;
+  id:            string;
+  slot_id:       string;
+  title:         string;
+  description:   string | null;
+  image_url:     string | null;
+  link_url:      string;
+  cta_text:      string;
+  is_active:     boolean;
+  priority:      number;
+  starts_at:     string;
+  ends_at:       string | null;
+  budget_type:   'cpc' | 'cpm' | 'flat' | null;
   budget_amount: number | null;
-  advertiser:  string | null;
-  created_by:  string | null;
-  created_at:  string;
-  updated_at:  string;
+  advertiser:    string | null;
+  platforms:     ('web' | 'android' | 'ios')[];
+  created_by:    string | null;
+  created_at:    string;
+  updated_at:    string;
 }
 
 /** 관리자 화면용 — 성과 통계 포함 */
