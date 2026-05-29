@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
@@ -9,6 +9,7 @@ import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatTy
 
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
+import { prepareInterstitial, showInterstitial } from '@/lib/admob';
 
 /** 지출 추가 입력값 */
 export interface AddExpenseInput {
@@ -33,6 +34,9 @@ export interface EditExpenseInput {
 export default function BudgetPage() {
   const isDesktop = useIsDesktop();
   const today = new Date();
+
+  // Interstitial 미리 로드
+  useEffect(() => { void prepareInterstitial(); }, []);
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
   const { familyGroupId, user, personalSpaceId } = useCurrentUser();
@@ -122,6 +126,8 @@ export default function BudgetPage() {
           position: isDesktop ? 'bottom-right' : 'top-center',
           duration: 1500,
         });
+        // 지출 등록 후 Interstitial 표시 (페이지 이동 없음 — 닫으면 가계부로 복귀)
+        void showInterstitial();
         return true;
       }
       return false;

@@ -27,7 +27,7 @@ import java.util.Date
  */
 class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, DefaultLifecycleObserver {
 
-    private lateinit var appOpenAdManager: AppOpenAdManager
+    private val appOpenAdManager = AppOpenAdManager()
     private var currentActivity: Activity? = null
 
     /** 콜드 스타트 여부 — 첫 번째 ON_START 는 스플래시 지연 후 표시 */
@@ -44,7 +44,6 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         // MobileAds 초기화 (백그라운드 스레드 권장)
         MobileAds.initialize(this)
 
-        appOpenAdManager = AppOpenAdManager()
         appOpenAdManager.loadAd(this)
     }
 
@@ -84,7 +83,8 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
 
     // ── App Open Ad 매니저 ────────────────────────────────────────────────────
 
-    inner class AppOpenAdManager {
+    // inner class 안에 companion object 불가 → 일반 class 로 선언
+    class AppOpenAdManager {
 
         private var appOpenAd: AppOpenAd? = null
         private var isLoadingAd  = false
@@ -92,19 +92,17 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         private var loadTime     = 0L
         private var lastShowTime = 0L
 
-        companion object {
-            /** 실제 광고 단위 ID */
-            private const val AD_UNIT_ID = "ca-app-pub-7426507548879721/5027423989"
+        /** 실제 광고 단위 ID */
+        private val AD_UNIT_ID      = "ca-app-pub-7426507548879721/5027423989"
 
-            /** Google 테스트 광고 단위 ID (디버그 빌드에서만 사용) */
-            private const val AD_UNIT_ID_TEST = "ca-app-pub-3940256099942544/9257395921"
+        /** Google 테스트 광고 단위 ID (디버그 빌드에서만 사용) */
+        private val AD_UNIT_ID_TEST = "ca-app-pub-3940256099942544/9257395921"
 
-            /** 로드된 광고 유효 시간 (4시간) */
-            private const val AD_EXPIRE_MS = 4L * 3_600_000L
+        /** 로드된 광고 유효 시간 (4시간) */
+        private val AD_EXPIRE_MS = 4L * 3_600_000L
 
-            /** 광고 재표시 최소 간격 (30분) */
-            private const val COOLDOWN_MS = 30L * 60_000L
-        }
+        /** 광고 재표시 최소 간격 (30분) */
+        private val COOLDOWN_MS = 30L * 60_000L
 
         /** 현재 빌드에 맞는 광고 단위 ID */
         private val adUnitId: String

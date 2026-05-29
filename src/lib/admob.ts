@@ -1,43 +1,40 @@
 /**
  * 글리움 — Google AdMob 유틸리티
  *
- * 네이티브 앱(iOS/Android)에서만 동작. 웹에서는 모든 함수가 no-op.
+ * 네이티브 앱(iOS/Android)에서만 동작합니다. 웹에서는 모든 함수가 no-op.
  *
- * ── 광고 단위 ID ──────────────────────────────────────────────
- * Android Banner: ca-app-pub-7426507548879721/6211229285
+ * ── 광고 단위 ───────────────────────────────────────────────────
+ * App Open    : ca-app-pub-7426507548879721/5027423989  (GleaumApp.kt 직접 처리)
+ * Interstitial: ca-app-pub-7426507548879721/5949776341
+ * Inline Banner (홈피드): ca-app-pub-7426507548879721/1438321314
  *
- * ── 배너 동작 방식 ─────────────────────────────────────────────
- * AdMob 배너는 WebView 위에 얹히는 네이티브 뷰입니다.
- * showBannerAt(yPx) 호출 시 TOP_CENTER + margin 으로 특정 Y 위치에 표시됩니다.
+ * ── Interstitial 쿨다운 ─────────────────────────────────────────
+ * - 최소 간격: 10분
+ * - 일일 최대: 5회
+ * - 저장소: localStorage (세션 간 유지)
  */
 
 import { isNativeApp } from '@/lib/native';
 
 // ── 광고 단위 ID ──────────────────────────────────────────────────────────────
+
+const IS_TESTING = process.env.NODE_ENV === 'development';
+
 const AD_UNIT = {
-  // 테스트 ID (개발/디버그 빌드에서 사용)
-  BANNER_TEST: 'ca-app-pub-3940256099942544/6300978111',
-  // 실제 배너 ID — 프로덕션 빌드에서 사용
-  BANNER_ANDROID: 'ca-app-pub-7426507548879721/6211229285',
+  INTERSTITIAL:    IS_TESTING ? 'ca-app-pub-3940256099942544/1033173712' : 'ca-app-pub-7426507548879721/5949776341',
+  INLINE_BANNER:   IS_TESTING ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-7426507548879721/1438321314',
 } as const;
 
-// 개발 환경에서는 테스트 광고 ID 사용
-const IS_TESTING = process.env.NODE_ENV === 'development';
-const BANNER_AD_UNIT = IS_TESTING ? AD_UNIT.BANNER_TEST : AD_UNIT.BANNER_ANDROID;
+// ── 초기화 ────────────────────────────────────────────────────────────────────
 
 let initialized = false;
 
-/**
- * AdMob 초기화 — 앱 시작 시 1회 호출
- * (FirebaseServicesProvider 또는 첫 광고 표시 전에 호출됨)
- */
 export async function initAdMob(): Promise<void> {
   if (!isNativeApp() || initialized) return;
   try {
     const { AdMob } = await import('@capacitor-community/admob');
     await AdMob.initialize({
-      // 테스트 기기 지정 시 여기에 IDFA/GAID 추가
-      testingDevices: IS_TESTING ? ['EMULATOR'] : [],
+      testingDevices:      IS_TESTING ? ['EMULATOR'] : [],
       initializeForTesting: IS_TESTING,
     });
     initialized = true;
@@ -46,49 +43,179 @@ export async function initAdMob(): Promise<void> {
   }
 }
 
+// ── Interstitial 쿨다운 ───────────────────────────────────────────────────────
+
+const KEY_LAST  = 'admob_intrs_last';   // 마지막 노출 타임스탬프
+const KEY_DAY   = 'admob_intrs_day';    // 당일 날짜 문자열
+const KEY_COUNT = 'admob_intrs_count';  // 당일 노출 횟수
+
+const COOLDOWN_MS  = 10 * 60 * 1000;   // 10분
+const DAILY_LIMIT  = 5;                 // 일 5회 상한
+
+function canShowInterstitial(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+
+  const now  = Date.now();
+  const last = parseInt(localStorage.getItem(KEY_LAST) ?? '0', 10);
+  if (now - last < COOLDOWN_MS) return false;
+
+  const today = new Date().toDateString();
+  const day   = localStorage.getItem(KEY_DAY);
+  const count = day === today ? parseInt(localStorage.getItem(KEY_COUNT) ?? '0', 10) : 0;
+  return count < DAILY_LIMIT;
+}
+
+function recordInterstitialShown(): void {
+  if (typeof localStorage === 'undefined') return;
+  const today = new Date().toDateString();
+  const day   = localStorage.getItem(KEY_DAY);
+  const prev  = day === today ? parseInt(localStorage.getItem(KEY_COUNT) ?? '0', 10) : 0;
+
+  localStorage.setItem(KEY_LAST,  Date.now().toString());
+  localStorage.setItem(KEY_DAY,   today);
+  localStorage.setItem(KEY_COUNT, (prev + 1).toString());
+}
+
+// ── Interstitial ──────────────────────────────────────────────────────────────
+
+let interstitialReady = false;
+
 /**
- * 홈 배너 표시
- * @param marginFromTop 화면 최상단으로부터의 거리(px)
+ * Interstitial 미리 로드 — 페이지 마운트 시 호출
+ * 저장/제출 버튼 클릭 시 이미 로드돼 있도록 선제적으로 준비합니다.
  */
-export async function showHomeBanner(marginFromTop: number): Promise<void> {
-  if (!isNativeApp()) return;
+export async function prepareInterstitial(): Promise<void> {
+  if (!isNativeApp() || !canShowInterstitial()) return;
+  try {
+    if (!initialized) await initAdMob();
+    const { AdMob, InterstitialAdPluginEvents } = await import('@capacitor-community/admob');
+
+    interstitialReady = false;
+    const handle = await AdMob.addListener(InterstitialAdPluginEvents.Loaded, () => {
+      interstitialReady = true;
+      void handle.remove();
+    });
+
+    await AdMob.prepareInterstitial({ adId: AD_UNIT.INTERSTITIAL, isTesting: IS_TESTING });
+  } catch (err) {
+    console.warn('[AdMob] Interstitial 준비 실패:', err);
+  }
+}
+
+/**
+ * Interstitial 표시 후 콜백 실행
+ *
+ * 광고 표시 불가(미로드·쿨다운) 시 즉시 onComplete 호출.
+ * 광고 종료 또는 표시 실패 시 onComplete 호출.
+ * 안전 타임아웃(30초) 후 강제 onComplete 호출.
+ *
+ * @param onComplete 광고가 닫힌 뒤(또는 건너뜀) 실행할 콜백
+ */
+export async function showInterstitialThenDo(onComplete: () => void): Promise<void> {
+  if (!isNativeApp() || !canShowInterstitial()) {
+    onComplete();
+    return;
+  }
+
+  try {
+    if (!initialized) await initAdMob();
+    const { AdMob, InterstitialAdPluginEvents } = await import('@capacitor-community/admob');
+
+    let done = false;
+    const finish = () => {
+      if (!done) { done = true; onComplete(); }
+    };
+
+    // 광고 종료 & 표시 실패 리스너
+    const hDismiss = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+      void hDismiss.remove(); void hFail.remove(); finish();
+    });
+    const hFail = await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
+      void hDismiss.remove(); void hFail.remove(); finish();
+    });
+
+    // 30초 안전 타임아웃
+    const timer = setTimeout(() => {
+      void hDismiss.remove(); void hFail.remove(); finish();
+    }, 30_000);
+
+    try {
+      await AdMob.showInterstitial();
+      recordInterstitialShown();
+      interstitialReady = false;
+    } catch {
+      clearTimeout(timer);
+      void hDismiss.remove(); void hFail.remove(); finish();
+    }
+  } catch (err) {
+    console.warn('[AdMob] Interstitial 표시 실패:', err);
+    onComplete();
+  }
+}
+
+/**
+ * Interstitial만 표시 (탐색 없이 — 가계부 등록 후 사용)
+ */
+export async function showInterstitial(): Promise<void> {
+  return showInterstitialThenDo(() => {});
+}
+
+// ── 인라인 배너 (홈피드) ──────────────────────────────────────────────────────
+
+let inlineBannerShowing = false;
+
+/**
+ * 인라인 홈피드 배너 표시
+ * @param marginFromTop 화면 상단으로부터의 CSS px 거리 (sticky 헤더 bottom 위치)
+ */
+export async function showInlineBanner(marginFromTop: number): Promise<void> {
+  if (!isNativeApp() || inlineBannerShowing) return;
   try {
     if (!initialized) await initAdMob();
     const { AdMob, BannerAdSize, BannerAdPosition } = await import('@capacitor-community/admob');
     await AdMob.showBanner({
-      adId:     BANNER_AD_UNIT,
-      adSize:   BannerAdSize.ADAPTIVE_BANNER,
-      position: BannerAdPosition.TOP_CENTER,
-      margin:   Math.round(marginFromTop),
+      adId:      AD_UNIT.INLINE_BANNER,
+      adSize:    BannerAdSize.ADAPTIVE_BANNER,
+      position:  BannerAdPosition.TOP_CENTER,
+      margin:    Math.round(marginFromTop),
       isTesting: IS_TESTING,
     });
+    inlineBannerShowing = true;
   } catch (err) {
-    console.warn('[AdMob] 배너 표시 실패:', err);
+    console.warn('[AdMob] 인라인 배너 표시 실패:', err);
   }
 }
 
 /**
- * 배너 숨김 (다른 탭으로 이동 시)
+ * 인라인 배너 숨김
  */
-export async function hideBanner(): Promise<void> {
+export async function hideInlineBanner(): Promise<void> {
   if (!isNativeApp()) return;
   try {
     const { AdMob } = await import('@capacitor-community/admob');
     await AdMob.hideBanner();
+    inlineBannerShowing = false;
   } catch (err) {
-    console.warn('[AdMob] 배너 숨김 실패:', err);
+    console.warn('[AdMob] 인라인 배너 숨김 실패:', err);
   }
 }
 
 /**
- * 배너 제거 (완전히 파괴)
+ * 인라인 배너 제거 (완전히 파괴)
  */
-export async function removeBanner(): Promise<void> {
+export async function removeInlineBanner(): Promise<void> {
   if (!isNativeApp()) return;
   try {
     const { AdMob } = await import('@capacitor-community/admob');
     await AdMob.removeBanner();
+    inlineBannerShowing = false;
   } catch (err) {
-    console.warn('[AdMob] 배너 제거 실패:', err);
+    console.warn('[AdMob] 인라인 배너 제거 실패:', err);
   }
 }
+
+// ── 레거시 호환 ───────────────────────────────────────────────────────────────
+/** @deprecated removeInlineBanner() 를 사용하세요 */
+export const removeBanner = removeInlineBanner;
+/** @deprecated hideInlineBanner() 를 사용하세요 */
+export const hideBanner = hideInlineBanner;
