@@ -6,13 +6,31 @@ import { Button } from "@/components/ui/button";
 import { UsersClient } from "./UsersClient";
 
 export default async function UsersPage() {
+  // profiles 테이블에 created_at 컬럼 없음 → updated_at 기준 정렬
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, display_name, email, onboarding_completed_at, created_at, family_group_id, fcm_token"
+      "id, name, display_name, email, onboarding_completed_at, updated_at, family_group_id, fcm_token"
     )
-    .order("created_at", { ascending: false })
+    .order("updated_at", { ascending: false })
     .limit(500);
+
+  // auth.users에서 실제 가입일 조회 (SUPABASE_SERVICE_ROLE_KEY 필요)
+  let createdAtMap = new Map<string, string>();
+  try {
+    const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({
+      perPage: 1000,
+    });
+    createdAtMap = new Map((authUsers ?? []).map((u) => [u.id, u.created_at]));
+  } catch {
+    // service role key 미설정 시 fallback — updated_at 사용
+  }
+
+  // profiles + 실제 가입일 병합
+  const enriched = (profiles ?? []).map((p) => ({
+    ...p,
+    created_at: createdAtMap.get(p.id) ?? p.updated_at ?? "",
+  }));
 
   return (
     <main className="p-8">
@@ -21,9 +39,9 @@ export default async function UsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">회원 관리</h1>
           <p className="text-muted-foreground mt-1">
             가입된 회원 목록 및 상세 정보를 관리합니다.
-            {profiles && (
+            {enriched.length > 0 && (
               <span className="ml-2 font-semibold text-foreground">
-                총 {profiles.length}명
+                총 {enriched.length}명
               </span>
             )}
           </p>
@@ -45,7 +63,7 @@ export default async function UsersPage() {
         </div>
       )}
 
-      <UsersClient profiles={profiles ?? []} />
+      <UsersClient profiles={enriched} />
     </main>
   );
 }

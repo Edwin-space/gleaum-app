@@ -20,7 +20,8 @@ export interface ProfileRow {
   display_name: string | null;
   email: string | null;
   onboarding_completed_at: string | null;
-  created_at: string;
+  created_at: string;   // auth.users.created_at (서버에서 병합)
+  updated_at: string | null;
   family_group_id: string | null;
   fcm_token: string | null;
 }

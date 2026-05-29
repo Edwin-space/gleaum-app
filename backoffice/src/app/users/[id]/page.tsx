@@ -30,6 +30,15 @@ export default async function UserDetailPage({ params }: PageProps) {
 
   if (error || !profile) notFound();
 
+  /* ── 실제 가입일 조회 (auth.users.created_at) ── */
+  let createdAt: string = profile.updated_at ?? "";
+  try {
+    const { data: { user: authUser } } = await supabase.auth.admin.getUserById(id);
+    if (authUser?.created_at) createdAt = authUser.created_at;
+  } catch {
+    // service role key 미설정 시 updated_at fallback
+  }
+
   /* ── 공간(Space) 조회 ── */
   const { data: spaceMembers } = await supabase
     .from("space_members")
@@ -96,7 +105,7 @@ export default async function UserDetailPage({ params }: PageProps) {
             <InfoRow label="이름"       value={profile.name}         />
             <InfoRow label="닉네임"     value={profile.display_name} />
             <InfoRow label="이메일"     value={profile.email}        />
-            <InfoRow label="가입일"     value={new Date(profile.created_at).toLocaleString("ko-KR")} />
+            <InfoRow label="가입일"     value={createdAt ? new Date(createdAt).toLocaleString("ko-KR") : "—"} />
             <InfoRow
               label="온보딩 완료"
               value={profile.onboarding_completed_at
