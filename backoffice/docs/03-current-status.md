@@ -1,6 +1,6 @@
 # 03. 현재 상태 및 다음 작업 (Current Status)
 
-> 마지막 업데이트: 2026-05-28
+> 마지막 업데이트: 2026-05-29
 > 이 문서는 다음 AI 에이전트가 작업을 이어받기 위한 핵심 인수인계 문서입니다.
 
 ---
@@ -26,66 +26,38 @@
 ### 구현된 페이지
 - [x] `/` — 대시보드 (KPI 카드 4종, GA4 실시간 데이터, 차트 플레이스홀더)
 - [x] `/users` — 회원 관리 (Supabase `profiles` 테이블 실데이터 연동)
+  - 가입일: `auth.users.created_at` (profiles에 created_at 없음 → admin API로 병합)
 - [x] `/spaces` — 공간 관리 (Supabase `family_groups` 테이블 실데이터 연동)
+  - 실시간 검색 (공간명/초대코드/ID) — `SpacesClient.tsx` 클라이언트 컴포넌트 분리
 - [x] `/campaigns` — CRM 캠페인 빌더 (5채널 탭, 실시간 메시지 미리보기)
-- [x] `/releases` — 릴리즈 관리 (Firebase App Distribution 빌드 목록 + 내부 테스터 추가/제거, projectNumber 기반 REST API 연동 보정 완료)
-- [x] `/settings` — Remote Config 기능 플래그 편집기 추가 (스위치 토글, 즉시 Firebase 반영)
-- [x] `/ads` — 광고 매니저 전면 개편 (2026-05-29, shadcn/ui 기반 DB 연동 완료)
-  - Supabase `ads` 테이블 + `ad_events` CRUD 실연동
+- [x] `/releases` — 릴리즈 관리 (Firebase App Distribution 빌드 목록 + 내부 테스터 추가/제거)
+- [x] `/settings` — Remote Config 기능 플래그 편집기 (스위치 토글, 즉시 Firebase 반영)
+- [x] `/ads` — 광고 매니저 (shadcn/ui 기반, DB 완전 연동, **Supabase SQL 실행 완료**)
+  - 광고 CRUD (등록/수정/삭제/복제/활성 토글)
   - 이미지 업로드 (브라우저 압축 WebP → Supabase Storage `ad-images`)
-  - 실시간 미리보기, 광고 복제, 플랫폼 타겟팅 (web/android/ios)
+  - 실시간 미리보기, 플랫폼 타겟팅 (web/android/ios)
   - 기간별 통계 필터 (오늘/7일/30일/전체), 상태 필터, 요약 카드
-  - ⚠️ **Supabase SQL 실행 필요** → `docs/06-supabase-sql.md` 참조
-    - `013_ad_system.sql` (테이블/RLS/함수 생성)
-    - `014_ad_platforms.sql` (platforms 컬럼 + RPC 파라미터 보정)
-    - `is_admin = true` 설정 (관리자 계정)
-    - `ad-images` Storage 버킷 생성 (UI에서)
-- [x] `/settings` — 시스템 설정 (API 키 관리 폼, 비밀번호 변경, GA4 연동 상태 표시)
-- [x] `/login` — 관리자 로그인 페이지 (Supabase Auth 기반)
+  - 하우스 광고 없음 → 프론트에서 AdSense 자동 폴백 (백오피스 UI 제어 없음 — 미구현)
+- [x] `/login` — 관리자 로그인 페이지 (shadcn/ui, 아이디 저장 기능 포함)
 
-### 인증 시스템 (Phase 4)
-- [x] `src/app/login/page.tsx` — 이메일/비밀번호 로그인 폼 (shadcn/ui)
-- [x] `src/proxy.ts` — Next.js 16 라우트 보호 미들웨어 (구 middleware.ts)
-  - 비로그인 시 전체 경로 `/login` 리다이렉트
-  - `/login` 접근 시 이미 로그인된 경우 `/` 리다이렉트
-- [x] `src/components/ConditionalSidebar.tsx` — 로그인 페이지에서 사이드바 숨김
-- [x] 관리자 계정: `devianne.tsyoo@gmail.com` (Supabase Auth에 등록됨)
+### 인증 시스템
+- [x] `src/proxy.ts` — Next.js 16 라우트 보호 미들웨어
+- [x] `src/components/SessionProvider.tsx` — 비활동 30분 자동 로그아웃
+- [x] `src/components/Sidebar.tsx` — 세션 카운트다운 UI (120초 이하 경고)
+- [x] 관리자 계정: `devianne.tsyoo@gmail.com` (`is_admin = true` 설정 완료)
 
-### 세션 관리
-- [x] `src/components/SessionProvider.tsx` — 비활동 기반 세션 타이머
-  - IDLE_LIMIT: **30분** (비활동 시 자동 로그아웃, 2026-05-29 변경)
-  - 활동 감지 이벤트: mousemove / mousedown / keydown / scroll / touchstart / click
-  - sessionStorage `gleaum_admin_last_active` 키로 마지막 활동 시각 저장
-  - 10초 디바운스로 과도한 저장 방지
-- [x] `src/components/Sidebar.tsx` — 세션 카운트다운 UI
-  - 좌측 하단 "비활동 로그아웃까지 MM:SS" 표시
-  - 120초 이하: 노란색 경고, 60초 이하: 빨간색 위험
-  - 로그아웃 버튼 (LogOut 아이콘)
+### Supabase DB (2026-05-29 기준 실행 완료)
+- [x] `013_ad_system.sql` — ad_slots / ads / ad_events 테이블, RLS, get_active_ad 함수
+- [x] `014_ad_platforms.sql` — ads.platforms 컬럼, get_active_ad p_platform 파라미터
+- [x] `profiles.is_admin` 컬럼 — 관리자 권한 컬럼 (013에 포함)
+- [x] `ad-images` Storage 버킷 — 공개 읽기 + 관리자 업로드/삭제 정책
 
-### GA4 연동
-- [x] `src/lib/ga4.ts` — GA4 Data API 서버 사이드 클라이언트
-  - `BetaAnalyticsDataClient` (`@google-analytics/data` v5)
-  - `fetchGA4Summary()`: 활성/신규 사용자, 세션, 페이지뷰 (7일), 실시간 접속자, 상위 5 페이지
-- [x] `src/app/page.tsx` — 대시보드에 GA4 섹션 통합
-  - 4개 GA4 메트릭 카드 + 상위 페이지 테이블
-  - 실시간 접속자 카드: 초록 pulse 애니메이션
-  - 미연동 시 환경변수 설정 안내 배너
-- [x] `src/components/GoogleAnalytics.tsx` — 백오피스 자체 GA4 페이지뷰 추적
-- [x] GA4 서비스 계정 접근 권한 부여 완료
-  - 서비스 계정: `gleaum-backoffice@gleaum-firebase.iam.gserviceaccount.com`
-  - GA4 속성 ID: `536593148`
-  - 역할: `predefinedRoles/viewer`
-
-### 실데이터 연동
-- [x] `export const dynamic = "force-dynamic"` 전 페이지 적용 (정적 렌더링 방지)
-- [x] 대시보드 KPI: `profiles`, `family_groups`, `schedules` 테이블 실시간 집계
-- [x] 회원 관리: 컬럼명 오류 수정 (`full_name` → `name`, `onboarding_completed` → `onboarding_completed_at`)
-
-### 기타
-- [x] `src/app/settings/page.tsx` — 비밀번호 변경 기능
-  - 현재 비밀번호 재인증 후 변경
-  - 8자 이상, 확인 일치 검증
-  - 새 비밀번호 눈 아이콘 토글
+### 메인 앱 버그 수정 (2026-05-29)
+- [x] 초대 코드 "유효하지 않음" 버그 — `purpose`가 `family_groups.settings` JSONB에 있음을 반영
+- [x] Universal Link / 딥링크 — iOS App Link, Android App Link, 커스텀 스킴 통합 핸들러 구현
+- [x] `assetlinks.json` SHA256 fingerprint 오류 수정
+- [x] AASA (apple-app-site-association) App Router 라우트 신규 생성
+- [x] `AdSlot.tsx` — 500 에러 시 AdSense 폴백 처리 수정
 
 ---
 
@@ -104,9 +76,11 @@
 - [ ] 발송 이력 DB 저장
 
 ### Phase 7: 광고 매니저 고도화
-- [x] 광고 CRUD DB 연동 완료 (2026-05-29)
-- [x] platforms 컬럼 + get_active_ad RPC 보정 (2026-05-29) — 014 migration
-- [ ] **Supabase SQL 실행 대기** (013 + 014 + is_admin + Storage 버킷)
+- [x] 광고 CRUD DB 연동 완료
+- [x] platforms 컬럼 + get_active_ad RPC 보정
+- [x] Supabase SQL 전체 실행 완료
+- [ ] AdSense 폴백 ON/OFF 토글 (백오피스 설정 UI)
+- [ ] 교차 광고 모드 (하우스 광고 있어도 N%는 AdSense 노출)
 - [ ] 광고 성과 차트 (노출/클릭 트렌드)
 - [ ] 광고별 상세 통계 페이지
 
@@ -114,10 +88,8 @@
 
 ## ⚠️ 이전 세션에서 발생한 부작용 (확인 필요)
 
-브라우저 에이전트 오작동으로 발생한 사항:
 1. **Supabase Storage `avatars` 버킷** — 의도치 않게 생성됨. 불필요 시 삭제 가능.
 2. **`devianne.tsyoo@gmail.com`으로 메인 앱 온보딩 완료** — `profiles` 테이블에 테스트 데이터 존재.
-3. **Supabase SQL 에디터에 여러 스니펫 생성** — 확인 후 정리 필요.
 
 ---
 
@@ -131,7 +103,7 @@
 | Phase 4 | 관리자 인증 + 세션 타이머 + GA4 연동 + 실데이터 | ✅ 완료 |
 | Phase 5 | Recharts 차트 + 상세 페이지 | 🔜 다음 작업 |
 | Phase 6 | CRM 실제 발송 API | ❌ 미착수 |
-| Phase 7 | 광고 매니저 DB 저장 | ❌ 미착수 |
+| Phase 7 | 광고 매니저 고도화 | 🔄 진행 중 (기본 완료, 고도화 미착수) |
 
 ---
 
@@ -156,3 +128,43 @@ const nextConfig: NextConfig = {
 | `GA4_PROPERTY_ID` | GA4 속성 ID (서버 사이드 Data API 조회) |
 | `GOOGLE_SERVICE_ACCOUNT` | 서비스 계정 JSON 전체 (서버 사이드 전용) |
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | 백오피스 자체 GA4 추적 (클라이언트 사이드) |
+
+### 광고 시스템 관련 환경변수 (메인 앱 `.env.local`)
+| 변수명 | 값 | 용도 |
+|--------|-----|------|
+| `NEXT_PUBLIC_ADSENSE_CLIENT` | `ca-pub-7426507548879721` | AdSense 퍼블리셔 ID |
+| `NEXT_PUBLIC_ADSENSE_SLOT_HOME_FEED` | `2747378024` | 홈피드 인라인 AdSense 슬롯 ID |
+
+---
+
+## 📁 광고 시스템 파일 구조 (메인 앱)
+
+```
+src/
+  components/
+    AdSlot.tsx          — 웹 광고 슬롯 (하우스 광고 → AdSense 폴백)
+    InlineFeedAd.tsx    — 홈피드 광고 (웹: AdSlot / 네이티브: AdMob)
+  app/
+    api/ads/
+      route.ts          — GET /api/ads?slot=&platform=  (공개 API)
+      events/route.ts   — POST /api/ads/events          (노출/클릭 기록)
+    api/admin/ads/
+      route.ts          — GET/POST /api/admin/ads       (관리자 전용)
+      [id]/route.ts     — PATCH/DELETE /api/admin/ads/[id]
+    admin/ads/
+      page.tsx          — 메인 앱 내 광고 관리 페이지 (레거시, 백오피스로 대체 예정)
+  types/
+    ads.ts              — Ad, AdWithStats, ActiveAd 타입 정의
+```
+
+```
+backoffice/src/
+  app/ads/
+    page.tsx            — 백오피스 광고 매니저 (현재 사용)
+```
+
+```
+supabase/migrations/
+  013_ad_system.sql     — ✅ 실행 완료
+  014_ad_platforms.sql  — ✅ 실행 완료
+```

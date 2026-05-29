@@ -38,7 +38,16 @@ UI 작업 전 반드시 아래 두 파일을 읽으세요:
 
 ## 최신 상태 확인
 - 작업 시작 시 `git log --oneline -5`와 `git status -sb`로 실제 최신 커밋/미커밋 변경을 먼저 확인하세요.
-- 2026-05-27 기준 주요 최근 커밋: `1a5db08` — iOS 무료 Apple Developer 계정 빌드를 위해 Associated Domains entitlement 제거
+- 2026-05-29 기준 최신 커밋: `34dbb4b` — Supabase SQL 실행 가이드 문서화
+
+## 2026-05-29 주요 변경 사항 (메인 앱)
+- `src/app/api/invite/info/route.ts` — `purpose` 필드가 `family_groups.settings` JSONB에 저장됨 (직접 컬럼 아님) 버그 수정
+- `src/components/NativeAppProvider.tsx` — Universal Link(`https://gleaum.com/*`) + 커스텀 스킴(`gleaum://`) 통합 핸들러 추가
+- `src/app/.well-known/apple-app-site-association/route.ts` — iOS Universal Link AASA 파일 App Router 라우트로 신규 생성
+- `src/app/.well-known/assetlinks.json/route.ts` — Android App Link SHA256 fingerprint 오류 수정
+- `src/components/AdSlot.tsx` — 4xx/5xx 에러 시 AdSense 폴백 처리 수정
+- `supabase/migrations/013_ad_system.sql` — 광고 시스템 테이블/RLS/함수 (**Supabase에서 실행 완료**)
+- `supabase/migrations/014_ad_platforms.sql` — platforms 컬럼 + get_active_ad RPC 보정 (**Supabase에서 실행 완료**)
 
 ## 상세 문서 위치
 - `/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/docs/`
