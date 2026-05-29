@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
+const SAVED_EMAIL_KEY = "gleaum_backoffice_saved_email";
+
 /**
  * useSearchParams를 쓰는 부분을 별도 컴포넌트로 분리 (Suspense 필수)
  * 미들웨어가 ?error=unauthorized 로 리다이렉트한 경우 처리
@@ -32,12 +34,24 @@ function SearchParamsHandler({ onError }: { onError: (msg: string) => void }) {
  * 2. 서버사이드 최종 검증은 proxy.ts 에서 처리
  */
 export default function LoginPage() {
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [error,         setError]         = useState("");
+  const [loading,       setLoading]       = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
 
   const router = useRouter();
+
+  // ── 저장된 이메일 불러오기 ─────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SAVED_EMAIL_KEY);
+      if (saved) {
+        setEmail(saved);
+        setRememberEmail(true);
+      }
+    } catch {}
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,8 +75,14 @@ export default function LoginPage() {
       return;
     }
 
-    // ── 2. 클라이언트 측 관리자 이메일 사전 검증 (UX 개선용) ─
-    //       서버사이드 최종 검증은 middleware.ts 에서 수행
+    // ── 2. 아이디 저장 처리 ───────────────────────────────
+    try {
+      if (rememberEmail) localStorage.setItem(SAVED_EMAIL_KEY, email);
+      else               localStorage.removeItem(SAVED_EMAIL_KEY);
+    } catch {}
+
+    // ── 3. 클라이언트 측 관리자 이메일 사전 검증 (UX 개선용) ─
+    //       서버사이드 최종 검증은 proxy.ts 에서 수행
     const adminEmailsRaw = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
     const adminEmails    = adminEmailsRaw
       .split(",")
@@ -76,7 +96,7 @@ export default function LoginPage() {
       return;
     }
 
-    // ── 3. 대시보드로 이동 ────────────────────────────────
+    // ── 4. 대시보드로 이동 ────────────────────────────────
     router.push("/");
     router.refresh();
   };
@@ -121,6 +141,21 @@ export default function LoginPage() {
                 autoComplete="current-password"
               />
             </div>
+
+            {/* 아이디 저장 */}
+            <div className="flex items-center gap-2">
+              <input
+                id="remember"
+                type="checkbox"
+                checked={rememberEmail}
+                onChange={(e) => setRememberEmail(e.target.checked)}
+                className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+              />
+              <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground cursor-pointer">
+                아이디 저장
+              </Label>
+            </div>
+
             {error && (
               <p className="text-sm text-destructive">{error}</p>
             )}
