@@ -179,6 +179,10 @@ export default function AdsPage() {
     e.preventDefault();
     setSaving(true);
     const supabase = getBrowserClient();
+
+    // 현재 로그인 유저 ID (created_by 기록용)
+    const { data: { user } } = await supabase.auth.getUser();
+
     const payload = {
       ...form,
       priority:    Number(form.priority),
@@ -187,9 +191,11 @@ export default function AdsPage() {
       description: form.description || null,
       advertiser:  form.advertiser  || null,
     };
+
     const { error } = editId
       ? await supabase.from("ads").update(payload).eq("id", editId)
-      : await supabase.from("ads").insert(payload);
+      : await supabase.from("ads").insert({ ...payload, created_by: user?.id ?? null });
+
     if (error) { alert("저장 실패: " + error.message); }
     else { setShowForm(false); setEditId(null); setForm(emptyForm); await load(); }
     setSaving(false);

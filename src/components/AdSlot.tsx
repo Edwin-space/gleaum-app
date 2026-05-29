@@ -35,9 +35,16 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
   useEffect(() => {
     fetch(`/api/ads?slot=${encodeURIComponent(slotId)}&platform=web`)
       .then(async (res) => {
-        if (res.status === 204) { setAd(null); return; }  // 광고 없음 → AdSense
+        // 204: 광고 없음 → AdSense 폴백
+        // 4xx/5xx: API/DB 오류 → AdSense 폴백 (광고 누락 방지)
+        if (!res.ok) { setAd(null); return; }
         const json = await res.json();
-        setAd(json as ActiveAd);
+        // 응답이 유효한 광고 객체인지 확인 (id + link_url 필수)
+        if (json && typeof json.id === 'string' && typeof json.link_url === 'string') {
+          setAd(json as ActiveAd);
+        } else {
+          setAd(null);
+        }
       })
       .catch(() => setAd(null));
   }, [slotId]);
