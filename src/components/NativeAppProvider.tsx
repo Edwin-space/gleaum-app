@@ -174,19 +174,60 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       const { App } = await import('@capacitor/app');
 
+      // Universal Link (https) 또는 커스텀 스킴(gleaum://)을 라우팅하는 공통 핸들러
+      async function handleIncomingUrl(url: string) {
+        // ── OAuth 콜백: gleaum://auth/* ─────────────────────────────────
+        if (url.startsWith('gleaum://auth/')) {
+          await handleOAuthCallback(url);
+          return;
+        }
+
+        // ── Universal Link: https://gleaum.com/* 또는 https://www.gleaum.com/* ─
+        // iOS Universal Link / Android App Link 로 앱이 열렸을 때
+        // → URL에서 경로(path + query)만 추출해 Next.js 라우터로 이동
+        const isUniversalLink =
+          url.startsWith('https://gleaum.com/') ||
+          url.startsWith('https://www.gleaum.com/');
+
+        if (isUniversalLink) {
+          try {
+            const parsed = new URL(url);
+            const path = parsed.pathname + parsed.search;
+            console.log('[NativeApp] Universal Link → 앱 내 이동:', path);
+            router.push(path);
+          } catch (e) {
+            console.warn('[NativeApp] Universal Link 파싱 오류:', url, e);
+          }
+          return;
+        }
+
+        // ── 커스텀 스킴 범용: gleaum://path ────────────────────────────
+        // 예) gleaum://invite/XXXX  gleaum://home 등
+        if (url.startsWith('gleaum://')) {
+          try {
+            const parsed = new URL(url);
+            // gleaum://invite/CODE → /invite/CODE
+            const path = '/' + parsed.hostname + parsed.pathname + parsed.search;
+            console.log('[NativeApp] 커스텀 스킴 → 앱 내 이동:', path);
+            router.push(path);
+          } catch (e) {
+            console.warn('[NativeApp] 커스텀 스킴 파싱 오류:', url, e);
+          }
+        }
+      }
+
       // ── 경로 B: getLaunchUrl ──────────────────────────────────────────────
-      // 앱이 gleaum:// 딥링크로 콜드 스타트된 경우 (프로세스가 종료됐다 재시작)
+      // 앱이 딥링크로 콜드 스타트된 경우 (프로세스가 종료됐다 재시작)
       const launchResult = await App.getLaunchUrl();
-      if (launchResult?.url?.startsWith('gleaum://auth/')) {
+      if (launchResult?.url) {
         console.log('[NativeApp] 콜드 스타트 딥링크:', launchResult.url);
-        await handleOAuthCallback(launchResult.url);
+        await handleIncomingUrl(launchResult.url);
       }
 
       // ── 경로 A: appUrlOpen ───────────────────────────────────────────────
-      // 앱이 이미 실행 중일 때 딥링크 수신
+      // 앱이 이미 실행 중일 때 딥링크/Universal Link 수신
       const handle = await App.addListener('appUrlOpen', async ({ url }) => {
-        if (!url.startsWith('gleaum://')) return;
-        await handleOAuthCallback(url);
+        await handleIncomingUrl(url);
       });
 
       removeUrlListener = () => handle.remove();

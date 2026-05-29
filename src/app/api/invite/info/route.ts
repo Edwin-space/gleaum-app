@@ -22,9 +22,10 @@ export async function GET(req: NextRequest) {
   );
 
   // 공간 기본 정보 조회 (invite_code 매칭)
+  // purpose는 family_groups.settings JSONB 안에 저장됨 (직접 컬럼 아님)
   const { data: group, error } = await admin
     .from('family_groups')
-    .select('id, name, purpose, invite_code_expires_at')
+    .select('id, name, settings, invite_code_expires_at')
     .eq('invite_code', normalizedCode)
     .single();
 
@@ -37,6 +38,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: '만료된 초대 코드입니다.' }, { status: 410 });
   }
 
+  // settings JSONB에서 purpose 추출
+  const settings = group.settings as { purpose?: string; scheduleTypes?: string[] } | null;
+
   // 멤버 수 조회 (이름 등 개인정보 제외)
   const { count: memberCount } = await admin
     .from('space_members')
@@ -45,7 +49,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     spaceName: group.name,
-    purpose: group.purpose ?? null,
+    purpose: settings?.purpose ?? null,
     memberCount: memberCount ?? 0,
   });
 }

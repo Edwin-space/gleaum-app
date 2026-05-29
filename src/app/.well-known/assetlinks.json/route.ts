@@ -10,7 +10,6 @@ const assetlinks = [
       namespace: 'android_app',
       package_name: 'com.gleaum.app',
       sha256_cert_fingerprints: [
-        'C3:A0:94:A7:96:60:26:DA:80:08:94:05:2E:FD:8E:6A:77:1F:DE:B3:AD:A6:54:1E:FB:EA:28:EC:CB:F6',
         'C3:A0:94:A7:96:60:26:DA:80:08:94:05:2E:FD:8E:6A:77:1F:DE:B3:AD:A6:54:1E:FB:EA:28:EC:CB:F6:ED:01',
       ],
     },
