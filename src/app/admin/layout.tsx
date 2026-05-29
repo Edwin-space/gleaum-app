@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { SessionGuard } from './SessionGuard';
 
 export const metadata = { title: '글리움 관리자' };
 
@@ -53,6 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </span>
       </header>
 
+      <SessionGuard />
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
         {children}
       </main>
