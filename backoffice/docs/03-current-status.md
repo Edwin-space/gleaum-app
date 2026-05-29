@@ -35,6 +35,11 @@
   - 이미지 업로드 (브라우저 압축 WebP → Supabase Storage `ad-images`)
   - 실시간 미리보기, 광고 복제, 플랫폼 타겟팅 (web/android/ios)
   - 기간별 통계 필터 (오늘/7일/30일/전체), 상태 필터, 요약 카드
+  - ⚠️ **Supabase SQL 실행 필요** → `docs/06-supabase-sql.md` 참조
+    - `013_ad_system.sql` (테이블/RLS/함수 생성)
+    - `014_ad_platforms.sql` (platforms 컬럼 + RPC 파라미터 보정)
+    - `is_admin = true` 설정 (관리자 계정)
+    - `ad-images` Storage 버킷 생성 (UI에서)
 - [x] `/settings` — 시스템 설정 (API 키 관리 폼, 비밀번호 변경, GA4 연동 상태 표시)
 - [x] `/login` — 관리자 로그인 페이지 (Supabase Auth 기반)
 
@@ -100,6 +105,8 @@
 
 ### Phase 7: 광고 매니저 고도화
 - [x] 광고 CRUD DB 연동 완료 (2026-05-29)
+- [x] platforms 컬럼 + get_active_ad RPC 보정 (2026-05-29) — 014 migration
+- [ ] **Supabase SQL 실행 대기** (013 + 014 + is_admin + Storage 버킷)
 - [ ] 광고 성과 차트 (노출/클릭 트렌드)
 - [ ] 광고별 상세 통계 페이지
 

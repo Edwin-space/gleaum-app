@@ -18,6 +18,10 @@ Supabase 대시보드 → SQL Editor → New Query
 | `010_move_private_records_to_personal_space.sql` | 공유 공간에 잘못 저장된 private 일정/지출을 개인 공간으로 이동 | ⬜ Supabase SQL Editor 실행 필요 |
 | `011_add_expense_reflection_columns.sql` | 공간 지출 → 개인 가계부 반영 연결 컬럼 추가 | ⬜ Supabase SQL Editor 실행 필요 |
 | `012_cron_overdue_and_digest.sql` | 고정지출 연체 알림(D+0/3/7) + 주간 소비 다이제스트 크론잡 등록 | ⬜ **실행 전 app_url·cron_secret 수정 필요** |
+| `013_ad_system.sql` | 광고 시스템 (ad_slots / ads / ad_events 테이블, RLS, get_active_ad 함수) | ⬜ **Supabase SQL Editor 실행 필요** |
+| `014_ad_platforms.sql` | ads.platforms 컬럼 추가 + get_active_ad p_platform 파라미터 보정 | ⬜ **013 실행 후 반드시 이어서 실행** |
+
+> 📖 **SQL 전문 + 실행 순서 + 확인 쿼리** → `backoffice/docs/06-supabase-sql.md` 참조
 
 ## 001_space_members.sql 상세
 

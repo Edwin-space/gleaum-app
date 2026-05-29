@@ -8,3 +8,10 @@
 @docs/01-overview.md
 @docs/02-design-guide.md
 @docs/03-current-status.md
+@docs/06-supabase-sql.md
+
+## ⚠️ Supabase SQL 작업 규칙
+새 테이블/컬럼/함수/RLS를 추가하는 작업 시:
+1. `supabase/migrations/NNN_설명.sql` 파일 생성
+2. `docs/06-supabase-sql.md`에 실행 SQL 전문 추가
+3. 코드 배포 후 사용자에게 반드시 SQL 실행 안내
