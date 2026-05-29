@@ -11,8 +11,8 @@
 | 항목 | 기술 | 비고 |
 |------|------|------|
 | 프레임워크 | Next.js 15.1.6 (App Router) | 기존 사용자 앱(Next.js 16)과 별도 버전 |
-| 스타일링 | Tailwind CSS v4 | shadcn/ui 스타일 수동 구현 방식 |
-| UI 컴포넌트 | lucide-react (아이콘) | shadcn 패키지 설치 없이 수동 구현 |
+| 스타일링 | Tailwind CSS v4 + shadcn/ui | Nova 프리셋, shadcn/ui 정식 설치됨 |
+| UI 컴포넌트 | shadcn/ui + lucide-react | `src/components/ui/`에서 import하여 사용 |
 | 백엔드/DB | Supabase | 기존 사용자 앱과 동일한 Supabase 프로젝트 공유 |
 | 배포 플랫폼 | Vercel | Root Directory: `backoffice` |
 | 언어 | TypeScript 5 | |
@@ -51,6 +51,6 @@ gleaum-app/                     ← GitHub 레포지토리 루트
 ## 핵심 설계 결정 사항
 
 1. **공유 DB**: 기존 사용자 앱과 동일한 Supabase 프로젝트를 사용. 별도 DB 생성 없음.
-2. **shadcn/ui 패키지 미설치**: 백오피스 UI는 Tailwind CSS 클래스를 이용해 shadcn/ui 스타일을 수동으로 구현함. `shadcn add` 명령어를 쓰면 구조가 깨질 수 있으므로 금지.
+2. **shadcn/ui 정식 설치됨**: `components.json` 기반으로 설치 완료. 모든 UI는 `src/components/ui/`에서 import하여 사용. Tailwind 클래스로 shadcn을 수동 시뮬레이션하는 것은 금지.
 3. **독립 배포**: Vercel에서 `gleaum-app` 레포지토리를 `Root Directory: backoffice`로 별도 Import하여 독립 프로젝트로 배포.
 4. **관리자 인증 미구현(현재)**: 현재 인증 없이 URL 직접 접근 가능. Phase 4에서 Supabase Auth + `is_super_admin` 기반 인증 추가 예정.

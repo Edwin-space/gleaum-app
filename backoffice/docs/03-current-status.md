@@ -30,7 +30,11 @@
 - [x] `/campaigns` — CRM 캠페인 빌더 (5채널 탭, 실시간 메시지 미리보기)
 - [x] `/releases` — 릴리즈 관리 (Firebase App Distribution 빌드 목록 + 내부 테스터 추가/제거, projectNumber 기반 REST API 연동 보정 완료)
 - [x] `/settings` — Remote Config 기능 플래그 편집기 추가 (스위치 토글, 즉시 Firebase 반영)
-- [x] `/ads` — 광고 매니저 (RadioGroup 전략 선택, 앱 목업 시뮬레이터)
+- [x] `/ads` — 광고 매니저 전면 개편 (2026-05-29, shadcn/ui 기반 DB 연동 완료)
+  - Supabase `ads` 테이블 + `ad_events` CRUD 실연동
+  - 이미지 업로드 (브라우저 압축 WebP → Supabase Storage `ad-images`)
+  - 실시간 미리보기, 광고 복제, 플랫폼 타겟팅 (web/android/ios)
+  - 기간별 통계 필터 (오늘/7일/30일/전체), 상태 필터, 요약 카드
 - [x] `/settings` — 시스템 설정 (API 키 관리 폼, 비밀번호 변경, GA4 연동 상태 표시)
 - [x] `/login` — 관리자 로그인 페이지 (Supabase Auth 기반)
 
@@ -44,7 +48,7 @@
 
 ### 세션 관리
 - [x] `src/components/SessionProvider.tsx` — 비활동 기반 세션 타이머
-  - IDLE_LIMIT: 10분 (비활동 시 자동 로그아웃)
+  - IDLE_LIMIT: **30분** (비활동 시 자동 로그아웃, 2026-05-29 변경)
   - 활동 감지 이벤트: mousemove / mousedown / keydown / scroll / touchstart / click
   - sessionStorage `gleaum_admin_last_active` 키로 마지막 활동 시각 저장
   - 10초 디바운스로 과도한 저장 방지
@@ -94,9 +98,10 @@
 - [ ] SendGrid API — 이메일 발송
 - [ ] 발송 이력 DB 저장
 
-### Phase 7: 광고 매니저 DB 연동
-- [ ] 광고 설정 DB 저장
-- [ ] 배너 CRUD API
+### Phase 7: 광고 매니저 고도화
+- [x] 광고 CRUD DB 연동 완료 (2026-05-29)
+- [ ] 광고 성과 차트 (노출/클릭 트렌드)
+- [ ] 광고별 상세 통계 페이지
 
 ---
 
