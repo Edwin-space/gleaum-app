@@ -15,6 +15,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import imageCompression from 'browser-image-compression';
 import { createClient } from '@/lib/supabase/client';
 import type { AdWithStats } from '@/types/ads';
 
@@ -70,15 +71,33 @@ const emptyForm = {
 };
 type FormState = typeof emptyForm;
 
-// ── 이미지 업로드 ────────────────────────────────────────────────
-async function uploadAdImage(file: File): Promise<string | null> {
+// ── 이미지 압축 + 업로드 ─────────────────────────────────────────
+async function uploadAdImage(
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<string | null> {
+  // 1. 브라우저에서 압축 (최대 200KB, 최대 640px 너비)
+  let compressed: File;
+  try {
+    compressed = await imageCompression(file, {
+      maxSizeMB:           0.2,   // 200KB
+      maxWidthOrHeight:    640,   // 배너 최적 너비
+      useWebWorker:        true,
+      fileType:            'image/webp', // WebP로 변환 (최고 압축률)
+      onProgress,
+    });
+  } catch {
+    // 압축 실패 시 원본 사용
+    compressed = file;
+  }
+
+  // 2. Supabase Storage 업로드
   const supabase = createClient();
-  const ext  = file.name.split('.').pop() ?? 'jpg';
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const path     = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
   const { error } = await supabase.storage
     .from('ad-images')
-    .upload(path, file, { cacheControl: '3600', upsert: false });
+    .upload(path, compressed, { cacheControl: '2592000', upsert: false, contentType: 'image/webp' });
 
   if (error) { alert('이미지 업로드 실패: ' + error.message); return null; }
 
@@ -95,8 +114,9 @@ export default function AdsAdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId]     = useState<string | null>(null);
   const [form, setForm]         = useState<FormState>(emptyForm);
-  const [saving, setSaving]     = useState(false);
+  const [saving, setSaving]       = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
 
   // 필터
   const [period, setPeriod]           = useState<PeriodValue>('7d');
@@ -116,9 +136,11 @@ export default function AdsAdminPage() {
   // ── 이미지 업로드 핸들러 ───────────────────────────────────────
   const handleImageUpload = async (file: File) => {
     setUploading(true);
-    const url = await uploadAdImage(file);
+    setUploadPct(0);
+    const url = await uploadAdImage(file, setUploadPct);
     if (url) setForm(f => ({ ...f, image_url: url }));
     setUploading(false);
+    setUploadPct(0);
   };
 
   // ── 저장 ───────────────────────────────────────────────────────
@@ -285,7 +307,7 @@ export default function AdsAdminPage() {
       {showForm && (
         <AdForm
           form={form} setForm={setForm}
-          editId={editId} saving={saving} uploading={uploading}
+          editId={editId} saving={saving} uploading={uploading} uploadPct={uploadPct}
           onSave={handleSave}
           onCancel={() => { setShowForm(false); setEditId(null); setForm(emptyForm); }}
           onImageUpload={handleImageUpload}
@@ -367,7 +389,7 @@ const STATUS_BG: Record<string, string> = {
 // 광고 등록/수정 폼 + 미리보기
 // ════════════════════════════════════════════════════════════════
 function AdForm({
-  form, setForm, editId, saving, uploading,
+  form, setForm, editId, saving, uploading, uploadPct,
   onSave, onCancel, onImageUpload,
 }: {
   form: typeof emptyForm;
@@ -375,6 +397,7 @@ function AdForm({
   editId: string | null;
   saving: boolean;
   uploading: boolean;
+  uploadPct: number;
   onSave: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
   onImageUpload: (file: File) => Promise<void>;
@@ -453,7 +476,21 @@ function AdForm({
                 }}
               >
                 {uploading ? (
-                  <span style={{ fontSize: 13, color: '#0084CC', fontWeight: 600 }}>업로드 중...</span>
+                  <div style={{ width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, color: '#0084CC', fontWeight: 600 }}>
+                        {uploadPct < 50 ? '압축 중...' : '업로드 중...'}
+                      </span>
+                      <span style={{ fontSize: 12, color: '#0084CC', fontWeight: 700 }}>{uploadPct}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: 6, background: '#E0EFFF', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: 4,
+                        background: 'linear-gradient(90deg, #0084CC, #34C759)',
+                        width: `${uploadPct}%`, transition: 'width 0.2s ease',
+                      }} />
+                    </div>
+                  </div>
                 ) : form.image_url ? (
                   <>
                     <div style={{ width: 48, height: 32, borderRadius: 6, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
