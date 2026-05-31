@@ -31,6 +31,36 @@ function dispatchAuthEvent(type: 'gleaum:auth-success' | 'gleaum:auth-error', de
 }
 
 /**
+ * Android 네이티브 로그인(LoginActivity) 후 MainActivity 가 WebView 에 주입한 세션을
+ * Supabase 클라이언트에 반영. window.__GLEAUM_NATIVE_SESSION__ 이 있을 때만 동작.
+ */
+async function applyNativeSessionIfPresent(
+  router: ReturnType<typeof import('next/navigation').useRouter>
+): Promise<void> {
+  const win = window as unknown as {
+    __GLEAUM_NATIVE_SESSION__?: {
+      access_token:  string;
+      refresh_token: string;
+    } | null;
+  };
+  const ns = win.__GLEAUM_NATIVE_SESSION__;
+  if (!ns?.access_token) return;
+
+  // 중복 처리 방지
+  win.__GLEAUM_NATIVE_SESSION__ = null;
+
+  const supabase = createClient();
+  const { error } = await supabase.auth.setSession({
+    access_token:  ns.access_token,
+    refresh_token: ns.refresh_token,
+  });
+  if (!error) {
+    // 세션 설정 성공 → 홈으로 이동 (현재 페이지가 /login 이든 아니든 동일)
+    router.replace('/home');
+  }
+}
+
+/**
  * 로그인 전 저장해 둔 next 경로를 꺼내 반환 (1회 소비 후 삭제)
  * - useAuth.signInWithGoogle 이 네이티브 OAuth 시작 직전에 저장
  * - 초대 링크 등 로그인 후 이동해야 할 특정 경로를 OAuth 완료 후 복원하는 데 사용
@@ -56,6 +86,9 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isNativeApp()) return;
+
+    // 0. Android 네이티브 로그인 세션 주입 처리 (LoginActivity → MainActivity → WebView)
+    void applyNativeSessionIfPresent(router);
 
     // 1. 스플래시 숨기기
     const splashTimer = setTimeout(async () => {

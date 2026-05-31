@@ -4,11 +4,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsetsController
 import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.getcapacitor.BridgeActivity
 
@@ -20,40 +23,49 @@ class MainActivity : BridgeActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // ── 2-a. WebView 성능 최적화 ─────────────────────────────────────────
+        // ── 2-a. 세션 없으면 LoginActivity 로 ────────────────────────────────
+        // NativeAppProvider 가 WebView 에서 세션을 주입받기 때문에
+        // LoginActivity 에서 로그인한 세션은 여기서 WebView 에 전달됨.
+        if (!SessionManager.hasValid(this) && !isOAuthCallback()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        // ── 2-b. WebView 성능 최적화 ─────────────────────────────────────────
         bridge?.webView?.settings?.apply {
-            // 캐시 전략: 네트워크 있을 때는 서버 캐시 정책 따름, 없으면 캐시 사용
-            cacheMode = WebSettings.LOAD_DEFAULT
-            // DOM Storage 활성화 (localStorage 등 사용)
+            cacheMode         = WebSettings.LOAD_DEFAULT
             domStorageEnabled = true
-            // 불필요한 Safe Browsing 비활성화 (초기 로드 지연 요인)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 safeBrowsingEnabled = false
             }
         }
 
-        // ── 2-b. FCM 알림 채널 생성 (Android 8+ 필수) ──────────────────────────
+        // ── 2-c. 세션을 WebView 에 주입 ──────────────────────────────────────
+        // NativeAppProvider.tsx 가 window.__GLEAUM_NATIVE_SESSION__ 을 읽어
+        // supabase.auth.setSession() 호출
+        injectSessionOnLoad()
+
+        // ── 2-d. FCM 알림 채널 생성 ──────────────────────────────────────────
         createNotificationChannels()
 
-        // ── 2-c. Edge-to-Edge: WebView가 상태바·네비게이션바 뒤까지 확장 ───────
+        // ── 2-e. Edge-to-Edge 설정 ───────────────────────────────────────────
         setupEdgeToEdge()
 
-        // ── 2-d. OAuth 딥링크 처리 (앱이 이미 실행 중인 상태에서 딥링크 수신) ──
+        // ── 2-f. OAuth 딥링크 처리 ────────────────────────────────────────────
         handleIntent(intent)
     }
 
-    // onNewIntent: 앱이 포그라운드에 있을 때 딥링크 수신
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
     }
 
-    // gleaum:// 딥링크를 Capacitor Bridge(WebView)로 전달
+    /** gleaum:// 딥링크 → Capacitor Bridge(WebView)로 전달 */
     private fun handleIntent(intent: Intent?) {
         intent?.data?.let { uri ->
             if (uri.scheme == "gleaum") {
-                // Capacitor가 앱 시작 시 URL을 처리하도록 Bridge에 전달
                 bridge?.webView?.post {
                     bridge?.triggerWindowJSEvent("appUrlOpen", "{ url: '${uri}' }")
                 }
@@ -62,35 +74,70 @@ class MainActivity : BridgeActivity() {
     }
 
     /**
-     * FCM 알림 채널 등록 (Android 8 Oreo 이상 필수)
-     *
-     * FCM 페이로드의 android.notification.channel_id 와 반드시 일치해야 합니다.
-     * 채널이 없으면 Android 8+ 에서 알림이 무음 처리되거나 표시되지 않습니다.
+     * 현재 Intent 가 OAuth 콜백 딥링크인지 확인
+     * — gleaum://auth/callback 으로 시작되면 세션 없어도 진입 허용
      */
+    private fun isOAuthCallback(): Boolean {
+        val uri = intent?.data ?: return false
+        return uri.scheme == "gleaum" && uri.host == "auth"
+    }
+
+    /**
+     * WebView 첫 페이지 로드 완료 시 네이티브 세션을 JS 전역변수로 주입.
+     * NativeAppProvider.tsx 가 이 값을 읽어 supabase.auth.setSession() 수행.
+     */
+    private fun injectSessionOnLoad() {
+        val sessionJson = SessionManager.get(this) ?: return
+
+        // JSON 내 특수문자 이스케이프 (JS 삽입 안전 처리)
+        val escaped = sessionJson
+            .replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\n", "\\n")
+
+        bridge?.webView?.webViewClient = object : WebViewClient() {
+            private var injected = false
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                if (injected) return
+                injected = true
+                view?.evaluateJavascript(
+                    """(function(){
+                        try {
+                            window.__GLEAUM_NATIVE_SESSION__ = JSON.parse('$escaped');
+                        } catch(e) {}
+                    })();""".trimIndent(),
+                    null
+                )
+            }
+        }
+    }
+
+    // ── FCM 알림 채널 ─────────────────────────────────────────────────────────
+
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            // ── 기본 알림 채널 (캠페인, 시스템 알림) ────────────────────────
             val defaultChannel = NotificationChannel(
-                "gleaum_notifications",         // channel_id — FCM 페이로드와 동일
-                "글리움 알림",                   // 설정 화면에 표시되는 채널 이름
+                "gleaum_notifications",
+                "글리움 알림",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description      = "캠페인 및 서비스 알림"
+                description = "캠페인 및 서비스 알림"
                 enableLights(true)
                 enableVibration(true)
                 setShowBadge(true)
             }
             manager.createNotificationChannel(defaultChannel)
 
-            // ── 일정 알림 채널 (리마인더) ─────────────────────────────────
             val scheduleChannel = NotificationChannel(
                 "gleaum_schedules",
                 "일정 알림",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description      = "일정 리마인더 알림"
+                description = "일정 리마인더 알림"
                 enableLights(true)
                 enableVibration(true)
                 setShowBadge(true)
@@ -99,32 +146,27 @@ class MainActivity : BridgeActivity() {
         }
     }
 
+    // ── Edge-to-Edge ──────────────────────────────────────────────────────────
+
     private fun setupEdgeToEdge() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+: WindowInsetsController 사용
             window.insetsController?.apply {
-                // 상태바 아이콘: 흰색 (다크 배경)
                 setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
-                // 네비게이션 바 아이콘: 어두운 색 (밝은 배경 #FAFAFD 위)
                 setSystemBarsAppearance(
                     WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
                     WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
                 )
             }
         } else {
-            // Android 10 이하: 레거시 플래그
             @Suppress("DEPRECATION")
             window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR  // 네비게이션 바 아이콘 다크
+                    or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
             )
         }
-
-        // 상태바: 다크 네이비 (앱 상단 배경과 일치)
-        window.statusBarColor = android.graphics.Color.parseColor("#0F1A2E")
-        // 네비게이션 바: 앱 배경색(#FAFAFD)과 일치 → BottomNav safe area 갭 제거
+        window.statusBarColor     = android.graphics.Color.parseColor("#0F1A2E")
         window.navigationBarColor = android.graphics.Color.parseColor("#FAFAFD")
     }
 }

@@ -4,4 +4,18 @@
     <string name="title_activity_main">글리움</string>
     <string name="package_name">com.gleaum.app</string>
     <string name="custom_url_scheme">com.gleaum.app</string>
+
+    <!-- ── Supabase 설정 ──────────────────────────────────────────────
+         NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY 와 동일한 값
+    -->
+    <string name="supabase_url">https://tyvjdsescukaeorcuaga.supabase.co</string>
+    <!-- anon key: Supabase 대시보드 → Settings → API → Project API Keys → anon/public -->
+    <string name="supabase_anon_key">REPLACE_WITH_SUPABASE_ANON_KEY</string>
+
+    <!-- ── Google OAuth Web Client ID ────────────────────────────────
+         Google Cloud Console → APIs & Services → Credentials → "Web client (auto created…)"
+         → Client ID 복사 (ends with .apps.googleusercontent.com)
+         Supabase Auth → Providers → Google 에 등록된 것과 동일해야 함
+    -->
+    <string name="google_web_client_id">REPLACE_WITH_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com</string>
 </resources>

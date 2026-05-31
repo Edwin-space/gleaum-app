@@ -47,19 +47,23 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         appOpenAdManager.loadAd(this)
     }
 
+    /** LoginActivity 에서는 App Open Ad 표시 안 함 */
+    private fun isLoginActivity(): Boolean =
+        currentActivity?.javaClass?.simpleName == "LoginActivity"
+
     // ── DefaultLifecycleObserver: 앱 포그라운드 감지 ─────────────────────────
 
     /** 앱이 포그라운드로 전환될 때 호출 (콜드 스타트 + 백그라운드 복귀 모두 포함) */
     override fun onStart(owner: LifecycleOwner) {
         val activity = currentActivity ?: return
+        // 로그인 화면에서는 App Open Ad 표시하지 않음
+        if (isLoginActivity()) return
         if (isColdStart) {
             isColdStart = false
-            // 스플래시 애니메이션(~2초)이 끝난 후 광고 표시
             activity.window.decorView.postDelayed({
-                appOpenAdManager.showAdIfAvailable(activity)
+                if (!isLoginActivity()) appOpenAdManager.showAdIfAvailable(activity)
             }, 2500L)
         } else {
-            // 백그라운드에서 복귀
             appOpenAdManager.showAdIfAvailable(activity)
         }
     }

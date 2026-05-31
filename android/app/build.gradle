@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 apply plugin: 'com.google.firebase.crashlytics'
 // firebase-perf 플러그인 제거 (AGP 9.x Transform API 호환 불가)
 // firebase-perf-ktx 런타임 라이브러리는 유지 → 커스텀 트레이스 정상 동작
@@ -11,8 +12,8 @@ android {
         applicationId "com.gleaum.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10
-        versionName "1.0.10"
+        versionCode 11
+        versionName "1.0.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -43,6 +44,7 @@ android {
     }
     buildFeatures {
         buildConfig = true
+        compose = true      // Jetpack Compose 활성화
     }
     kotlinOptions {
         jvmTarget = '21'
@@ -69,6 +71,20 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    // ── Jetpack Compose ───────────────────────────────────────────────
+    implementation platform('androidx.compose:compose-bom:2025.05.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.activity:activity-compose:1.10.1'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+
+    // ── Google Credential Manager (네이티브 Google 로그인) ─────────────
+    implementation 'androidx.credentials:credentials:1.5.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.5.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
 
     // ── Lifecycle (App Open Ad 포그라운드 감지) ───────────────────────
     implementation 'androidx.lifecycle:lifecycle-process:2.9.1'
