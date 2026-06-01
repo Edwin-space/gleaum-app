@@ -95,8 +95,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // ── WKWebView 성능 최적화 ────────────────────────────────────────────
-        //    Capacitor Bridge가 준비된 시점이므로 여기서 WebView 설정을 적용합니다.
         setupWebView()
+
+        // ── NativeSessionPlugin 브리지 등록 ──────────────────────────────────
+        if let bridgeVC = window?.rootViewController as? CAPBridgeViewController {
+            bridgeVC.bridge?.registerPlugin(NativeSessionPlugin.self)
+        }
 
         #if targetEnvironment(macCatalyst)
         // Mac Catalyst: 최소/최대 윈도우 크기 설정

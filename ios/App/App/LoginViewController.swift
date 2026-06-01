@@ -57,10 +57,20 @@ class LoginViewController: UIViewController {
     }
 
     @objc private func onAppDidBecomeActive() {
-        // OAuth 브라우저에서 앱으로 복귀 후 세션 확인
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            self?.checkSessionAndDismiss()
+        // OAuth 브라우저에서 앱 복귀 후 세션 반복 확인
+        // NativeSession.saveSession() 처리 시간 고려해 최대 5초 재시도
+        var attempts = 0
+        func retry() {
+            attempts += 1
+            if SessionManager.shared.hasValidSession() {
+                DispatchQueue.main.async { [weak self] in self?.dismiss(animated: true) }
+                return
+            }
+            if attempts < 10 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { retry() }
+            }
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { retry() }
     }
 
     private func checkSessionAndDismiss() {
