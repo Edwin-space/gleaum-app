@@ -9,7 +9,6 @@ import android.view.View
 import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.browser.customtabs.CustomTabsIntent
 import com.gleaum.app.databinding.ActivityLoginBinding
 import com.gleaum.app.databinding.ActivityLoginEmailBinding
 import kotlinx.coroutines.CoroutineScope
@@ -94,13 +93,9 @@ class LoginActivity : AppCompatActivity() {
             .build()
 
         try {
-            CustomTabsIntent.Builder()
-                .setShowTitle(false)
-                .build()
-                .launchUrl(this, oauthUri)
-        } catch (e: Exception) {
-            // Chrome이 없으면 기본 브라우저로 열기
             startActivity(Intent(Intent.ACTION_VIEW, oauthUri))
+        } catch (e: Exception) {
+            showToast("브라우저를 열 수 없습니다.")
         } finally {
             setGoogleLoading(false)
         }
