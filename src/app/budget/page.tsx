@@ -133,8 +133,12 @@ export default function BudgetPage() {
         position: isDesktop ? 'bottom-right' : 'top-center',
       });
       return false;
-    } catch {
-      toast.error('지출 등록에 실패했습니다');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`지출 등록 실패: ${msg}`, {
+        position: isDesktop ? 'bottom-right' : 'top-center',
+        duration: 5000,
+      });
       return false;
     }
   };

@@ -1006,8 +1006,11 @@ export async function createSchedule(
   input: CreateScheduleInput
 ): Promise<Schedule | null> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (!user) {
+    console.error('[createSchedule] 인증 없음:', authError?.message);
+    throw new Error(`인증 오류: ${authError?.message ?? '로그인이 필요합니다'}`);
+  }
 
   // Phase 2: type → category/visibility/automation_policy 자동 매핑
   const autoCategory = input.category ?? inferCategory(input.type);
@@ -1058,8 +1061,8 @@ export async function createSchedule(
     .single();
 
   if (error) {
-    console.error('일정 생성 오류:', error.message);
-    return null;
+    console.error('[createSchedule] DB 오류:', error.message, '| code:', error.code, '| spaceId:', familyGroupId);
+    throw new Error(`DB 오류 [${error.code}]: ${error.message}`);
   }
 
   // 참여자 등록
