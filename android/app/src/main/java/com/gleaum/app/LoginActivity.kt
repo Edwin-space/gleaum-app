@@ -10,9 +10,11 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.gleaum.app.databinding.ActivityLoginBinding
 import com.gleaum.app.databinding.ActivityLoginEmailBinding
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,21 +71,9 @@ class LoginActivity : AppCompatActivity() {
 
     private fun handleGoogleSignIn() {
         setGoogleLoading(true)
-
-        val credentialManager = CredentialManager.create(this)
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(getString(R.string.google_web_client_id))
-            .setAutoSelectEnabled(false)
-            .build()
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
-
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val result  = credentialManager.getCredential(this@LoginActivity, request)
-                val idToken = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+                val idToken = fetchGoogleIdToken()
                 val session = exchangeGoogleToken(idToken)
                 if (session != null) {
                     SessionManager.save(this@LoginActivity, session)
@@ -99,6 +89,44 @@ class LoginActivity : AppCompatActivity() {
                 setGoogleLoading(false)
             }
         }
+    }
+
+    /**
+     * Google ID 토큰 획득.
+     *
+     * 1차: GetGoogleIdOption (Bottom Sheet — 부드러운 UX)
+     * 폴백: GetSignInWithGoogleOption (전체 화면 계정 선택 — 계정 없을 때 확실히 동작)
+     *
+     * "no credentials available" 오류 = 기기에 앱 사용 이력이 없거나
+     * SHA-1 불일치 시 1차가 실패하므로 폴백 필수
+     */
+    private suspend fun fetchGoogleIdToken(): String {
+        val credentialManager = CredentialManager.create(this)
+        val clientId = getString(R.string.google_web_client_id)
+
+        // ── 1차: GetGoogleIdOption (One Tap / Bottom Sheet) ──────────────
+        try {
+            val request = GetCredentialRequest.Builder()
+                .addCredentialOption(
+                    GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(clientId)
+                        .setAutoSelectEnabled(false)
+                        .build()
+                ).build()
+            val result = credentialManager.getCredential(this, request)
+            return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+        } catch (e: NoCredentialException) {
+            // "no credentials available" → 폴백으로 계속
+        }
+
+        // ── 폴백: GetSignInWithGoogleOption (전체 화면 계정 선택) ─────────
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(
+                GetSignInWithGoogleOption.Builder(clientId).build()
+            ).build()
+        val result = credentialManager.getCredential(this, request)
+        return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
     }
 
     private fun setGoogleLoading(loading: Boolean) {
