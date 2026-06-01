@@ -13,10 +13,10 @@
         android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true">
 
-        <!-- ── 라우터 (런처) — 세션 체크 후 Login 또는 Main 으로 분기 ──── -->
+        <!-- ── 스플래시 (런처) — 전체 화면 브랜딩 → RouterActivity 로 전환 ── -->
         <activity
-            android:name=".RouterActivity"
-            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:name=".SplashActivity"
+            android:theme="@style/AppTheme.Splash"
             android:exported="true"
             android:noHistory="true">
 
@@ -26,7 +26,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep Link: gleaum:// (OAuth 콜백) — 세션 체크 후 MainActivity 로 전달 -->
+        </activity>
+
+        <!-- ── 라우터 — 세션 체크 후 Login 또는 Main 으로 분기 ──────────── -->
+        <activity
+            android:name=".RouterActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="true"
+            android:noHistory="true">
+
+            <!-- Deep Link: gleaum:// (OAuth 콜백) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

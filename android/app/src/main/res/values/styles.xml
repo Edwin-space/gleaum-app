@@ -20,6 +20,17 @@
         <item name="android:background">@null</item>
     </style>
 
+    <!-- ── 커스텀 스플래시 테마 ─────────────────────────────────────────
+         SplashActivity 전용 — 전체 화면 브랜딩 스플래시 -->
+    <style name="AppTheme.Splash" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#0A0B10</item>
+        <item name="android:statusBarColor">#0A0B10</item>
+        <item name="android:navigationBarColor">#0A0B10</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <!-- ── 런치 스플래시 테마 (앱 시작 직후) ─────────────────────────────
          androidx.core:core-splashscreen 기반
          AndroidManifest의 android:theme 에서 참조됨               -->

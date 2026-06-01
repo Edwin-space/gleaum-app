@@ -8,26 +8,119 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <!-- 배경색: #0A0B10 -->
+                        <color key="backgroundColor" red="0.039215686" green="0.043137255" blue="0.062745098" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+
                         <subviews>
-                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="Xnw-9h-3fY">
-                                <rect key="frame" x="127" y="328" width="160" height="160"/>
+
+                            <!-- ── "Making everyday life shine together" ── -->
+                            <label opaque="NO" userInteractionEnabled="NO"
+                                contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251"
+                                text="Making everyday life shine together"
+                                textAlignment="natural" lineBreakMode="middleTruncation"
+                                translatesAutoresizingMaskIntoConstraints="NO" id="lbl-sub-01">
+                                <rect key="frame" x="32" y="88" width="300" height="16"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                <color key="textColor" red="0.047058824" green="0.78823529" blue="0.70980392" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+
+                            <!-- ── "나, 그리고" ── -->
+                            <label opaque="NO" userInteractionEnabled="NO"
+                                contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251"
+                                text="나, 그리고"
+                                textAlignment="natural" lineBreakMode="middleTruncation"
+                                translatesAutoresizingMaskIntoConstraints="NO" id="lbl-tit-01">
+                                <rect key="frame" x="32" y="112" width="280" height="52"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="42"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+
+                            <!-- ── "연인/가족의" ── -->
+                            <label opaque="NO" userInteractionEnabled="NO"
+                                contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251"
+                                text="연인/가족의"
+                                textAlignment="natural" lineBreakMode="middleTruncation"
+                                translatesAutoresizingMaskIntoConstraints="NO" id="lbl-tit-02">
+                                <rect key="frame" x="32" y="166" width="280" height="52"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="42"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+
+                            <!-- ── "일상 네트워크" (teal — iOS LaunchScreen은 그라디언트 미지원) ── -->
+                            <label opaque="NO" userInteractionEnabled="NO"
+                                contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251"
+                                text="일상 네트워크"
+                                textAlignment="natural" lineBreakMode="middleTruncation"
+                                translatesAutoresizingMaskIntoConstraints="NO" id="lbl-tit-03">
+                                <rect key="frame" x="32" y="220" width="280" height="52"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="42"/>
+                                <color key="textColor" red="0.047058824" green="0.78823529" blue="0.70980392" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+
+                            <!-- ── 글리움 로고 아이콘 (우측 중앙) ── -->
+                            <imageView contentMode="scaleAspectFit"
+                                horizontalHuggingPriority="251" verticalHuggingPriority="251"
+                                image="Splash"
+                                translatesAutoresizingMaskIntoConstraints="NO" id="img-logo-01">
+                                <rect key="frame" x="220" y="360" width="180" height="180"/>
+                                <transform key="transform" m11="0.97815" m12="0.20791" m21="-0.20791" m22="0.97815" m33="1" m44="1"/>
                             </imageView>
+
+                            <!-- ── "gleaum" 하단 브랜드 텍스트 ── -->
+                            <label opaque="NO" userInteractionEnabled="NO"
+                                contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251"
+                                text="gleaum"
+                                textAlignment="center" lineBreakMode="middleTruncation"
+                                translatesAutoresizingMaskIntoConstraints="NO" id="lbl-brand-01">
+                                <rect key="frame" x="146" y="780" width="100" height="28"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+
                         </subviews>
+
                         <viewLayoutGuide key="safeArea" id="cGa-bB-1UN"/>
-                        <color key="backgroundColor" red="0.058823528999999999" green="0.10196078" blue="0.18039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+
                         <constraints>
-                            <constraint firstItem="Xnw-9h-3fY" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="cx1"/>
-                            <constraint firstItem="Xnw-9h-3fY" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-40" id="cy1"/>
-                            <constraint firstItem="Xnw-9h-3fY" firstAttribute="height" constant="160" id="h1"/>
-                            <constraint firstItem="Xnw-9h-3fY" firstAttribute="width" constant="160" id="w1"/>
+                            <!-- 서브 텍스트: top + leading -->
+                            <constraint firstItem="lbl-sub-01" firstAttribute="top" secondItem="cGa-bB-1UN" secondAttribute="top" constant="72" id="c001"/>
+                            <constraint firstItem="lbl-sub-01" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c002"/>
+                            <constraint firstItem="lbl-sub-01" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-32" id="c003"/>
+
+                            <!-- 타이틀 1 -->
+                            <constraint firstItem="lbl-tit-01" firstAttribute="top" secondItem="lbl-sub-01" secondAttribute="bottom" constant="12" id="c004"/>
+                            <constraint firstItem="lbl-tit-01" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c005"/>
+
+                            <!-- 타이틀 2 -->
+                            <constraint firstItem="lbl-tit-02" firstAttribute="top" secondItem="lbl-tit-01" secondAttribute="bottom" constant="0" id="c006"/>
+                            <constraint firstItem="lbl-tit-02" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c007"/>
+
+                            <!-- 타이틀 3 (그라디언트) -->
+                            <constraint firstItem="lbl-tit-03" firstAttribute="top" secondItem="lbl-tit-02" secondAttribute="bottom" constant="0" id="c008"/>
+                            <constraint firstItem="lbl-tit-03" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c009"/>
+
+                            <!-- 로고: 우측, 수직 중앙 + 오프셋 -->
+                            <constraint firstItem="img-logo-01" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="12" id="c010"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="60" id="c011"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="width" constant="180" id="c012"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="height" constant="180" id="c013"/>
+
+                            <!-- 브랜드: 하단 중앙 -->
+                            <constraint firstItem="lbl-brand-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c014"/>
+                            <constraint firstItem="lbl-brand-01" firstAttribute="bottom" secondItem="cGa-bB-1UN" secondAttribute="bottom" constant="-48" id="c015"/>
                         </constraints>
+
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
