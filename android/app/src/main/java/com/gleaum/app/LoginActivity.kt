@@ -103,30 +103,40 @@ class LoginActivity : AppCompatActivity() {
     /**
      * Google ID 토큰 획득.
      *
-     * GetGoogleIdOption + GetSignInWithGoogleOption 을 동시에 요청.
-     * Credential Manager 가 상황에 맞는 옵션을 선택해 보여줌.
-     * - 기존 인증 계정 있음 → GetGoogleIdOption (Bottom Sheet, 빠름)
-     * - 없음 → GetSignInWithGoogleOption (표준 Google 로그인 화면)
+     * 1차: GetGoogleIdOption — 네이티브 계정 선택 바텀시트 (웹 화면 없음)
+     * 폴백: GetSignInWithGoogleOption — 웹 기반 로그인 (1차 실패 시에만)
+     *
+     * GetGoogleIdOption 이 정상 동작하면 웹 화면 없이 순수 네이티브 UI 로 처리됨.
      */
     private suspend fun fetchGoogleIdToken(): String {
         val credentialManager = CredentialManager.create(this)
         val clientId = getString(R.string.google_web_client_id)
 
+        // ── 1차: 네이티브 바텀시트 ──────────────────────────────────────
+        try {
+            val request = GetCredentialRequest.Builder()
+                .addCredentialOption(
+                    GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(clientId)
+                        .setAutoSelectEnabled(false)
+                        .build()
+                ).build()
+            val result = credentialManager.getCredential(this, request)
+            android.util.Log.d("GleaumLogin", "1차 성공 (네이티브)")
+            return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+        } catch (e: GetCredentialException) {
+            // NoCredentialException, CancellationException 등 모두 폴백으로
+            android.util.Log.w("GleaumLogin", "1차 실패 (${e.type}) → 웹 폴백")
+        }
+
+        // ── 폴백: 웹 기반 Sign in with Google ────────────────────────────
         val request = GetCredentialRequest.Builder()
             .addCredentialOption(
-                GetGoogleIdOption.Builder()
-                    .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(clientId)
-                    .setAutoSelectEnabled(false)
-                    .build()
-            )
-            .addCredentialOption(
                 GetSignInWithGoogleOption.Builder(clientId).build()
-            )
-            .build()
-
+            ).build()
         val result = credentialManager.getCredential(this, request)
-        android.util.Log.d("GleaumLogin", "credential type: ${result.credential.type}")
+        android.util.Log.d("GleaumLogin", "폴백 성공 (웹)")
         return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
     }
 
