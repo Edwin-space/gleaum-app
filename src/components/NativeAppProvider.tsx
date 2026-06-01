@@ -4,10 +4,11 @@
  * NativeAppProvider
  *
  * 앱 마운트 시 네이티브 초기화 작업:
- * 1. 스플래시 스크린 숨기기
- * 2. 상태바 스타일 설정
- * 3. Android 뒤로가기 버튼 처리
- * 4. gleaum:// 딥링크 수신 → OAuth 콜백 처리 (핵심)
+ * 1. Android 네이티브 로그인 세션 적용 (LoginActivity → NativeSessionPlugin → setSession)
+ * 2. 스플래시 스크린 숨기기
+ * 3. 상태바 스타일 설정
+ * 4. Android 뒤로가기 버튼 처리
+ * 5. gleaum:// 딥링크 수신 → OAuth 콜백 처리
  *
  * 인증 결과 커스텀 이벤트:
  *   'gleaum:auth-success' — 로그인 성공 (로그인 페이지 스피너 해제용)
@@ -31,39 +32,7 @@ function dispatchAuthEvent(type: 'gleaum:auth-success' | 'gleaum:auth-error', de
 }
 
 /**
- * Android 네이티브 로그인(LoginActivity) 후 MainActivity 가 WebView 에 주입한 세션을
- * Supabase 클라이언트에 반영. window.__GLEAUM_NATIVE_SESSION__ 이 있을 때만 동작.
- */
-async function applyNativeSessionIfPresent(
-  router: ReturnType<typeof import('next/navigation').useRouter>
-): Promise<void> {
-  const win = window as unknown as {
-    __GLEAUM_NATIVE_SESSION__?: {
-      access_token:  string;
-      refresh_token: string;
-    } | null;
-  };
-  const ns = win.__GLEAUM_NATIVE_SESSION__;
-  if (!ns?.access_token) return;
-
-  // 중복 처리 방지
-  win.__GLEAUM_NATIVE_SESSION__ = null;
-
-  const supabase = createClient();
-  const { error } = await supabase.auth.setSession({
-    access_token:  ns.access_token,
-    refresh_token: ns.refresh_token,
-  });
-  if (!error) {
-    // 세션 설정 성공 → 홈으로 이동 (현재 페이지가 /login 이든 아니든 동일)
-    router.replace('/home');
-  }
-}
-
-/**
  * 로그인 전 저장해 둔 next 경로를 꺼내 반환 (1회 소비 후 삭제)
- * - useAuth.signInWithGoogle 이 네이티브 OAuth 시작 직전에 저장
- * - 초대 링크 등 로그인 후 이동해야 할 특정 경로를 OAuth 완료 후 복원하는 데 사용
  */
 function consumePendingRedirect(): string | null {
   try {
@@ -74,11 +43,69 @@ function consumePendingRedirect(): string | null {
 }
 
 /**
- * OAuth 콜백 URL 수신 즉시 알림 — 로그인 페이지의 browserFinished 타임아웃을 취소시켜
- * exchangeCodeForSession 완료 전에 리스너가 제거되는 타이밍 버그를 방지.
+ * OAuth 콜백 URL 수신 즉시 알림 — 로그인 페이지의 browserFinished 타임아웃을 취소
  */
 function dispatchAuthProcessing() {
   window.dispatchEvent(new CustomEvent('gleaum:auth-processing'));
+}
+
+/**
+ * Android 네이티브 로그인(LoginActivity) 세션을 Supabase 에 적용.
+ *
+ * 흐름:
+ *   LoginActivity → SessionManager(SharedPrefs) 저장
+ *   → NativeSessionPlugin.getSession() (Capacitor 브리지)
+ *   → supabase.auth.setSession()
+ *   → /home 이동
+ *
+ * - 이미 Supabase 세션이 있으면 스킵 (중복 적용 방지)
+ * - NativeSession 플러그인이 없는 환경(웹)에서는 session = null → 스킵
+ */
+async function applyNativeSession(router: ReturnType<typeof useRouter>): Promise<void> {
+  try {
+    const supabase = createClient();
+
+    // 이미 Supabase 클라이언트 세션이 있으면 처리 불필요
+    const { data: { session: existing } } = await supabase.auth.getSession();
+    if (existing) return;
+
+    // NativeSessionPlugin 으로 Android 에 저장된 세션 조회
+    const { NativeSession } = await import('@/lib/native-session');
+    const { session: rawJson } = await NativeSession.getSession();
+    if (!rawJson) return;
+
+    const parsed = JSON.parse(rawJson) as {
+      access_token:  string;
+      refresh_token: string;
+    };
+    if (!parsed.access_token) return;
+
+    const { data, error } = await supabase.auth.setSession({
+      access_token:  parsed.access_token,
+      refresh_token: parsed.refresh_token,
+    });
+
+    if (error) {
+      console.warn('[NativeApp] 네이티브 세션 적용 실패:', error.message);
+      return;
+    }
+
+    if (data.session) {
+      console.log('[NativeApp] 네이티브 세션 적용 완료 → /home');
+      // 온보딩 완료 여부 확인
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed_at')
+        .eq('id', data.session.user.id)
+        .single();
+      router.replace(
+        profile && !profile.onboarding_completed_at ? '/onboarding' : '/home'
+      );
+    }
+  } catch (e) {
+    // NativeSessionPlugin 미설치 환경 또는 파싱 오류 — 무시
+    console.debug('[NativeApp] applyNativeSession 스킵:', e);
+  }
 }
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
@@ -87,36 +114,22 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isNativeApp()) return;
 
-    // 0. Android 네이티브 로그인 세션 주입 처리 (LoginActivity → MainActivity → WebView)
-    void applyNativeSessionIfPresent(router);
+    // ── 0. Android 네이티브 로그인 세션 적용 ─────────────────────────
+    void applyNativeSession(router);
 
-    // 1. 스플래시 숨기기
+    // ── 1. 스플래시 숨기기 ───────────────────────────────────────────
     const splashTimer = setTimeout(async () => {
       await hideSplash();
     }, 300);
 
-    // 2. 상태바 설정
+    // ── 2. 상태바 설정 ───────────────────────────────────────────────
     setStatusBarDark();
 
-    // 3. 딥링크 처리 — gleaum://auth/callback (OAuth 콜백)
-    //
-    // ⚠️ 두 가지 진입 경로를 모두 처리해야 함:
-    //   A) appUrlOpen  — 앱이 이미 실행 중일 때 딥링크 수신 (가장 일반적)
-    //   B) getLaunchUrl — Android가 앱 프로세스를 종료한 뒤 딥링크로 재시작될 때
-    //      (Chrome Custom Tab 사용 중 메모리 부족 등으로 앱이 kill된 경우)
-    //      → 이 경로를 누락하면 OAuth code가 유실되어 로그인 화면으로 돌아옴
-    //
-    // ⚠️ 콜드 스타트 이중 처리 방지:
-    //   일부 Android 기기에서는 getLaunchUrl AND appUrlOpen이 동일 URL로 모두 발화됨.
-    //   code를 두 번 교환하면 두 번째 교환이 "code already used" 오류를 반환하여
-    //   gleaum:auth-error가 발생 → 로그인 화면으로 돌아가는 버그 발생.
-    //   lastProcessedUrl로 중복 처리를 차단.
+    // ── 3. 딥링크 처리 ───────────────────────────────────────────────
     let removeUrlListener: (() => void) | undefined;
     let lastProcessedUrl: string | null = null;
 
-    // OAuth 콜백 URL 처리 공통 함수
     async function handleOAuthCallback(url: string) {
-      // 중복 처리 방지: 동일 URL은 한 번만 처리
       if (lastProcessedUrl === url) {
         console.log('[NativeApp] 이미 처리된 URL, 건너뜀:', url);
         return;
@@ -124,78 +137,58 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       lastProcessedUrl = url;
       console.log('[NativeApp] OAuth 콜백 처리:', url);
 
-      // 로그인 페이지에 "처리 중" 알림 → browserFinished 타임아웃 취소
       dispatchAuthProcessing();
-
-      // 인앱 브라우저 닫기 (이미 닫혀 있어도 안전하게 호출 가능)
       await closeBrowser();
 
       try {
-        const parsedUrl = new URL(url);
-        const code        = parsedUrl.searchParams.get('code');
-        const accessToken = parsedUrl.searchParams.get('access_token');
+        const parsedUrl    = new URL(url);
+        const code         = parsedUrl.searchParams.get('code');
+        const accessToken  = parsedUrl.searchParams.get('access_token');
         const refreshToken = parsedUrl.searchParams.get('refresh_token');
-
-        const supabase = createClient();
+        const supabase     = createClient();
 
         if (code) {
-          // PKCE 방식: code → session 교환
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
-            console.error('[NativeApp] 세션 교환 오류:', error.message);
             dispatchAuthEvent('gleaum:auth-error', `PKCE오류|${error.message}|url=${url}`);
           } else if (data.session) {
-            console.log('[NativeApp] 로그인 성공 (PKCE)');
             dispatchAuthEvent('gleaum:auth-success');
-            // 로그인 전 저장된 next 경로 (초대 링크 등) 우선 사용
-            const pendingRedirect = consumePendingRedirect();
-            if (pendingRedirect) {
-              router.replace(pendingRedirect);
+            const pending = consumePendingRedirect();
+            if (pending) {
+              router.replace(pending);
             } else {
-              // 신규 유저 온보딩 체크
-              const { data: profileRow } = await supabase
-                .from('profiles')
-                .select('onboarding_completed_at')
-                .eq('id', data.session.user.id)
-                .single();
+              const { data: profile } = await supabase
+                .from('profiles').select('onboarding_completed_at')
+                .eq('id', data.session.user.id).single();
               router.replace(
-                profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
+                profile && !profile.onboarding_completed_at ? '/onboarding' : '/home'
               );
             }
           } else {
             dispatchAuthEvent('gleaum:auth-error', '세션을 가져올 수 없습니다');
           }
         } else if (accessToken) {
-          // Implicit 방식: 토큰 직접 설정 (fallback)
           const { data: sessionData, error } = await supabase.auth.setSession({
-            access_token: accessToken,
+            access_token:  accessToken,
             refresh_token: refreshToken ?? '',
           });
           if (error) {
-            console.error('[NativeApp] 세션 설정 오류:', error.message);
             dispatchAuthEvent('gleaum:auth-error', error.message);
           } else {
-            console.log('[NativeApp] 로그인 성공 (Implicit)');
             dispatchAuthEvent('gleaum:auth-success');
-            // 로그인 전 저장된 next 경로 (초대 링크 등) 우선 사용
-            const pendingRedirect = consumePendingRedirect();
-            if (pendingRedirect) {
-              router.replace(pendingRedirect);
+            const pending = consumePendingRedirect();
+            if (pending) {
+              router.replace(pending);
             } else {
-              // 신규 유저 온보딩 체크
-              const { data: profileRow } = await supabase
-                .from('profiles')
-                .select('onboarding_completed_at')
-                .eq('id', sessionData.session?.user.id ?? '')
-                .single();
+              const { data: profile } = await supabase
+                .from('profiles').select('onboarding_completed_at')
+                .eq('id', sessionData.session?.user.id ?? '').single();
               router.replace(
-                profileRow && !profileRow.onboarding_completed_at ? '/onboarding' : '/home'
+                profile && !profile.onboarding_completed_at ? '/onboarding' : '/home'
               );
             }
           }
         } else {
-          console.warn('[NativeApp] 콜백 URL에 인증 파라미터 없음:', url);
-          // 디버그: 실제 받은 URL을 에러 메시지에 포함
           dispatchAuthEvent('gleaum:auth-error', `파라미터없음|url=${url}`);
         }
       } catch (err) {
@@ -207,81 +200,67 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       const { App } = await import('@capacitor/app');
 
-      // Universal Link (https) 또는 커스텀 스킴(gleaum://)을 라우팅하는 공통 핸들러
       async function handleIncomingUrl(url: string) {
-        // ── OAuth 콜백: gleaum://auth/* ─────────────────────────────────
         if (url.startsWith('gleaum://auth/')) {
           await handleOAuthCallback(url);
           return;
         }
-
-        // ── Universal Link: https://gleaum.com/* 또는 https://www.gleaum.com/* ─
-        // iOS Universal Link / Android App Link 로 앱이 열렸을 때
-        // → URL에서 경로(path + query)만 추출해 Next.js 라우터로 이동
         const isUniversalLink =
           url.startsWith('https://gleaum.com/') ||
           url.startsWith('https://www.gleaum.com/');
-
         if (isUniversalLink) {
           try {
             const parsed = new URL(url);
-            const path = parsed.pathname + parsed.search;
-            console.log('[NativeApp] Universal Link → 앱 내 이동:', path);
-            router.push(path);
+            router.push(parsed.pathname + parsed.search);
           } catch (e) {
             console.warn('[NativeApp] Universal Link 파싱 오류:', url, e);
           }
           return;
         }
-
-        // ── 커스텀 스킴 범용: gleaum://path ────────────────────────────
-        // 예) gleaum://invite/XXXX  gleaum://home 등
         if (url.startsWith('gleaum://')) {
           try {
             const parsed = new URL(url);
-            // gleaum://invite/CODE → /invite/CODE
-            const path = '/' + parsed.hostname + parsed.pathname + parsed.search;
-            console.log('[NativeApp] 커스텀 스킴 → 앱 내 이동:', path);
-            router.push(path);
+            router.push('/' + parsed.hostname + parsed.pathname + parsed.search);
           } catch (e) {
             console.warn('[NativeApp] 커스텀 스킴 파싱 오류:', url, e);
           }
         }
       }
 
-      // ── 경로 B: getLaunchUrl ──────────────────────────────────────────────
-      // 앱이 딥링크로 콜드 스타트된 경우 (프로세스가 종료됐다 재시작)
       const launchResult = await App.getLaunchUrl();
       if (launchResult?.url) {
-        console.log('[NativeApp] 콜드 스타트 딥링크:', launchResult.url);
         await handleIncomingUrl(launchResult.url);
       }
 
-      // ── 경로 A: appUrlOpen ───────────────────────────────────────────────
-      // 앱이 이미 실행 중일 때 딥링크/Universal Link 수신
       const handle = await App.addListener('appUrlOpen', async ({ url }) => {
         await handleIncomingUrl(url);
       });
-
       removeUrlListener = () => handle.remove();
     })();
 
-    // 4. Android 뒤로가기 버튼
+    // ── 4. Android 뒤로가기 버튼 ────────────────────────────────────
     let removeBackButton: (() => void) | undefined;
     onAndroidBackButton(() => {
-      if (window.history.length > 1) {
-        router.back();
-      } else {
-        router.push('/home');
+      if (window.history.length > 1) router.back();
+      else router.push('/home');
+    }).then((remove) => { removeBackButton = remove; });
+
+    // ── 5. 로그아웃 시 네이티브 세션 삭제 ───────────────────────────
+    // Supabase SIGNED_OUT 이벤트 → Android SharedPreferences 세션 삭제
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        import('@/lib/native-session')
+          .then(({ NativeSession }) => NativeSession.clearSession())
+          .catch(() => {});
       }
-    }).then((remove) => {
-      removeBackButton = remove;
     });
 
     return () => {
       clearTimeout(splashTimer);
       removeUrlListener?.();
       removeBackButton?.();
+      subscription.unsubscribe();
     };
   }, [router]);
 
