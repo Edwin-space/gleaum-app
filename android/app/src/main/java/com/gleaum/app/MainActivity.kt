@@ -18,6 +18,7 @@ class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // NativeSessionPlugin 등록 (반드시 super.onCreate 전)
         registerPlugin(NativeSessionPlugin::class.java)
+        registerPlugin(NativeAdPlugin::class.java)
 
         super.onCreate(savedInstanceState)
 
