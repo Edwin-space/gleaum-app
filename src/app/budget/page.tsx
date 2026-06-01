@@ -126,10 +126,12 @@ export default function BudgetPage() {
           position: isDesktop ? 'bottom-right' : 'top-center',
           duration: 1500,
         });
-        // 지출 등록 후 Interstitial 표시 (페이지 이동 없음 — 닫으면 가계부로 복귀)
         void showInterstitial();
         return true;
       }
+      toast.error('지출 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.', {
+        position: isDesktop ? 'bottom-right' : 'top-center',
+      });
       return false;
     } catch {
       toast.error('지출 등록에 실패했습니다');
