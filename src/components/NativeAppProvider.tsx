@@ -245,13 +245,14 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       else router.push('/home');
     }).then((remove) => { removeBackButton = remove; });
 
-    // ── 5. 로그아웃 시 네이티브 세션 삭제 ───────────────────────────
-    // Supabase SIGNED_OUT 이벤트 → Android SharedPreferences 세션 삭제
+    // ── 5. 로그아웃 시 네이티브 LoginActivity 로 전환 ──────────────
+    // Supabase SIGNED_OUT → NativeSession.logout() → LoginActivity 표시
+    // (웹 /login 페이지가 아닌 네이티브 로그인 화면으로 이동)
     const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         import('@/lib/native-session')
-          .then(({ NativeSession }) => NativeSession.clearSession())
+          .then(({ NativeSession }) => NativeSession.logout())
           .catch(() => {});
       }
     });
