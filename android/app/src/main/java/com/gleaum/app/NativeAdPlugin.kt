@@ -5,8 +5,10 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 
@@ -50,19 +52,25 @@ class NativeAdPlugin : Plugin() {
                 val adLoader = AdLoader.Builder(activity, adUnitId)
                     .forNativeAd { nativeAd ->
                         currentNativeAd = nativeAd
-
-                        // 이미지 URL 추출 (첫 번째 이미지)
                         val imageUrl = nativeAd.images.firstOrNull()?.uri?.toString()
-
-                        val result = JSObject().apply {
-                            put("headline",    nativeAd.headline    ?: "")
-                            put("body",        nativeAd.body        ?: "")
-                            put("callToAction",nativeAd.callToAction ?: "더 알아보기")
-                            put("advertiser",  nativeAd.advertiser  ?: "")
-                            put("imageUrl",    imageUrl             ?: "")
-                        }
-                        call.resolve(result)
+                        android.util.Log.d("NativeAdPlugin", "광고 로드 성공: ${nativeAd.headline}")
+                        call.resolve(JSObject().apply {
+                            put("headline",    nativeAd.headline     ?: "")
+                            put("body",        nativeAd.body         ?: "")
+                            put("callToAction",nativeAd.callToAction  ?: "더 알아보기")
+                            put("advertiser",  nativeAd.advertiser   ?: "")
+                            put("imageUrl",    imageUrl              ?: "")
+                        })
                     }
+                    .withAdListener(object : AdListener() {
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            android.util.Log.e("NativeAdPlugin", "광고 로드 실패: ${error.message} (code=${error.code})")
+                            // 실패 시에도 resolve (null 체크는 JS에서)
+                            call.resolve(JSObject().apply {
+                                put("error", "code=${error.code}: ${error.message}")
+                            })
+                        }
+                    })
                     .withNativeAdOptions(
                         NativeAdOptions.Builder()
                             .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
