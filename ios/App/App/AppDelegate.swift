@@ -32,11 +32,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         return true
     }
 
-    // ── NativeSessionPlugin 등록 (Capacitor 브리지 준비 후) ──────────────────
-    override var plugins: [CAPPlugin.Type] {
-        return [NativeSessionPlugin.self]
-    }
-
     private func showLoginScreenAfterLaunch() {
         // Capacitor 브리지가 준비된 후 LoginVC 표시
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
