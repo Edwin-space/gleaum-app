@@ -110,7 +110,13 @@ export function useAuth() {
   const signOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = '/login';
+    if (isNativeApp()) {
+      // 네이티브 앱: NativeAppProvider 의 SIGNED_OUT 이벤트 핸들러가
+      // NativeSession.logout() 을 호출해 LoginActivity 로 전환
+      // (window.location.href = '/login' 으로 웹 로그인 페이지가 뜨는 것 방지)
+    } else {
+      window.location.href = '/login';
+    }
   };
 
   // 구글 토큰 (Calendar/Drive API 용)

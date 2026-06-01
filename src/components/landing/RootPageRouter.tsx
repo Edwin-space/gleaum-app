@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { isNativeApp } from '@/lib/native';
 import { PcLandingPage } from './PcLandingPage';
 
 /**
@@ -16,9 +17,10 @@ export function RootPageRouter() {
   const router = useRouter();
 
   useEffect(() => {
-    // window가 로드된 후 모바일이면 /login으로 이동
     if (!isDesktop) {
-      router.replace('/login');
+      // 네이티브 앱: 이미 RouterActivity 에서 세션 체크 후 MainActivity 로 왔으므로 /home 으로
+      // 웹 브라우저: 마케팅 랜딩 노출 방지를 위해 /login 으로
+      router.replace(isNativeApp() ? '/home' : '/login');
     }
   }, [isDesktop, router]);
 

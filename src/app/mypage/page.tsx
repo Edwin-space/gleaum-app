@@ -7,6 +7,7 @@ import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { updateMyProfile, updateNotificationSettings, getMyPageInsights } from '@/lib/db';
 import { profileToast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
+import { isNativeApp } from '@/lib/native';
 import type { NotificationSettings } from '@/types';
 
 import { MobileMyPage } from './MobileMyPage';
@@ -131,7 +132,12 @@ export default function MyPage() {
       });
       if (res.ok) {
         setShowDeleteModal(false);
-        router.replace('/login?message=withdrawn');
+        if (isNativeApp()) {
+          const { NativeSession } = await import('@/lib/native-session');
+          await NativeSession.logout();
+        } else {
+          router.replace('/login?message=withdrawn');
+        }
       } else {
         const data = await res.json();
         alert(data.error ?? '탈퇴 처리 중 오류가 발생했습니다.');
