@@ -52,7 +52,7 @@ export function useSaveAdSheet() {
   const [visible, setVisible]   = useState(false);
   const [ad, setAd]             = useState<HouseAd | null | 'loading'>('loading');
   const trackedRef               = useRef(false);
-  const autoCloseRef             = useRef<ReturnType<typeof setTimeout>>();
+  const autoCloseRef             = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 하우스 광고 조회
   useEffect(() => {
