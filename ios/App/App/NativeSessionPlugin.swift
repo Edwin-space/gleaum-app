@@ -55,7 +55,10 @@ public class NativeSessionPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func presentLoginScreen() {
-        guard let rootVC = UIApplication.shared.windows.first(where: \.isKeyWindow)?.rootViewController else { return }
+        guard let rootVC = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: \.isKeyWindow)?.rootViewController else { return }
         let loginVC = LoginViewController()
         loginVC.modalPresentationStyle = .fullScreen
         loginVC.modalTransitionStyle   = .crossDissolve
