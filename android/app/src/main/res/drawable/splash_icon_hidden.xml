@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 시스템 스플래시 아이콘을 배경과 동일한 색상으로 설정 → 시각적으로 보이지 않음 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#0A0B10" />
+</shape>
