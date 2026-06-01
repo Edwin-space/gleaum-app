@@ -12,6 +12,7 @@ import {
 import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 import type { AddExpenseInput, EditExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
+import { AdSlot } from '@/components/AdSlot';
 
 interface MobileBudgetProps {
   loading: boolean;
@@ -321,8 +322,17 @@ export function MobileBudget({
               </div>
             )}
 
+            {/* ── 가계부 목록 상단 광고 ── */}
+            <div style={{ padding: '0 16px', marginTop: '16px' }}>
+              <AdSlot
+                slotId="budget-list-top"
+                width={335} height={60}
+                adsenseSlotId={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BUDGET_TOP}
+              />
+            </div>
+
             {/* ── 지출 내역 ── */}
-            <div style={{ padding: '0 16px', marginTop: '24px' }}>
+            <div style={{ padding: '0 16px', marginTop: '16px' }}>
               {/* 헤더 + 탭 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingLeft: '4px' }}>
                 <div style={{ display: 'flex', gap: '6px' }}>

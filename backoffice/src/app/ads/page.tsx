@@ -60,6 +60,7 @@ const DEFAULT_SLOT_LABELS: Record<string, string> = {
   "schedule-list-top": "일정 목록 상단",
   "budget-list-top":   "가계부 목록 상단",
   "save-prompt":       "저장 후 바텀시트",
+  "in-app-popup":      "인앱 팝업",
 };
 
 const PLATFORM_OPTIONS = [
@@ -621,23 +622,74 @@ function ImageUploader({ imageUrl, uploading, uploadPct, onUpload, onUrlChange, 
 }
 
 // ── 광고 미리보기 ─────────────────────────────────────────────────
+// 슬롯별 미리보기 형태 정의
+const SLOT_PREVIEW: Record<string, { label: string; aspect: string; height: number; style: "banner" | "sheet" | "popup" }> = {
+  "home-feed-inline":  { label: "홈피드 배너",     aspect: "320/60",  height: 60,  style: "banner" },
+  "schedule-list-top": { label: "일정 목록 상단",  aspect: "320/60",  height: 60,  style: "banner" },
+  "budget-list-top":   { label: "가계부 목록 상단",aspect: "320/60",  height: 60,  style: "banner" },
+  "save-prompt":       { label: "저장 후 바텀시트", aspect: "375/200", height: 200, style: "sheet"  },
+  "in-app-popup":      { label: "인앱 팝업",        aspect: "375/300", height: 300, style: "popup"  },
+};
+
 function AdPreview({ form }: { form: FormState }) {
+  const meta = SLOT_PREVIEW[form.slot_id] ?? SLOT_PREVIEW["home-feed-inline"];
+  const isSheet = meta.style === "sheet";
+  const isPopup = meta.style === "popup";
+
   return (
-    <div className="w-full h-14 rounded-lg overflow-hidden relative border bg-muted" style={{ maxWidth: 320 }}>
-      {form.image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={form.image_url} alt="" className="w-full h-full object-cover" />
+    <div className="space-y-1.5">
+      <p className="text-[10px] text-muted-foreground font-medium">
+        📍 {meta.label} 미리보기
+      </p>
+      {/* 바텀시트 / 팝업 형태 */}
+      {(isSheet || isPopup) ? (
+        <div className="w-full rounded-xl overflow-hidden relative border bg-white shadow-md"
+          style={{ maxWidth: 280, minHeight: meta.height * 0.7 }}>
+          {isSheet && (
+            <div className="w-8 h-1 rounded-full bg-muted mx-auto mt-2 mb-1" />
+          )}
+          {form.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.image_url} alt="" className="w-full object-cover"
+              style={{ maxHeight: 120 }} />
+          ) : (
+            <div className="w-full bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4"
+              style={{ minHeight: 80 }}>
+              <span className="text-2xl">🖼️</span>
+            </div>
+          )}
+          <div className="p-3 space-y-1.5">
+            <p className="text-[9px] font-bold text-muted-foreground">AD</p>
+            <p className="text-sm font-bold text-foreground leading-tight">
+              {form.title || "광고 제목"}
+            </p>
+            {form.description && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{form.description}</p>
+            )}
+            <div className="w-full rounded-lg bg-primary text-white text-xs font-bold text-center py-2">
+              {form.cta_text || "자세히 알아보기"}
+            </div>
+          </div>
+        </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center px-3 gap-2 bg-gradient-to-r from-slate-50 to-blue-50">
-          <span className="text-xs font-bold text-foreground flex-1 truncate">
-            {form.title || "광고 제목 미리보기"}
-          </span>
-          <span className="text-[10px] font-bold text-white bg-primary rounded px-2 py-1 shrink-0">
-            {form.cta_text || "자세히 보기"}
-          </span>
+        /* 배너 형태 */
+        <div className="w-full h-14 rounded-lg overflow-hidden relative border bg-muted" style={{ maxWidth: 320 }}>
+          {form.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.image_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center px-3 gap-2 bg-gradient-to-r from-slate-50 to-blue-50">
+              <span className="text-xs font-bold text-foreground flex-1 truncate">
+                {form.title || "광고 제목 미리보기"}
+              </span>
+              <span className="text-[10px] font-bold text-white bg-primary rounded px-2 py-1 shrink-0">
+                {form.cta_text || "자세히 보기"}
+              </span>
+            </div>
+          )}
+          <span className="absolute top-1 right-1 text-[8px] font-bold text-muted-foreground">AD</span>
         </div>
       )}
-      <span className="absolute top-1 right-1 text-[8px] font-bold text-muted-foreground">AD</span>
     </div>
   );
 }

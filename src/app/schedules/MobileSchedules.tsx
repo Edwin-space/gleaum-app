@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ScheduleCard, ScheduleCardSkeleton } from '@/components/ui/Card';
+import { AdSlot } from '@/components/AdSlot';
 import type { Schedule, ScheduleType } from '@/types';
 
 interface MobileSchedulesProps {
@@ -314,6 +315,17 @@ export function MobileSchedules({
           {Array.from({ length: 4 }).map((_, i) => (
             <ScheduleCardSkeleton key={i} />
           ))}
+        </div>
+      )}
+
+      {/* ── 일정 목록 상단 광고 ── */}
+      {!loading && (
+        <div style={{ padding: '12px 20px 0' }}>
+          <AdSlot
+            slotId="schedule-list-top"
+            width={335} height={60}
+            adsenseSlotId={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SCHEDULE_TOP}
+          />
         </div>
       )}
 
