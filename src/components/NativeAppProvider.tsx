@@ -269,15 +269,18 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       else router.push('/home');
     }).then((remove) => { removeBackButton = remove; });
 
-    // ── 5. 로그아웃 시 네이티브 LoginActivity 로 전환 ──────────────
-    // Supabase SIGNED_OUT → NativeSession.logout() → LoginActivity 표시
-    // (웹 /login 페이지가 아닌 네이티브 로그인 화면으로 이동)
+    // ── 5. 로그아웃 시 네이티브 로그인 화면으로 전환 ────────────────
+    // SIGNED_OUT → NativeSession.logout() 시도
+    // 실패(플러그인 미등록) 시 → gleaum://logout 딥링크로 iOS AppDelegate 직접 호출
     const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         import('@/lib/native-session')
           .then(({ NativeSession }) => NativeSession.logout())
-          .catch(() => {});
+          .catch(() => {
+            // iOS 폴백: AppDelegate가 gleaum://logout 을 처리
+            try { window.location.href = 'gleaum://logout'; } catch {}
+          });
       }
     });
 

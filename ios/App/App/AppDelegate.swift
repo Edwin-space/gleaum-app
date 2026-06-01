@@ -63,6 +63,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             handleOAuthCallback(fragment: fragment)
         }
 
+        // 로그아웃: gleaum://logout
+        // NativeSessionPlugin 미등록 시 폴백 경로
+        if url.scheme == "gleaum", url.host == "logout" {
+            SessionManager.shared.clearSession()
+            showLoginScreenAfterLaunch()
+        }
+
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
