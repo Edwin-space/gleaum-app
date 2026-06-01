@@ -1,21 +1,17 @@
 package com.gleaum.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.GetCredentialException
-import androidx.credentials.exceptions.NoCredentialException
+import androidx.browser.customtabs.CustomTabsIntent
 import com.gleaum.app.databinding.ActivityLoginBinding
 import com.gleaum.app.databinding.ActivityLoginEmailBinding
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,10 +22,16 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * LoginActivity — 네이티브 로그인/회원가입 화면
+ * LoginActivity — 네이티브 로그인 화면
  *
- * 진입 조건: 세션 없음 (앱 최초 실행 또는 로그아웃 후)
- * 로그인 성공 → SessionManager 저장 → MainActivity 시작
+ * 로그인 방식:
+ *  1. Google로 계속하기
+ *     → Chrome Custom Tab으로 Supabase Google OAuth 실행
+ *     → gleaum://auth/callback 딥링크 → RouterActivity → MainActivity
+ *     → NativeAppProvider가 코드 교환 + NativeSession.saveSession() 저장
+ *     → onResume() 에서 SessionManager 확인 후 MainActivity 이동
+ *
+ *  2. 이메일 주소로 사용하기 (기존 Google 가입 계정 OTP)
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -38,17 +40,14 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 이미 유효한 세션이 있으면 바로 메인으로
         if (SessionManager.hasValid(this)) { goToMain(); return }
 
-        // 상태바/네비게이션바 색상 — setContentView 전에 설정 가능
         window.statusBarColor     = android.graphics.Color.BLACK
         window.navigationBarColor = android.graphics.Color.BLACK
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // insetsController 는 DecorView 생성(setContentView) 이후에만 호출 가능
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.insetsController?.setSystemBarsAppearance(
                 0,
@@ -57,111 +56,76 @@ class LoginActivity : AppCompatActivity() {
             )
         }
 
-        // 이메일 링크 밑줄 — XML paintFlags 미지원으로 코드에서 처리
-        binding.btnEmail.paintFlags = binding.btnEmail.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
+        binding.btnEmail.paintFlags =
+            binding.btnEmail.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
 
-        // Google 로그인
         binding.btnGoogle.setOnClickListener { handleGoogleSignIn() }
-
-        // 이메일 로그인
-        binding.btnEmail.setOnClickListener { startEmailLogin() }
-    }
-
-    // ── Google Sign-In ──────────────────────────────────────────────────────
-
-    private fun handleGoogleSignIn() {
-        setGoogleLoading(true)
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                android.util.Log.d("GleaumLogin", "1. fetchGoogleIdToken 시작")
-                val idToken = fetchGoogleIdToken()
-                android.util.Log.d("GleaumLogin", "2. idToken 획득 성공 (길이=${idToken.length})")
-
-                val session = exchangeGoogleToken(idToken)
-                android.util.Log.d("GleaumLogin", "3. session=${if (session != null) "획득 성공" else "null (실패)"}")
-
-                if (session != null) {
-                    SessionManager.save(this@LoginActivity, session)
-                    goToMain()
-                } else {
-                    showToast("로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.")
-                }
-            } catch (_: GetCredentialCancellationException) {
-                android.util.Log.w("GleaumLogin", "사용자 취소 또는 동의 화면 닫힘")
-            } catch (e: GetCredentialException) {
-                android.util.Log.e("GleaumLogin", "GetCredentialException: ${e.type} / ${e.message}")
-                showToast("Google 로그인 오류: ${e.message}")
-            } catch (e: Exception) {
-                android.util.Log.e("GleaumLogin", "기타 예외: ${e.javaClass.simpleName} / ${e.message}")
-                showToast("오류: ${e.message}")
-            } finally {
-                setGoogleLoading(false)
-            }
-        }
+        binding.btnEmail.setOnClickListener  { startEmailLogin() }
     }
 
     /**
-     * Google ID 토큰 획득.
-     *
-     * 1차: GetGoogleIdOption — 네이티브 계정 선택 바텀시트 (웹 화면 없음)
-     * 폴백: GetSignInWithGoogleOption — 웹 기반 로그인 (1차 실패 시에만)
-     *
-     * GetGoogleIdOption 이 정상 동작하면 웹 화면 없이 순수 네이티브 UI 로 처리됨.
+     * 앱 복귀 시 (Chrome Custom Tab OAuth 완료 후) 세션 확인
+     * NativeAppProvider가 saveSession() 을 호출하는 데 약간의 시간이 필요하므로 재시도
      */
-    private suspend fun fetchGoogleIdToken(): String {
-        val credentialManager = CredentialManager.create(this)
-        val clientId = getString(R.string.google_web_client_id)
-
-        // ── 1차: 네이티브 바텀시트 ──────────────────────────────────────
-        try {
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(
-                    GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(clientId)
-                        .setAutoSelectEnabled(false)
-                        .build()
-                ).build()
-            val result = credentialManager.getCredential(this, request)
-            android.util.Log.d("GleaumLogin", "1차 성공 (네이티브)")
-            return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
-        } catch (e: GetCredentialException) {
-            // NoCredentialException, CancellationException 등 모두 폴백으로
-            android.util.Log.w("GleaumLogin", "1차 실패 (${e.type}) → 웹 폴백")
+    override fun onResume() {
+        super.onResume()
+        if (SessionManager.hasValid(this)) {
+            goToMain()
+            return
         }
+        // OAuth 처리 시간(약 2초) 후 재확인
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!isFinishing && SessionManager.hasValid(this)) {
+                goToMain()
+            }
+        }, 2500L)
+    }
 
-        // ── 폴백: 웹 기반 Sign in with Google ────────────────────────────
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(
-                GetSignInWithGoogleOption.Builder(clientId).build()
-            ).build()
-        val result = credentialManager.getCredential(this, request)
-        android.util.Log.d("GleaumLogin", "폴백 성공 (웹)")
-        return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+    // ── Google 로그인 — Chrome Custom Tab ──────────────────────────────────
+
+    private fun handleGoogleSignIn() {
+        setGoogleLoading(true)
+
+        val supabaseUrl = getString(R.string.supabase_url)
+        val oauthUri = Uri.parse("$supabaseUrl/auth/v1/authorize")
+            .buildUpon()
+            .appendQueryParameter("provider", "google")
+            .appendQueryParameter("redirect_to", "gleaum://auth/callback")
+            .build()
+
+        try {
+            CustomTabsIntent.Builder()
+                .setShowTitle(false)
+                .build()
+                .launchUrl(this, oauthUri)
+        } catch (e: Exception) {
+            // Chrome이 없으면 기본 브라우저로 열기
+            startActivity(Intent(Intent.ACTION_VIEW, oauthUri))
+        } finally {
+            setGoogleLoading(false)
+        }
     }
 
     private fun setGoogleLoading(loading: Boolean) {
         binding.googleLoading.visibility = if (loading) View.VISIBLE else View.GONE
-        binding.btnGoogleText.visibility = if (loading) View.GONE  else View.VISIBLE
-        binding.googleIcon.visibility    = if (loading) View.GONE  else View.VISIBLE
+        binding.btnGoogleText.visibility = if (loading) View.GONE   else View.VISIBLE
+        binding.googleIcon.visibility    = if (loading) View.GONE   else View.VISIBLE
         binding.btnGoogle.isClickable    = !loading
         binding.btnEmail.isClickable     = !loading
     }
 
-    // ── 이메일 로그인 (별도 화면) ───────────────────────────────────────────
+    // ── 이메일 OTP 로그인 ────────────────────────────────────────────────────
 
     private fun startEmailLogin() {
         val emailBinding = ActivityLoginEmailBinding.inflate(layoutInflater)
         setContentView(emailBinding.root)
 
+        emailBinding.btnResend.paintFlags =
+            emailBinding.btnResend.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
+
         var currentEmail = ""
 
-        // 재발송 링크 밑줄
-        emailBinding.btnResend.paintFlags = emailBinding.btnResend.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
-
-        emailBinding.btnBack.setOnClickListener {
-            setContentView(binding.root)
-        }
+        emailBinding.btnBack.setOnClickListener { setContentView(binding.root) }
 
         emailBinding.btnSendOtp.setOnClickListener {
             val email = emailBinding.inputEmail.text?.toString()?.trim() ?: ""
@@ -184,22 +148,19 @@ class LoginActivity : AppCompatActivity() {
     private fun sendOtp(email: String, emailBinding: ActivityLoginEmailBinding) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url  = URL("${getString(R.string.supabase_url)}/auth/v1/otp")
-                val conn = (url.openConnection() as HttpURLConnection).apply {
+                val conn = (URL("${getString(R.string.supabase_url)}/auth/v1/otp").openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
                     setRequestProperty("apikey", getString(R.string.supabase_anon_key))
                     setRequestProperty("Content-Type", "application/json")
                     doOutput = true
                 }
                 OutputStreamWriter(conn.outputStream).use {
-                    it.write(JSONObject().apply {
-                        put("email", email); put("create_user", false)
-                    }.toString())
+                    it.write(JSONObject().apply { put("email", email); put("create_user", false) }.toString())
                 }
                 val success = conn.responseCode == 200
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        emailBinding.otpDesc.text = "${email} 으로\n6자리 코드를 보냈습니다."
+                        emailBinding.otpDesc.text = "${email}으로\n6자리 코드를 보냈습니다."
                         emailBinding.emailStep.visibility = View.GONE
                         emailBinding.otpStep.visibility   = View.VISIBLE
                     } else {
@@ -216,8 +177,7 @@ class LoginActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             val session = withContext(Dispatchers.IO) {
                 try {
-                    val url  = URL("${getString(R.string.supabase_url)}/auth/v1/verify")
-                    val conn = (url.openConnection() as HttpURLConnection).apply {
+                    val conn = (URL("${getString(R.string.supabase_url)}/auth/v1/verify").openConnection() as HttpURLConnection).apply {
                         requestMethod = "POST"
                         setRequestProperty("apikey", getString(R.string.supabase_anon_key))
                         setRequestProperty("Content-Type", "application/json")
@@ -244,42 +204,6 @@ class LoginActivity : AppCompatActivity() {
 
     // ── 유틸 ────────────────────────────────────────────────────────────────
 
-    private suspend fun exchangeGoogleToken(idToken: String): String? =
-        withContext(Dispatchers.IO) {
-            try {
-                val supabaseUrl = getString(R.string.supabase_url)
-                val anonKey    = getString(R.string.supabase_anon_key)
-                val url  = URL("$supabaseUrl/auth/v1/token?grant_type=id_token")
-                val conn = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    setRequestProperty("apikey", anonKey)
-                    setRequestProperty("Content-Type", "application/json")
-                    connectTimeout = 10_000
-                    readTimeout    = 10_000
-                    doOutput = true
-                }
-                val body = JSONObject().apply {
-                    put("provider", "google"); put("id_token", idToken)
-                }.toString()
-                OutputStreamWriter(conn.outputStream).use { it.write(body) }
-
-                val code = conn.responseCode
-                android.util.Log.d("GleaumLogin", "Supabase 응답 코드: $code")
-
-                if (code == 200) {
-                    addExpiresAt(conn.inputStream.bufferedReader().readText())
-                } else {
-                    // 에러 응답 본문 로깅
-                    val errBody = try { conn.errorStream?.bufferedReader()?.readText() } catch (_: Exception) { null }
-                    android.util.Log.e("GleaumLogin", "Supabase 오류 ($code): $errBody")
-                    null
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("GleaumLogin", "네트워크 예외: ${e.javaClass.simpleName} / ${e.message}")
-                null
-            }
-        }
-
     private fun addExpiresAt(json: String): String = try {
         val obj = JSONObject(json)
         obj.put("expires_at", System.currentTimeMillis() / 1000L + obj.optLong("expires_in", 3600L))
@@ -290,7 +214,9 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
     private fun goToMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+        startActivity(Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        })
         finish()
     }
 }

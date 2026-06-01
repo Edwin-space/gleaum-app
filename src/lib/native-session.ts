@@ -9,6 +9,8 @@ import { registerPlugin } from '@capacitor/core';
 export interface NativeSessionPlugin {
   /** 저장된 세션 JSON 반환. 없거나 만료됐으면 session = null */
   getSession(): Promise<{ session: string | null }>;
+  /** 세션 저장 — 웹 OAuth(Chrome Custom Tab) 완료 후 호출 */
+  saveSession(options: { session: string }): Promise<void>;
   /** 세션 삭제만 (내부 용도) */
   clearSession(): Promise<void>;
   /**
@@ -20,8 +22,9 @@ export interface NativeSessionPlugin {
 
 export const NativeSession = registerPlugin<NativeSessionPlugin>('NativeSession', {
   web: () => ({
-    async getSession()   { return { session: null }; },
-    async clearSession() {},
-    async logout()       {},
+    async getSession()            { return { session: null }; },
+    async saveSession(_: unknown) {},
+    async clearSession()          {},
+    async logout()                {},
   }),
 });

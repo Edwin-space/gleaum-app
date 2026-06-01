@@ -67,6 +67,7 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "androidx.webkit:webkit:$androidxWebkitVersion"  // addDocumentStartJavaScript
+    implementation "androidx.browser:browser:1.8.0"                 // Chrome Custom Tab (OAuth)
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

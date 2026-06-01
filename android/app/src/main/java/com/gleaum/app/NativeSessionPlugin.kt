@@ -22,6 +22,17 @@ class NativeSessionPlugin : Plugin() {
         call.resolve(result)
     }
 
+    /** 세션 저장 — 웹 OAuth 완료 후 JS에서 호출 */
+    @PluginMethod
+    fun saveSession(call: PluginCall) {
+        val sessionJson = call.getString("session") ?: run {
+            call.reject("session 파라미터 필요")
+            return
+        }
+        SessionManager.save(activity, sessionJson)
+        call.resolve()
+    }
+
     /** 세션 삭제만 (내부 용도) */
     @PluginMethod
     fun clearSession(call: PluginCall) {

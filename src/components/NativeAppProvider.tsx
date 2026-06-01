@@ -152,6 +152,19 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           if (error) {
             dispatchAuthEvent('gleaum:auth-error', `PKCE오류|${error.message}|url=${url}`);
           } else if (data.session) {
+            // Android 네이티브 SessionManager 에도 저장 (LoginActivity.onResume() 확인용)
+            try {
+              const { NativeSession } = await import('@/lib/native-session');
+              await NativeSession.saveSession({
+                session: JSON.stringify({
+                  access_token:  data.session.access_token,
+                  refresh_token: data.session.refresh_token,
+                  expires_in:    data.session.expires_in ?? 3600,
+                  expires_at:    data.session.expires_at ?? (Math.floor(Date.now() / 1000) + 3600),
+                }),
+              });
+            } catch { /* 웹 브라우저 환경에서는 무시 */ }
+
             dispatchAuthEvent('gleaum:auth-success');
             const pending = consumePendingRedirect();
             if (pending) {
