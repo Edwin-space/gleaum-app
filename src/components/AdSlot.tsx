@@ -1,45 +1,45 @@
 'use client';
 
 /**
- * AdSlot — 웹 광고 슬롯 컴포넌트
+ * AdSlot — 광고 슬롯 컴포넌트
  *
- * 우선순위:
- *   1. 백오피스에 등록된 자체 광고  (Supabase ads 테이블)
- *   2. Google AdSense 폴백          (자체 광고 없을 때)
+ * 플랫폼별 자동 분리:
+ *   웹 브라우저  → 하우스광고(Supabase) → AdSense 폴백
+ *   네이티브 앱  → 하우스광고(Supabase) → 광고 없음 (AdMob은 슬롯별 네이티브 코드에서 처리)
  *
  * 사용:
- *   <AdSlot slotId="home-feed-inline" width={320} height={60} />
+ *   <AdSlot slotId="home-feed-inline" width={320} height={60}
+ *           adsenseSlotId="XXXX" />  ← 웹 전용 AdSense ID
  */
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { isNativeApp } from '@/lib/native';
 import type { ActiveAd } from '@/types/ads';
 
 interface AdSlotProps {
-  slotId:   string;
-  width?:   number;
-  height?:  number;
-  /** AdSense 광고 슬롯 ID (없으면 AdSense 폴백 생략) */
+  slotId:         string;
+  width?:         number;
+  height?:        number;
+  /** AdSense 슬롯 ID — 웹 브라우저 전용 폴백. 네이티브 앱에서는 무시됨 */
   adsenseSlotId?: string;
-  className?: string;
+  className?:     string;
 }
 
-// AdSense 퍼블리셔 ID — 환경변수 또는 직접 설정
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? '';
 
 export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, className }: AdSlotProps) {
-  const [ad, setAd]       = useState<ActiveAd | null | 'loading'>('loading');
-  const trackedRef        = useRef(false);
+  const [ad, setAd]    = useState<ActiveAd | null | 'loading'>('loading');
+  const trackedRef     = useRef(false);
+  const native         = isNativeApp();
 
-  // ── 1. 자체 광고 조회 ────────────────────────────────────────
+  // ── 1. 하우스 광고 조회 (웹/앱 공통) ─────────────────────────
   useEffect(() => {
-    fetch(`/api/ads?slot=${encodeURIComponent(slotId)}&platform=web`)
+    const platform = native ? 'android' : 'web'; // 앱이면 android로 필터링
+    fetch(`/api/ads?slot=${encodeURIComponent(slotId)}&platform=${platform}`)
       .then(async (res) => {
-        // 204: 광고 없음 → AdSense 폴백
-        // 4xx/5xx: API/DB 오류 → AdSense 폴백 (광고 누락 방지)
         if (!res.ok) { setAd(null); return; }
         const json = await res.json();
-        // 응답이 유효한 광고 객체인지 확인 (id + link_url 필수)
         if (json && typeof json.id === 'string' && typeof json.link_url === 'string') {
           setAd(json as ActiveAd);
         } else {
@@ -47,35 +47,34 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
         }
       })
       .catch(() => setAd(null));
-  }, [slotId]);
+  }, [slotId, native]);
 
-  // ── 2. AdSense 폴백 초기화 ───────────────────────────────────
+  // ── 2. AdSense 폴백 초기화 — 웹 전용 ─────────────────────────
   useEffect(() => {
+    if (native) return;                          // 앱에서는 AdSense 사용 안 함
     if (ad !== null || !adsenseSlotId || !ADSENSE_CLIENT) return;
     try {
-      // adsbygoogle 스크립트가 로드된 경우에만 push
       const w = window as unknown as { adsbygoogle?: unknown[] };
-      if (Array.isArray(w.adsbygoogle)) {
-        w.adsbygoogle.push({});
-      }
+      if (Array.isArray(w.adsbygoogle)) w.adsbygoogle.push({});
     } catch { /* silent */ }
-  }, [ad, adsenseSlotId]);
+  }, [ad, adsenseSlotId, native]);
 
-  // ── 3. 자체 광고 노출 이벤트 ────────────────────────────────
+  // ── 3. 하우스 광고 노출 이벤트 ───────────────────────────────
   useEffect(() => {
     if (!ad || ad === 'loading' || trackedRef.current) return;
     trackedRef.current = true;
     navigator.sendBeacon('/api/ads/events', JSON.stringify({
-      adId: ad.id, event: 'impression', platform: 'web',
+      adId: ad.id, event: 'impression',
+      platform: native ? 'android' : 'web',
     }));
-  }, [ad]);
+  }, [ad, native]);
 
-  // ── 로딩 중: 빈 공간 유지 ────────────────────────────────────
+  // ── 로딩 중 ──────────────────────────────────────────────────
   if (ad === 'loading') {
     return <div style={{ width, height, borderRadius: 12, background: 'rgba(0,0,0,0.03)' }} />;
   }
 
-  // ── 자체 광고 렌더 ───────────────────────────────────────────
+  // ── 하우스 광고 렌더 (웹/앱 공통) ────────────────────────────
   if (ad) {
     return (
       <a
@@ -84,30 +83,22 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
         rel="noopener noreferrer"
         onClick={() => {
           navigator.sendBeacon('/api/ads/events', JSON.stringify({
-            adId: ad.id, event: 'click', platform: 'web',
+            adId: ad.id, event: 'click',
+            platform: native ? 'android' : 'web',
           }));
         }}
         className={className}
         style={{
-          display:        'block',
-          width,
-          height,
-          borderRadius:   12,
-          overflow:       'hidden',
-          textDecoration: 'none',
-          position:       'relative',
-          background:     '#F2F2F7',
+          display: 'block', width, height,
+          borderRadius: 12, overflow: 'hidden',
+          textDecoration: 'none', position: 'relative',
+          background: '#F2F2F7',
         }}
         aria-label={`광고: ${ad.title}`}
       >
         {ad.image_url ? (
-          <Image
-            src={ad.image_url}
-            alt={ad.title}
-            fill
-            style={{ objectFit: 'cover' }}
-            sizes={`${width}px`}
-          />
+          <Image src={ad.image_url} alt={ad.title} fill
+            style={{ objectFit: 'cover' }} sizes={`${width}px`} />
         ) : (
           <div style={{
             width: '100%', height: '100%',
@@ -127,20 +118,17 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
             </span>
           </div>
         )}
-        {/* 광고 레이블 */}
         <span style={{
           position: 'absolute', top: 3, right: 5,
-          fontSize: 9, fontWeight: 700, color: 'rgba(0,0,0,0.3)',
-          letterSpacing: '0.05em',
-        }}>
-          AD
-        </span>
+          fontSize: 9, fontWeight: 700, color: 'rgba(0,0,0,0.3)', letterSpacing: '0.05em',
+        }}>AD</span>
       </a>
     );
   }
 
-  // ── AdSense 폴백 ─────────────────────────────────────────────
-  if (adsenseSlotId && ADSENSE_CLIENT) {
+  // ── 폴백 ─────────────────────────────────────────────────────
+  // 웹: AdSense | 네이티브 앱: null (AdMob은 슬롯별 네이티브 코드에서 처리)
+  if (!native && adsenseSlotId && ADSENSE_CLIENT) {
     return (
       <ins
         className={`adsbygoogle${className ? ` ${className}` : ''}`}
@@ -153,6 +141,5 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
     );
   }
 
-  // ── 광고도 AdSense 설정도 없음 → 공간 없음 ───────────────────
   return null;
 }

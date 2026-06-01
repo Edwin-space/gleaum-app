@@ -444,6 +444,19 @@ export default function AdsPage() {
                       );
                     })}
                   </div>
+                  {/* 플랫폼별 폴백 광고 안내 */}
+                  <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground space-y-1">
+                    <p className="font-semibold text-foreground">📌 하우스광고 없을 때 폴백 광고</p>
+                    {form.platforms.includes("web") && (
+                      <p>🌐 <span className="font-medium">웹</span> → Google AdSense 자동 노출</p>
+                    )}
+                    {(form.platforms.includes("android") || form.platforms.includes("ios")) && (
+                      <p>📱 <span className="font-medium">앱 (Android/iOS)</span> → AdMob 자동 노출</p>
+                    )}
+                    {form.platforms.length === 0 && (
+                      <p className="text-destructive">⚠️ 플랫폼을 하나 이상 선택해야 합니다.</p>
+                    )}
+                  </div>
                 </div>
 
                 <Separator />
