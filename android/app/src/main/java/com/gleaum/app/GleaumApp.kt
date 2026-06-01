@@ -45,6 +45,7 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         MobileAds.initialize(this)
 
         appOpenAdManager.loadAd(this)
+
     }
 
     /** LoginActivity 에서는 App Open Ad 표시 안 함 */
