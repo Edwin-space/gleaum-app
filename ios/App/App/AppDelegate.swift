@@ -56,7 +56,42 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     // ── URL Scheme 처리 (gleaum:// — Google OAuth 콜백) ──────────────────────
     func application(_ app: UIApplication, open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+
+        // OAuth implicit 콜백: gleaum://auth/callback#access_token=...
+        if url.scheme == "gleaum", url.host == "auth",
+           let fragment = url.fragment, fragment.contains("access_token") {
+            handleOAuthCallback(fragment: fragment)
+        }
+
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
+    }
+
+    /// OAuth 콜백 fragment 파싱 → SessionManager 저장
+    private func handleOAuthCallback(fragment: String) {
+        var params: [String: String] = [:]
+        for pair in fragment.components(separatedBy: "&") {
+            let kv = pair.components(separatedBy: "=")
+            if kv.count == 2 {
+                params[kv[0]] = kv[1].removingPercentEncoding ?? kv[1]
+            }
+        }
+        guard let accessToken  = params["access_token"],
+              let refreshToken = params["refresh_token"] else { return }
+
+        let expiresIn = TimeInterval(params["expires_in"] ?? "3600") ?? 3600
+        let expiresAt = Date().timeIntervalSince1970 + expiresIn
+
+        let sessionDict: [String: Any] = [
+            "access_token":  accessToken,
+            "refresh_token": refreshToken,
+            "token_type":    params["token_type"] ?? "bearer",
+            "expires_in":    expiresIn,
+            "expires_at":    expiresAt,
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: sessionDict),
+           let json = String(data: data, encoding: .utf8) {
+            SessionManager.shared.saveSession(json)
+        }
     }
 
     // ── Universal Links 처리 (https://www.gleaum.com 딥링크) ─────────────────
@@ -97,10 +132,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // ── WKWebView 성능 최적화 ────────────────────────────────────────────
         setupWebView()
 
-        // ── NativeSessionPlugin 브리지 등록 ──────────────────────────────────
-        if let bridgeVC = window?.rootViewController as? CAPBridgeViewController {
-            bridgeVC.bridge?.registerPlugin(NativeSessionPlugin.self)
-        }
 
         #if targetEnvironment(macCatalyst)
         // Mac Catalyst: 최소/최대 윈도우 크기 설정
