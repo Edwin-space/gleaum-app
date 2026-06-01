@@ -51,6 +51,23 @@ const nextConfig: NextConfig = {
   // Firebase SDK — 동적 임포트로 서버 빌드 안전성 확보, transpile로 ESM 호환
   transpilePackages: ['firebase'],
 
+  // ── 외부 이미지 도메인 허용 ───────────────────────────────────────────
+  images: {
+    remotePatterns: [
+      {
+        // Supabase Storage (하우스 광고 이미지, 프로필 아바타 등)
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        // Google 프로필 사진
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+      },
+    ],
+  },
+
   // ── 번들 최적화: 사용한 아이콘/함수만 포함 ──
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns', 'sonner'],

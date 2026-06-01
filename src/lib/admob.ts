@@ -25,6 +25,14 @@ const AD_UNIT = {
   INLINE_BANNER:   IS_TESTING ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-7426507548879721/1438321314',
 } as const;
 
+// ── 테스트 기기 해시 목록 ─────────────────────────────────────────────────────
+// AdMob 대시보드에 등록된 테스트 기기의 MD5 해시 (GAID 기준)
+// 새 기기 추가: MD5(GAID) 값을 여기에 추가
+const TEST_DEVICE_HASHES = [
+  '984BF1704E20ADFA3C368E9E7746DF08',  // 갤럭시 테스트폰 (GAID: aef92330-...)
+  // iOS IDFA 는 AdMob 대시보드 등록으로만 처리 (코드 추가 불필요)
+];
+
 // ── 초기화 ────────────────────────────────────────────────────────────────────
 
 let initialized = false;
@@ -34,7 +42,10 @@ export async function initAdMob(): Promise<void> {
   try {
     const { AdMob } = await import('@capacitor-community/admob');
     await AdMob.initialize({
-      testingDevices:      IS_TESTING ? ['EMULATOR'] : [],
+      // 개발 환경: 에뮬레이터 포함 / 프로덕션: 등록된 테스트 기기만
+      testingDevices: IS_TESTING
+        ? ['EMULATOR', ...TEST_DEVICE_HASHES]
+        : TEST_DEVICE_HASHES,
       initializeForTesting: IS_TESTING,
     });
     initialized = true;
