@@ -143,9 +143,19 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const parsedUrl    = new URL(url);
-        const code         = parsedUrl.searchParams.get('code');
-        const accessToken  = parsedUrl.searchParams.get('access_token');
-        const refreshToken = parsedUrl.searchParams.get('refresh_token');
+
+        // implicit flow: 파라미터가 fragment(#) 뒤에 위치
+        // PKCE flow: 파라미터가 query(?) 뒤에 위치
+        // 둘 다 지원
+        const fragmentParams = new URLSearchParams(
+          parsedUrl.hash.startsWith('#') ? parsedUrl.hash.slice(1) : parsedUrl.hash
+        );
+        const code         = parsedUrl.searchParams.get('code')
+                          || fragmentParams.get('code');
+        const accessToken  = parsedUrl.searchParams.get('access_token')
+                          || fragmentParams.get('access_token');
+        const refreshToken = parsedUrl.searchParams.get('refresh_token')
+                          || fragmentParams.get('refresh_token');
         const supabase     = createClient();
 
         if (code) {
