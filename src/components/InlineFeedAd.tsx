@@ -13,13 +13,13 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+
+const AD_HEIGHT = 60;
 import { isNativeApp } from '@/lib/native';
 import { AdSlot } from '@/components/AdSlot';
 import type { NativeAdData } from '@/lib/native-ad';
 
-const AD_HEIGHT = 60;
-
-// ── 네이티브 광고 카드 ───────────────────────────────────────────────────────
+// ── 네이티브 광고 카드 (피드 카드 형태) ────────────────────────────────────
 function NativeAdCard({ ad }: { ad: NativeAdData }) {
   const trackedRef = useRef(false);
 
@@ -31,46 +31,51 @@ function NativeAdCard({ ad }: { ad: NativeAdData }) {
       .catch(() => {});
   }, []);
 
-  if (ad.imageUrl) {
-    return (
-      <div style={{
-        width: '100%', height: AD_HEIGHT, borderRadius: 12,
-        overflow: 'hidden', position: 'relative', background: '#F2F2F7',
-      }}>
-        <Image src={ad.imageUrl} alt={ad.headline} fill
-          style={{ objectFit: 'cover' }} sizes="100vw" />
-        <span style={{
-          position: 'absolute', top: 3, right: 5,
-          fontSize: 9, fontWeight: 700, color: 'rgba(0,0,0,0.3)',
-        }}>AD</span>
-      </div>
-    );
-  }
-
   return (
     <div style={{
-      width: '100%', height: AD_HEIGHT, borderRadius: 12,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 16px', gap: 8, background: '#F8F9FF',
-      border: '1px solid #EEF2FF',
+      width: '100%', borderRadius: 16, overflow: 'hidden',
+      background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
     }}>
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      {/* 이미지 */}
+      {ad.imageUrl && (
+        <div style={{ width: '100%', aspectRatio: '16/9', position: 'relative' }}>
+          <Image src={ad.imageUrl} alt={ad.headline} fill
+            style={{ objectFit: 'cover' }} sizes="100vw" />
+        </div>
+      )}
+
+      {/* 텍스트 영역 */}
+      <div style={{ padding: '12px 16px 16px' }}>
+        {/* AD 라벨 */}
+        <span style={{
+          fontSize: 10, fontWeight: 700, color: '#8E8E93',
+          letterSpacing: '0.05em', display: 'block', marginBottom: 6,
+        }}>AD{ad.advertiser ? ` · ${ad.advertiser}` : ''}</span>
+
+        {/* 헤드라인 */}
         <p style={{
-          fontSize: 12, fontWeight: 700, color: '#1A1B2E',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0,
+          fontSize: 15, fontWeight: 800, color: '#1A1B2E',
+          margin: '0 0 4px', lineHeight: 1.3,
         }}>{ad.headline}</p>
-        {ad.advertiser && (
-          <p style={{ fontSize: 10, color: '#8E8E93', margin: '2px 0 0' }}>{ad.advertiser}</p>
-        )}
+
+        {/* 본문 */}
+        {ad.body ? (
+          <p style={{
+            fontSize: 12, color: '#6E6E66',
+            margin: '0 0 12px', lineHeight: 1.5,
+          }}>{ad.body}</p>
+        ) : <div style={{ height: 12 }} />}
+
+        {/* CTA 버튼 */}
+        <div style={{
+          display: 'inline-block',
+          background: 'linear-gradient(135deg, #0084CC, #0CC9B5)',
+          color: 'white', fontSize: 13, fontWeight: 700,
+          padding: '8px 20px', borderRadius: 10,
+        }}>
+          {ad.callToAction || '자세히 알아보기'}
+        </div>
       </div>
-      <span style={{
-        fontSize: 11, fontWeight: 700, color: 'white',
-        background: '#0084CC', borderRadius: 8, padding: '4px 10px',
-        flexShrink: 0, whiteSpace: 'nowrap',
-      }}>
-        {ad.callToAction || '더 알아보기'}
-      </span>
-      <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(0,0,0,0.3)', flexShrink: 0 }}>AD</span>
     </div>
   );
 }
