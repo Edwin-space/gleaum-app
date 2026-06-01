@@ -29,9 +29,14 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 상태바/네비게이션바 다크 처리
+        // 상태바/네비게이션바 색상 — setContentView 전에 설정 가능
         window.statusBarColor     = Color.parseColor("#0A0B10")
         window.navigationBarColor = Color.parseColor("#0A0B10")
+
+        val binding = ActivitySplashBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // insetsController 는 DecorView(setContentView) 이후에만 접근 가능
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.insetsController?.setSystemBarsAppearance(
                 0,
@@ -39,9 +44,6 @@ class SplashActivity : AppCompatActivity() {
                 WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
             )
         }
-
-        val binding = ActivitySplashBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         // "일상 네트워크" teal → green 그라디언트 적용
         binding.textGradient.post {
