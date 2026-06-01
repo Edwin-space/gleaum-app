@@ -9,7 +9,7 @@ import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatTy
 
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
-import { prepareInterstitial, showInterstitial } from '@/lib/admob';
+import { useSaveAdSheet } from '@/components/SaveAdSheet';
 
 /** 지출 추가 입력값 */
 export interface AddExpenseInput {
@@ -35,8 +35,7 @@ export default function BudgetPage() {
   const isDesktop = useIsDesktop();
   const today = new Date();
 
-  // Interstitial 미리 로드
-  useEffect(() => { void prepareInterstitial(); }, []);
+  const { showAd, AdSheet } = useSaveAdSheet();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
   const { familyGroupId, user, personalSpaceId } = useCurrentUser();
@@ -126,7 +125,7 @@ export default function BudgetPage() {
           position: isDesktop ? 'bottom-right' : 'top-center',
           duration: 1500,
         });
-        void showInterstitial();
+        showAd();
         return true;
       }
       toast.error('지출 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.', {
@@ -200,5 +199,10 @@ export default function BudgetPage() {
   if (isDesktop) {
     return <DesktopBudget {...commonProps} />;
   }
-  return <MobileBudget {...commonProps} />;
+  return (
+    <>
+      <MobileBudget {...commonProps} />
+      <AdSheet />
+    </>
+  );
 }

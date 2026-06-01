@@ -12,7 +12,7 @@ import type { ScheduleType, RepeatType, ExpenseCategory, PaymentMethod, Schedule
 import { MobileNewSchedule } from './MobileNewSchedule';
 import { DesktopNewSchedule } from './DesktopNewSchedule';
 import { trackEvent } from '@/lib/analytics';
-import { prepareInterstitial, showInterstitialThenDo } from '@/lib/admob';
+import { useSaveAdSheet } from '@/components/SaveAdSheet';
 
 export default function NewSchedulePage() {
   const isDesktop = useIsDesktop();
@@ -38,10 +38,7 @@ export default function NewSchedulePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLoading, familyGroupId]);
 
-  // Interstitial 미리 로드 — 저장 완료 시 즉시 표시 가능하도록
-  useEffect(() => {
-    void prepareInterstitial();
-  }, []);
+  const { showAd, AdSheet } = useSaveAdSheet();
 
   const [saving, setSaving] = useState(false);
   const [type, setType] = useState<ScheduleType>((searchParams.get('type') as ScheduleType) || 'personal');
@@ -166,8 +163,9 @@ export default function NewSchedulePage() {
         has_expense: type === 'expense' && !!amount,
       });
       toast.success('일정이 등록되었습니다');
-      // Interstitial 표시 → 닫힌 후 이동 (미로드·쿨다운 시 즉시 이동)
-      showInterstitialThenDo(() => { router.push('/schedules'); });
+      // 바텀시트 광고 표시 후 일정 목록으로 이동
+      showAd();
+      setTimeout(() => router.push('/schedules'), 500);
     } catch (err) {
       console.error(err);
       toast.error('일정 저장에 실패했습니다');
@@ -191,5 +189,10 @@ export default function NewSchedulePage() {
     return <DesktopNewSchedule {...commonProps} />;
   }
 
-  return <MobileNewSchedule {...commonProps} />;
+  return (
+    <>
+      <MobileNewSchedule {...commonProps} />
+      <AdSheet />
+    </>
+  );
 }
