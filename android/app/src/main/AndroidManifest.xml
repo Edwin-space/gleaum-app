@@ -13,15 +13,12 @@
         android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true">
 
-        <!-- ── 메인 액티비티 ───────────────────────────────────────── -->
+        <!-- ── 라우터 (런처) — 세션 체크 후 Login 또는 Main 으로 분기 ──── -->
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
-            android:name=".MainActivity"
-            android:label="@string/title_activity_main"
+            android:name=".RouterActivity"
             android:theme="@style/AppTheme.NoActionBarLaunch"
-            android:launchMode="singleTask"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:noHistory="true">
 
             <!-- 앱 런처 -->
             <intent-filter>
@@ -29,7 +26,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep Link: gleaum:// (OAuth 콜백) -->
+            <!-- Deep Link: gleaum:// (OAuth 콜백) — 세션 체크 후 MainActivity 로 전달 -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -42,21 +39,28 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="www.gleaum.com" />
+                <data android:scheme="https" android:host="www.gleaum.com" />
             </intent-filter>
 
-            <!-- App Links: https://gleaum.com (www 없는 도메인 — 초대 링크 등) -->
+            <!-- App Links: https://gleaum.com -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="gleaum.com" />
+                <data android:scheme="https" android:host="gleaum.com" />
             </intent-filter>
 
+        </activity>
+
+        <!-- ── 메인 액티비티 (Capacitor WebView) ──────────────────────── -->
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleTask"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize">
         </activity>
 
         <!-- ── 네이티브 로그인 화면 ────────────────────────────────────────── -->

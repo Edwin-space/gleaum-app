@@ -15,23 +15,12 @@ import com.getcapacitor.BridgeActivity
 class MainActivity : BridgeActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // ── 1. SplashScreen API (반드시 super.onCreate 전에) ─────────────────
         installSplashScreen()
 
-        // ── NativeSessionPlugin 등록 ─────────────────────────────────────────
-        // NativeAppProvider.tsx 에서 Capacitor.Plugins.NativeSession.getSession() 호출 가능
         registerPlugin(NativeSessionPlugin::class.java)
 
         super.onCreate(savedInstanceState)
 
-        // ── 2-a. 세션 없으면 LoginActivity 로 ────────────────────────────────
-        if (!SessionManager.hasValid(this) && !isOAuthCallback()) {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-            return
-        }
-
-        // ── 2-b. WebView 성능 최적화 ─────────────────────────────────────────
         bridge?.webView?.settings?.apply {
             cacheMode         = WebSettings.LOAD_DEFAULT
             domStorageEnabled = true
@@ -40,13 +29,8 @@ class MainActivity : BridgeActivity() {
             }
         }
 
-        // ── 2-c. FCM 알림 채널 ────────────────────────────────────────────────
         createNotificationChannels()
-
-        // ── 2-d. Edge-to-Edge ─────────────────────────────────────────────────
         setupEdgeToEdge()
-
-        // ── 2-e. OAuth 딥링크 처리 ────────────────────────────────────────────
         handleIntent(intent)
     }
 
@@ -56,7 +40,6 @@ class MainActivity : BridgeActivity() {
         handleIntent(intent)
     }
 
-    /** gleaum:// 딥링크 → Capacitor Bridge(WebView)로 전달 */
     private fun handleIntent(intent: Intent?) {
         intent?.data?.let { uri ->
             if (uri.scheme == "gleaum") {
@@ -66,18 +49,6 @@ class MainActivity : BridgeActivity() {
             }
         }
     }
-
-    /**
-     * 현재 Intent 가 OAuth 콜백 딥링크인지 확인
-     * — gleaum://auth/callback 으로 시작되면 세션 없어도 진입 허용
-     *   (웹 기반 OAuth 완료 후 코드 교환 흐름)
-     */
-    private fun isOAuthCallback(): Boolean {
-        val uri = intent?.data ?: return false
-        return uri.scheme == "gleaum" && uri.host == "auth"
-    }
-
-    // ── FCM 알림 채널 ─────────────────────────────────────────────────────────
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -98,8 +69,6 @@ class MainActivity : BridgeActivity() {
             }
         }
     }
-
-    // ── Edge-to-Edge ──────────────────────────────────────────────────────────
 
     private fun setupEdgeToEdge() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
