@@ -553,6 +553,7 @@ export default function AdsPage() {
         <div className="space-y-3">
           {filtered.map(ad => (
             <AdRow key={ad.id} ad={ad} expired={isExpired(ad)}
+              slotLabels={slotLabels}
               onEdit={handleEdit} onDelete={handleDelete}
               onToggle={handleToggle} onDuplicate={handleDuplicate} />
           ))}
@@ -642,8 +643,9 @@ function AdPreview({ form }: { form: FormState }) {
 }
 
 // ── 광고 행 ──────────────────────────────────────────────────────
-function AdRow({ ad, expired, onEdit, onDelete, onToggle, onDuplicate }: {
+function AdRow({ ad, expired, slotLabels, onEdit, onDelete, onToggle, onDuplicate }: {
   ad: Ad; expired: boolean;
+  slotLabels: Record<string, string>;
   onEdit: (a: Ad) => void; onDelete: (id: string, title: string) => void;
   onToggle: (a: Ad) => void; onDuplicate: (a: Ad) => void;
 }) {
