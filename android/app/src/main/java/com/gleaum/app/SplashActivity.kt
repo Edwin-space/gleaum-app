@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.WindowInsetsController
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.gleaum.app.databinding.ActivitySplashBinding
 
 /**
@@ -27,6 +28,9 @@ import com.gleaum.app.databinding.ActivitySplashBinding
 class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 시스템 스플래시(둥근 아이콘)를 즉시 제거하고 커스텀 UI 로 전환
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
         // 상태바/네비게이션바 색상 — setContentView 전에 설정 가능
