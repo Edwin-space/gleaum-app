@@ -73,8 +73,13 @@ class LoginActivity : AppCompatActivity() {
         setGoogleLoading(true)
         CoroutineScope(Dispatchers.Main).launch {
             try {
+                android.util.Log.d("GleaumLogin", "1. fetchGoogleIdToken 시작")
                 val idToken = fetchGoogleIdToken()
+                android.util.Log.d("GleaumLogin", "2. idToken 획득 성공 (길이=${idToken.length})")
+
                 val session = exchangeGoogleToken(idToken)
+                android.util.Log.d("GleaumLogin", "3. session=${if (session != null) "획득 성공" else "null (실패)"}")
+
                 if (session != null) {
                     SessionManager.save(this@LoginActivity, session)
                     goToMain()
@@ -82,9 +87,13 @@ class LoginActivity : AppCompatActivity() {
                     showToast("로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.")
                 }
             } catch (_: GetCredentialCancellationException) {
-                // 사용자 취소 — 무시
+                android.util.Log.w("GleaumLogin", "사용자 취소 또는 동의 화면 닫힘")
             } catch (e: GetCredentialException) {
+                android.util.Log.e("GleaumLogin", "GetCredentialException: ${e.type} / ${e.message}")
                 showToast("Google 로그인 오류: ${e.message}")
+            } catch (e: Exception) {
+                android.util.Log.e("GleaumLogin", "기타 예외: ${e.javaClass.simpleName} / ${e.message}")
+                showToast("오류: ${e.message}")
             } finally {
                 setGoogleLoading(false)
             }
@@ -236,22 +245,37 @@ class LoginActivity : AppCompatActivity() {
     private suspend fun exchangeGoogleToken(idToken: String): String? =
         withContext(Dispatchers.IO) {
             try {
-                val url  = URL("${getString(R.string.supabase_url)}/auth/v1/token?grant_type=id_token")
+                val supabaseUrl = getString(R.string.supabase_url)
+                val anonKey    = getString(R.string.supabase_anon_key)
+                val url  = URL("$supabaseUrl/auth/v1/token?grant_type=id_token")
                 val conn = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
-                    setRequestProperty("apikey", getString(R.string.supabase_anon_key))
+                    setRequestProperty("apikey", anonKey)
                     setRequestProperty("Content-Type", "application/json")
+                    connectTimeout = 10_000
+                    readTimeout    = 10_000
                     doOutput = true
                 }
-                OutputStreamWriter(conn.outputStream).use {
-                    it.write(JSONObject().apply {
-                        put("provider", "google"); put("id_token", idToken)
-                    }.toString())
-                }
-                if (conn.responseCode == 200)
+                val body = JSONObject().apply {
+                    put("provider", "google"); put("id_token", idToken)
+                }.toString()
+                OutputStreamWriter(conn.outputStream).use { it.write(body) }
+
+                val code = conn.responseCode
+                android.util.Log.d("GleaumLogin", "Supabase 응답 코드: $code")
+
+                if (code == 200) {
                     addExpiresAt(conn.inputStream.bufferedReader().readText())
-                else null
-            } catch (_: Exception) { null }
+                } else {
+                    // 에러 응답 본문 로깅
+                    val errBody = try { conn.errorStream?.bufferedReader()?.readText() } catch (_: Exception) { null }
+                    android.util.Log.e("GleaumLogin", "Supabase 오류 ($code): $errBody")
+                    null
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("GleaumLogin", "네트워크 예외: ${e.javaClass.simpleName} / ${e.message}")
+                null
+            }
         }
 
     private fun addExpiresAt(json: String): String = try {
