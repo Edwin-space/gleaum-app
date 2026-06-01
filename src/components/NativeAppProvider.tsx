@@ -138,7 +138,8 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       console.log('[NativeApp] OAuth 콜백 처리:', url);
 
       dispatchAuthProcessing();
-      await closeBrowser();
+      // iOS: SFSafariViewController는 딥링크 시 자동 닫힘 → 에러 무시
+      try { await closeBrowser(); } catch { /* 이미 닫힌 경우 정상 */ }
 
       try {
         const parsedUrl    = new URL(url);
