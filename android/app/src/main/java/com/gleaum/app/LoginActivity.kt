@@ -39,7 +39,14 @@ class LoginActivity : AppCompatActivity() {
         // 이미 유효한 세션이 있으면 바로 메인으로
         if (SessionManager.hasValid(this)) { goToMain(); return }
 
-        // 상태바/네비게이션바 검정 배경 + 흰색 아이콘
+        // 상태바/네비게이션바 색상 — setContentView 전에 설정 가능
+        window.statusBarColor     = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
+
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // insetsController 는 DecorView 생성(setContentView) 이후에만 호출 가능
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.insetsController?.setSystemBarsAppearance(
                 0,
@@ -47,11 +54,6 @@ class LoginActivity : AppCompatActivity() {
                 WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
             )
         }
-        window.statusBarColor     = android.graphics.Color.BLACK
-        window.navigationBarColor = android.graphics.Color.BLACK
-
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         // 이메일 링크 밑줄 — XML paintFlags 미지원으로 코드에서 처리
         binding.btnEmail.paintFlags = binding.btnEmail.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
