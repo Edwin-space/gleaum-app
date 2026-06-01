@@ -3,6 +3,7 @@ import WebKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
+import SafariServices
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
@@ -23,7 +24,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // ── 3. 알림 센터 delegate 설정 ────────────────────────────────────────
         UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
 
+        // ── 4. 세션 없으면 LoginViewController 표시 ──────────────────────────
+        if !SessionManager.shared.hasValidSession() {
+            showLoginScreenAfterLaunch()
+        }
+
         return true
+    }
+
+    // ── NativeSessionPlugin 등록 (Capacitor 브리지 준비 후) ──────────────────
+    override var plugins: [CAPPlugin.Type] {
+        return [NativeSessionPlugin.self]
+    }
+
+    private func showLoginScreenAfterLaunch() {
+        // Capacitor 브리지가 준비된 후 LoginVC 표시
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self,
+                  let rootVC = self.window?.rootViewController else { return }
+            let loginVC = LoginViewController()
+            loginVC.modalPresentationStyle = .fullScreen
+            loginVC.modalTransitionStyle   = .crossDissolve
+            rootVC.present(loginVC, animated: false)
+        }
     }
 
     // ── FCM 토큰 갱신 시 콜백 ─────────────────────────────────────────────────
@@ -96,6 +119,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     private func setupWebView() {
         guard let rootVC = window?.rootViewController as? CAPBridgeViewController,
               let webView = rootVC.webView else { return }
+
+        // 네이티브 로그인 세션 → WebView localStorage 주입
+        // Android의 addDocumentStartJavaScript 와 동일한 역할
+        if let sessionJson = SessionManager.shared.getSession() {
+            let escaped = sessionJson
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "'",  with: "\\'")
+                .replacingOccurrences(of: "\n", with: "\\n")
+            let projectRef = "tyvjdsescukaeorcuaga"
+            let storageKey = "sb-\(projectRef)-auth-token"
+            let script = WKUserScript(
+                source: "(function(){try{localStorage.setItem('\(storageKey)','\(escaped)');}catch(e){}})()",
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true
+            )
+            webView.configuration.userContentController.addUserScript(script)
+        }
 
         let scrollView = webView.scrollView
 
