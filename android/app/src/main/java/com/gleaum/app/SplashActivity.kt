@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.WindowInsetsController
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.gleaum.app.databinding.ActivitySplashBinding
 
@@ -25,7 +25,9 @@ import com.gleaum.app.databinding.ActivitySplashBinding
  *
  * 2초 후 RouterActivity 로 전환 (페이드 아웃)
  */
-class SplashActivity : AppCompatActivity() {
+// ComponentActivity 사용 — Theme.SplashScreen 은 AppCompat 기반이 아니라
+// AppCompatActivity 와 호환 불가. ComponentActivity 는 Theme.SplashScreen 과 호환됨.
+class SplashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 시스템 스플래시(둥근 아이콘)를 즉시 제거하고 커스텀 UI 로 전환
