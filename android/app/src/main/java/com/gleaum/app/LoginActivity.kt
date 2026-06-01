@@ -103,38 +103,30 @@ class LoginActivity : AppCompatActivity() {
     /**
      * Google ID 토큰 획득.
      *
-     * 1차: GetGoogleIdOption (Bottom Sheet — 부드러운 UX)
-     * 폴백: GetSignInWithGoogleOption (전체 화면 계정 선택 — 계정 없을 때 확실히 동작)
-     *
-     * "no credentials available" 오류 = 기기에 앱 사용 이력이 없거나
-     * SHA-1 불일치 시 1차가 실패하므로 폴백 필수
+     * GetGoogleIdOption + GetSignInWithGoogleOption 을 동시에 요청.
+     * Credential Manager 가 상황에 맞는 옵션을 선택해 보여줌.
+     * - 기존 인증 계정 있음 → GetGoogleIdOption (Bottom Sheet, 빠름)
+     * - 없음 → GetSignInWithGoogleOption (표준 Google 로그인 화면)
      */
     private suspend fun fetchGoogleIdToken(): String {
         val credentialManager = CredentialManager.create(this)
         val clientId = getString(R.string.google_web_client_id)
 
-        // ── 1차: GetGoogleIdOption (One Tap / Bottom Sheet) ──────────────
-        try {
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(
-                    GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(clientId)
-                        .setAutoSelectEnabled(false)
-                        .build()
-                ).build()
-            val result = credentialManager.getCredential(this, request)
-            return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
-        } catch (e: NoCredentialException) {
-            // "no credentials available" → 폴백으로 계속
-        }
-
-        // ── 폴백: GetSignInWithGoogleOption (전체 화면 계정 선택) ─────────
         val request = GetCredentialRequest.Builder()
             .addCredentialOption(
+                GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(clientId)
+                    .setAutoSelectEnabled(false)
+                    .build()
+            )
+            .addCredentialOption(
                 GetSignInWithGoogleOption.Builder(clientId).build()
-            ).build()
+            )
+            .build()
+
         val result = credentialManager.getCredential(this, request)
+        android.util.Log.d("GleaumLogin", "credential type: ${result.credential.type}")
         return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
     }
 
