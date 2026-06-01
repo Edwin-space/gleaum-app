@@ -54,13 +54,13 @@ interface Ad {
   ctr_pct:       number;
 }
 
-// ── 상수 ────────────────────────────────────────────────────────
-const SLOT_LABELS: Record<string, string> = {
+// ── 기본 슬롯 (DB 로딩 전 폴백) ─────────────────────────────────
+const DEFAULT_SLOT_LABELS: Record<string, string> = {
   "home-feed-inline":  "홈피드 인라인",
   "schedule-list-top": "일정 목록 상단",
   "budget-list-top":   "가계부 목록 상단",
+  "save-prompt":       "저장 후 바텀시트",
 };
-const SLOT_IDS = Object.keys(SLOT_LABELS);
 
 const PLATFORM_OPTIONS = [
   { value: "web",     label: "웹",      Icon: Globe      },
@@ -143,6 +143,21 @@ export default function AdsPage() {
   const [period, setPeriod]     = useState<PeriodValue>("7d");
   const [slotFilter, setSlotFilter]     = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  // ── 슬롯 목록 (DB에서 동적 로드) ─────────────────────────────
+  const [slotLabels, setSlotLabels] = useState<Record<string, string>>(DEFAULT_SLOT_LABELS);
+
+  useEffect(() => {
+    const supabase = getBrowserClient();
+    supabase.from("ad_slots").select("id, description").then(({ data }) => {
+      if (!data || data.length === 0) return;
+      const labels: Record<string, string> = {};
+      data.forEach((s: { id: string; description: string }) => {
+        labels[s.id] = s.description;
+      });
+      setSlotLabels(labels);
+    });
+  }, []);
 
   // ── 데이터 로드 ───────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -330,7 +345,7 @@ export default function AdsPage() {
                     <Select value={form.slot_id} onValueChange={v => setForm(f => ({ ...f, slot_id: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {SLOT_IDS.map(s => <SelectItem key={s} value={s}>{SLOT_LABELS[s]}</SelectItem>)}
+                        {Object.keys(slotLabels).map(s => <SelectItem key={s} value={s}>{slotLabels[s]}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -374,13 +389,23 @@ export default function AdsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>시작일시 *</Label>
-                    <Input type="datetime-local" required value={form.starts_at}
-                      onChange={e => setForm(f => ({ ...f, starts_at: e.target.value }))} />
+                    <input
+                      type="datetime-local"
+                      required
+                      value={form.starts_at}
+                      onChange={e => setForm(f => ({ ...f, starts_at: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>종료일시 (빈 칸 = 무기한)</Label>
-                    <Input type="datetime-local" value={form.ends_at}
-                      onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))} />
+                    {/* shadcn Input이 datetime-local과 호환 불가 → 네이티브 input 사용 */}
+                    <input
+                      type="datetime-local"
+                      value={form.ends_at}
+                      onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>우선순위 (높을수록 먼저)</Label>
@@ -459,7 +484,7 @@ export default function AdsPage() {
                 <div className="space-y-1.5 text-xs">
                   <p className="font-semibold text-muted-foreground uppercase tracking-wider mb-2">정보 요약</p>
                   {[
-                    { label: "슬롯",     value: SLOT_LABELS[form.slot_id] ?? form.slot_id },
+                    { label: "슬롯",     value: slotLabels[form.slot_id] ?? form.slot_id },
                     { label: "플랫폼",   value: form.platforms.length === 3 ? "전체" : form.platforms.join(", ") || "없음" },
                     { label: "우선순위", value: `${form.priority}점` },
                     { label: "상태",     value: form.is_active ? "✅ 활성" : "⏸ 비활성" },
@@ -481,7 +506,7 @@ export default function AdsPage() {
         <Tabs value={slotFilter} onValueChange={setSlotFilter}>
           <TabsList>
             <TabsTrigger value="all">전체</TabsTrigger>
-            {SLOT_IDS.map(id => <TabsTrigger key={id} value={id}>{SLOT_LABELS[id]}</TabsTrigger>)}
+            {Object.keys(slotLabels).map(id => <TabsTrigger key={id} value={id}>{slotLabels[id]}</TabsTrigger>)}
           </TabsList>
         </Tabs>
         <Separator orientation="vertical" className="h-6" />
@@ -626,7 +651,7 @@ function AdRow({ ad, expired, onEdit, onDelete, onToggle, onDuplicate }: {
           {/* 슬롯 + 제목 */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <Badge variant="secondary" className="text-xs shrink-0">{SLOT_LABELS[ad.slot_id] ?? ad.slot_id}</Badge>
+              <Badge variant="secondary" className="text-xs shrink-0">{slotLabels[ad.slot_id] ?? ad.slot_id}</Badge>
               {expired && <Badge variant="destructive" className="text-xs shrink-0">만료</Badge>}
               <span className="font-semibold text-sm truncate">{ad.title}</span>
             </div>
