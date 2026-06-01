@@ -5,17 +5,8 @@
     <string name="package_name">com.gleaum.app</string>
     <string name="custom_url_scheme">com.gleaum.app</string>
 
-    <!-- ── Supabase 설정 ──────────────────────────────────────────────
-         NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY 와 동일한 값
-    -->
     <string name="supabase_url">https://tyvjdsescukaeorcuaga.supabase.co</string>
-    <!-- anon key: Supabase 대시보드 → Settings → API → Project API Keys → anon/public -->
-    <string name="supabase_anon_key">REPLACE_WITH_SUPABASE_ANON_KEY</string>
+    <string name="supabase_anon_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dmpkc2VzY3VrYWVvcmN1YWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUxNDksImV4cCI6MjA5MzA2MTE0OX0.oFPpDadJIGbEe7du222Wr0ZdRnBJp46-v7oQbBfszqE</string>
 
-    <!-- ── Google OAuth Web Client ID ────────────────────────────────
-         Google Cloud Console → APIs & Services → Credentials → "Web client (auto created…)"
-         → Client ID 복사 (ends with .apps.googleusercontent.com)
-         Supabase Auth → Providers → Google 에 등록된 것과 동일해야 함
-    -->
-    <string name="google_web_client_id">REPLACE_WITH_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com</string>
+    <string name="google_web_client_id">913127709928-uba2o16d4dic4cs008b8jrhfpfprqguj.apps.googleusercontent.com</string>
 </resources>
