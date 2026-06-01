@@ -90,6 +90,9 @@ class LoginActivity : AppCompatActivity() {
             .buildUpon()
             .appendQueryParameter("provider", "google")
             .appendQueryParameter("redirect_to", "gleaum://auth/callback")
+            // PKCE 없이 브라우저에서 직접 시작하므로 implicit flow 사용
+            // → 콜백 URL에 access_token/refresh_token 이 직접 포함됨
+            .appendQueryParameter("flow_type", "implicit")
             .build()
 
         try {
