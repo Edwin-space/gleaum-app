@@ -53,6 +53,9 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 이메일 링크 밑줄 — XML paintFlags 미지원으로 코드에서 처리
+        binding.btnEmail.paintFlags = binding.btnEmail.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
+
         // Google 로그인
         binding.btnGoogle.setOnClickListener { handleGoogleSignIn() }
 
@@ -111,6 +114,9 @@ class LoginActivity : AppCompatActivity() {
         setContentView(emailBinding.root)
 
         var currentEmail = ""
+
+        // 재발송 링크 밑줄
+        emailBinding.btnResend.paintFlags = emailBinding.btnResend.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
 
         emailBinding.btnBack.setOnClickListener {
             setContentView(binding.root)
