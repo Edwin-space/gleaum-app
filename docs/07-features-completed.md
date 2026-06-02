@@ -13,6 +13,18 @@
 ---
 
 
+### 2026-06-02 — iOS 스플래시/로그인 전환 UX 보정
+
+- Capacitor SplashScreen 표시 시간을 2초에서 3초로 변경
+- iOS 반영본 `ios/App/App/capacitor.config.json`도 동일하게 3초로 업데이트
+- 세션이 없는 Apple 디바이스에서 `LoginViewController` 표시를 2.75초 지연시켜 스플래시 종료 직전 로그인 화면을 준비
+- `modalTransitionStyle = .crossDissolve` 유지 + 중복 LoginViewController 표시 방지
+
+검증:
+- `npm run build` 통과
+- iOS Simulator compile-only build 통과 (`Gleaum`, Debug, iPhone 17)
+
+
 ### 2026-06-02 — iOS 네이티브 로그인 OAuth UX 보정
 
 - iOS 네이티브 `LoginViewController`의 Google 버튼 아이콘이 `globe` fallback으로 보일 수 있던 문제를 막기 위해 `google_icon` asset 추가
