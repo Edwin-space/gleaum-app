@@ -9,7 +9,7 @@ import SafariServices
 class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     var window: UIWindow?
-    private let loginPresentationDelay: TimeInterval = 2.75
+    private let loginPresentationDelay: TimeInterval = 0.45
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -34,8 +34,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     }
 
     private func showLoginScreenAfterLaunch() {
-        // 스플래시(3초)가 끝나기 직전에 LoginVC를 미리 올려두면
-        // 스플래시가 사라질 때 검은 배경/웹뷰 플래시 없이 로그인 화면으로 부드럽게 넘어간다.
+        // 스플래시가 3초 유지되는 동안 LoginVC를 미리 올려둔다.
+        // 스플래시가 사라질 때 WebView /login이 아니라 네이티브 로그인 화면이 바로 보이게 한다.
         DispatchQueue.main.asyncAfter(deadline: .now() + loginPresentationDelay) { [weak self] in
             guard let self = self,
                   let rootVC = self.window?.rootViewController else { return }

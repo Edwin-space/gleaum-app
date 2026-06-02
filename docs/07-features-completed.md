@@ -13,6 +13,17 @@
 ---
 
 
+### 2026-06-02 — iOS 스플래시 후 웹 로그인 flash 보정
+
+- `NativeAppProvider`의 `hideSplash()` 타이머를 300ms에서 3000ms로 변경
+- 원인: Capacitor 스플래시는 3초로 설정했지만 JS가 300ms에 강제로 숨겨 WebView `/login`이 네이티브 로그인 화면 전에 잠깐 노출됨
+- iOS `LoginViewController`는 0.45초에 미리 fullScreen으로 올려 스플래시가 사라질 때 네이티브 로그인 화면이 바로 보이도록 조정
+
+검증:
+- `npm run build` 통과
+- iOS Simulator compile-only build 통과 (`Gleaum`, Debug, iPhone 17)
+
+
 ### 2026-06-02 — iOS 스플래시/로그인 전환 UX 보정
 
 - Capacitor SplashScreen 표시 시간을 2초에서 3초로 변경

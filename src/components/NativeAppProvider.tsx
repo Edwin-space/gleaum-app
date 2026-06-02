@@ -149,9 +149,11 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     void applyNativeSession(router);
 
     // ── 1. 스플래시 숨기기 ───────────────────────────────────────────
+    // Capacitor 설정의 launchShowDuration(3초)과 맞춘다.
+    // iOS에서 너무 빨리 숨기면 WebView /login이 네이티브 LoginVC 전에 잠깐 노출된다.
     const splashTimer = setTimeout(async () => {
       await hideSplash();
-    }, 300);
+    }, 3000);
 
     // ── 2. 상태바 설정 ───────────────────────────────────────────────
     setStatusBarDark();
