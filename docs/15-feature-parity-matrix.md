@@ -55,7 +55,7 @@
 | 기능 | 적용 플랫폼 | 다른 플랫폼 노출 정책 | 현재 판단 |
 |---|---|---|---|
 | 생체인증 앱 잠금 | Android App, iOS App 예정 | Web에서는 숨김 또는 `앱 전용` 안내 | Android/iOS 네이티브 플러그인 기반 추가 완료. 웹 기능으로 오해시키면 안 됨 |
-| 기기 캘린더 연동 | Native App 예정 | Web에서는 `앱 전용/준비 중` 안내 | 현재 `/settings/calendar`는 준비 중 안내. 모든 설정 화면의 문구 통일 필요 |
+| 기기 캘린더 연동 | Android App 1차 지원, iOS 예정 | Web에서는 `Android 앱 우선 지원` 안내 | Android 권한 요청/캘린더 선택/30일 수동 내보내기 완료. 자동 동기화/import/iOS는 후속 |
 | 앱 버전/스토어 업데이트 | Native App | Web에서는 숨김 | 앱 내부 마이페이지/설정에서만 노출하는 것이 적절 |
 | Universal Link / App Link | Native App + Web 라우트 | Web에서는 일반 링크로 동작 | 초대 링크, OAuth callback, logout callback은 회귀 테스트 필요 |
 | iOS 앱 다운로드 | iOS App | `/download`에서 `준비 중` 표시 | App Store 등록 전까지 동일 문구 유지 |
@@ -70,7 +70,7 @@
 | P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity`, iOS `LoginViewController`, `AppDelegate` | Android/iOS OAuth callback 보정 완료. 실제 기기 회귀 테스트 필요 |
 | P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql` | 단일 조회 private 필터 + RLS 강화 SQL 추가. Supabase 실행 후 회귀 테스트 필요 |
 | P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
-| P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, MyPage 설정 링크 | 준비 중/앱 전용 문구 및 PC 레이아웃 통일 필요 |
+| P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, `src/lib/native-calendar.ts`, Android `NativeCalendarPlugin` | Android 1차 완료. 자동 반영/import/iOS EventKit 확장 필요 |
 | P1 | 생체인증 설정 노출 | `src/app/mypage/*`, `src/components/NativeBiometricGate.tsx` | Web에서는 앱 전용으로 오해되지 않게 숨김/안내 기준 필요 |
 | P1 | 광고 플랫폼 타겟 | `src/components/AdSlot.tsx`, `src/lib/admob.ts`, `/admin/ads` | 웹/Android/iOS 타겟 값과 실제 노출 로직 검증 필요 |
 | P1 | 관리자/백오피스 경계 | `src/app/admin/ads/page.tsx`, `backoffice/*` | 사용자 앱 내부 관리자 페이지와 별도 백오피스 역할 재정리 필요 |

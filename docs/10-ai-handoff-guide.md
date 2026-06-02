@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-02 | Android 기기 캘린더 연동 1차 구현. `NativeCalendarPlugin` 추가, READ/WRITE_CALENDAR 권한 연결, 설정 화면에서 권한 요청/캘린더 선택/앞으로 30일 일정 수동 내보내기 지원 |
 | 2026-06-02 | iOS 스플래시 후 웹 로그인 flash 보정. JS `hideSplash()`가 300ms에 스플래시를 강제 종료하던 문제를 3000ms로 맞추고, 네이티브 LoginViewController는 0.45초에 미리 올리도록 조정 |
 | 2026-06-02 | iOS 스플래시/로그인 전환 UX 보정. Capacitor SplashScreen 3초 적용, iOS LoginViewController 표시를 2.75초 지연시켜 스플래시 종료 직전 cross-dissolve로 부드럽게 전환 |
 | 2026-06-02 | iOS 네이티브 로그인 OAuth UX 보정. `LoginViewController` Google 아이콘 asset 추가, SFSafariViewController fullscreen 적용, OAuth 성공 후 Safari/Login 스택 자동 dismiss, JS OAuth Browser.close await 제거 |

@@ -13,6 +13,26 @@
 ---
 
 
+### 2026-06-02 — Android 기기 캘린더 연동 1차 구현
+
+- Android 네이티브 `NativeCalendarPlugin` 추가
+- `READ_CALENDAR` / `WRITE_CALENDAR` 권한 선언 및 Capacitor permission bridge 연결
+- `src/lib/native-calendar.ts` 추가: 권한 확인/요청, 캘린더 목록 조회, 이벤트 생성, 이벤트 조회, 로컬 설정 저장
+- `/settings/calendar` 화면을 Android 앱 기준으로 전환
+- Android 앱에서 캘린더 권한 요청, 쓰기 가능한 기기 캘린더 선택, 앞으로 30일 글리움 일정 수동 내보내기 지원
+- 지출 일정은 기기 캘린더 내보내기 대상에서 제외
+- 중복 내보내기 방지를 위해 기기 캘린더 이벤트 description에 `gleaum:schedule:{id}` marker 저장 및 기존 marker 조회
+
+검증:
+- `npm run build` 통과
+- Android `:app:assembleDebug` 통과
+
+다음 단계:
+- 일정 생성/수정 시 자동 내보내기 여부 결정
+- 기기 캘린더 이벤트 수정/삭제 동기화 정책 설계
+- 외부 캘린더에서 글리움으로 가져오기(import) UI/충돌 정책 설계
+
+
 ### 2026-06-02 — iOS 스플래시 후 웹 로그인 flash 보정
 
 - `NativeAppProvider`의 `hideSplash()` 타이머를 300ms에서 3000ms로 변경

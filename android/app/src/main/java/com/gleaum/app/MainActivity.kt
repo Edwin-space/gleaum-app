@@ -23,6 +23,7 @@ class MainActivity : BridgeActivity() {
         registerPlugin(NativeSessionPlugin::class.java)
         registerPlugin(NativeBiometricPlugin::class.java)
         registerPlugin(NativeAdPlugin::class.java)
+        registerPlugin(NativeCalendarPlugin::class.java)
 
         super.onCreate(savedInstanceState)
 
