@@ -27,6 +27,7 @@
 | `12-product-model.md`      | ⭐ 개인 중심 + Space 확장형 제품 모델 재정의 | **최우선** |
 | `13-gcp-account-migration.md` | GCP/Firebase 계정 이관 기록 | 참고 |
 | `14-native-app-plan.md`    | ⭐ **네이티브 앱 확장 계획** (macOS → iOS → Android) | **최우선** |
+| `15-feature-parity-matrix.md` | ⭐ PC Web / Mobile Web / Native App 기능 싱크 기준표 | **최우선** |
 | `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
 ---
@@ -38,7 +39,7 @@
 - **현재 단계**: 웹 서비스 운영 + 네이티브 앱/스토어 출시 준비 + 초대/공간 정책 안정화
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 기준 커밋**: `d915bfb` (2026-05-28) — Android Firebase Performance 플러그인 제거(AGP 9.x 호환)까지 반영
+- **최근 기준 커밋**: `d7b2cfc` (2026-06-02) — 공유 테마 모드 시스템 추가까지 반영
 
 ---
 
@@ -73,6 +74,10 @@
 ✅ 2026-05-28 백오피스 릴리즈 관리 + Remote Config 편집기 추가
 ✅ 2026-05-28 Android AGP 9.x 호환 문제로 Firebase Performance Gradle 플러그인 제거
 ✅ 2026-05-28 Firebase App Distribution Gradle DSL 제거로 Android Studio Sync 오류 수정
+✅ 2026-06-01 Android OAuth 네이티브 콜백 세션 저장 보정
+✅ 2026-06-01 네이티브 생체인증 앱 잠금 추가
+✅ 2026-06-02 공유 테마 모드 시스템 추가
+✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
 🔜 다음 단계  Supabase `012_cron_overdue_and_digest.sql` 실행 여부 확인 → Firebase Remote Config 실값 등록 → Android 내부 배포 검증 → Apple Developer 유료 계정 연결
 ```
@@ -92,4 +97,4 @@
 
 ---
 
-마지막 업데이트: 2026-05-28
+마지막 업데이트: 2026-06-02

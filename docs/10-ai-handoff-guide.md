@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-05-28
+> **최종 업데이트**: 2026-06-02
 
 ---
 
@@ -44,6 +44,10 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-02 | PC Web / Mobile Web / Android App / iOS 예정 앱의 기능 싱크 기준표 추가. `docs/15-feature-parity-matrix.md`를 신규 작성하고, 공통 기능/플랫폼 전용 기능/불일치 점검 대상을 정리 |
+| 2026-06-02 | 공유 테마 모드 시스템 추가. `light/dark/system` 3모드와 `ThemeProvider`, `ThemeModeSelector`, theme 토큰 기반 shell UI 반영 |
+| 2026-06-01 | 네이티브 생체인증 앱 잠금 추가. Android 지문/생체인증 및 iOS Face ID/Touch ID 플러그인, 온보딩/마이페이지 설정/앱 잠금 게이트 반영 |
+| 2026-06-01 | Android Google OAuth 네이티브 콜백 세션 저장 보정. 로그인 후 모바일 웹 로그인 화면으로 되돌아가는 문제를 막기 위해 implicit callback 토큰 저장 처리 추가 |
 | 2026-05-28 | 공간 초대문/링크 생성 안정화. 복사/공유 전 `/api/invite/info`로 코드 유효성을 확인하고, DB에 없는 오래된 코드면 자동 재발급 후 최신 코드로 초대문 생성 |
 | 2026-05-28 | 백오피스 Firebase App Distribution 연동 보정. REST API 경로를 projectNumber 기준으로 수정하고, 테스터는 `projects.testers.list` + 그룹 필터로 조회. `/releases` 페이지에 사용 안내/진단 UI 추가 |
 | 2026-05-28 | Android Studio Sync 오류 수정. Firebase App Distribution Gradle DSL 제거, 배포는 `scripts/distribute-android.sh` Firebase CLI 방식으로 유지. `:app:tasks`, `:app:assembleDebug` 통과 확인 |
@@ -185,6 +189,16 @@ Claude가 진행한 뒤 문서 반영이 누락되어 있던 핵심 변경입니
 
 ### 지출 카테고리 가이드
 - `docs/Guide/expenses.md`: 고정지출/변동지출 1~3차 카테고리 설계 초안
+
+## 🔴 기능 싱크 기준 (2026-06-02 추가)
+
+상세 기준표는 `docs/15-feature-parity-matrix.md`를 먼저 확인한다.
+
+- PC Web / Mobile Web / Android App / iOS 예정 앱은 같은 제품이어야 한다. UI 형태는 달라도 기능 상태, 진입 경로, 권한 정책, 데이터 경계는 동일한 의미를 가져야 한다.
+- 네이티브 전용 기능은 웹에서 억지로 동작시키지 않는다. 대신 숨기거나 `앱 전용`, `준비 중`, `지원 예정`으로 명확히 안내한다.
+- P0 회귀 대상은 로그인 세션 복귀, 초대 링크/코드, 개인/공간 데이터 경계, 공간 멤버/역할, 가계부/공간 지출 분리다.
+- 설정 항목은 테마, 생체인증, 알림, 캘린더, 홈 화면 구성의 노출 정책을 웹/앱 기준으로 통일해야 한다.
+- 기능 싱크 작업 후에는 이 문서와 `docs/15-feature-parity-matrix.md`를 같이 업데이트한다.
 
 ## 핵심 파일 맵
 
