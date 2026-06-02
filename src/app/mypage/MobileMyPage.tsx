@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GleaumBI } from '@/components/ui/GleaumLogo';
 import { getAppVersionInfo, isNativeApp, getNativePlatform } from '@/lib/native';
+import { ThemeModeSelector } from '@/components/ui/ThemeModeSelector';
 import type { NotificationSettings } from '@/types';
 
 // ── 최신 앱 버전 (새 버전 출시 시 이 값만 업데이트) ──
@@ -60,7 +61,7 @@ function Toggle({ toggled, onToggle }: { toggled: boolean; onToggle: () => void 
         top: '3px',
         left: toggled ? '21px' : '3px',
         width: '20px', height: '20px', borderRadius: '50%',
-        background: 'white',
+        background: 'var(--theme-surface)',
         boxShadow: '0 2px 4px rgba(0,0,0,0.18)',
         transition: 'left 0.22s ease',
       }} />
@@ -99,7 +100,7 @@ function MenuItem({
           {label}
         </span>
         {sub && (
-          <p style={{ fontSize: '12px', color: '#8E8E93', margin: '1px 0 0', fontWeight: 500 }}>{sub}</p>
+          <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: '1px 0 0', fontWeight: 500 }}>{sub}</p>
         )}
       </div>
       {right ?? (href || onClick ? <Chevron /> : null)}
@@ -112,17 +113,17 @@ function MenuItem({
 }
 
 function MenuDivider() {
-  return <div style={{ height: '1px', background: '#F2F2F7', marginLeft: '68px' }} />;
+  return <div style={{ height: '1px', background: 'var(--theme-border)', marginLeft: '68px' }} />;
 }
 
 function MenuCard({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      background: 'white',
+      background: 'var(--theme-surface)',
       borderRadius: '18px',
       overflow: 'hidden',
-      boxShadow: '0 1px 8px rgba(0,0,0,0.05)',
-      border: '1px solid rgba(0,0,0,0.04)',
+      boxShadow: 'var(--theme-shadow-card)',
+      border: '1px solid var(--theme-border)',
     }}>
       {children}
     </div>
@@ -133,7 +134,7 @@ function SectionTitle({ title }: { title: string }) {
   return (
     <p style={{
       fontSize: '12px', fontWeight: 700,
-      color: '#8E8E93', margin: '0 0 8px',
+      color: 'var(--theme-text-subtle)', margin: '0 0 8px',
       paddingLeft: '4px', letterSpacing: '0.2px',
     }}>
       {title}
@@ -187,14 +188,14 @@ export function MobileMyPage({
 
   return (
     <div style={{
-      background: '#F2F2F7',
+      background: 'var(--theme-bg)',
       minHeight: '100dvh',
       paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)',
     }}>
 
       {/* ── 상단 프로필 카드 ─────────────────────────────────── */}
       <div style={{
-        background: 'white',
+        background: 'var(--theme-surface)',
         paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
         paddingBottom: '0',
         paddingLeft: '20px',
@@ -204,7 +205,7 @@ export function MobileMyPage({
         {/* 상단 레이블 */}
         <p style={{
           fontSize: '22px', fontWeight: 800,
-          color: '#1A1B2E', margin: '0 0 20px',
+          color: 'var(--theme-text)', margin: '0 0 20px',
           letterSpacing: '-0.4px',
         }}>
           전체
@@ -260,13 +261,13 @@ export function MobileMyPage({
           >
             <h2 style={{
               fontSize: '18px', fontWeight: 800,
-              color: '#1A1B2E', margin: '0 0 3px',
+              color: 'var(--theme-text)', margin: '0 0 3px',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {user?.name ?? '사용자'}
             </h2>
             <p style={{
-              fontSize: '13px', color: '#8E8E93',
+              fontSize: '13px', color: 'var(--theme-text-subtle)',
               fontWeight: 500, margin: 0,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
@@ -297,11 +298,11 @@ export function MobileMyPage({
               textAlign: 'center',
               borderLeft: i > 0 ? '1px solid #F2F2F7' : 'none',
             }}>
-              <p style={{ fontSize: '18px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>
+              <p style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>
                 {s.value}
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', marginLeft: '1px' }}>{s.unit}</span>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', marginLeft: '1px' }}>{s.unit}</span>
               </p>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>{s.label}</p>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -310,10 +311,10 @@ export function MobileMyPage({
       {/* ── 빠른 메뉴 그리드 ─────────────────────────────────── */}
       <div style={{ padding: '20px 16px 0' }}>
         <div style={{
-          background: 'white', borderRadius: '18px',
+          background: 'var(--theme-surface)', borderRadius: '18px',
           overflow: 'hidden',
-          boxShadow: '0 1px 8px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.04)',
+          boxShadow: 'var(--theme-shadow-card)',
+          border: '1px solid var(--theme-border)',
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
         }}>
           {[
@@ -377,7 +378,7 @@ export function MobileMyPage({
                 </div>
                 <span style={{
                   fontSize: '11px', fontWeight: 600,
-                  color: '#1A1B2E', letterSpacing: '-0.2px',
+                  color: 'var(--theme-text)', letterSpacing: '-0.2px',
                 }}>
                   {item.label}
                 </span>
@@ -396,18 +397,18 @@ export function MobileMyPage({
 
           {/* 무료 플랜 현황 카드 */}
           <div style={{
-            background: 'white', borderRadius: '18px', padding: '18px 20px',
-            boxShadow: '0 1px 8px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+            background: 'var(--theme-surface)', borderRadius: '18px', padding: '18px 20px',
+            boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)',
             marginBottom: '10px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>플랜 현황</p>
+              <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>플랜 현황</p>
               <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 800, background: 'rgba(0,132,204,0.08)', color: '#0084CC' }}>FREE</span>
             </div>
             {/* 공간 */}
             <div style={{ marginBottom: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>내 공간</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>내 공간</span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.spaceCount ?? 0) >= 2 ? '#EF4444' : '#1A1B2E' }}>
                   {insights?.spaceCount ?? 0}/2
                 </span>
@@ -419,7 +420,7 @@ export function MobileMyPage({
             {/* 멤버 */}
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>공간 멤버</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>공간 멤버</span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.memberCount ?? 0) >= 10 ? '#EF4444' : '#1A1B2E' }}>
                   {insights?.memberCount ?? 0}/10
                 </span>
@@ -431,7 +432,7 @@ export function MobileMyPage({
             {/* 업그레이드 힌트 */}
             <div style={{ padding: '10px 14px', borderRadius: '12px', background: 'linear-gradient(135deg,rgba(0,132,204,0.06),rgba(12,201,181,0.06))', border: '1px solid rgba(0,132,204,0.10)', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '18px' }}>🎁</span>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.5 }}>
                 광고 시청 또는 인앱결제 포인트로 공간·멤버 슬롯 확장 가능 <span style={{ color: '#0084CC', fontWeight: 800 }}>준비 중</span>
               </p>
             </div>
@@ -540,6 +541,26 @@ export function MobileMyPage({
         <div>
           <SectionTitle title="앱 설정" />
           <MenuCard>
+            <div style={{ padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <IconBox bg="rgba(0,132,204,0.09)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                  </svg>
+                </IconBox>
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>
+                    화면 모드
+                  </p>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>
+                    PC·모바일 웹·앱 화면을 같은 기준으로 표시합니다.
+                  </p>
+                </div>
+              </div>
+              <ThemeModeSelector compact />
+            </div>
+            <MenuDivider />
             <MenuItem
               href="/settings/home-layout"
               label="홈 레이아웃"
@@ -627,7 +648,7 @@ export function MobileMyPage({
                   </svg>
                 </IconBox>
               }
-              right={<span style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>준비 중</span>}
+              right={<span style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>준비 중</span>}
             />
           </MenuCard>
         </div>
@@ -676,7 +697,7 @@ export function MobileMyPage({
                   <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(0,132,204,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '18px' }}>🆕</div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '13px', fontWeight: 800, color: '#0084CC', margin: '0 0 2px' }}>업데이트가 있어요</p>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>
                       현재 v{installedVersion} → 최신 v{LATEST_VERSION}
                     </p>
                   </div>
@@ -708,7 +729,7 @@ export function MobileMyPage({
                     )}
                   </div>
                 ) : (
-                  <span style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>
                     {isNativeApp() ? '확인 중...' : `웹 v${LATEST_VERSION}`}
                   </span>
                 )

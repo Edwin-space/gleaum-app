@@ -23,8 +23,29 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { NativeAppProvider } from '@/components/NativeAppProvider';
 import { NativeBiometricGate } from '@/components/NativeBiometricGate';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { FirebaseServicesProvider } from '@/components/FirebaseServicesProvider';
+
+const themeInitScript = `
+(function(){
+  try {
+    var key = 'gleaum:theme-mode';
+    var mode = localStorage.getItem(key) || 'system';
+    if (mode !== 'light' && mode !== 'dark' && mode !== 'system') mode = 'system';
+    var resolved = mode === 'system'
+      ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : mode;
+    document.documentElement.dataset.themeMode = mode;
+    document.documentElement.dataset.theme = resolved;
+    document.documentElement.style.colorScheme = resolved;
+  } catch (_) {
+    document.documentElement.dataset.themeMode = 'system';
+    document.documentElement.dataset.theme = 'light';
+    document.documentElement.style.colorScheme = 'light';
+  }
+})();
+`;
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://gleaum.com'),
@@ -99,8 +120,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className="h-full">
+    <html lang="ko" className="h-full" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {/* ── Supabase 연결 사전 설정 ── */}
         <link rel="preconnect" href="https://lbzroynnmcvjnpqopagg.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://lbzroynnmcvjnpqopagg.supabase.co" />
@@ -175,58 +197,62 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`h-full ${outfit.variable}`}>
-        {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
-        <div className="mesh-bg">
-          <div className="mesh-blob mesh-blob-1" />
-          <div className="mesh-blob mesh-blob-2" />
-          <div className="mesh-blob mesh-blob-3" />
-        </div>
-        <NativeAppProvider>
-          <FirebaseServicesProvider>
-            <div id="app-shell">
-              <DesktopSidebar />
-              <div className="pc-content-area w-full">
-                <PWARegister />
-                <LazyPWABanner />
-                <FCMProvider>
-                  {children}
-                </FCMProvider>
+        <ThemeProvider>
+          {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
+          <div className="mesh-bg">
+            <div className="mesh-blob mesh-blob-1" />
+            <div className="mesh-blob mesh-blob-2" />
+            <div className="mesh-blob mesh-blob-3" />
+          </div>
+          <NativeAppProvider>
+            <FirebaseServicesProvider>
+              <div id="app-shell">
+                <DesktopSidebar />
+                <div className="pc-content-area w-full">
+                  <PWARegister />
+                  <LazyPWABanner />
+                  <FCMProvider>
+                    {children}
+                  </FCMProvider>
+                </div>
               </div>
-            </div>
-          </FirebaseServicesProvider>
-        </NativeAppProvider>
-        <NativeBiometricGate />
-        {/* 최상위 루트 네비게이션 (z-index: 9999) */}
-        <BottomNav />
-        <Toaster
-          position="bottom-center"
-          toastOptions={{
-            style: {
-              borderRadius: '16px',
-              fontFamily: 'var(--font-body)',
-              fontSize: '14px',
-              fontWeight: '600',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-              border: '1px solid rgba(255,255,255,0.8)',
-            },
-          }}
-          offset={96}
-          richColors
-        />
-        <AppFooter />
-        <PwaRegistry />
-        <Analytics />
-        <SpeedInsights />
-        <GoogleAnalytics />
-        {/* ── Google AdSense (자체 광고 없을 때 폴백) ── */}
-        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
+            </FirebaseServicesProvider>
+          </NativeAppProvider>
+          <NativeBiometricGate />
+          {/* 최상위 루트 네비게이션 (z-index: 9999) */}
+          <BottomNav />
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                borderRadius: '16px',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                fontWeight: '600',
+                background: 'var(--theme-surface)',
+                color: 'var(--theme-text)',
+                boxShadow: 'var(--theme-shadow-modal)',
+                border: '1px solid var(--theme-border)',
+              },
+            }}
+            offset={96}
+            richColors
           />
-        )}
+          <AppFooter />
+          <PwaRegistry />
+          <Analytics />
+          <SpeedInsights />
+          <GoogleAnalytics />
+          {/* ── Google AdSense (자체 광고 없을 때 폴백) ── */}
+          {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+            <Script
+              async
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+              crossOrigin="anonymous"
+              strategy="afterInteractive"
+            />
+          )}
+        </ThemeProvider>
       </body>
     </html>
   );

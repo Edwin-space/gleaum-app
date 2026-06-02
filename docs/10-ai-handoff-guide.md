@@ -809,3 +809,39 @@ Android 네이티브 로그인은 Supabase implicit OAuth(`gleaum://auth/callbac
 
 - 실제 생체인증 UX는 빌드 통과만으로 완전히 검증되지 않는다. Android 실기기 지문 등록 상태, iPhone Face ID/Touch ID 등록 상태에서 최종 확인해야 한다.
 - 이 기능은 앱 잠금 UX이며, 현재 세션 저장소 자체를 Android Keystore / iOS Keychain으로 암호화 이전한 것은 아니다. 다음 보안 고도화 단계는 네이티브 세션 저장소 강화다.
+
+---
+
+## 2026-06-02 Codex 인수인계 — PC/Mobile Web/Native WebView 테마 동기화 기반
+
+### 목적
+
+PC 웹, 모바일 웹, 네이티브 앱 WebView가 서로 다른 배경/쉘 감각을 갖고 있던 문제를 줄이기 위해 공통 테마 시스템을 추가했다. 기본 라이트 모드는 전체 배경을 흰색 기준으로 정리하고, 사용자가 `자동/라이트/다크` 중 선택할 수 있게 했다.
+
+### 구현 범위
+
+- `자동`: OS/브라우저 `prefers-color-scheme`에 따라 라이트/다크 자동 적용
+- `라이트`: 전체 앱 배경을 흰색 중심으로 고정
+- `다크`: 전역 배경, 텍스트, 서피스, 네비게이션 쉘을 다크 토큰으로 전환
+- 설정 저장은 `localStorage`의 `gleaum:theme-mode` 사용
+- 초기 렌더 깜빡임을 줄이기 위해 `layout.tsx` head에 테마 초기화 스크립트 삽입
+
+### 수정 파일
+
+- `src/lib/theme.ts` — 테마 모드 타입, 저장 키, 적용/해결 유틸
+- `src/components/ThemeProvider.tsx` — 전역 테마 컨텍스트 및 시스템 모드 감지
+- `src/components/ui/ThemeModeSelector.tsx` — `자동/라이트/다크` 선택 UI
+- `src/app/layout.tsx` — `ThemeProvider` 적용 및 초기화 스크립트 추가
+- `src/styles/tokens.css` — `--theme-*` 라이트/다크 토큰 추가
+- `src/app/globals.css` — 전역 body/app shell/mesh/glass-card 배경을 테마 토큰 기반으로 변경
+- `src/components/layout/BottomNav.tsx`, `src/components/layout/DesktopSidebar.tsx` — 공통 네비게이션 쉘을 테마 토큰 기반으로 전환
+- `src/app/mypage/DesktopMyPage.tsx`, `src/app/mypage/MobileMyPage.tsx` — 마이페이지 앱 설정에 화면 모드 선택 추가
+
+### 검증
+
+- `npm run build` 통과
+
+### 남은 작업
+
+- 이번 작업은 전역 테마 기반과 핵심 쉘 동기화다. 아직 각 페이지 내부에 남아 있는 인라인 하드코딩 색상은 화면별로 점진적으로 `var(--theme-*)` 토큰으로 전환해야 한다.
+- 특히 홈/일정/가계부/공간 상세 화면의 카드 배경과 텍스트 색상은 후속 정리가 필요하다.

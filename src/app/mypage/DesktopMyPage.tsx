@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { ThemeModeSelector } from '@/components/ui/ThemeModeSelector';
 import type { NotificationSettings } from '@/types';
 
 // ── 아이콘 헬퍼 ──
@@ -46,14 +47,14 @@ function SettingRow({ icon, label, description, value, isToggle, toggled, onTogg
       </div>
       <div style={{ flex: 1 }}>
         <h4 style={{ fontSize: '15px', fontWeight: 800, color: danger ? '#EF4444' : '#1A1B2E', margin: '0 0 2px' }}>{label}</h4>
-        {description && <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{description}</p>}
+        {description && <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{description}</p>}
       </div>
       {isToggle ? (
         <div style={{ width: '50px', height: '28px', borderRadius: '999px', position: 'relative', background: toggled ? '#0084CC' : '#E5E5EA', transition: 'background 0.3s', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: '3px', width: '22px', height: '22px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left 0.3s', left: toggled ? '25px' : '3px' }} />
+          <div style={{ position: 'absolute', top: '3px', width: '22px', height: '22px', background: 'var(--theme-surface)', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left 0.3s', left: toggled ? '25px' : '3px' }} />
         </div>
       ) : value ? (
-        <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', background: '#F5F5F9', padding: '5px 12px', borderRadius: '999px', flexShrink: 0 }}>{value}</span>
+        <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', background: 'var(--theme-surface-muted)', padding: '5px 12px', borderRadius: '999px', flexShrink: 0 }}>{value}</span>
       ) : (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
           <path d="M9 18L15 12L9 6" stroke="#D0D0D0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -158,7 +159,7 @@ export function DesktopMyPage({
                     style={{
                       position: 'absolute', bottom: '-6px', right: '-6px',
                       width: '32px', height: '32px', borderRadius: '50%',
-                      background: 'white', color: '#1A1B2E', border: 'none', cursor: 'pointer',
+                      background: 'var(--theme-surface)', color: 'var(--theme-text)', border: 'none', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.15)', transition: 'transform 0.2s',
                     }}
@@ -191,14 +192,14 @@ export function DesktopMyPage({
 
           {/* 프리미엄 혜택 카드 */}
           <div style={{
-            background: 'white', borderRadius: '24px', padding: '22px',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
+            background: 'var(--theme-surface)', borderRadius: '24px', padding: '22px',
+            boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span style={{ fontSize: '20px' }}>💎</span>
-              <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>프리미엄 혜택</p>
+              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>프리미엄 혜택</p>
             </div>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.65, margin: 0 }}>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, lineHeight: 1.65, margin: 0 }}>
               글리움 프리미엄 사용 중입니다. 무제한 공간 생성과 고화질 파일 첨부 기능을 이용할 수 있습니다.
             </p>
           </div>
@@ -208,17 +209,36 @@ export function DesktopMyPage({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* 앱 설정 */}
-          <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
-            <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
-              <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>앱 설정</p>
+          <div style={{ background: 'var(--theme-surface)', borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)' }}>
+            <div style={{ padding: '18px 24px', background: 'var(--theme-surface-muted)', borderBottom: '1px solid var(--theme-border)' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>앱 설정</p>
             </div>
+            <div style={{ padding: '18px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '44px', height: '44px', borderRadius: '15px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  background: 'rgba(0,132,204,0.07)',
+                }}>
+                  <Icon d="M12 3v2 M12 19v2 M5.64 5.64l1.41 1.41 M16.95 16.95l1.41 1.41 M3 12h2 M19 12h2 M5.64 18.36l1.41-1.41 M16.95 7.05l1.41-1.41 M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke="#0084CC" />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>화면 모드</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
+                    PC·모바일 웹·앱 화면을 같은 기준으로 표시합니다.
+                  </p>
+                </div>
+              </div>
+              <ThemeModeSelector />
+            </div>
+            <div style={{ height: '1px', background: 'var(--theme-border)', margin: '0 24px' }} />
             <SettingRow
               icon={<Icon d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" stroke="#0084CC" />}
               label="홈 레이아웃"
               description="홈 화면의 구성과 우선 표시 항목을 선택합니다."
               href="/settings/home-layout"
             />
-            <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+            <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
             <SettingRow
               icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0084CC" />}
               label="캘린더 설정"
@@ -228,9 +248,9 @@ export function DesktopMyPage({
           </div>
 
           {/* 계정 및 보안 */}
-          <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
-            <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
-              <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>계정 및 보안</p>
+          <div style={{ background: 'var(--theme-surface)', borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)' }}>
+            <div style={{ padding: '18px 24px', background: 'var(--theme-surface-muted)', borderBottom: '1px solid var(--theme-border)' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>계정 및 보안</p>
             </div>
             <div style={{ divideY: '1px solid #F7F7FA' } as any}>
               <SettingRow
@@ -241,7 +261,7 @@ export function DesktopMyPage({
               />
               {biometricAvailable && (
                 <>
-                  <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+                  <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
                   <SettingRow
                     icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4" stroke="#0084CC" />}
                     label="생체인증 앱 잠금"
@@ -254,7 +274,7 @@ export function DesktopMyPage({
                   />
                 </>
               )}
-              <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+              <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
               <SettingRow
                 icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />}
                 label="공간(Space) 관리"
@@ -265,9 +285,9 @@ export function DesktopMyPage({
           </div>
 
           {/* 알림 설정 */}
-          <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>
-            <div style={{ padding: '18px 24px', background: '#FAFAFA', borderBottom: '1px solid #F5F5F9' }}>
-              <p style={{ fontSize: '11px', fontWeight: 800, color: '#AEAEA8', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>서비스 연동 및 알림</p>
+          <div style={{ background: 'var(--theme-surface)', borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)' }}>
+            <div style={{ padding: '18px 24px', background: 'var(--theme-surface-muted)', borderBottom: '1px solid var(--theme-border)' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>서비스 연동 및 알림</p>
             </div>
             <SettingRow
               icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" stroke="#1A1B2E" />}
@@ -277,7 +297,7 @@ export function DesktopMyPage({
               toggled={notifSettings.scheduleReminders}
               onToggle={() => handleToggle('scheduleReminders')}
             />
-            <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+            <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
             <SettingRow
               icon={<Icon d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M21 21l-4.35-4.35" stroke="#1A1B2E" />}
               label="가계부 스마트 리포트"
@@ -292,7 +312,7 @@ export function DesktopMyPage({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
             <button
               onClick={() => setShowDeleteModal(true)}
-              style={{ fontSize: '13px', fontWeight: 700, color: '#AEAEA8', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+              style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
             >
               회원탈퇴
             </button>

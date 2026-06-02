@@ -11,7 +11,7 @@ const NAV_ITEMS = [
     label: '홈',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
+        stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
@@ -23,7 +23,7 @@ const NAV_ITEMS = [
     label: '일정',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
+        stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <rect width="18" height="18" x="3" y="4" rx="2"/>
         <line x1="16" x2="16" y1="2" y2="6"/>
@@ -37,7 +37,7 @@ const NAV_ITEMS = [
     label: '공간',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
+        stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
@@ -51,7 +51,7 @@ const NAV_ITEMS = [
     label: '가계부',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
+        stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <rect width="20" height="14" x="2" y="5" rx="2"/>
         <line x1="2" x2="22" y1="10" y2="10"/>
@@ -63,7 +63,7 @@ const NAV_ITEMS = [
     label: '전체',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke={active ? '#0084CC' : '#AEAEB2'} strokeWidth="2.2"
+        stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2.2"
         strokeLinecap="round" strokeLinejoin="round">
         <line x1="3" y1="6" x2="21" y2="6"/>
         <line x1="3" y1="12" x2="21" y2="12"/>
@@ -95,8 +95,8 @@ export function BottomNav() {
           left: 0,
           right: 0,
           zIndex: 9999,
-          background: '#FFFFFF',
-          borderTop: '1px solid rgba(0,0,0,0.07)',
+          background: 'var(--theme-surface)',
+          borderTop: '1px solid var(--theme-border)',
           /* safe-area 포함해 물리 화면 끝까지 흰 배경 확장 */
           paddingBottom: 'env(safe-area-inset-bottom)',
           boxShadow: '0 -1px 8px rgba(0,0,0,0.05)',
@@ -143,7 +143,7 @@ export function BottomNav() {
                     width: '28px',
                     height: '2.5px',
                     borderRadius: '0 0 3px 3px',
-                    background: '#0084CC',
+                    background: 'var(--color-primary)',
                   }} />
                 )}
 
@@ -152,7 +152,7 @@ export function BottomNav() {
                 <span style={{
                   fontSize: '10px',
                   fontWeight: active ? 700 : 500,
-                  color: active ? '#0084CC' : '#AEAEB2',
+                  color: active ? 'var(--color-primary)' : 'var(--theme-text-subtle)',
                   letterSpacing: '-0.2px',
                   lineHeight: 1,
                 }}>

@@ -71,9 +71,10 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-body);
   color: var(--color-ink);
-  background-color: var(--color-canvas-parchment);
+  background-color: var(--theme-bg);
   line-height: 1.47;
   letter-spacing: -0.374px;
+  transition: background-color 0.22s ease, color 0.22s ease;
 }
 
 /* ── 모바일 앱 셸 ── */
@@ -102,7 +103,7 @@ body {
     height: -webkit-fill-available;
     overflow: hidden;
     /* nav bar 색상과 일치 — safe area 갭이 생겨도 흰색으로 통일 */
-    background: #FFFFFF;
+    background: var(--theme-bg);
   }
   #app-shell {
     height: 100%;
@@ -124,7 +125,7 @@ body {
     left: 0;
     right: 0;
     height: env(safe-area-inset-bottom);
-    background: #FFFFFF;
+    background: var(--theme-bg);
     z-index: 9998;
     pointer-events: none;
   }
@@ -165,7 +166,7 @@ body {
 /* 데스크톱: 메쉬 그라디언트 배경 */
 @media (min-width: 1024px) {
   body {
-    background: #FAFAFD;
+    background: var(--theme-bg);
   }
 }
 
@@ -256,7 +257,7 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-color: #FAFAFD;
+  background-color: var(--theme-bg);
   overflow: hidden;
   pointer-events: none;
 }
@@ -264,7 +265,7 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
 .mesh-blob {
   position: absolute;
   filter: blur(90px);
-  opacity: 0.5;
+  opacity: var(--theme-mesh-opacity);
   border-radius: 50%;
   /* 모바일: GPU 부하 줄이기 위해 애니메이션 비활성화 */
 }
@@ -287,11 +288,11 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
 
 /* ── 글래스모피즘 (Glassmorphism) ── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--theme-surface-glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 8px 32px rgba(0, 132, 204, 0.08);
+  border: 1px solid var(--theme-border);
+  box-shadow: var(--theme-shadow-card);
 }
 
 /* ── 애니메이션 (Figma 리뉴얼) ── */
@@ -322,9 +323,9 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── 카드 그림자 (Figma 리뉴얼) ── */
-.shadow-card  { box-shadow: 0 8px 30px rgba(0,132,204,0.06); }
+.shadow-card  { box-shadow: var(--theme-shadow-card); }
 .shadow-fab   { box-shadow: 0 8px 24px rgba(12,201,181,0.40); }
-.shadow-modal { box-shadow: 0 -10px 40px rgba(0,0,0,0.10); }
+.shadow-modal { box-shadow: var(--theme-shadow-modal); }
 
 /* ── 앱 셸 위 콘텐츠가 z-index 1 이상이어야 블롭 위에 뜸 ── */
 #app-shell > * { position: relative; z-index: 1; }
@@ -375,4 +376,3 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
     pointer-events: none;
   }
 }
-

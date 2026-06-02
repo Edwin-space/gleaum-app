@@ -655,3 +655,16 @@ npm run cap:open:android # Android Studio 열기
 - [x] 앱 실행 및 백그라운드 복귀 시 잠금 해제 인증 처리
 - [x] 웹 브라우저에서는 비활성화하고 네이티브 앱에서만 동작하도록 분리
 - [x] `npm run build`, Android Debug 빌드, iOS Simulator Debug 빌드 통과
+
+---
+
+## PC/Mobile Web/Native WebView 테마 동기화 기반 (완료 — 2026-06-02)
+
+- [x] `자동/라이트/다크` 테마 모드 추가
+- [x] 시스템 환경 설정(`prefers-color-scheme`) 기반 자동 전환 지원
+- [x] 라이트 모드 기본 배경을 흰색 중심으로 정리
+- [x] 다크 모드용 전역 배경/텍스트/서피스/네비게이션 토큰 추가
+- [x] PC 사이드바, 모바일 하단 네비게이션, 마이페이지 설정 영역을 테마 토큰 기반으로 보정
+- [x] 마이페이지 앱 설정에 화면 모드 선택 UI 추가
+- [x] 초기 렌더링 시 테마 깜빡임을 줄이는 head 초기화 스크립트 추가
+- [x] `npm run build` 통과

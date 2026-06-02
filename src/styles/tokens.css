@@ -57,6 +57,24 @@
   --color-status-done:       #2EE895;   /* 완료 — Brand Green */
   --color-status-missed:     #EF4444;   /* 미완료 */
 
+  /* ── 테마 토큰: PC/Mobile Web/Native WebView 공통 ── */
+  color-scheme: light;
+  --theme-bg:              #FFFFFF;
+  --theme-bg-soft:         #FFFFFF;
+  --theme-surface:         #FFFFFF;
+  --theme-surface-muted:   #F7F8FB;
+  --theme-surface-glass:   rgba(255,255,255,0.78);
+  --theme-selected-bg:     rgba(0,132,204,0.08);
+  --theme-text:            #1A1B2E;
+  --theme-text-muted:      #6E6E66;
+  --theme-text-subtle:     #8E8E93;
+  --theme-border:          rgba(26,27,46,0.08);
+  --theme-border-strong:   rgba(26,27,46,0.14);
+  --theme-nav-bg:          rgba(255,255,255,0.92);
+  --theme-shadow-card:     0 8px 32px rgba(0,132,204,0.08);
+  --theme-shadow-modal:    0 18px 64px rgba(15,26,46,0.16);
+  --theme-mesh-opacity:    0.10;
+
   /* ── 타이포그래피 (Premium Typography) ── */
   /* --font-outfit: next/font이 <body>에 주입하는 CSS 변수 */
   --font-display:  var(--font-outfit, 'Outfit'), 'Pretendard Variable', system-ui, -apple-system, sans-serif;
@@ -98,4 +116,33 @@
   --radius-app-icon:  22px;
   --bottom-nav-height: 64px;
   --header-height:     56px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-canvas:           #0F172A;
+  --color-canvas-parchment: #0F172A;
+  --color-surface-pearl:    #111827;
+  --color-ink:              #F8FAFC;
+  --color-ink-muted-80:     #E5E7EB;
+  --color-ink-muted-48:     #A7B0C0;
+  --color-body-muted:       #7D8796;
+  --color-hairline:         rgba(255,255,255,0.10);
+  --color-divider-soft:     rgba(255,255,255,0.08);
+
+  --theme-bg:              #0F172A;
+  --theme-bg-soft:         #111827;
+  --theme-surface:         #151D2F;
+  --theme-surface-muted:   #1D2638;
+  --theme-surface-glass:   rgba(21,29,47,0.78);
+  --theme-selected-bg:     rgba(12,201,181,0.14);
+  --theme-text:            #F8FAFC;
+  --theme-text-muted:      #CBD5E1;
+  --theme-text-subtle:     #94A3B8;
+  --theme-border:          rgba(255,255,255,0.10);
+  --theme-border-strong:   rgba(255,255,255,0.16);
+  --theme-nav-bg:          rgba(15,23,42,0.92);
+  --theme-shadow-card:     0 14px 44px rgba(0,0,0,0.28);
+  --theme-shadow-modal:    0 24px 80px rgba(0,0,0,0.48);
+  --theme-mesh-opacity:    0.16;
 }
