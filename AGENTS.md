@@ -38,16 +38,58 @@ UI 작업 전 반드시 아래 두 파일을 읽으세요:
 
 ## 최신 상태 확인
 - 작업 시작 시 `git log --oneline -5`와 `git status -sb`로 실제 최신 커밋/미커밋 변경을 먼저 확인하세요.
-- 2026-05-29 기준 최신 커밋: `34dbb4b` — Supabase SQL 실행 가이드 문서화
+- 2026-06-01 기준 최신 커밋: `273e71c` — iOS 로그아웃 딥링크 폴백
+
+## 2026-06-01 주요 변경 사항 (메인 앱)
+
+### Android 네이티브 로그인 시스템 구현
+- `android/.../SplashActivity.kt` — 커스텀 스플래시 화면 (검정 배경, 브랜딩)
+- `android/.../RouterActivity.kt` — 세션 체크 후 Login/Main 분기 (런처)
+- `android/.../LoginActivity.kt` — 네이티브 로그인 UI + Google OAuth (브라우저 방식)
+- `android/.../SessionManager.kt` — SharedPreferences 세션 저장/조회
+- `android/.../NativeSessionPlugin.kt` — Capacitor 브리지 (saveSession/getSession/logout)
+- `android/.../NativeAdPlugin.kt` — AdMob 네이티브 광고 Capacitor 브리지
+- `src/lib/native-session.ts` — JS 측 NativeSession 인터페이스
+- `src/lib/native-ad.ts` — JS 측 NativeAd 인터페이스
+
+### iOS 네이티브 로그인 시스템 구현
+- `ios/App/App/SessionManager.swift` — UserDefaults 세션 저장/조회
+- `ios/App/App/NativeSessionPlugin.swift` — Capacitor 브리지 (iOS)
+- `ios/App/App/LoginViewController.swift` — 네이티브 로그인 UI + SFSafariViewController OAuth
+- `ios/App/App/AppDelegate.swift` — 세션 체크 + OAuth 콜백 직접 파싱 + 로그아웃 처리
+- `ios/App/App/Base.lproj/LaunchScreen.storyboard` — 브랜딩 스플래시 업데이트
+
+### 광고 시스템
+- `src/components/AdSlot.tsx` — 웹/앱 플랫폼 자동 분리 (웹→AdSense, 앱→null)
+- `src/components/SaveAdSheet.tsx` — 저장 후 바텀시트 광고 (웹→AdSense, 앱→AdMob)
+- `src/components/InlineFeedAd.tsx` — 홈피드 AdMob 네이티브 광고
+- `src/lib/admob.ts` — 테스트 기기 해시 추가, 광고 단위 수정
+- `src/lib/native-ad.ts` — AdMob 네이티브 광고 JS 인터페이스
+- `public/app-ads.txt` — AdMob 인벤토리 승인
+
+### NativeAppProvider 핵심 수정
+- OAuth fragment(`#`) 파라미터 파싱 수정 (implicit flow)
+- closeBrowser() 에러 무시 (iOS SFSafariViewController 자동 닫힘)
+- SIGNED_OUT 시 gleaum://logout 딥링크 폴백 (iOS 로그아웃)
+- 로그아웃 시 웹 /login 대신 네이티브 화면으로 전환
+
+### 기타 수정
+- `src/hooks/useAuth.ts` — 네이티브 앱에서 /login 리다이렉트 제거
+- `src/components/landing/RootPageRouter.tsx` — 앱은 /home으로, 웹은 /login으로
+- `src/app/mypage/page.tsx` — 회원탈퇴 후 네이티브 logout 처리
+- `next.config.ts` — Supabase Storage 이미지 도메인 허용
+- `supabase/migrations/014_ad_platforms.sql` (**실행 완료**)
+
+### Android 빌드 설정
+- `android/app/src/main/res/values/strings.xml` — Supabase anon key, Google Web Client ID 설정
+- `android/app/google-services.json` — 디버그/릴리즈 SHA-1 등록 완료
+- AdMob 테스트 기기: 갤럭시 (`aef92330-b493-41e8-85b1-a50a76dbb7bd`), iOS 등록 완료
 
 ## 2026-05-29 주요 변경 사항 (메인 앱)
-- `src/app/api/invite/info/route.ts` — `purpose` 필드가 `family_groups.settings` JSONB에 저장됨 (직접 컬럼 아님) 버그 수정
-- `src/components/NativeAppProvider.tsx` — Universal Link(`https://gleaum.com/*`) + 커스텀 스킴(`gleaum://`) 통합 핸들러 추가
-- `src/app/.well-known/apple-app-site-association/route.ts` — iOS Universal Link AASA 파일 App Router 라우트로 신규 생성
-- `src/app/.well-known/assetlinks.json/route.ts` — Android App Link SHA256 fingerprint 오류 수정
-- `src/components/AdSlot.tsx` — 4xx/5xx 에러 시 AdSense 폴백 처리 수정
-- `supabase/migrations/013_ad_system.sql` — 광고 시스템 테이블/RLS/함수 (**Supabase에서 실행 완료**)
-- `supabase/migrations/014_ad_platforms.sql` — platforms 컬럼 + get_active_ad RPC 보정 (**Supabase에서 실행 완료**)
+- `src/app/api/invite/info/route.ts` — `purpose` 필드가 `family_groups.settings` JSONB에 저장됨 버그 수정
+- `src/components/NativeAppProvider.tsx` — Universal Link + 커스텀 스킴 통합 핸들러
+- `supabase/migrations/013_ad_system.sql` — 광고 시스템 (**Supabase에서 실행 완료**)
+- `supabase/migrations/014_ad_platforms.sql` — platforms 컬럼 (**Supabase에서 실행 완료**)
 
 ## 상세 문서 위치
 - `/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/docs/`

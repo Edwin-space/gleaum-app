@@ -5,6 +5,20 @@
 
 ---
 
+## ✅ 실행 완료 현황 (2026-06-01 기준)
+
+| 항목 | 상태 |
+|------|------|
+| `013_ad_system.sql` | ✅ 실행 완료 |
+| `014_ad_platforms.sql` | ✅ 실행 완료 |
+| `is_admin = true` 관리자 설정 | ✅ 완료 |
+| `ad-images` Storage 버킷 + 정책 | ✅ 완료 |
+| `schedules.expense_category` CHECK 확장 | ✅ 완료 |
+| `ad_slots` RLS 정책 재생성 | ✅ 완료 |
+| `save-prompt` 슬롯 추가 | ✅ 완료 |
+
+---
+
 ## 🚀 빠른 시작 — 처음 설정하는 경우
 
 아래 순서대로 SQL Editor에 붙여넣고 **Run** 버튼을 클릭하세요.
@@ -13,6 +27,24 @@
 ① 013_ad_system.sql      (광고 시스템 테이블/함수/RLS 생성)
 ② 014_ad_platforms.sql   (platforms 컬럼 + RPC 파라미터 보정)
 ③ 관리자 계정 is_admin 설정  (백오피스 로그인 계정에 권한 부여)
+④ expense_category CHECK 확장 (food/daily 등 추가)
+```
+
+## ④ expense_category CHECK 확장 (신규)
+
+지출 카테고리 추가로 기존 CHECK 제약이 위반되는 문제 수정:
+
+```sql
+ALTER TABLE schedules
+DROP CONSTRAINT IF EXISTS schedules_expense_category_check;
+
+ALTER TABLE schedules
+ADD CONSTRAINT schedules_expense_category_check
+CHECK (expense_category IN (
+  'education', 'housing', 'utility', 'insurance', 'subscription',
+  'food', 'daily', 'fashion', 'transport', 'culture', 'medical', 'social',
+  'other'
+));
 ```
 
 ---
