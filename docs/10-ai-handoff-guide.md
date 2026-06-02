@@ -769,3 +769,43 @@ Android 네이티브 로그인은 Supabase implicit OAuth(`gleaum://auth/callbac
 - Google Play에 이미 올라간 빌드에는 이 수정이 포함되어 있지 않으므로 새 Android 빌드를 생성해 배포해야 한다.
 - 배포 전 `android/app/build.gradle`의 `versionCode`/`versionName`이 Play Console 기준으로 증가되어 있는지 확인할 것.
 - 실제 단말에서 Google 로그인 후 `/login`으로 돌아가지 않고 `/home` 또는 온보딩 미완료 시 `/onboarding`으로 이동하는지 확인할 것.
+
+---
+
+## 2026-06-02 Codex 인수인계 — 네이티브 생체인증 앱 잠금 추가
+
+### 목적
+
+글리움 앱에서 개인 일정, 공간 데이터, 가계부 정보가 노출되지 않도록 Android 지문/기기 잠금, iOS Face ID/Touch ID 기반 앱 잠금 기능을 추가했다. 설정은 계정 단위가 아니라 기기별 로컬 설정으로 저장한다.
+
+### 구현 범위
+
+- 신규 사용자: 온보딩 마지막 단계에 `앱 잠금 설정` 단계 추가
+- 기존 사용자: 네이티브 앱 첫 진입 시 1회 생체인증 잠금 제안 모달 표시
+- 마이페이지: `계정 & 보안` 영역에서 생체인증 앱 잠금 토글 제공
+- 앱 실행/백그라운드 복귀: 잠금이 켜져 있으면 생체인증 또는 기기 잠금 인증 요구
+- 웹 브라우저: 기능 비활성. 네이티브 앱에서만 동작
+
+### 수정 파일
+
+- `android/app/src/main/java/com/gleaum/app/NativeBiometricPlugin.kt` — Android framework `BiometricPrompt` 기반 인증 브리지
+- `android/app/src/main/java/com/gleaum/app/MainActivity.kt` — `NativeBiometricPlugin` 등록
+- `android/app/src/main/AndroidManifest.xml` — `USE_BIOMETRIC`, `USE_FINGERPRINT`, optional fingerprint feature 선언
+- `ios/App/App/NativeBiometricPlugin.swift` — iOS `LocalAuthentication` 기반 Face ID/Touch ID 브리지
+- `ios/App/Gleaum.xcodeproj/project.pbxproj` — iOS 신규 Swift 파일 타겟 포함
+- `src/lib/native-biometric.ts` — JS 측 Capacitor 브리지 + 기기별 로컬 설정 래퍼
+- `src/components/NativeBiometricGate.tsx` — 앱 잠금 오버레이, 기존 사용자 1회 제안, 앱 복귀 인증 처리
+- `src/app/layout.tsx` — 전역 `NativeBiometricGate` 삽입
+- `src/app/onboarding/page.tsx` — 온보딩 마지막 보안 설정 단계 추가
+- `src/app/mypage/page.tsx`, `src/app/mypage/MobileMyPage.tsx`, `src/app/mypage/DesktopMyPage.tsx` — 마이페이지 생체인증 토글 추가
+
+### 검증
+
+- `npm run build` 통과
+- `cd android && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew :app:assembleDebug --quiet` 통과
+- `xcodebuild -project ios/App/Gleaum.xcodeproj -scheme Gleaum -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build` 통과
+
+### 주의사항
+
+- 실제 생체인증 UX는 빌드 통과만으로 완전히 검증되지 않는다. Android 실기기 지문 등록 상태, iPhone Face ID/Touch ID 등록 상태에서 최종 확인해야 한다.
+- 이 기능은 앱 잠금 UX이며, 현재 세션 저장소 자체를 Android Keystore / iOS Keychain으로 암호화 이전한 것은 아니다. 다음 보안 고도화 단계는 네이티브 세션 저장소 강화다.

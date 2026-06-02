@@ -38,6 +38,10 @@ interface MobileMyPageProps {
   setShowAvatarEditor?: (v: boolean) => void;
   setShowPasswordModal: (v: boolean) => void;
   setShowDeleteModal: (v: boolean) => void;
+  biometricLockEnabled?: boolean;
+  biometricAvailable?: boolean;
+  savingBiometric?: boolean;
+  handleBiometricToggle?: () => void;
 }
 
 function Toggle({ toggled, onToggle }: { toggled: boolean; onToggle: () => void }) {
@@ -160,6 +164,10 @@ export function MobileMyPage({
   setShowAvatarEditor,
   setShowPasswordModal,
   setShowDeleteModal,
+  biometricLockEnabled = false,
+  biometricAvailable = false,
+  savingBiometric = false,
+  handleBiometricToggle,
 }: MobileMyPageProps) {
   const router = useRouter();
 
@@ -582,6 +590,31 @@ export function MobileMyPage({
                 </IconBox>
               }
             />
+            {biometricAvailable && (
+              <>
+                <MenuDivider />
+                <MenuItem
+                  label="생체인증 앱 잠금"
+                  sub="앱을 열 때 지문 또는 Face ID로 보호"
+                  icon={
+                    <IconBox bg="rgba(0,132,204,0.09)">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                      </svg>
+                    </IconBox>
+                  }
+                  right={
+                    <Toggle
+                      toggled={biometricLockEnabled}
+                      onToggle={() => {
+                        if (!savingBiometric) handleBiometricToggle?.();
+                      }}
+                    />
+                  }
+                />
+              </>
+            )}
             <MenuDivider />
             <MenuItem
               label="Apple 로그인"

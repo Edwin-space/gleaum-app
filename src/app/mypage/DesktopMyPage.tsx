@@ -74,6 +74,10 @@ interface DesktopMyPageProps {
   setShowEditModal: (v: boolean) => void;
   setShowPasswordModal: (v: boolean) => void;
   setShowDeleteModal: (v: boolean) => void;
+  biometricLockEnabled?: boolean;
+  biometricAvailable?: boolean;
+  savingBiometric?: boolean;
+  handleBiometricToggle?: () => void;
 }
 
 export function DesktopMyPage({
@@ -85,6 +89,10 @@ export function DesktopMyPage({
   setShowEditModal,
   setShowPasswordModal,
   setShowDeleteModal,
+  biometricLockEnabled = false,
+  biometricAvailable = false,
+  savingBiometric = false,
+  handleBiometricToggle,
 }: DesktopMyPageProps) {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -231,6 +239,21 @@ export function DesktopMyPage({
                 description="이메일 로그인을 위한 보안 비밀번호를 설정하거나 변경합니다."
                 onClick={() => setShowPasswordModal(true)}
               />
+              {biometricAvailable && (
+                <>
+                  <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
+                  <SettingRow
+                    icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4" stroke="#0084CC" />}
+                    label="생체인증 앱 잠금"
+                    description="앱 실행 또는 복귀 시 지문, Face ID, 기기 잠금으로 보호합니다."
+                    isToggle
+                    toggled={biometricLockEnabled}
+                    onToggle={() => {
+                      if (!savingBiometric) handleBiometricToggle?.();
+                    }}
+                  />
+                </>
+              )}
               <div style={{ height: '1px', background: '#F7F7FA', margin: '0 24px' }} />
               <SettingRow
                 icon={<Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="#0084CC" />}

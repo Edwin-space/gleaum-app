@@ -124,6 +124,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <!-- 카메라 & 사진 — 프로필 아바타 업로드, 일정 사진 첨부 -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -142,5 +144,7 @@
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <!-- 카메라 하드웨어 없어도 설치 가능 (선택 기능) -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- 생체인증은 선택 기능. 없는 기기는 기기 잠금/설정 미노출로 처리 -->
+    <uses-feature android:name="android.hardware.fingerprint" android:required="false" />
 
 </manifest>

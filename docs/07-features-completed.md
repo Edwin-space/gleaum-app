@@ -642,3 +642,16 @@ npm run cap:open:android # Android Studio 열기
 - [x] `MainActivity`에도 동일한 저장 로직을 추가해 딥링크 재진입/이벤트 유실 케이스 방어
 - [x] `NativeAppProvider`의 implicit OAuth 처리 분기도 `NativeSession.saveSession()`을 호출하도록 보정
 - [x] `npm run build`, Android `:app:assembleDebug` 통과
+
+---
+
+## 네이티브 생체인증 앱 잠금 (완료 — 2026-06-02)
+
+- [x] Android 지문/기기 잠금 인증 브리지 추가
+- [x] iOS Face ID/Touch ID 인증 브리지 추가
+- [x] 온보딩 마지막 단계에 신규 사용자용 보안 설정 추가
+- [x] 기존 사용자 대상 네이티브 앱 첫 진입 1회 생체인증 제안 모달 추가
+- [x] 마이페이지 계정/보안 영역에서 생체인증 앱 잠금 토글 제공
+- [x] 앱 실행 및 백그라운드 복귀 시 잠금 해제 인증 처리
+- [x] 웹 브라우저에서는 비활성화하고 네이티브 앱에서만 동작하도록 분리
+- [x] `npm run build`, Android Debug 빌드, iOS Simulator Debug 빌드 통과

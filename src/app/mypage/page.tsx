@@ -8,6 +8,13 @@ import { updateMyProfile, updateNotificationSettings, getMyPageInsights } from '
 import { profileToast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { isNativeApp } from '@/lib/native';
+import {
+  authenticateForAppUnlock,
+  getBiometricAvailability,
+  isBiometricLockEnabled,
+  setBiometricLockEnabled,
+  type NativeBiometricAvailability,
+} from '@/lib/native-biometric';
 import type { NotificationSettings } from '@/types';
 
 import { MobileMyPage } from './MobileMyPage';
@@ -31,6 +38,12 @@ export default function MyPage() {
   const [insights, setInsights] = useState<{ totalExpense: number; upcomingCount: number; memberCount: number; month: number } | null>(null);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIF);
   const [savingNotif, setSavingNotif] = useState(false);
+  const [biometricAvailability, setBiometricAvailability] = useState<NativeBiometricAvailability>({
+    available: false,
+    biometryType: 'none',
+  });
+  const [biometricLockEnabled, setBiometricLockEnabledState] = useState(false);
+  const [savingBiometric, setSavingBiometric] = useState(false);
 
   const [showEditModal, setShowEditModal]   = useState(false);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
@@ -76,12 +89,59 @@ export default function MyPage() {
     }
   }, [profile?.id, user?.id, familyGroupId, fetchWithdrawalStatus]);
 
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    let mounted = true;
+    async function loadBiometricState() {
+      const [availability, enabled] = await Promise.all([
+        getBiometricAvailability(),
+        isBiometricLockEnabled(),
+      ]);
+      if (!mounted) return;
+      setBiometricAvailability(availability);
+      setBiometricLockEnabledState(enabled);
+    }
+    void loadBiometricState();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const handleToggle = async (key: keyof NotificationSettings) => {
     const updated = { ...notifSettings, [key]: !notifSettings[key] };
     setNotifSettings(updated);
     setSavingNotif(true);
     await updateNotificationSettings(updated);
     setSavingNotif(false);
+  };
+
+  const handleBiometricToggle = async () => {
+    if (!isNativeApp()) return;
+    setSavingBiometric(true);
+    try {
+      if (biometricLockEnabled) {
+        await setBiometricLockEnabled(false);
+        setBiometricLockEnabledState(false);
+        return;
+      }
+
+      const availability = await getBiometricAvailability();
+      setBiometricAvailability(availability);
+      if (!availability.available) {
+        alert('이 기기에서는 생체인증 또는 기기 잠금을 사용할 수 없습니다. 휴대폰 설정을 확인해 주세요.');
+        return;
+      }
+
+      const ok = await authenticateForAppUnlock('앞으로 글리움 앱을 열 때 생체인증으로 보호합니다.');
+      if (!ok) {
+        alert('인증이 완료되어야 생체인증 잠금을 켤 수 있습니다.');
+        return;
+      }
+      await setBiometricLockEnabled(true);
+      setBiometricLockEnabledState(true);
+    } finally {
+      setSavingBiometric(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -183,6 +243,10 @@ export default function MyPage() {
     setShowAvatarEditor,
     setShowPasswordModal,
     setShowDeleteModal,
+    biometricLockEnabled,
+    biometricAvailable: isNativeApp() && biometricAvailability.available,
+    savingBiometric,
+    handleBiometricToggle,
   };
 
   return (

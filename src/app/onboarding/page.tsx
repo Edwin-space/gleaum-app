@@ -6,6 +6,13 @@ import { GleaumAppIcon } from '@/components/ui/GleaumLogo';
 import { completeOnboarding, createSpace, createPersonalSpace, joinSpaceByCode } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { trackEvent } from '@/lib/analytics';
+import {
+  authenticateForAppUnlock,
+  getBiometricAvailability,
+  setBiometricLockEnabled,
+  type NativeBiometricAvailability,
+} from '@/lib/native-biometric';
+import { getNativePlatform, isNativeApp } from '@/lib/native';
 import type {
   HomeLayoutPreference,
   NameDisplayMode,
@@ -46,6 +53,7 @@ const steps = [
   { title: '공간의 성격',             eyebrow: '04  공간 성격', desc: '누구와 함께 사용할지 선택하세요.' },
   { title: '공간 설정',               eyebrow: '05  공간 설정', desc: '새 공간을 만들거나 코드로 참여하세요.' },
   { title: '알림 설정',               eyebrow: '06  알림',      desc: '중요한 일정을 놓치지 않도록 도와드릴게요.' },
+  { title: '앱 잠금 설정',            eyebrow: '07  보안',      desc: '이 기기에서 글리움을 한 번 더 안전하게 보호할 수 있어요.' },
 ] as const;
 
 function modulesForGoal(goal: OnboardingPrimaryGoal): OnboardingPreferences['enabledModules'] {
@@ -233,6 +241,13 @@ export default function OnboardingPage() {
     expenseReminders: true,
     spaceUpdates: true,
   });
+  const [biometricAvailability, setBiometricAvailability] = useState<NativeBiometricAvailability>({
+    available: false,
+    biometryType: 'none',
+  });
+  const [biometricLock, setBiometricLock] = useState(false);
+  const [checkingBiometric, setCheckingBiometric] = useState(false);
+  const [biometricError, setBiometricError] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -252,6 +267,11 @@ export default function OnboardingPage() {
     }, 2500);
     return () => clearTimeout(timer);
   }, [profile, router, user]);
+
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    getBiometricAvailability().then(setBiometricAvailability).catch(() => {});
+  }, []);
 
   const suggestedDisplayName = user?.displayName ?? user?.name ?? user?.email.split('@')[0] ?? '사용자';
   const effectiveDisplayName = hasEditedName ? displayName : suggestedDisplayName;
@@ -300,6 +320,29 @@ export default function OnboardingPage() {
     setHomeLayout(key);
   }, []);
 
+  const handleBiometricToggle = async (enabled: boolean) => {
+    setBiometricError('');
+    if (!enabled) {
+      setBiometricLock(false);
+      return;
+    }
+    if (!biometricAvailability.available) {
+      setBiometricError('이 기기에서는 생체인증 또는 기기 잠금을 사용할 수 없어요.');
+      return;
+    }
+
+    setCheckingBiometric(true);
+    const ok = await authenticateForAppUnlock('앞으로 글리움 앱을 열 때 생체인증으로 보호합니다.');
+    setCheckingBiometric(false);
+
+    if (ok) {
+      await setBiometricLockEnabled(true);
+      setBiometricLock(true);
+    } else {
+      setBiometricError('인증이 완료되어야 앱 잠금을 켤 수 있어요.');
+    }
+  };
+
   const handleSubmit = async () => {
     setError(null);
     setSaving(true);
@@ -336,6 +379,9 @@ export default function OnboardingPage() {
     setSaving(false);
 
     if (ok) {
+      if (isNativeApp() && biometricAvailability.available && !biometricLock) {
+        await setBiometricLockEnabled(false);
+      }
       const eventGoal        = goal ?? 'personal_schedule';
       const eventSpaceIntent = (spaceIntent.length > 0 ? spaceIntent[0] : 'solo') as string;
       // GA4 추천 이벤트 (tutorial_complete) + 글리움 커스텀 이벤트 동시 발송
@@ -927,6 +973,115 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Step 6: 보안 ── */}
+        {step === 6 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(0,132,204,0.10), rgba(12,201,181,0.10))',
+              borderRadius: '24px',
+              border: '1.5px solid rgba(0,132,204,0.12)',
+              padding: '24px',
+              textAlign: 'center',
+            }}>
+              <div style={{
+                width: '72px', height: '72px', borderRadius: '24px',
+                margin: '0 auto 18px',
+                background: 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '34px',
+                boxShadow: '0 8px 24px rgba(0,132,204,0.10)',
+              }}>
+                🔐
+              </div>
+              <p style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>
+                {getNativePlatform() === 'ios' ? 'Face ID / Touch ID 잠금' : '지문 / 기기 잠금'}
+              </p>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: '#6E6E66', lineHeight: 1.65, margin: 0 }}>
+                앱을 다시 열 때 이 기기의 생체인증으로 일정, 공간, 가계부 정보를 보호합니다.
+              </p>
+            </div>
+
+            {!isNativeApp() && (
+              <div style={{
+                background: 'white', borderRadius: '20px',
+                border: '1.5px solid rgba(0,0,0,0.07)',
+                padding: '18px 20px',
+              }}>
+                <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px' }}>
+                  앱에서 사용할 수 있어요
+                </p>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93', margin: 0, lineHeight: 1.55 }}>
+                  생체인증 잠금은 Android/iOS 앱에서만 제공됩니다. 웹에서는 이 단계를 건너뜁니다.
+                </p>
+              </div>
+            )}
+
+            {isNativeApp() && !biometricAvailability.available && (
+              <div style={{
+                background: '#FFF8E7', borderRadius: '20px',
+                border: '1.5px solid rgba(245,158,11,0.24)',
+                padding: '18px 20px',
+              }}>
+                <p style={{ fontSize: '15px', fontWeight: 800, color: '#92400E', margin: '0 0 4px' }}>
+                  기기 설정이 필요해요
+                </p>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: '#B45309', margin: 0, lineHeight: 1.55 }}>
+                  휴대폰에 지문, Face ID 또는 화면 잠금이 설정되어 있지 않아 지금은 앱 잠금을 켤 수 없습니다.
+                </p>
+              </div>
+            )}
+
+            {isNativeApp() && biometricAvailability.available && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {([
+                  { enabled: true, label: '생체인증 잠금 켜기', desc: '앱 실행/복귀 시 한 번 더 인증합니다.', icon: '🛡️' },
+                  { enabled: false, label: '나중에 설정하기', desc: '마이페이지에서 언제든 다시 켤 수 있습니다.', icon: '⏭️' },
+                ]).map((item) => {
+                  const active = biometricLock === item.enabled;
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={() => handleBiometricToggle(item.enabled)}
+                      disabled={checkingBiometric}
+                      style={card(active, '#0084CC')}
+                    >
+                      <div style={{
+                        width: '52px', height: '52px', flexShrink: 0,
+                        borderRadius: '16px',
+                        background: active ? 'rgba(0,132,204,0.1)' : 'rgba(0,0,0,0.04)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '26px',
+                      }}>
+                        {item.icon}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px' }}>
+                          {item.label}
+                        </p>
+                        <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
+                          {item.desc}
+                        </p>
+                      </div>
+                      <Check active={active} color="#0084CC" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {checkingBiometric && (
+              <p style={{ fontSize: '13px', fontWeight: 700, color: '#0084CC', textAlign: 'center', margin: 0 }}>
+                기기 인증을 확인하고 있어요...
+              </p>
+            )}
+            {biometricError && (
+              <p style={{ fontSize: '13px', fontWeight: 700, color: '#EF4444', textAlign: 'center', margin: 0 }}>
+                {biometricError}
+              </p>
+            )}
           </div>
         )}
 
