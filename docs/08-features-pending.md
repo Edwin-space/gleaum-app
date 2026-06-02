@@ -147,7 +147,7 @@
 - [ ] `@capacitor/status-bar` 상태바 스타일 조정
 - [ ] `@capacitor/keyboard` 키보드 이벤트 처리
 - [ ] `@capacitor/haptics` 햅틱 피드백
-- [ ] Face ID / Touch ID 인증 (`@capacitor-community/biometric-auth`)
+- [x] Face ID / Touch ID 인증 — 자체 Capacitor 브리지로 구현 완료
 - [ ] 네이티브 캘린더 동기화 (`@capacitor-community/native-market`)
 - [ ] App Store 스크린샷 및 메타데이터 제출
 

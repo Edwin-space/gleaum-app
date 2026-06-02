@@ -735,3 +735,17 @@ npm run cap:open:android # Android Studio 열기
 - [x] 마이페이지 앱 설정에 화면 모드 선택 UI 추가
 - [x] 초기 렌더링 시 테마 깜빡임을 줄이는 head 초기화 스크립트 추가
 - [x] `npm run build` 통과
+
+---
+
+## 네이티브 보안 설정 고도화 (완료 — 2026-06-02)
+
+- [x] `/settings/security` 보안 설정 페이지 추가
+- [x] 프로젝트 규칙에 맞춰 `DesktopSecuritySettings.tsx` + `MobileSecuritySettings.tsx` + `page.tsx` 분기 구조 적용
+- [x] 기존 사용자도 마이페이지에서 항상 `보안 설정` 메뉴를 볼 수 있도록 수정
+- [x] 생체인증 사용 가능 여부와 무관하게 보안 설정 화면에서 상태/안내 노출
+- [x] 생체인증 앱 잠금 설정을 기기별 로컬 저장소에 유지
+- [x] 잠금 적용 범위 설정 추가: 앱 시작/복귀, 가계부, 공간 설정/초대, 계정/보안 설정
+- [x] 재인증 주기 설정 추가: 항상 확인, 5분, 15분, 30분
+- [x] `NativeBiometricGate`가 설정된 보호 범위와 재인증 주기를 읽어 잠금 처리하도록 보정
+- [x] `npm run build` 통과

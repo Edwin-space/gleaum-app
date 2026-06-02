@@ -10,8 +10,15 @@ import { isNativeApp, secureStorage } from '@/lib/native';
 const LOCK_ENABLED_KEY = 'gleaum:biometric-lock-enabled';
 const PROMPT_SEEN_KEY = 'gleaum:biometric-lock-prompt-seen';
 const UNLOCKED_AT_KEY = 'gleaum:biometric-unlocked-at';
+const LOCK_SCOPES_KEY = 'gleaum:biometric-lock-scopes';
+const RELOCK_INTERVAL_KEY = 'gleaum:biometric-relock-interval';
 
 export type NativeBiometryType = 'faceId' | 'touchId' | 'fingerprint' | 'deviceCredential' | 'none';
+export type BiometricLockScope = 'app' | 'budget' | 'spaceSettings' | 'accountSettings';
+export type BiometricRelockInterval = 'always' | '5m' | '15m' | '30m';
+
+export const DEFAULT_BIOMETRIC_LOCK_SCOPES: BiometricLockScope[] = ['app'];
+export const DEFAULT_BIOMETRIC_RELOCK_INTERVAL: BiometricRelockInterval = 'always';
 
 export interface NativeBiometricAvailability {
   available: boolean;
@@ -85,3 +92,48 @@ export async function markBiometricUnlockedNow(): Promise<void> {
   await secureStorage.set(UNLOCKED_AT_KEY, String(Date.now()));
 }
 
+export async function getBiometricUnlockedAt(): Promise<number> {
+  const value = await secureStorage.get(UNLOCKED_AT_KEY);
+  const parsed = value ? Number(value) : 0;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export async function getBiometricLockScopes(): Promise<BiometricLockScope[]> {
+  const raw = await secureStorage.get(LOCK_SCOPES_KEY);
+  if (!raw) return DEFAULT_BIOMETRIC_LOCK_SCOPES;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return DEFAULT_BIOMETRIC_LOCK_SCOPES;
+    const validScopes: BiometricLockScope[] = ['app', 'budget', 'spaceSettings', 'accountSettings'];
+    const scopes = parsed.filter((scope): scope is BiometricLockScope => validScopes.includes(scope as BiometricLockScope));
+    return scopes.length > 0 ? scopes : DEFAULT_BIOMETRIC_LOCK_SCOPES;
+  } catch {
+    return DEFAULT_BIOMETRIC_LOCK_SCOPES;
+  }
+}
+
+export async function setBiometricLockScopes(scopes: BiometricLockScope[]): Promise<void> {
+  const uniqueScopes = Array.from(new Set(scopes));
+  await secureStorage.set(LOCK_SCOPES_KEY, JSON.stringify(uniqueScopes.length > 0 ? uniqueScopes : DEFAULT_BIOMETRIC_LOCK_SCOPES));
+}
+
+export async function getBiometricRelockInterval(): Promise<BiometricRelockInterval> {
+  const value = await secureStorage.get(RELOCK_INTERVAL_KEY);
+  if (value === 'always' || value === '5m' || value === '15m' || value === '30m') return value;
+  return DEFAULT_BIOMETRIC_RELOCK_INTERVAL;
+}
+
+export async function setBiometricRelockInterval(interval: BiometricRelockInterval): Promise<void> {
+  await secureStorage.set(RELOCK_INTERVAL_KEY, interval);
+}
+
+export async function shouldRequireBiometricUnlock(): Promise<boolean> {
+  const interval = await getBiometricRelockInterval();
+  if (interval === 'always') return true;
+
+  const unlockedAt = await getBiometricUnlockedAt();
+  if (!unlockedAt) return true;
+
+  const minutes = interval === '5m' ? 5 : interval === '15m' ? 15 : 30;
+  return Date.now() - unlockedAt >= minutes * 60 * 1000;
+}

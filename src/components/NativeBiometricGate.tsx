@@ -1,14 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { CSSProperties } from 'react';
 import {
   authenticateForAppUnlock,
   getBiometricAvailability,
+  getBiometricLockScopes,
   hasSeenBiometricPrompt,
   isBiometricLockEnabled,
   markBiometricPromptSeen,
   setBiometricLockEnabled,
+  shouldRequireBiometricUnlock,
 } from '@/lib/native-biometric';
 import { getNativePlatform, isNativeApp } from '@/lib/native';
 
@@ -18,7 +21,20 @@ function isExcludedPath(pathname: string): boolean {
   return EXCLUDED_PATH_PREFIXES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
+async function shouldProtectPath(pathname: string): Promise<boolean> {
+  if (isExcludedPath(pathname)) return false;
+
+  const scopes = await getBiometricLockScopes();
+  if (scopes.includes('app')) return true;
+  if (scopes.includes('budget') && pathname.startsWith('/budget')) return true;
+  if (scopes.includes('spaceSettings') && pathname.startsWith('/space/settings')) return true;
+  if (scopes.includes('accountSettings') && (pathname.startsWith('/mypage') || pathname.startsWith('/settings/security'))) return true;
+
+  return false;
+}
+
 export function NativeBiometricGate() {
+  const pathname = usePathname();
   const [locked, setLocked] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -44,21 +60,26 @@ export function NativeBiometricGate() {
 
   useEffect(() => {
     if (!isNativeApp() || typeof window === 'undefined') return;
-    if (isExcludedPath(window.location.pathname)) return;
 
     let mounted = true;
 
     async function prepare() {
-      const [enabled, seen, availability] = await Promise.all([
+      const [enabled, seen, availability, protectCurrentPath, requireUnlock] = await Promise.all([
         isBiometricLockEnabled(),
         hasSeenBiometricPrompt(),
         getBiometricAvailability(),
+        shouldProtectPath(pathname),
+        shouldRequireBiometricUnlock(),
       ]);
       if (!mounted) return;
 
-      if (enabled && availability.available) {
-        setLocked(true);
-        void unlock();
+      if (enabled && availability.available && protectCurrentPath) {
+        if (requireUnlock) {
+          setLocked(true);
+          void unlock();
+        } else {
+          setLocked(false);
+        }
         return;
       }
 
@@ -72,7 +93,7 @@ export function NativeBiometricGate() {
     return () => {
       mounted = false;
     };
-  }, [unlock]);
+  }, [pathname, unlock]);
 
   useEffect(() => {
     if (!isNativeApp()) return;
@@ -82,15 +103,22 @@ export function NativeBiometricGate() {
     async function listenAppState() {
       const { App } = await import('@capacitor/app');
       const handle = await App.addListener('appStateChange', async ({ isActive }) => {
-        if (typeof window !== 'undefined' && isExcludedPath(window.location.pathname)) return;
-        const enabled = await isBiometricLockEnabled();
-        if (!enabled) return;
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+        const [enabled, availability, protectCurrentPath] = await Promise.all([
+          isBiometricLockEnabled(),
+          getBiometricAvailability(),
+          shouldProtectPath(currentPath),
+        ]);
+        if (!enabled || !availability.available || !protectCurrentPath) return;
         if (!isActive) {
           setLocked(true);
           return;
         }
-        const availability = await getBiometricAvailability();
-        if (availability.available) void unlock();
+        if (await shouldRequireBiometricUnlock()) {
+          void unlock();
+        } else {
+          setLocked(false);
+        }
       });
       removeListener = () => {
         void handle.remove();
@@ -102,7 +130,7 @@ export function NativeBiometricGate() {
     return () => {
       removeListener?.();
     };
-  }, [unlock]);
+  }, [pathname, unlock]);
 
   const enableFromPrompt = async () => {
     setAuthenticating(true);
