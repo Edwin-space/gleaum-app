@@ -92,46 +92,56 @@ async function saveNativeSession(session: {
   }
 }
 
+async function resolvePostLoginPath(userId: string): Promise<'/home' | '/onboarding'> {
+  const supabase = createClient();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('onboarding_completed_at')
+    .eq('id', userId)
+    .single();
+  return profile && !profile.onboarding_completed_at ? '/onboarding' : '/home';
+}
+
 async function applyNativeSession(router: ReturnType<typeof useRouter>): Promise<void> {
   try {
     const supabase = createClient();
 
-    // 이미 Supabase 클라이언트 세션이 있으면 처리 불필요
-    const { data: { session: existing } } = await supabase.auth.getSession();
-    if (existing) return;
-
     // NativeSessionPlugin 으로 Android 에 저장된 세션 조회
     const { NativeSession } = await import('@/lib/native-session');
     const { session: rawJson } = await NativeSession.getSession();
-    if (!rawJson) return;
 
-    const parsed = JSON.parse(rawJson) as {
-      access_token:  string;
-      refresh_token: string;
-    };
-    if (!parsed.access_token) return;
+    if (rawJson) {
+      const parsed = JSON.parse(rawJson) as {
+        access_token:  string;
+        refresh_token: string;
+      };
+      if (!parsed.access_token) return;
 
-    const { data, error } = await supabase.auth.setSession({
-      access_token:  parsed.access_token,
-      refresh_token: parsed.refresh_token,
-    });
+      // WebView localStorage 주입만으로는 서버 proxy 쿠키가 아직 없을 수 있다.
+      // 네이티브 저장소의 세션을 항상 Supabase 브라우저 클라이언트에 재적용해
+      // 쿠키/localStorage를 같은 타이밍으로 맞춘다.
+      const { data, error } = await supabase.auth.setSession({
+        access_token:  parsed.access_token,
+        refresh_token: parsed.refresh_token,
+      });
 
-    if (error) {
-      console.warn('[NativeApp] 네이티브 세션 적용 실패:', error.message);
+      if (error) {
+        console.warn('[NativeApp] 네이티브 세션 적용 실패:', error.message);
+        return;
+      }
+
+      if (data.session) {
+        const nextPath = await resolvePostLoginPath(data.session.user.id);
+        console.log(`[NativeApp] 네이티브 세션 적용 완료 → ${nextPath}`);
+        router.replace(nextPath);
+      }
       return;
     }
 
-    if (data.session) {
-      console.log('[NativeApp] 네이티브 세션 적용 완료 → /home');
-      // 온보딩 완료 여부 확인
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_completed_at')
-        .eq('id', data.session.user.id)
-        .single();
-      router.replace(
-        profile && !profile.onboarding_completed_at ? '/onboarding' : '/home'
-      );
+    // 이미 WebView 쪽 세션만 살아 있는 경우에도 / 또는 /login에 머물지 않게 한다.
+    const { data: { session: existing } } = await supabase.auth.getSession();
+    if (existing && (window.location.pathname === '/' || window.location.pathname.startsWith('/login'))) {
+      router.replace(await resolvePostLoginPath(existing.user.id));
     }
   } catch (e) {
     // NativeSessionPlugin 미설치 환경 또는 파싱 오류 — 무시

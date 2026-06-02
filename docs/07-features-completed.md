@@ -749,3 +749,14 @@ npm run cap:open:android # Android Studio 열기
 - [x] 재인증 주기 설정 추가: 항상 확인, 5분, 15분, 30분
 - [x] `NativeBiometricGate`가 설정된 보호 범위와 재인증 주기를 읽어 잠금 처리하도록 보정
 - [x] `npm run build` 통과
+
+---
+
+## Android 네이티브 로그인 후 웹 로그인 재노출 방지 (완료 — 2026-06-02)
+
+- [x] Android 네이티브 Google 로그인 후 MainActivity WebView가 모바일 웹 `/login`으로 돌아갈 수 있는 레이스 조건 보정
+- [x] `NativeAppProvider`가 네이티브 저장소의 Supabase 세션을 항상 브라우저 클라이언트에 재적용하도록 수정
+- [x] WebView `localStorage` 주입만으로 서버 proxy 쿠키가 준비되지 않는 구간을 방어
+- [x] 네이티브 앱 루트(`/`) 진입 시 `RootPageRouter`가 직접 `/home`으로 이동하지 않도록 변경
+- [x] 네이티브 세션 적용 완료 후 `/home` 또는 온보딩 미완료 시 `/onboarding`으로 이동하도록 일원화
+- [x] `npm run build`, Android `:app:assembleDebug` 통과

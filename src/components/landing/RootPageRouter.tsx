@@ -17,11 +17,13 @@ export function RootPageRouter() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isDesktop) {
-      // 네이티브 앱: 이미 RouterActivity 에서 세션 체크 후 MainActivity 로 왔으므로 /home 으로
-      // 웹 브라우저: 마케팅 랜딩 노출 방지를 위해 /login 으로
-      router.replace(isNativeApp() ? '/home' : '/login');
-    }
+    if (isDesktop) return;
+
+    // 네이티브 앱은 NativeAppProvider가 네이티브 세션 적용 후 /home 또는 /onboarding으로 이동시킨다.
+    // 여기서 먼저 /home으로 이동하면 서버 proxy가 쿠키 없는 요청을 /login으로 돌려보내는 레이스가 생긴다.
+    if (isNativeApp()) return;
+
+    router.replace('/login');
   }, [isDesktop, router]);
 
   // 데스크탑이면 랜딩 페이지, 모바일이면 빈 화면(리다이렉트 중)
