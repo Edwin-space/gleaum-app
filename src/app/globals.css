@@ -359,6 +359,54 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
   100% { opacity: 0; visibility: hidden; }
 }
 
+/* ── 다크모드: 인라인 하드코딩 색상 오버라이드 ──────────────────────────────
+   컴포넌트 인라인 스타일의 하드코딩된 밝은 배경/텍스트를 다크모드에서 교체.
+   인라인 스타일보다 특이성이 낮으므로 !important 적용.
+──────────────────────────────────────────────────────────────────────────── */
+:root[data-theme='dark'] #app-shell {
+  /* 공통 배경 오버라이드 */
+  background-color: var(--theme-bg) !important;
+}
+
+/* 다크모드에서 흰/밝은 배경 카드 → 어둡게 */
+:root[data-theme='dark'] [style*="background: white"],
+:root[data-theme='dark'] [style*="background: #FFF"],
+:root[data-theme='dark'] [style*="background: #fff"],
+:root[data-theme='dark'] [style*="background: #FFFFFF"],
+:root[data-theme='dark'] [style*="background: #FAFAFD"],
+:root[data-theme='dark'] [style*="background: #F8F9FF"],
+:root[data-theme='dark'] [style*="background: #F2F2F7"],
+:root[data-theme='dark'] [style*="background: #F7F8FB"],
+:root[data-theme='dark'] [style*="background:#FFF"],
+:root[data-theme='dark'] [style*="background:#fff"],
+:root[data-theme='dark'] [style*="background:#FFFFFF"],
+:root[data-theme='dark'] [style*="background:#FAFAFD"],
+:root[data-theme='dark'] [style*="background-color: white"],
+:root[data-theme='dark'] [style*="background-color: #FFFFFF"],
+:root[data-theme='dark'] [style*="background-color: #FAFAFD"] {
+  background-color: var(--theme-surface) !important;
+  background: var(--theme-surface) !important;
+}
+
+/* 다크모드에서 어두운 텍스트 → 밝게 */
+:root[data-theme='dark'] [style*="color: #1A1B2E"],
+:root[data-theme='dark'] [style*="color: #1a1b2e"],
+:root[data-theme='dark'] [style*="color: #333"],
+:root[data-theme='dark'] [style*="color: #333333"],
+:root[data-theme='dark'] [style*="color:#1A1B2E"],
+:root[data-theme='dark'] [style*="color:#1a1b2e"] {
+  color: var(--theme-text) !important;
+}
+
+/* 다크모드에서 흐린 텍스트 */
+:root[data-theme='dark'] [style*="color: #6E6E66"],
+:root[data-theme='dark'] [style*="color: #8E8E93"],
+:root[data-theme='dark'] [style*="color: #AEAEA8"],
+:root[data-theme='dark'] [style*="color:#6E6E66"],
+:root[data-theme='dark'] [style*="color:#8E8E93"] {
+  color: var(--theme-text-muted) !important;
+}
+
 /* 스플래시 로고 펄스 (별도 pseudo-element 불가, ::before로만) */
 @media all and (display-mode: standalone) {
   body::after {
