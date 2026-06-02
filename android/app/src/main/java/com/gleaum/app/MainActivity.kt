@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -12,6 +13,8 @@ import android.webkit.WebSettings
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.getcapacitor.BridgeActivity
+import org.json.JSONObject
+import java.net.URLDecoder
 
 class MainActivity : BridgeActivity() {
 
@@ -86,12 +89,45 @@ class MainActivity : BridgeActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent?.data?.let { uri ->
+            if (uri.scheme == "gleaum" && uri.host == "auth") {
+                saveImplicitSession(uri)
+            }
             if (uri.scheme == "gleaum") {
                 bridge?.webView?.post {
                     bridge?.triggerWindowJSEvent("appUrlOpen", "{ url: '${uri}' }")
                 }
             }
         }
+    }
+
+    /** WebView 리스너가 OAuth 딥링크를 놓쳐도 세션을 네이티브 저장소에 보존한다. */
+    private fun saveImplicitSession(uri: Uri) {
+        val fragment = uri.fragment ?: return
+        val params = fragment.split("&")
+            .mapNotNull { part ->
+                val idx = part.indexOf('=')
+                if (idx <= 0) return@mapNotNull null
+                val key = URLDecoder.decode(part.substring(0, idx), "UTF-8")
+                val value = URLDecoder.decode(part.substring(idx + 1), "UTF-8")
+                key to value
+            }
+            .toMap()
+
+        val accessToken = params["access_token"] ?: return
+        val refreshToken = params["refresh_token"] ?: return
+        val expiresIn = params["expires_in"]?.toLongOrNull() ?: 3600L
+        val expiresAt = System.currentTimeMillis() / 1000L + expiresIn
+
+        val session = JSONObject().apply {
+            put("access_token", accessToken)
+            put("refresh_token", refreshToken)
+            put("expires_in", expiresIn)
+            put("expires_at", expiresAt)
+            put("token_type", params["token_type"] ?: "bearer")
+        }
+
+        SessionManager.save(this, session.toString())
+        android.util.Log.d("GleaumMain", "OAuth implicit 세션 저장 완료")
     }
 
     private fun createNotificationChannels() {

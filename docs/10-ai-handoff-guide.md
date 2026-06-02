@@ -734,3 +734,38 @@ git add [파일들] && git commit -m "feat: ..." && git push origin main
 - `android/release-notes.txt`는 임시 문구라면 정리 필요.
 - 초대 링크 문제는 새 배포 반영 후 새 초대문을 다시 복사/발송해야 기존에 발송된 죽은 코드 문제를 피할 수 있음.
 - Firebase App Distribution 릴리즈가 백오피스에 0개로 보이는 것은 현재 Firebase API 기준 릴리즈가 0개였기 때문. 새 APK를 `scripts/distribute-android.sh`로 배포한 뒤 `/releases`에서 다시 확인할 것.
+
+---
+
+## 2026-06-02 Codex 인수인계 — Android Google 로그인 네이티브 세션 보정
+
+### 문제
+
+Google Play 배포본에서 Google 로그인을 완료한 뒤 앱 내부가 인증 상태로 전환되지 않고 모바일 웹 로그인 화면으로 돌아가는 증상이 발생했다.
+
+### 원인
+
+Android 네이티브 로그인은 Supabase implicit OAuth(`gleaum://auth/callback#access_token=...`)를 사용한다. 기존 구조는 OAuth 콜백을 WebView의 `appUrlOpen` 이벤트로 넘겨 React 쪽에서 처리하는 흐름이었는데, 앱 cold start/라우터 전환 시점에는 WebView 리스너가 아직 붙기 전이라 콜백 이벤트를 놓칠 수 있었다. 또한 React의 implicit 토큰 처리 분기는 Supabase 세션만 설정하고 네이티브 `SessionManager`에는 저장하지 않아, 다음 네이티브 라우팅에서 로그인 상태를 확인하지 못할 수 있었다.
+
+### 수정
+
+- `android/app/src/main/java/com/gleaum/app/RouterActivity.kt`
+  - `gleaum://auth/callback` 진입 시 URL fragment의 `access_token`, `refresh_token`, `expires_in`을 직접 파싱해 `SessionManager`에 먼저 저장.
+  - WebView 이벤트가 유실되어도 네이티브 세션이 남도록 보강.
+- `android/app/src/main/java/com/gleaum/app/MainActivity.kt`
+  - OAuth 딥링크를 받을 때 동일하게 implicit 세션을 저장하는 방어 로직 추가.
+  - RouterActivity를 거치지 않는 재진입 케이스까지 보호.
+- `src/components/NativeAppProvider.tsx`
+  - PKCE/implicit OAuth 성공 시 공통 `saveNativeSession()`으로 네이티브 세션 저장.
+  - implicit 토큰 분기도 `NativeSession.saveSession()`을 호출하도록 수정.
+
+### 검증
+
+- `npm run build` 통과.
+- `cd android && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew :app:assembleDebug --quiet` 통과.
+
+### 다음 배포 주의
+
+- Google Play에 이미 올라간 빌드에는 이 수정이 포함되어 있지 않으므로 새 Android 빌드를 생성해 배포해야 한다.
+- 배포 전 `android/app/build.gradle`의 `versionCode`/`versionName`이 Play Console 기준으로 증가되어 있는지 확인할 것.
+- 실제 단말에서 Google 로그인 후 `/login`으로 돌아가지 않고 `/home` 또는 온보딩 미완료 시 `/onboarding`으로 이동하는지 확인할 것.

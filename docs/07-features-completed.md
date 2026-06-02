@@ -632,3 +632,13 @@ npm run cap:open:android # Android Studio 열기
 - [x] `android/build.gradle`의 Firebase App Distribution Gradle plugin classpath 제거
 - [x] Firebase App Distribution 배포는 Gradle 플러그인이 아니라 `scripts/distribute-android.sh` Firebase CLI 방식으로 유지
 - [x] `:app:tasks`, `:app:assembleDebug` 통과 확인
+
+---
+
+## Android Google 로그인 세션 보정 (완료 — 2026-06-02)
+
+- [x] Google Play 배포본에서 Google 로그인 후 모바일 웹 로그인 화면으로 돌아가던 문제 원인 확인
+- [x] `RouterActivity`에서 Supabase implicit OAuth callback fragment를 직접 파싱해 네이티브 `SessionManager`에 저장
+- [x] `MainActivity`에도 동일한 저장 로직을 추가해 딥링크 재진입/이벤트 유실 케이스 방어
+- [x] `NativeAppProvider`의 implicit OAuth 처리 분기도 `NativeSession.saveSession()`을 호출하도록 보정
+- [x] `npm run build`, Android `:app:assembleDebug` 통과

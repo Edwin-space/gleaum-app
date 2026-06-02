@@ -1,8 +1,11 @@
 package com.gleaum.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONObject
+import java.net.URLDecoder
 
 /**
  * RouterActivity — 앱 진입 라우터 (경량 Activity, UI 없음)
@@ -24,6 +27,10 @@ class RouterActivity : AppCompatActivity() {
             uri.scheme == "gleaum" && uri.host == "auth"
         } ?: false
 
+        if (isOAuthCallback) {
+            saveImplicitSession(intent?.data)
+        }
+
         val target = when {
             SessionManager.hasValid(this) -> MainActivity::class.java
             isOAuthCallback              -> MainActivity::class.java  // OAuth 콜백은 Main 으로
@@ -42,5 +49,38 @@ class RouterActivity : AppCompatActivity() {
         )
         finish()
         overridePendingTransition(0, 0)
+    }
+
+    /**
+     * Supabase implicit OAuth 콜백은 fragment(#)에 토큰이 담긴다.
+     * WebView의 appUrlOpen 리스너가 늦게 붙어 콜백을 놓쳐도 네이티브 세션은 먼저 저장한다.
+     */
+    private fun saveImplicitSession(uri: Uri?) {
+        val fragment = uri?.fragment ?: return
+        val params = fragment.split("&")
+            .mapNotNull { part ->
+                val idx = part.indexOf('=')
+                if (idx <= 0) return@mapNotNull null
+                val key = URLDecoder.decode(part.substring(0, idx), "UTF-8")
+                val value = URLDecoder.decode(part.substring(idx + 1), "UTF-8")
+                key to value
+            }
+            .toMap()
+
+        val accessToken = params["access_token"] ?: return
+        val refreshToken = params["refresh_token"] ?: return
+        val expiresIn = params["expires_in"]?.toLongOrNull() ?: 3600L
+        val expiresAt = System.currentTimeMillis() / 1000L + expiresIn
+
+        val session = JSONObject().apply {
+            put("access_token", accessToken)
+            put("refresh_token", refreshToken)
+            put("expires_in", expiresIn)
+            put("expires_at", expiresAt)
+            put("token_type", params["token_type"] ?: "bearer")
+        }
+
+        SessionManager.save(this, session.toString())
+        android.util.Log.d("GleaumRouter", "OAuth implicit 세션 저장 완료")
     }
 }

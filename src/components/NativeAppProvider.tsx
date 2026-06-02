@@ -61,6 +61,28 @@ function dispatchAuthProcessing() {
  * - 이미 Supabase 세션이 있으면 스킵 (중복 적용 방지)
  * - NativeSession 플러그인이 없는 환경(웹)에서는 session = null → 스킵
  */
+
+async function saveNativeSession(session: {
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number;
+  expires_at?: number;
+}) {
+  try {
+    const { NativeSession } = await import('@/lib/native-session');
+    await NativeSession.saveSession({
+      session: JSON.stringify({
+        access_token:  session.access_token,
+        refresh_token: session.refresh_token,
+        expires_in:    session.expires_in ?? 3600,
+        expires_at:    session.expires_at ?? (Math.floor(Date.now() / 1000) + 3600),
+      }),
+    });
+  } catch {
+    // 웹 브라우저 환경에서는 NativeSession 플러그인이 없으므로 무시한다.
+  }
+}
+
 async function applyNativeSession(router: ReturnType<typeof useRouter>): Promise<void> {
   try {
     const supabase = createClient();
@@ -163,18 +185,8 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           if (error) {
             dispatchAuthEvent('gleaum:auth-error', `PKCE오류|${error.message}|url=${url}`);
           } else if (data.session) {
-            // Android 네이티브 SessionManager 에도 저장 (LoginActivity.onResume() 확인용)
-            try {
-              const { NativeSession } = await import('@/lib/native-session');
-              await NativeSession.saveSession({
-                session: JSON.stringify({
-                  access_token:  data.session.access_token,
-                  refresh_token: data.session.refresh_token,
-                  expires_in:    data.session.expires_in ?? 3600,
-                  expires_at:    data.session.expires_at ?? (Math.floor(Date.now() / 1000) + 3600),
-                }),
-              });
-            } catch { /* 웹 브라우저 환경에서는 무시 */ }
+            // 네이티브 SessionManager 에도 저장 (LoginActivity.onResume() / 다음 앱 실행 확인용)
+            await saveNativeSession(data.session);
 
             dispatchAuthEvent('gleaum:auth-success');
             const pending = consumePendingRedirect();
@@ -199,6 +211,9 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           if (error) {
             dispatchAuthEvent('gleaum:auth-error', error.message);
           } else {
+            if (sessionData.session) {
+              await saveNativeSession(sessionData.session);
+            }
             dispatchAuthEvent('gleaum:auth-success');
             const pending = consumePendingRedirect();
             if (pending) {
