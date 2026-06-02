@@ -61,6 +61,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         if url.scheme == "gleaum", url.host == "auth",
            let fragment = url.fragment, fragment.contains("access_token") {
             handleOAuthCallback(fragment: fragment)
+            dismissAuthPresentation()
         }
 
         // 로그아웃: gleaum://logout
@@ -98,6 +99,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         if let data = try? JSONSerialization.data(withJSONObject: sessionDict),
            let json = String(data: data, encoding: .utf8) {
             SessionManager.shared.saveSession(json)
+        }
+    }
+
+    /// OAuth 성공 후 SFSafariViewController / LoginViewController 스택을 자동으로 닫는다.
+    /// 사용자가 직접 "닫기"를 눌러야 세션이 반영되는 iOS 타이밍 문제를 방지한다.
+    private func dismissAuthPresentation() {
+        DispatchQueue.main.async { [weak self] in
+            self?.window?.rootViewController?.dismiss(animated: true)
         }
     }
 

@@ -48,6 +48,7 @@ export function useAuth() {
       if (next) {
         try { sessionStorage.setItem('gleaum_oauth_next', next); } catch {}
       }
+      try { sessionStorage.setItem('gleaum_oauth_in_progress', '1'); } catch {}
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

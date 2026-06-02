@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-02 | iOS 네이티브 로그인 OAuth UX 보정. `LoginViewController` Google 아이콘 asset 추가, SFSafariViewController fullscreen 적용, OAuth 성공 후 Safari/Login 스택 자동 dismiss, JS OAuth Browser.close await 제거 |
 | 2026-06-02 | P0 데이터 경계 보강. `getScheduleById()` 단일 조회에 private 생성자 필터를 추가하고, `supabase/migrations/015_harden_private_schedule_rls.sql`로 schedules/schedule_participants RLS를 강화 |
 | 2026-06-02 | PC Web / Mobile Web / Android App / iOS 예정 앱의 기능 싱크 기준표 추가. `docs/15-feature-parity-matrix.md`를 신규 작성하고, 공통 기능/플랫폼 전용 기능/불일치 점검 대상을 정리 |
 | 2026-06-02 | 공유 테마 모드 시스템 추가. `light/dark/system` 3모드와 `ThemeProvider`, `ThemeModeSelector`, theme 토큰 기반 shell UI 반영 |

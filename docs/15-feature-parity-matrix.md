@@ -67,7 +67,7 @@
 
 | 우선순위 | 대상 | 파일 | 조치 |
 |---|---|---|---|
-| P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity` | Android OAuth callback은 최근 수정 완료. 배포 버전에서 실제 회귀 테스트 필요 |
+| P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity`, iOS `LoginViewController`, `AppDelegate` | Android/iOS OAuth callback 보정 완료. 실제 기기 회귀 테스트 필요 |
 | P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql` | 단일 조회 private 필터 + RLS 강화 SQL 추가. Supabase 실행 후 회귀 테스트 필요 |
 | P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
 | P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, MyPage 설정 링크 | 준비 중/앱 전용 문구 및 PC 레이아웃 통일 필요 |

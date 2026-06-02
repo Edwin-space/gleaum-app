@@ -203,7 +203,7 @@ export async function openBrowser(url: string): Promise<void> {
     await Browser.open({
       url,
       toolbarColor: '#1A1B2E',
-      presentationStyle: 'popover',
+      presentationStyle: 'fullscreen',
     });
   }
 }

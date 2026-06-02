@@ -13,6 +13,19 @@
 ---
 
 
+### 2026-06-02 — iOS 네이티브 로그인 OAuth UX 보정
+
+- iOS 네이티브 `LoginViewController`의 Google 버튼 아이콘이 `globe` fallback으로 보일 수 있던 문제를 막기 위해 `google_icon` asset 추가
+- iOS Google OAuth용 `SFSafariViewController`를 fullscreen으로 열도록 변경
+- OAuth 성공 콜백 수신 시 `AppDelegate`가 Safari/Login presentation stack을 자동 dismiss하도록 보정
+- JS `NativeAppProvider`에서 `Browser.close()`를 `await`하지 않도록 변경해, 사용자가 닫기를 누르기 전까지 세션 교환이 지연되는 문제 방지
+- iOS 앱 활성화 시 OAuth 진행 중일 때만 launch URL을 재확인하는 fallback 추가
+
+검증:
+- `npm run build` 통과
+- iOS Simulator compile-only build 통과 (`Gleaum`, Debug, iPhone 17)
+
+
 ### 2026-06-02 — P0 개인/공간 데이터 경계 RLS 보강
 
 - `getScheduleById()` 단일 일정 조회에 `visibility='private'` 생성자 필터를 추가해, 직접 URL 접근에서도 타인의 private 일정/지출이 null 처리되도록 보강

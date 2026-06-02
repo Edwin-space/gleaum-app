@@ -11,7 +11,7 @@ import SafariServices
  *   → SessionManager 세션 저장 알림 → 자동 dismiss
  * - 이메일 주소로 사용하기 → OTP 입력 화면
  */
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, SFSafariViewControllerDelegate {
 
     // MARK: - 색상
     private let bgColor    = UIColor(red: 0.039, green: 0.043, blue: 0.063, alpha: 1)  // #0A0B10
@@ -93,6 +93,8 @@ class LoginViewController: UIViewController {
         let safariVC = SFSafariViewController(url: url)
         safariVC.preferredBarTintColor = bgColor
         safariVC.preferredControlTintColor = .white
+        safariVC.modalPresentationStyle = .fullScreen
+        safariVC.delegate = self
         present(safariVC, animated: true)
     }
 

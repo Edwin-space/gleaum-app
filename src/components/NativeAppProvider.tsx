@@ -49,6 +49,15 @@ function dispatchAuthProcessing() {
   window.dispatchEvent(new CustomEvent('gleaum:auth-processing'));
 }
 
+function clearOAuthInProgress() {
+  try { sessionStorage.removeItem('gleaum_oauth_in_progress'); } catch {}
+}
+
+function hasOAuthInProgress(): boolean {
+  try { return sessionStorage.getItem('gleaum_oauth_in_progress') === '1'; } catch {}
+  return false;
+}
+
 /**
  * Android 네이티브 로그인(LoginActivity) 세션을 Supabase 에 적용.
  *
@@ -160,8 +169,9 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       console.log('[NativeApp] OAuth 콜백 처리:', url);
 
       dispatchAuthProcessing();
-      // iOS: SFSafariViewController는 딥링크 시 자동 닫힘 → 에러 무시
-      try { await closeBrowser(); } catch { /* 이미 닫힌 경우 정상 */ }
+      // iOS에서 Browser.close()를 await하면 사용자가 닫기를 누를 때까지
+      // 세션 교환이 지연될 수 있다. 닫기는 fire-and-forget으로 처리한다.
+      void closeBrowser();
 
       try {
         const parsedUrl    = new URL(url);
@@ -183,11 +193,13 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
+            clearOAuthInProgress();
             dispatchAuthEvent('gleaum:auth-error', `PKCE오류|${error.message}|url=${url}`);
           } else if (data.session) {
             // 네이티브 SessionManager 에도 저장 (LoginActivity.onResume() / 다음 앱 실행 확인용)
             await saveNativeSession(data.session);
 
+            clearOAuthInProgress();
             dispatchAuthEvent('gleaum:auth-success');
             const pending = consumePendingRedirect();
             if (pending) {
@@ -201,6 +213,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
               );
             }
           } else {
+            clearOAuthInProgress();
             dispatchAuthEvent('gleaum:auth-error', '세션을 가져올 수 없습니다');
           }
         } else if (accessToken) {
@@ -209,11 +222,13 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
             refresh_token: refreshToken ?? '',
           });
           if (error) {
+            clearOAuthInProgress();
             dispatchAuthEvent('gleaum:auth-error', error.message);
           } else {
             if (sessionData.session) {
               await saveNativeSession(sessionData.session);
             }
+            clearOAuthInProgress();
             dispatchAuthEvent('gleaum:auth-success');
             const pending = consumePendingRedirect();
             if (pending) {
@@ -228,10 +243,12 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
             }
           }
         } else {
+          clearOAuthInProgress();
           dispatchAuthEvent('gleaum:auth-error', `파라미터없음|url=${url}`);
         }
       } catch (err) {
         console.error('[NativeApp] 딥링크 처리 오류:', err);
+        clearOAuthInProgress();
         dispatchAuthEvent('gleaum:auth-error', '알 수 없는 오류가 발생했습니다');
       }
     }
@@ -271,10 +288,26 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
         await handleIncomingUrl(launchResult.url);
       }
 
-      const handle = await App.addListener('appUrlOpen', async ({ url }) => {
+      const urlHandle = await App.addListener('appUrlOpen', async ({ url }) => {
         await handleIncomingUrl(url);
       });
-      removeUrlListener = () => handle.remove();
+
+      // iOS SFSafariViewController가 URL 이벤트를 브라우저 dismiss 뒤에 안정적으로
+      // 전달하는 케이스가 있어, 앱 재활성화 시 마지막 launch URL을 한 번 더 확인한다.
+      const activeHandle = await App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) return;
+        if (!hasOAuthInProgress()) return;
+        window.setTimeout(() => {
+          void App.getLaunchUrl().then((result) => {
+            if (result?.url) void handleIncomingUrl(result.url);
+          });
+        }, 150);
+      });
+
+      removeUrlListener = () => {
+        urlHandle.remove();
+        activeHandle.remove();
+      };
     })();
 
     // ── 4. Android 뒤로가기 버튼 ────────────────────────────────────
