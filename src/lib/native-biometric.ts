@@ -7,11 +7,12 @@
 import { registerPlugin } from '@capacitor/core';
 import { isNativeApp, secureStorage } from '@/lib/native';
 
-const LOCK_ENABLED_KEY = 'gleaum:biometric-lock-enabled';
-const PROMPT_SEEN_KEY = 'gleaum:biometric-lock-prompt-seen';
-const UNLOCKED_AT_KEY = 'gleaum:biometric-unlocked-at';
-const LOCK_SCOPES_KEY = 'gleaum:biometric-lock-scopes';
+const LOCK_ENABLED_KEY    = 'gleaum:biometric-lock-enabled';
+const PROMPT_SEEN_KEY     = 'gleaum:biometric-lock-prompt-seen';
+const UNLOCKED_AT_KEY     = 'gleaum:biometric-unlocked-at';
+const LOCK_SCOPES_KEY     = 'gleaum:biometric-lock-scopes';
 const RELOCK_INTERVAL_KEY = 'gleaum:biometric-relock-interval';
+const PIN_HASH_KEY        = 'gleaum:pin-hash';  // 생체인식 폴백 PIN 해시
 
 export type NativeBiometryType = 'faceId' | 'touchId' | 'fingerprint' | 'deviceCredential' | 'none';
 export type BiometricLockScope = 'app' | 'budget' | 'spaceSettings' | 'accountSettings';
@@ -136,4 +137,41 @@ export async function shouldRequireBiometricUnlock(): Promise<boolean> {
 
   const minutes = interval === '5m' ? 5 : interval === '15m' ? 15 : 30;
   return Date.now() - unlockedAt >= minutes * 60 * 1000;
+}
+
+// ── PIN 폴백 (생체인식 불가 시 사용) ──────────────────────────────────────────
+
+/** PIN → SHA-256 해시 (Web Crypto API) */
+async function hashPin(pin: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`gleaum-pin-v1:${pin}`);
+  const buf  = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** PIN 설정 (해시 저장) */
+export async function setPinCode(pin: string): Promise<void> {
+  const hash = await hashPin(pin);
+  await secureStorage.set(PIN_HASH_KEY, hash);
+}
+
+/** PIN 검증 */
+export async function verifyPinCode(pin: string): Promise<boolean> {
+  const stored = await secureStorage.get(PIN_HASH_KEY);
+  if (!stored) return false;
+  const hash = await hashPin(pin);
+  return hash === stored;
+}
+
+/** PIN 설정 여부 */
+export async function hasPinCode(): Promise<boolean> {
+  const stored = await secureStorage.get(PIN_HASH_KEY);
+  return !!stored && stored.length > 0;
+}
+
+/** PIN 삭제 */
+export async function removePinCode(): Promise<void> {
+  await secureStorage.set(PIN_HASH_KEY, '');
 }

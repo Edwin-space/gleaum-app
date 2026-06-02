@@ -19,14 +19,27 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light');
+  // themeInitScript가 <html data-theme="..."> 를 이미 설정했으므로
+  // DOM 값으로 초기화 → hydration 불일치(라이트/다크 깜박임) 방지
+  const [mode, setModeState] = useState<ThemeMode>(() => {
+    if (typeof document === 'undefined') return 'system';
+    const dom = document.documentElement.dataset['themeMode'];
+    return isThemeMode(dom) ? dom : 'system';
+  });
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
+    if (typeof document === 'undefined') return 'light';
+    return document.documentElement.dataset['theme'] === 'dark' ? 'dark' : 'light';
+  });
 
   useEffect(() => {
+    // localStorage 재확인 (SSR과 DOM이 다를 경우 보정)
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     const initialMode = isThemeMode(stored) ? stored : 'system';
-    setModeState(initialMode);
-    setResolvedTheme(applyTheme(initialMode));
+    if (initialMode !== mode) {
+      setModeState(initialMode);
+      setResolvedTheme(applyTheme(initialMode));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
