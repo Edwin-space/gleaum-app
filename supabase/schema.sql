@@ -311,7 +311,14 @@ DROP POLICY IF EXISTS "schedules: 일정 삭제 (본인 또는 admin)" ON schedu
 
 CREATE POLICY "schedules: 공간 일정 조회"
   ON schedules FOR SELECT
-  USING (family_group_id IN (SELECT my_space_ids()));
+  USING (
+    family_group_id IN (SELECT my_space_ids())
+    AND (
+      visibility IS NULL
+      OR visibility <> 'private'
+      OR created_by = auth.uid()
+    )
+  );
 
 CREATE POLICY "schedules: 일정 생성 (editor 이상)"
   ON schedules FOR INSERT
@@ -326,16 +333,31 @@ CREATE POLICY "schedules: 일정 수정 (editor 이상 또는 본인)"
   USING (
     family_group_id IN (SELECT my_space_ids())
     AND (
-      created_by = auth.uid()
-      OR can_edit_in_space(family_group_id)
+      (visibility = 'private' AND created_by = auth.uid())
+      OR (
+        (visibility IS NULL OR visibility <> 'private')
+        AND (
+          created_by = auth.uid()
+          OR can_edit_in_space(family_group_id)
+        )
+      )
     )
   );
 
 CREATE POLICY "schedules: 일정 삭제 (본인 또는 admin)"
   ON schedules FOR DELETE
   USING (
-    created_by = auth.uid()
-    OR is_space_admin(family_group_id)
+    family_group_id IN (SELECT my_space_ids())
+    AND (
+      (visibility = 'private' AND created_by = auth.uid())
+      OR (
+        (visibility IS NULL OR visibility <> 'private')
+        AND (
+          created_by = auth.uid()
+          OR is_space_admin(family_group_id)
+        )
+      )
+    )
   );
 
 
@@ -351,6 +373,11 @@ CREATE POLICY "schedule_participants: 참여자 조회"
       SELECT 1 FROM schedules s
       WHERE  s.id = schedule_id
         AND  s.family_group_id IN (SELECT my_space_ids())
+        AND  (
+          s.visibility IS NULL
+          OR s.visibility <> 'private'
+          OR s.created_by = auth.uid()
+        )
     )
   );
 

@@ -20,6 +20,7 @@ Supabase 대시보드 → SQL Editor → New Query
 | `012_cron_overdue_and_digest.sql` | 고정지출 연체 알림(D+0/3/7) + 주간 소비 다이제스트 크론잡 등록 | ⬜ **실행 전 app_url·cron_secret 수정 필요** |
 | `013_ad_system.sql` | 광고 시스템 (ad_slots / ads / ad_events 테이블, RLS, get_active_ad 함수) | ⬜ **Supabase SQL Editor 실행 필요** |
 | `014_ad_platforms.sql` | ads.platforms 컬럼 추가 + get_active_ad p_platform 파라미터 보정 | ⬜ **013 실행 후 반드시 이어서 실행** |
+| `015_harden_private_schedule_rls.sql` | private 일정/개인 가계부가 공유 공간 멤버에게 노출되지 않도록 schedules/schedule_participants RLS 강화 | ⬜ **Supabase SQL Editor 실행 필요** |
 
 > 📖 **SQL 전문 + 실행 순서 + 확인 쿼리** → `backoffice/docs/06-supabase-sql.md` 참조
 
@@ -122,3 +123,29 @@ SELECT jobname, schedule, active
 FROM cron.job
 WHERE jobname IN ('gleaum-overdue-expenses', 'gleaum-weekly-digest');
 ```
+
+
+## 015_harden_private_schedule_rls.sql 상세
+
+### 변경 내용
+- `schedules` SELECT RLS에서 `visibility='private'` 데이터는 생성자 본인만 조회 가능하도록 강화
+- `schedules` UPDATE/DELETE RLS에서 private 일정/개인 가계부는 생성자 본인만 수정/삭제 가능하도록 강화
+- `schedule_participants` SELECT RLS에서 private 일정 참여자 정보도 생성자 본인에게만 노출
+
+### 실행 후 확인사항
+```sql
+SELECT tablename, policyname, cmd
+FROM pg_policies
+WHERE schemaname = 'public'
+  AND tablename IN ('schedules', 'schedule_participants')
+  AND policyname IN (
+    'schedules: 공간 일정 조회',
+    'schedules: 일정 수정 (editor 이상 또는 본인)',
+    'schedules: 일정 삭제 (본인 또는 admin)',
+    'schedule_participants: 참여자 조회'
+  )
+ORDER BY tablename, policyname;
+```
+
+위 4개 정책명이 모두 보이면 적용 완료입니다.
+

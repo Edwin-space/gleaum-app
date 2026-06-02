@@ -933,6 +933,8 @@ export async function getSchedules(spaceId: string): Promise<Schedule[]> {
 /** 단일 일정 조회 */
 export async function getScheduleById(id: string): Promise<Schedule | null> {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('schedules')
@@ -941,6 +943,8 @@ export async function getScheduleById(id: string): Promise<Schedule | null> {
       schedule_participants (user_id)
     `)
     .eq('id', id)
+    // RLS 강화 전/후 모두 안전하게 private 일정은 생성자 본인에게만 노출한다.
+    .or(`visibility.neq.private,visibility.is.null,created_by.eq.${user.id}`)
     .single();
 
   if (error) return null;

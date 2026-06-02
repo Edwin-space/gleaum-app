@@ -12,6 +12,17 @@
 
 ---
 
+
+### 2026-06-02 — P0 개인/공간 데이터 경계 RLS 보강
+
+- `getScheduleById()` 단일 일정 조회에 `visibility='private'` 생성자 필터를 추가해, 직접 URL 접근에서도 타인의 private 일정/지출이 null 처리되도록 보강
+- `supabase/migrations/015_harden_private_schedule_rls.sql` 추가
+- `schedules` SELECT/UPDATE/DELETE RLS 정책에서 private 일정/개인 가계부는 생성자 본인에게만 허용하도록 강화
+- `schedule_participants` SELECT RLS도 private 일정 참여자 정보는 생성자 본인에게만 보이도록 강화
+- `supabase/schema.sql` 기준 정책도 동일하게 업데이트
+
+> 운영 DB 반영을 위해 Supabase SQL Editor에서 `015_harden_private_schedule_rls.sql` 실행 필요
+
 ## Day 2 — 전체 화면 UI (완료)
 
 ### 구현된 페이지

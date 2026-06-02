@@ -68,7 +68,7 @@
 | 우선순위 | 대상 | 파일 | 조치 |
 |---|---|---|---|
 | P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity` | Android OAuth callback은 최근 수정 완료. 배포 버전에서 실제 회귀 테스트 필요 |
-| P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `src/app/budget/*`, `src/app/space/*` | 이미 여러 차례 보정됨. 자동 회귀 테스트 또는 체크 SQL 필요 |
+| P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql` | 단일 조회 private 필터 + RLS 강화 SQL 추가. Supabase 실행 후 회귀 테스트 필요 |
 | P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
 | P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, MyPage 설정 링크 | 준비 중/앱 전용 문구 및 PC 레이아웃 통일 필요 |
 | P1 | 생체인증 설정 노출 | `src/app/mypage/*`, `src/components/NativeBiometricGate.tsx` | Web에서는 앱 전용으로 오해되지 않게 숨김/안내 기준 필요 |
@@ -85,6 +85,7 @@
 
 - Android 앱 Google 로그인 후 모바일 웹 로그인 화면으로 되돌아가지 않는지 실제 배포 버전 확인
 - 초대 링크 `https://gleaum.com/invite/{code}`가 웹/Android 앱에서 모두 유효한 코드로 진입하는지 확인
+- Supabase SQL Editor에서 `015_harden_private_schedule_rls.sql` 실행
 - 개인 가계부 입력이 공유 공간에 표시되지 않는지 확인
 - 공유 공간 지출이 개인 가계부에 자동 섞이지 않는지 확인
 - 공간 멤버/역할 표시가 실제 `space_members` 기준과 일치하는지 확인

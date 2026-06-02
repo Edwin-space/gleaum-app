@@ -44,6 +44,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-02 | P0 데이터 경계 보강. `getScheduleById()` 단일 조회에 private 생성자 필터를 추가하고, `supabase/migrations/015_harden_private_schedule_rls.sql`로 schedules/schedule_participants RLS를 강화 |
 | 2026-06-02 | PC Web / Mobile Web / Android App / iOS 예정 앱의 기능 싱크 기준표 추가. `docs/15-feature-parity-matrix.md`를 신규 작성하고, 공통 기능/플랫폼 전용 기능/불일치 점검 대상을 정리 |
 | 2026-06-02 | 공유 테마 모드 시스템 추가. `light/dark/system` 3모드와 `ThemeProvider`, `ThemeModeSelector`, theme 토큰 기반 shell UI 반영 |
 | 2026-06-01 | 네이티브 생체인증 앱 잠금 추가. Android 지문/생체인증 및 iOS Face ID/Touch ID 플러그인, 온보딩/마이페이지 설정/앱 잠금 게이트 반영 |
