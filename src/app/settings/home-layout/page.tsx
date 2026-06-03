@@ -168,7 +168,7 @@ export default function HomeLayoutSettingsPage() {
   };
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}>
+    <div style={{ minHeight: '100dvh', background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}>
       {/* 헤더 */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 40,

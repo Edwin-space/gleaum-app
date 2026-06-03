@@ -359,6 +359,33 @@ p, span, div { word-break: keep-all; overflow-wrap: break-word; }
   100% { opacity: 0; visibility: hidden; }
 }
 
+/* ── 스크롤 컨테이너: 하단 BottomNav에 가려지지 않도록 ─────────────────────
+   .scroll-safe    — BottomNav 있는 페이지 스크롤 컨테이너
+   .scroll-btn-bar — 고정 버튼 바(저장/취소) 있는 페이지 스크롤 컨테이너
+───────────────────────────────────────────────────────────────────────────── */
+.scroll-safe {
+  padding-bottom: var(--scroll-bottom, calc(80px + env(safe-area-inset-bottom)));
+}
+
+.scroll-btn-bar {
+  padding-bottom: var(--fixed-btn-bar, calc(100px + env(safe-area-inset-bottom)));
+}
+
+/* 입력 필드가 키보드/네이티브 피커에 가려지지 않도록 스크롤 여백 */
+input:focus,
+textarea:focus,
+select:focus,
+[contenteditable]:focus {
+  scroll-margin-bottom: 140px;
+}
+
+/* 키보드 올라올 때 하단 여백 보정 */
+@supports (height: 100dvh) {
+  .mobile-form-page {
+    min-height: 100dvh;
+  }
+}
+
 /* ── 다크모드: 인라인 하드코딩 색상 오버라이드 ──────────────────────────────
    컴포넌트 인라인 스타일의 하드코딩된 밝은 배경/텍스트를 다크모드에서 교체.
    인라인 스타일보다 특이성이 낮으므로 !important 적용.

@@ -87,7 +87,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
       style={{
         minHeight: '100dvh',
         background: '#FAFAFD',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)',
+        paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
       }}
     >
       {/* ── 헤더 ── */}

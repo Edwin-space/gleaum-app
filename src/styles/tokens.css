@@ -116,6 +116,10 @@
   --radius-app-icon:  22px;
   --bottom-nav-height: 64px;
   --header-height:     56px;
+  /* 스크롤 컨테이너 하단 여백 — BottomNav + safe-area + 여유 16px */
+  --scroll-bottom:     calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
+  /* 고정 버튼 바 높이 (button 52 + padding top 16 + padding bottom 16) */
+  --fixed-btn-bar:     calc(84px + env(safe-area-inset-bottom));
 }
 
 :root[data-theme='dark'] {

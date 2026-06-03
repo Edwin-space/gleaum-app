@@ -182,7 +182,7 @@ export function MobileMyPage({
     <div style={{
       background: 'var(--theme-bg)',
       minHeight: '100dvh',
-      paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)',
+      paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
     }}>
 
       {/* ── 상단 프로필 카드 ─────────────────────────────────── */}

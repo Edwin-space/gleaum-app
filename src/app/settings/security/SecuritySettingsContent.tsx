@@ -182,6 +182,7 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
   const pageStyle: CSSProperties = {
     minHeight: '100dvh',
     background: 'var(--theme-bg, #FAFAFD)',
+    paddingBottom: desktop ? 0 : 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
   };
 
   const mainStyle: CSSProperties = {

@@ -117,7 +117,7 @@ export function MobileNewSchedule({
       className="min-h-dvh"
       style={{
         background: '#FAFAFD',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)',
+        paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
       }}
     >
       {/* ── 스티키 헤더 ── */}
@@ -710,7 +710,7 @@ export function MobileNewSchedule({
           gridTemplateColumns: '1fr 1fr',
           gap: '12px',
           paddingTop: '8px',
-          paddingBottom: '32px',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)',
         }}>
           <button
             onClick={() => router.back()}
