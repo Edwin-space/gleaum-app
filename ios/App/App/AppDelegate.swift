@@ -89,7 +89,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             return keyWindow.rootViewController
         }
 
-        return UIApplication.shared.windows.first { $0.isKeyWindow }?.rootViewController
+        return nil
     }
 
     private func topMostViewController(from root: UIViewController) -> UIViewController {

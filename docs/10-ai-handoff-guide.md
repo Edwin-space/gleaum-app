@@ -1158,3 +1158,29 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
   - 사용자가 직접 조정한 LaunchScreen 아이콘 위치 변경으로 보이나 `misplaced="YES"`가 포함되어 있어 별도 실기기/Xcode 확인 후 커밋 권장.
 - `gleaum-mail-auth-only.txt`, `gleaum.com.cleaned.txt`
   - DNS/메일 운영 참고 파일로 앱 코드 변경과 분리.
+
+---
+
+## 2026-06-04 — iOS LaunchScreen Auto Layout 경고 정리
+
+### 증상
+- Xcode에서 LaunchScreen에 노란 경고가 표시됨.
+- 사용자가 Splash 이미지 프레임을 크게 조정했지만, 실제 빌드에서는 커지지 않는 현상 발생.
+
+### 원인
+- `ios/App/App/Base.lproj/LaunchScreen.storyboard`의 `img-logo-01` 실제 프레임은 `257x257`로 커져 있었지만 Auto Layout 제약은 기존 `180x180`으로 남아 있었음.
+- 따라서 런타임/빌드 시 제약값 기준으로 이미지가 다시 계산되어 커진 프레임이 반영되지 않았음.
+- 타이틀 라벨에는 leading만 있고 trailing 제약이 없어 Xcode가 missing trailing constraint 경고를 표시함.
+
+### 수정
+- `img-logo-01`의 Auto Layout 제약을 사용자 캡처 의도에 맞게 정리.
+  - width/height: `257`
+  - trailing: `31`
+  - centerY: `110.5`
+  - `misplaced="YES"` 제거
+- 타이틀 라벨 3개에 `trailing <= -32` 제약 추가.
+- `ios/App/App/AppDelegate.swift`의 deprecated `UIApplication.shared.windows` fallback 제거.
+
+### 검증
+- `xcodebuild -project ios/App/Gleaum.xcodeproj -scheme Gleaum -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build` 통과.
+- 빌드 출력에서 LaunchScreen 관련 Auto Layout warning은 재확인되지 않음.
