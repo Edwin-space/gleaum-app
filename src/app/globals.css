@@ -473,6 +473,37 @@ select:focus,
   border-color: var(--theme-border) !important;
 }
 
+/* 다크모드: Tailwind arbitrary class로 남은 구형 색상 보정 */
+:root[data-theme='dark'] .text-\[\#1A1B2E\],
+:root[data-theme='dark'] .text-\[\#111827\],
+:root[data-theme='dark'] .text-\[\#1f2937\],
+:root[data-theme='dark'] .text-\[\#333333\] {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='dark'] .text-\[\#8E8E93\],
+:root[data-theme='dark'] .text-\[\#6E6E66\],
+:root[data-theme='dark'] .text-\[\#AEAEA8\],
+:root[data-theme='dark'] .text-\[\#AEAEB2\],
+:root[data-theme='dark'] .text-\[\#6b7280\],
+:root[data-theme='dark'] .text-\[\#9ca3af\] {
+  color: var(--theme-text-subtle) !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#FAFAFD\],
+:root[data-theme='dark'] .bg-\[\#FFFFFF\],
+:root[data-theme='dark'] .bg-\[\#fff\],
+:root[data-theme='dark'] .bg-white {
+  background-color: var(--theme-surface) !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#F5F5F7\],
+:root[data-theme='dark'] .bg-\[\#F0F0F5\],
+:root[data-theme='dark'] .bg-\[\#F2F2F7\],
+:root[data-theme='dark'] .bg-gray-50 {
+  background-color: var(--theme-surface-muted) !important;
+}
+
 /* 스플래시 로고 펄스 (별도 pseudo-element 불가, ::before로만) */
 @media all and (display-mode: standalone) {
   body::after {

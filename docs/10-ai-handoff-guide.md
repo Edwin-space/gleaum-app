@@ -1030,3 +1030,15 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 이번 작업은 화면이 보이지 않는 치명 증상을 줄이는 1차 안정화다.
 - 조건부 버튼 색상, SVG `stroke/fill`, 일부 관리자 페이지 상태 색상은 아직 브랜드/상태 색상 하드코딩이 남아 있다.
 - 이후 작업은 화면 단위로 `#1A1B2E`, `#8E8E93`, `white`, `#F5F5F7` 등을 직접 쓰지 않고 `var(--theme-*)` 토큰을 사용하도록 점진 정리해야 한다.
+
+### 2026-06-04 추가 보정
+
+사용자 모바일 웹 캡처 확인 결과, 1차 안정화 이후에도 일부 모바일 화면에서 다크모드가 불완전하게 적용됐다. 원인은 inline hex 외에도 Tailwind arbitrary class, SVG stroke/fill, 모바일 sticky header의 고정 밝은 배경, 조건부 버튼 색상이 남아 있었기 때문이다.
+
+추가 수정:
+- 모바일 홈/일정/공간 sticky header를 `--theme-nav-bg`, `--theme-border` 기반으로 변경.
+- 모바일 홈 BI 워드마크를 현재 resolved theme에 따라 `dark/white` variant로 전환.
+- 마이페이지 모바일 메뉴 라벨/chevron/toggle 비활성색을 테마 토큰으로 변경.
+- 가계부 지출 등록/수정 모달의 카테고리/결제방법/주기/비활성 버튼 색상을 테마 토큰으로 변경.
+- Tailwind arbitrary class 잔여 색상 보정을 `globals.css`에 추가.
+- `npm run build` 통과.

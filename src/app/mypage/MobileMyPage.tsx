@@ -48,7 +48,7 @@ function Toggle({ toggled, onToggle }: { toggled: boolean; onToggle: () => void 
       style={{
         width: '44px', height: '26px', borderRadius: '999px',
         position: 'relative', cursor: 'pointer', flexShrink: 0,
-        background: toggled ? '#0084CC' : '#E5E5EA',
+        background: toggled ? '#0084CC' : 'var(--theme-disabled-bg)',
         transition: 'background 0.22s ease',
       }}
     >
@@ -68,7 +68,7 @@ function Toggle({ toggled, onToggle }: { toggled: boolean; onToggle: () => void 
 function Chevron() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M9 18L15 12L9 6" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 18L15 12L9 6" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -92,7 +92,7 @@ function MenuItem({
     }}>
       <div style={{ flexShrink: 0 }}>{icon}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ fontSize: '15px', fontWeight: 600, color: danger ? '#EF4444' : '#1A1B2E' }}>
+        <span style={{ fontSize: '15px', fontWeight: 600, color: danger ? '#EF4444' : 'var(--theme-text)' }}>
           {label}
         </span>
         {sub && (
@@ -269,7 +269,7 @@ export function MobileMyPage({
 
           {/* 수정 화살표 */}
           <div onClick={() => setShowEditModal(true)} style={{ cursor: 'pointer' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18L15 12L9 6"/>
             </svg>
           </div>
@@ -401,7 +401,7 @@ export function MobileMyPage({
             <div style={{ marginBottom: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>내 공간</span>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.spaceCount ?? 0) >= 2 ? '#EF4444' : '#1A1B2E' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.spaceCount ?? 0) >= 2 ? '#EF4444' : 'var(--theme-text)' }}>
                   {insights?.spaceCount ?? 0}/2
                 </span>
               </div>
@@ -413,7 +413,7 @@ export function MobileMyPage({
             <div style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>공간 멤버</span>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.memberCount ?? 0) >= 10 ? '#EF4444' : '#1A1B2E' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.memberCount ?? 0) >= 10 ? '#EF4444' : 'var(--theme-text)' }}>
                   {insights?.memberCount ?? 0}/10
                 </span>
               </div>
@@ -623,7 +623,7 @@ export function MobileMyPage({
               sub="준비 중"
               icon={
                 <IconBox bg="rgba(0,0,0,0.06)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1B2E" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 20.94c1.5 0 2.75-.6 3.95-1.56 1.2-.96 1.55-2.34 1.55-3.88 0-2.06-1.25-3.56-3.1-3.56-.55 0-1.1.15-1.4.3-.3-.15-.85-.3-1.4-.3C9.75 12 8.5 13.5 8.5 15.5c0 1.54.35 2.92 1.55 3.88C11.25 20.34 12.5 20.94 12 20.94z"/>
                     <path d="M12 8.5a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0 5z"/>
                   </svg>
@@ -692,7 +692,7 @@ export function MobileMyPage({
               label="앱 버전"
               icon={
                 <IconBox bg="rgba(142,142,147,0.10)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -702,7 +702,7 @@ export function MobileMyPage({
               right={
                 installedVersion ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '13px', color: needsUpdate ? '#EF4444' : '#8E8E93', fontWeight: 600 }}>v{installedVersion}</span>
+                    <span style={{ fontSize: '13px', color: needsUpdate ? '#EF4444' : 'var(--theme-text-subtle)', fontWeight: 600 }}>v{installedVersion}</span>
                     {needsUpdate ? (
                       <span style={{ fontSize: '10px', fontWeight: 800, color: '#EF4444', background: 'rgba(239,68,68,0.10)', padding: '2px 7px', borderRadius: '999px' }}>구버전</span>
                     ) : (
@@ -722,7 +722,7 @@ export function MobileMyPage({
               label="이용약관"
               icon={
                 <IconBox bg="rgba(142,142,147,0.10)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <polyline points="14 2 14 8 20 8"/>
                     <line x1="16" y1="13" x2="8" y2="13"/>
@@ -737,7 +737,7 @@ export function MobileMyPage({
               label="개인정보처리방침"
               icon={
                 <IconBox bg="rgba(142,142,147,0.10)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                   </svg>
                 </IconBox>

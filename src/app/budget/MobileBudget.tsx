@@ -425,8 +425,8 @@ export function MobileBudget({
 
             {/* 고정 / 변동 탭 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px', background: 'var(--theme-surface-muted)', borderRadius: '16px', padding: '4px' }}>
-              <button onClick={() => handleSetAddType('fixed')} style={{ padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 800, border: 'none', cursor: 'pointer', background: addType === 'fixed' ? 'white' : 'transparent', color: addType === 'fixed' ? '#1A1B2E' : '#8E8E93', boxShadow: addType === 'fixed' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>🔒 고정지출</button>
-              <button onClick={() => handleSetAddType('variable')} style={{ padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 800, border: 'none', cursor: 'pointer', background: addType === 'variable' ? 'white' : 'transparent', color: addType === 'variable' ? '#1A1B2E' : '#8E8E93', boxShadow: addType === 'variable' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>💸 변동지출</button>
+              <button onClick={() => handleSetAddType('fixed')} style={{ padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 800, border: 'none', cursor: 'pointer', background: addType === 'fixed' ? 'var(--theme-surface)' : 'transparent', color: addType === 'fixed' ? 'var(--theme-text)' : 'var(--theme-text-muted)', boxShadow: addType === 'fixed' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>🔒 고정지출</button>
+              <button onClick={() => handleSetAddType('variable')} style={{ padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 800, border: 'none', cursor: 'pointer', background: addType === 'variable' ? 'var(--theme-surface)' : 'transparent', color: addType === 'variable' ? 'var(--theme-text)' : 'var(--theme-text-muted)', boxShadow: addType === 'variable' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>💸 변동지출</button>
             </div>
 
             {/* 카테고리 */}
@@ -434,7 +434,7 @@ export function MobileBudget({
               <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', marginBottom: '8px', letterSpacing: '0.5px' }}>카테고리</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {(addType === 'fixed' ? FIXED_EXPENSE_CATEGORIES : VARIABLE_EXPENSE_CATEGORIES).map((cat) => (
-                  <button key={cat} onClick={() => setNewCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: `2px solid ${newCategory === cat ? getCategoryColor(cat) : 'transparent'}`, cursor: 'pointer', background: newCategory === cat ? `${getCategoryColor(cat)}15` : '#F5F5F7', color: newCategory === cat ? getCategoryColor(cat) : '#8E8E93', transition: 'all 0.15s' }}>
+                  <button key={cat} onClick={() => setNewCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: `2px solid ${newCategory === cat ? getCategoryColor(cat) : 'transparent'}`, cursor: 'pointer', background: newCategory === cat ? `${getCategoryColor(cat)}22` : 'var(--theme-control-bg)', color: newCategory === cat ? getCategoryColor(cat) : 'var(--theme-text-muted)', transition: 'all 0.15s' }}>
                     <span>{EXPENSE_CATEGORY_ICONS[cat]}</span><span>{EXPENSE_CATEGORY_LABELS[cat]}</span>
                   </button>
                 ))}
@@ -447,7 +447,7 @@ export function MobileBudget({
                 <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', marginBottom: '8px', letterSpacing: '0.5px' }}>결제 주기</p>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {FIXED_REPEAT_OPTIONS.map(({ value, label }) => (
-                    <button key={value} onClick={() => setNewRepeat(value)} style={{ flex: 1, padding: '9px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newRepeat === value ? '#1A1B2E' : '#F5F5F7', color: newRepeat === value ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{label}</button>
+                    <button key={value} onClick={() => setNewRepeat(value)} style={{ flex: 1, padding: '9px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, border: 'none', cursor: 'pointer', background: newRepeat === value ? 'var(--theme-control-active)' : 'var(--theme-control-bg)', color: newRepeat === value ? 'var(--theme-bg)' : 'var(--theme-text-muted)', transition: 'all 0.15s' }}>{label}</button>
                   ))}
                 </div>
               </div>
@@ -482,13 +482,13 @@ export function MobileBudget({
               <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', marginBottom: '8px', letterSpacing: '0.5px' }}>결제 방법</p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {PAYMENT_METHODS.map((m) => (
-                  <button key={m} onClick={() => setNewPayment(m)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: newPayment === m ? '#1A1B2E' : '#F5F5F7', color: newPayment === m ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{PAYMENT_METHOD_LABELS[m]}</button>
+                  <button key={m} onClick={() => setNewPayment(m)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: newPayment === m ? 'var(--theme-control-active)' : 'var(--theme-control-bg)', color: newPayment === m ? 'var(--theme-bg)' : 'var(--theme-text-muted)', transition: 'all 0.15s' }}>{PAYMENT_METHOD_LABELS[m]}</button>
                 ))}
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button onClick={handleSave} disabled={saving || !newTitle.trim() || !newAmountRaw} style={{ width: '100%', height: '58px', borderRadius: '18px', background: newTitle.trim() && newAmountRaw ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : '#F0F0F5', border: 'none', cursor: newTitle.trim() && newAmountRaw ? 'pointer' : 'not-allowed', fontSize: '16px', fontWeight: 800, color: newTitle.trim() && newAmountRaw ? 'white' : '#AEAEA8', opacity: saving ? 0.7 : 1, boxShadow: newTitle.trim() && newAmountRaw ? '0 8px 24px rgba(0,132,204,0.25)' : 'none' }}>{saving ? '저장 중...' : '지출 등록'}</button>
+              <button onClick={handleSave} disabled={saving || !newTitle.trim() || !newAmountRaw} style={{ width: '100%', height: '58px', borderRadius: '18px', background: newTitle.trim() && newAmountRaw ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : 'var(--theme-disabled-bg)', border: 'none', cursor: newTitle.trim() && newAmountRaw ? 'pointer' : 'not-allowed', fontSize: '16px', fontWeight: 800, color: newTitle.trim() && newAmountRaw ? 'white' : 'var(--theme-disabled-text)', opacity: saving ? 0.7 : 1, boxShadow: newTitle.trim() && newAmountRaw ? '0 8px 24px rgba(0,132,204,0.25)' : 'none' }}>{saving ? '저장 중...' : '지출 등록'}</button>
               <button onClick={() => setShowAddModal(false)} style={{ width: '100%', height: '52px', borderRadius: '18px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>취소</button>
             </div>
           </div>
@@ -509,7 +509,7 @@ export function MobileBudget({
               <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', marginBottom: '8px', letterSpacing: '0.5px' }}>카테고리</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {[...FIXED_EXPENSE_CATEGORIES, ...VARIABLE_EXPENSE_CATEGORIES].map((cat) => (
-                  <button key={cat} onClick={() => setEditCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 700, border: `2px solid ${editCategory === cat ? getCategoryColor(cat) : 'transparent'}`, cursor: 'pointer', background: editCategory === cat ? `${getCategoryColor(cat)}15` : '#F5F5F7', color: editCategory === cat ? getCategoryColor(cat) : '#8E8E93', transition: 'all 0.15s' }}>
+                  <button key={cat} onClick={() => setEditCategory(cat)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 700, border: `2px solid ${editCategory === cat ? getCategoryColor(cat) : 'transparent'}`, cursor: 'pointer', background: editCategory === cat ? `${getCategoryColor(cat)}22` : 'var(--theme-control-bg)', color: editCategory === cat ? getCategoryColor(cat) : 'var(--theme-text-muted)', transition: 'all 0.15s' }}>
                     <span>{EXPENSE_CATEGORY_ICONS[cat]}</span><span>{EXPENSE_CATEGORY_LABELS[cat]}</span>
                   </button>
                 ))}
@@ -542,13 +542,13 @@ export function MobileBudget({
               <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', marginBottom: '8px', letterSpacing: '0.5px' }}>결제 방법</p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {PAYMENT_METHODS.map((m) => (
-                  <button key={m} onClick={() => setEditPayment(m)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: editPayment === m ? '#1A1B2E' : '#F5F5F7', color: editPayment === m ? 'white' : '#8E8E93', transition: 'all 0.15s' }}>{PAYMENT_METHOD_LABELS[m]}</button>
+                  <button key={m} onClick={() => setEditPayment(m)} style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer', background: editPayment === m ? 'var(--theme-control-active)' : 'var(--theme-control-bg)', color: editPayment === m ? 'var(--theme-bg)' : 'var(--theme-text-muted)', transition: 'all 0.15s' }}>{PAYMENT_METHOD_LABELS[m]}</button>
                 ))}
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button onClick={handleEditSave} disabled={editSaving || !editTitle.trim() || !editAmountRaw} style={{ width: '100%', height: '58px', borderRadius: '18px', background: editTitle.trim() && editAmountRaw ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : '#F0F0F5', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 800, color: editTitle.trim() && editAmountRaw ? 'white' : '#AEAEA8', opacity: editSaving ? 0.7 : 1, boxShadow: editTitle.trim() && editAmountRaw ? '0 8px 24px rgba(0,132,204,0.25)' : 'none' }}>{editSaving ? '수정 중...' : '수정 완료'}</button>
+              <button onClick={handleEditSave} disabled={editSaving || !editTitle.trim() || !editAmountRaw} style={{ width: '100%', height: '58px', borderRadius: '18px', background: editTitle.trim() && editAmountRaw ? 'linear-gradient(135deg, #0084CC, #0CC9B5)' : 'var(--theme-disabled-bg)', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 800, color: editTitle.trim() && editAmountRaw ? 'white' : 'var(--theme-disabled-text)', opacity: editSaving ? 0.7 : 1, boxShadow: editTitle.trim() && editAmountRaw ? '0 8px 24px rgba(0,132,204,0.25)' : 'none' }}>{editSaving ? '수정 중...' : '수정 완료'}</button>
               <button onClick={() => setEditTarget(null)} style={{ width: '100%', height: '52px', borderRadius: '18px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>취소</button>
             </div>
           </div>

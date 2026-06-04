@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
+import { useTheme } from '@/components/ThemeProvider';
 import { trackEvent } from '@/lib/analytics';
 import { InlineFeedAd } from '@/components/InlineFeedAd';
 import { ScheduleCard } from '@/components/ui/Card';
@@ -22,6 +23,7 @@ interface MobileHomeProps {
 
 export default function MobileHome({ user, profile, schedules, loading }: MobileHomeProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // ── 미결제 고정지출 배지 ──
@@ -96,15 +98,15 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
         top: 0,
         zIndex: 40,
         padding: 'calc(env(safe-area-inset-top) + 6px) 20px 10px',
-        background: 'rgba(250,250,253,0.97)',
+        background: 'var(--theme-nav-bg)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,0,0,0.04)',
+        borderBottom: '1px solid var(--theme-border)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <GleaumLogoImg size={32} />
-            <GleaumBI variant="dark" width={88} />
+            <GleaumBI variant={resolvedTheme === 'dark' ? 'white' : 'dark'} width={88} />
           </div>
           <Link
             href="/notifications"
@@ -116,12 +118,12 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               alignItems: 'center',
               justifyContent: 'center',
               background: 'var(--theme-surface)',
-              border: '1px solid rgba(0,0,0,0.06)',
+              border: '1px solid var(--theme-border)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               textDecoration: 'none',
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1B2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
@@ -280,7 +282,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
           </div>
           <svg
             width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round"
+            stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"
             style={{ transform: calendarOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
           >
             <path d="M6 9l6 6 6-6"/>
@@ -507,7 +509,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
                       {formatDateShort(s.startTime)}
                     </p>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5">
                     <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>

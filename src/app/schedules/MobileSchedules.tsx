@@ -46,10 +46,10 @@ export function MobileSchedules({
           top: 0,
           zIndex: 40,
           padding: '48px 20px 16px',
-          background: 'rgba(250,250,253,0.92)',
+          background: 'var(--theme-nav-bg)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(0,0,0,0.04)',
+          borderBottom: '1px solid var(--theme-border)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -355,13 +355,13 @@ export function MobileSchedules({
                   <div style={{
                     height: '1px',
                     flex: 1,
-                    background: 'rgba(0,0,0,0.06)',
+                    background: 'var(--theme-border)',
                   }} />
                   <span style={{
                     fontSize: '11px',
                     fontWeight: 700,
                     color: 'var(--theme-text-subtle)',
-                    background: '#F0F0F3',
+                    background: 'var(--theme-surface-muted)',
                     padding: '3px 8px',
                     borderRadius: '999px',
                     flexShrink: 0,

@@ -452,16 +452,16 @@ export function MobileSpace() {
       <header style={{
         position: 'sticky', top: 0, zIndex: 40,
         padding: 'calc(env(safe-area-inset-top) + 12px) 20px 14px',
-        background: 'rgba(250,250,253,0.82)',
+        background: 'var(--theme-nav-bg)',
         backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: '1px solid rgba(0,0,0,0.04)',
+        borderBottom: '1px solid var(--theme-border)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={() => router.back()}
-            style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer' }}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', cursor: 'pointer' }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1B2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18L9 12L15 6" />
             </svg>
           </button>
@@ -474,9 +474,9 @@ export function MobileSpace() {
           {isAdmin && (
             <button
               onClick={() => router.push(`/space/settings${displaySpaceId ? `?sid=${displaySpaceId}` : ''}`)}
-              style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer' }}
+              style={{ width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', cursor: 'pointer' }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1B2E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
@@ -861,7 +861,7 @@ export function MobileSpace() {
                   <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>공간 참여하기</p>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
               </button>
 
               {/* 새 공간 만들기 */}
@@ -871,7 +871,7 @@ export function MobileSpace() {
                 style={{
                   width: '100%', padding: '18px 20px', borderRadius: '20px',
                   border: `1.5px solid ${spaceAtLimit ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.07)'}`,
-                  background: spaceAtLimit ? 'rgba(0,0,0,0.02)' : 'white',
+                  background: spaceAtLimit ? 'var(--theme-surface-muted)' : 'var(--theme-surface)',
                   display: 'flex', alignItems: 'center', gap: '14px',
                   cursor: spaceAtLimit ? 'not-allowed' : 'pointer', textAlign: 'left',
                   boxShadow: spaceAtLimit ? 'none' : '0 2px 10px rgba(0,0,0,0.04)',
@@ -880,14 +880,14 @@ export function MobileSpace() {
                   {spaceAtLimit ? '🔒' : '🏡'}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: spaceAtLimit ? '#C7C7CC' : '#1A1B2E', margin: '0 0 2px' }}>새 공간 만들기</p>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: spaceAtLimit ? 'var(--theme-disabled-text)' : 'var(--theme-text)', margin: '0 0 2px' }}>새 공간 만들기</p>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>
                     {spaceAtLimit
                       ? `공유 공간 ${FREE_MAX_SPACES}개 한도 도달 (무료 플랜)`
                       : `현재 공유 공간 ${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
                   </p>
                 </div>
-                {!spaceAtLimit && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>}
+                {!spaceAtLimit && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>}
               </button>
             </div>
           </div>
@@ -953,7 +953,7 @@ export function MobileSpace() {
                 }}
               >
                 <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-                  <path d="M24 4C12.95 4 4 11.82 4 21.4c0 6.06 3.84 11.38 9.6 14.44L11.2 44l10.56-5.44c.72.1 1.46.16 2.24.16 11.05 0 20-7.82 20-17.4C44 11.82 35.05 4 24 4z" fill="#1A1B2E"/>
+                  <path d="M24 4C12.95 4 4 11.82 4 21.4c0 6.06 3.84 11.38 9.6 14.44L11.2 44l10.56-5.44c.72.1 1.46.16 2.24.16 11.05 0 20-7.82 20-17.4C44 11.82 35.05 4 24 4z" fill="var(--theme-text)"/>
                 </svg>
                 {shareKakao ? '공유 중...' : '카카오톡으로 공유'}
               </button>
@@ -1001,7 +1001,7 @@ export function MobileSpace() {
             {/* 공유 메시지 미리보기 */}
             <details style={{ marginBottom: '16px' }}>
               <summary style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', cursor: 'pointer', padding: '4px 0', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
                 공유될 메시지 미리보기
               </summary>
               <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: 'var(--theme-surface-muted)', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
