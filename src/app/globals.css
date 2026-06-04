@@ -390,8 +390,14 @@ select:focus,
    컴포넌트 인라인 스타일의 하드코딩된 밝은 배경/텍스트를 다크모드에서 교체.
    인라인 스타일보다 특이성이 낮으므로 !important 적용.
 ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── 기본: 앱 쉘 전체 배경 ── */
 :root[data-theme='dark'] #app-shell {
-  /* 공통 배경 오버라이드 */
+  background-color: var(--theme-bg) !important;
+}
+
+/* ── min-h-dvh 페이지 래퍼 (거의 모든 Mobile 페이지 최상위) ── */
+:root[data-theme='dark'] .min-h-dvh {
   background-color: var(--theme-bg) !important;
 }
 

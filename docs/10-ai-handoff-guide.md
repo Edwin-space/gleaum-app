@@ -1042,3 +1042,18 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 가계부 지출 등록/수정 모달의 카테고리/결제방법/주기/비활성 버튼 색상을 테마 토큰으로 변경.
 - Tailwind arbitrary class 잔여 색상 보정을 `globals.css`에 추가.
 - `npm run build` 통과.
+
+### 2026-06-04 iOS 스플래시 이후 검은 화면 긴급 보정
+
+사용자 iOS 디바이스에서 스플래시 종료 후 검은 화면에서 진행되지 않는 증상이 발생했다. Xcode 콘솔에는 `No APNS token specified before fetching FCM Token` 로그가 있었지만, FCM 토큰 실패는 `useFCM()` 내부에서 catch 처리되어 렌더를 중단하지 않는 구조다.
+
+원인 후보 중 실제 위험도가 높은 부분은 `globals.css`의 다크모드 보정이었다. `[style*="rgba(255,255,255"]`와 `[style*="backdrop-filter"]` 전역 선택자가 iOS WebView에서 앱 초기 렌더링 요소/오버레이/시트까지 강제로 어둡게 덮을 수 있었다.
+
+수정:
+- `src/app/globals.css`에서 과도한 전역 selector 제거.
+- 다크모드 헤더는 각 모바일 화면에서 직접 `--theme-nav-bg`, `--theme-border`를 쓰도록 유지.
+- `npm run build` 통과.
+
+남은 확인:
+- iOS 실기기에서 스플래시 후 `/home` 또는 네이티브 로그인 화면이 정상 표시되는지 확인.
+- FCM/APNS 경고는 화면 정지와 별개로 Apple Push Notifications 설정/권한/실기기 APNS 토큰 발급 흐름에서 따로 정리 필요.
