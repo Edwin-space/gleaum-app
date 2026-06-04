@@ -1184,3 +1184,63 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 ### 검증
 - `xcodebuild -project ios/App/Gleaum.xcodeproj -scheme Gleaum -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build` 통과.
 - 빌드 출력에서 LaunchScreen 관련 Auto Layout warning은 재확인되지 않음.
+
+---
+
+## 2026-06-04 — 홈 대시보드/가계부 도메인 확장 검토 및 1차 반영
+
+### 사용자 요구
+- 홈 화면은 서비스 내부 기능의 허브여야 하며, 일정/가계부/공간 정보를 일관성 있게 보여줘야 한다.
+- 사용자가 설정한 홈 레이아웃(`balanced`, `calendar_first`, `expense_first`, `space_first`, `routine_first`)이 실제 홈 구성 순서에 반영되어야 한다.
+- 오늘 일정 empty state 안의 `새 일정 추가`와 하단 quick action `새 일정`이 중복되어 UX가 어색하다.
+- 가계부는 지출만이 아니라 수입까지 포함하는 자금 흐름 관리로 확장해야 한다.
+- 고정 지출은 사용자가 중지하기 전까지 매월/매주/매년 예정 항목으로 자동 반영되어야 한다.
+
+### 확인된 현재 구조 문제
+- `/home`은 현재 활성 공간의 `schedules`만 읽고 있어 개인 가계부가 개인 공간(`preferences.personalSpaceId`)에 저장된 경우 홈에서 누락될 수 있다.
+- 가계부는 아직 `schedules.type = 'expense'`에 강하게 의존한다.
+- `repeat !== 'none'`인 고정 지출은 하나의 schedule row로만 존재하며, 다음 달 발생분/납부상태를 독립적으로 관리할 occurrence 모델이 없다.
+- 따라서 단순히 start_time만 다음 달로 복사하거나 status를 토글하면 “이번 달 납부 완료”가 “다음 달도 완료”처럼 해석될 위험이 있다.
+
+### 이번 1차 코드 반영
+- `/home`에서 활성 공간 일정과 개인 가계부 데이터를 분리해 읽도록 변경.
+  - 일정/공간 표시: 현재 `familyGroupId` 기준
+  - 개인 가계부 요약: `preferences.personalSpaceId` 기준
+- 모바일/데스크탑 홈에 `personalExpenses`를 전달하고 이번 달 개인 가계부 요약 카드를 추가.
+- `homeLayout === 'expense_first'`인 경우 가계부 요약 카드가 캘린더/일정 영역보다 먼저 보이도록 반영.
+- 모바일 홈 empty state 내부의 `+ 새 일정 추가` 링크를 제거하고, 하단 quick action으로 유도해 중복 CTA를 줄임.
+
+### 다음 단계 권장 설계 — 가계부 Phase 2
+
+수입/지출/반복 예정 처리는 더 이상 `schedules`만으로 확장하지 않는 것이 안전하다. 권장 모델은 다음과 같다.
+
+1. `budget_entries` 또는 `ledger_entries` 신규 테이블
+   - `kind`: `income | expense`
+   - `scope`: `personal | space`
+   - `space_id`: 개인 공간 또는 공유 공간
+   - `owner_id`: 개인 귀속 사용자
+   - `amount`, `category`, `payment_method`, `occurred_at`, `memo`
+   - 개인 가계부와 공간 공동 지출의 저장 경계를 명확히 분리
+
+2. `recurring_budget_rules` 신규 테이블
+   - 월세/구독/보험/급여처럼 반복되는 수입·지출의 원본 규칙
+   - `kind`, `amount`, `frequency`, `day_of_month`, `start_date`, `end_date`, `is_active`
+
+3. `budget_occurrences` 신규 테이블
+   - 반복 규칙에서 생성된 월별/주별 실제 예정 항목
+   - `rule_id`, `due_date`, `status: pending | paid | skipped | canceled`
+   - 같은 고정지출이라도 6월분/7월분 납부 상태를 독립적으로 관리
+
+4. 크론/서버 액션
+   - 매일 또는 매월 초 `recurring_budget_rules`를 기준으로 다음 N개월 occurrence를 미리 생성
+   - 중복 방지 unique key: `(rule_id, due_date)`
+   - 홈/가계부는 occurrences를 기준으로 예정/완료/연체를 표시
+
+### 주의
+- 수입 기능을 `schedules.type`에 억지로 추가하면 일정/가계부 경계가 더 흐려진다.
+- 고정지출 자동 반영을 단일 schedule row의 `repeat`와 `status`만으로 처리하면 월별 납부 상태가 분리되지 않는다.
+- 다음 작업자는 먼저 SQL 마이그레이션을 설계하고 Supabase RLS까지 포함해야 한다.
+
+### 검증
+- `npm run build` 통과.
+- 기존 경고: `/_next/static/(.*)` Cache-Control 경고는 이번 변경과 무관한 기존 설정 경고.

@@ -18,13 +18,22 @@ export default function HomePage() {
   const isDesktop = useIsDesktop();
 
   const { user, profile, familyGroupId, loading: userLoading } = useCurrentUser();
-  const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
-  const loading = userLoading || schedulesLoading;
   const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+  const personalBudgetSpaceId = personalSpaceId ?? familyGroupId;
+  const { schedules: activeSpaceSchedules, loading: schedulesLoading } = useSchedules(familyGroupId);
+  const shouldReuseActiveSchedules = !!familyGroupId && familyGroupId === personalBudgetSpaceId;
+  const { schedules: loadedPersonalSchedules, loading: personalSchedulesLoading } = useSchedules(shouldReuseActiveSchedules ? null : personalBudgetSpaceId);
+  const personalSchedules = shouldReuseActiveSchedules ? activeSpaceSchedules : loadedPersonalSchedules;
+  const loading = userLoading || schedulesLoading || (!shouldReuseActiveSchedules && personalSchedulesLoading);
   const isPersonalSpace = !!familyGroupId && familyGroupId === personalSpaceId;
-  const timelineSchedules = schedules
+  const timelineSchedules = activeSpaceSchedules
     .filter(isTimelineSchedule)
     .filter((schedule) => isPersonalSpace || schedule.visibility !== 'private');
+  const personalExpenses = personalSchedules.filter((schedule) =>
+    schedule.type === 'expense' &&
+    schedule.visibility === 'private' &&
+    (!user?.id || schedule.createdBy === user.id)
+  );
 
   // 온보딩 미완료 시 리다이렉트
   useEffect(() => {
@@ -40,6 +49,7 @@ export default function HomePage() {
         user={user}
         profile={profile}
         schedules={timelineSchedules}
+        personalExpenses={personalExpenses}
         loading={loading}
       />
     );
@@ -50,6 +60,7 @@ export default function HomePage() {
       user={user}
       profile={profile}
       schedules={timelineSchedules}
+      personalExpenses={personalExpenses}
       loading={loading}
     />
   );

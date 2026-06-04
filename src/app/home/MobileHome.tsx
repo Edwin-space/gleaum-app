@@ -18,10 +18,11 @@ interface MobileHomeProps {
   user: User | null;
   profile: ProfileRow | null;
   schedules: Schedule[];
+  personalExpenses: Schedule[];
   loading: boolean;
 }
 
-export default function MobileHome({ user, profile, schedules, loading }: MobileHomeProps) {
+export default function MobileHome({ user, profile, schedules, personalExpenses, loading }: MobileHomeProps) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -79,10 +80,95 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
     [schedules, today]
   );
 
+  const currentMonthExpenseSummary = useMemo(() => {
+    const monthExpenses = personalExpenses.filter((expense) =>
+      expense.startTime.getFullYear() === today.getFullYear() &&
+      expense.startTime.getMonth() === today.getMonth()
+    );
+    const fixed = monthExpenses.filter((expense) => expense.repeat && expense.repeat !== 'none');
+    const variable = monthExpenses.filter((expense) => !expense.repeat || expense.repeat === 'none');
+    const total = monthExpenses.reduce((sum, expense) => sum + (expense.amount ?? 0), 0);
+    const pendingFixedCount = fixed.filter((expense) => expense.status !== 'completed').length;
+    const recent = variable
+      .slice()
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+      .slice(0, 2);
+
+    return {
+      total,
+      fixedTotal: fixed.reduce((sum, expense) => sum + (expense.amount ?? 0), 0),
+      variableTotal: variable.reduce((sum, expense) => sum + (expense.amount ?? 0), 0),
+      pendingFixedCount,
+      recent,
+    };
+  }, [personalExpenses, today]);
+
   // 개인화 인사
   const displayName = user?.displayName ?? user?.name ?? '사용자';
   const hour = today.getHours();
   const greeting = hour < 12 ? '좋은 아침이에요' : hour < 18 ? '좋은 오후예요' : '좋은 저녁이에요';
+
+  const budgetSummaryCard = (
+    <Link
+      href="/budget"
+      style={{
+        display: 'block',
+        textDecoration: 'none',
+        borderRadius: '24px',
+        padding: '20px',
+        background: 'var(--theme-surface)',
+        border: '1px solid var(--theme-border)',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+        <div>
+          <p style={{ fontSize: '11px', fontWeight: 800, color: '#0CC9B5', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 6px' }}>
+            MONEY FLOW
+          </p>
+          <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', letterSpacing: '-0.3px', margin: 0 }}>
+            이번 달 개인 가계부
+          </h2>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '4px 0 0' }}>
+            지출 기록과 고정 지출 예정 흐름을 확인하세요.
+          </p>
+        </div>
+        <span style={{ fontSize: '20px', lineHeight: 1 }}>💳</span>
+      </div>
+
+      <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '8px' }}>
+        <div style={{ padding: '12px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(12,201,181,0.16), rgba(0,132,204,0.12))' }}>
+          <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 4px' }}>총 지출</p>
+          <p style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
+            {currentMonthExpenseSummary.total.toLocaleString('ko-KR')}원
+          </p>
+        </div>
+        <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--theme-surface-muted)' }}>
+          <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 4px' }}>고정</p>
+          <p style={{ fontSize: '14px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
+            {currentMonthExpenseSummary.fixedTotal.toLocaleString('ko-KR')}원
+          </p>
+        </div>
+        <div style={{ padding: '12px', borderRadius: '16px', background: 'var(--theme-surface-muted)' }}>
+          <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 4px' }}>변동</p>
+          <p style={{ fontSize: '14px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
+            {currentMonthExpenseSummary.variableTotal.toLocaleString('ko-KR')}원
+          </p>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <span style={{
+          fontSize: '12px',
+          fontWeight: 800,
+          color: currentMonthExpenseSummary.pendingFixedCount > 0 ? '#F59E0B' : 'var(--theme-text-subtle)',
+        }}>
+          고정 지출 예정 {currentMonthExpenseSummary.pendingFixedCount}건
+        </span>
+        <span style={{ fontSize: '12px', fontWeight: 800, color: '#0084CC' }}>가계부 보기 →</span>
+      </div>
+    </Link>
+  );
 
   return (
     <div
@@ -237,6 +323,8 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
 
         {/* ── 인라인 광고 배너 ── */}
         <InlineFeedAd />
+
+        {homeLayout === 'expense_first' && budgetSummaryCard}
 
         {/* ── 캘린더 토글 ── */}
         <button
@@ -424,17 +512,19 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--theme-text-muted)', margin: 0 }}>
                 등록된 일정이 없어요
               </p>
-              <Link href="/schedules/new" style={{
+              <p style={{
                 fontSize: '13px',
-                fontWeight: 700,
-                color: '#0084CC',
-                textDecoration: 'none',
+                fontWeight: 600,
+                color: 'var(--theme-text-subtle)',
+                margin: 0,
               }}>
-                + 새 일정 추가
-              </Link>
+                아래 빠른 액션에서 새 일정을 추가할 수 있어요
+              </p>
             </div>
           )}
         </div>
+
+        {homeLayout !== 'expense_first' && budgetSummaryCard}
 
         {/* ── 다가오는 일정 ── */}
         {!loading && upcoming.length > 0 && (

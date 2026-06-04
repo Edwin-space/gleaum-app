@@ -14,10 +14,11 @@ interface DesktopHomeProps {
   user: User | null;
   profile: ProfileRow | null;
   schedules: Schedule[];
+  personalExpenses: Schedule[];
   loading: boolean;
 }
 
-export default function DesktopHome({ user, profile, schedules, loading }: DesktopHomeProps) {
+export default function DesktopHome({ user, profile, schedules, personalExpenses, loading }: DesktopHomeProps) {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
@@ -50,6 +51,69 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
     space_first:   { title: 'Space를 먼저 볼게요.',           body: '친구, 연인과 연결된 공간의 일정과 자금 흐름을 우선합니다.' },
   };
   const personalCopy = homeCopy[homeLayout];
+
+  const currentMonthExpenses = personalExpenses.filter(
+    (expense) =>
+      expense.startTime.getFullYear() === now.getFullYear() &&
+      expense.startTime.getMonth() === now.getMonth()
+  );
+  const currentMonthExpenseTotal = currentMonthExpenses.reduce((sum, expense) => sum + (expense.amount ?? 0), 0);
+  const currentMonthFixedTotal = currentMonthExpenses
+    .filter((expense) => expense.repeat && expense.repeat !== 'none')
+    .reduce((sum, expense) => sum + (expense.amount ?? 0), 0);
+  const currentMonthVariableTotal = currentMonthExpenses
+    .filter((expense) => !expense.repeat || expense.repeat === 'none')
+    .reduce((sum, expense) => sum + (expense.amount ?? 0), 0);
+  const pendingFixedExpenseCount = currentMonthExpenses.filter(
+    (expense) => expense.repeat && expense.repeat !== 'none' && expense.status !== 'completed'
+  ).length;
+
+  const budgetSummaryCard = (
+    <Link
+      href="/budget"
+      style={{
+        display: 'block',
+        textDecoration: 'none',
+        background: 'var(--theme-surface)',
+        borderRadius: '24px',
+        padding: '22px 24px',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+        border: '1px solid var(--theme-border)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+        <div>
+          <p style={{ fontSize: '11px', fontWeight: 800, color: '#0CC9B5', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 8px' }}>MONEY FLOW</p>
+          <h2 style={{ fontSize: '18px', fontWeight: 900, lineHeight: 1.25, color: 'var(--theme-text)', margin: '0 0 6px' }}>
+            이번 달 개인 가계부
+          </h2>
+          <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>
+            등록된 지출과 예정된 고정 지출을 홈에서 바로 확인합니다.
+          </p>
+        </div>
+        <span style={{ fontSize: '13px', fontWeight: 900, color: '#0084CC', whiteSpace: 'nowrap' }}>가계부 보기 →</span>
+      </div>
+      <div style={{ marginTop: '18px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px' }}>
+        {[
+          { label: '총 지출', value: currentMonthExpenseTotal, bg: 'linear-gradient(135deg, rgba(12,201,181,0.16), rgba(0,132,204,0.12))' },
+          { label: '고정', value: currentMonthFixedTotal, bg: 'var(--theme-surface-muted)' },
+          { label: '변동', value: currentMonthVariableTotal, bg: 'var(--theme-surface-muted)' },
+        ].map((item) => (
+          <div key={item.label} style={{ padding: '13px 14px', borderRadius: '16px', background: item.bg }}>
+            <p style={{ fontSize: '10px', fontWeight: 900, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 5px' }}>
+              {item.label}
+            </p>
+            <p style={{ fontSize: item.label === '총 지출' ? '17px' : '15px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
+              {item.value.toLocaleString('ko-KR')}원
+            </p>
+          </div>
+        ))}
+      </div>
+      <p style={{ margin: '12px 0 0', fontSize: '12px', fontWeight: 800, color: pendingFixedExpenseCount > 0 ? '#F59E0B' : 'var(--theme-text-subtle)' }}>
+        고정 지출 예정 {pendingFixedExpenseCount}건
+      </p>
+    </Link>
+  );
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -182,6 +246,8 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
             </div>
           )}
 
+          {!loading && homeLayout === 'expense_first' && budgetSummaryCard}
+
           {/* 자녀 일정 요약 */}
           {!loading && totalChild > 0 && (
             <Link href="/schedules/children" style={{
@@ -262,6 +328,8 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
               )}
             </div>
           )}
+
+          {!loading && homeLayout !== 'expense_first' && budgetSummaryCard}
         </div>
       </div>
     </div>
