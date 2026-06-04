@@ -998,3 +998,35 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - iOS 실기기에서 Google 계정 선택 화면이 뜨는지 확인해야 한다.
 - 여전히 최근 계정으로 바로 진행되면 다음 단계는 `SFSafariViewController` 대신 `ASWebAuthenticationSession` + `prefersEphemeralWebBrowserSession` 전환을 검토한다. 단, 이 방식은 사용자가 매번 더 자주 로그인해야 할 수 있어 UX 비용이 있다.
 - 메일 OTP가 도착하지 않으면 Supabase Dashboard → Authentication → Email 설정/SMTP/템플릿/로그를 확인해야 한다.
+
+---
+
+## 2026-06-04 Codex 인수인계 — 다크모드 대비/토큰 안정화 1차
+
+### 문제
+
+`자동/라이트/다크` 테마 모드가 추가된 뒤에도 다수 화면이 `white`, `#1A1B2E`, `#8E8E93`, `#F5F5F7` 같은 값을 인라인 스타일 또는 Tailwind arbitrary class로 직접 들고 있어 다크모드 전환 시 텍스트/카드 대비가 깨졌다. 특히 모바일 앱 WebView에서 시스템 다크모드 또는 수동 다크모드 설정 후 검정 텍스트가 어두운 배경 위에 남아 UI가 보이지 않는 문제가 있었다.
+
+### 수정
+
+- `src/styles/tokens.css`
+  - `--theme-control-bg`, `--theme-control-active`, `--theme-control-text`, `--theme-disabled-bg`, `--theme-disabled-text` 추가.
+  - 라이트/다크 모드별 컨트롤·비활성 상태 토큰을 분리.
+- `src/app/globals.css`
+  - 다크모드 전용 inline-style 안전망을 확장.
+  - 밝은 카드 배경, 어두운 텍스트, 흐린 텍스트, 밝은 border가 런타임 조건부 inline 값으로 남아도 `var(--theme-*)`로 보정되도록 처리.
+- 주요 앱 화면 전반
+  - 홈, 일정, 공간, 가계부, 알림, 온보딩, 마이페이지, 광고/관리 일부 화면의 하드코딩된 밝은 배경/어두운 텍스트를 테마 토큰으로 1차 교체.
+- `src/app/mypage/page.tsx`
+  - 프로필/비밀번호/탈퇴 모달의 Tailwind 하드코딩 색상을 인라인 테마 토큰으로 보강.
+  - 프로필 수정 모달 제목 중복 노출을 정리.
+
+### 검증
+
+- `npm run build` 통과.
+
+### 남은 작업
+
+- 이번 작업은 화면이 보이지 않는 치명 증상을 줄이는 1차 안정화다.
+- 조건부 버튼 색상, SVG `stroke/fill`, 일부 관리자 페이지 상태 색상은 아직 브랜드/상태 색상 하드코딩이 남아 있다.
+- 이후 작업은 화면 단위로 `#1A1B2E`, `#8E8E93`, `white`, `#F5F5F7` 등을 직접 쓰지 않고 `var(--theme-*)` 토큰을 사용하도록 점진 정리해야 한다.

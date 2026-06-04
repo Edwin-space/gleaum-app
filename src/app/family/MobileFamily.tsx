@@ -46,7 +46,7 @@ export function MobileFamily() {
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
+      style={{ background: 'var(--theme-bg)', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
     >
       {/* ── Sticky frosted header ── */}
       <header style={{
@@ -74,7 +74,7 @@ export function MobileFamily() {
               <path d="M15 18L9 12L15 6" />
             </svg>
           </button>
-          <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.5px', margin: 0 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.5px', margin: 0 }}>
             공간 관리
           </h1>
         </div>
@@ -89,7 +89,7 @@ export function MobileFamily() {
             animation: 'spin 0.8s linear infinite',
           }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: '#8E8E93' }}>공간 정보를 불러오는 중...</p>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>공간 정보를 불러오는 중...</p>
         </div>
       ) : (
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -174,8 +174,8 @@ export function MobileFamily() {
                         onClick={copyInviteLink}
                         style={{
                           padding: '10px 20px', borderRadius: '14px',
-                          background: 'white', border: 'none', cursor: 'pointer',
-                          fontSize: '13px', fontWeight: 800, color: '#1A1B2E',
+                          background: 'var(--theme-surface)', border: 'none', cursor: 'pointer',
+                          fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)',
                           whiteSpace: 'nowrap',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                         }}
@@ -193,7 +193,7 @@ export function MobileFamily() {
           <div style={{ padding: '0 16px', marginBottom: '32px' }}>
             {/* Section heading */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingLeft: '4px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
                 공간 멤버
               </h3>
               <button
@@ -215,7 +215,7 @@ export function MobileFamily() {
                 <div
                   key={member.id}
                   style={{
-                    background: 'white',
+                    background: 'var(--theme-surface)',
                     borderRadius: '20px',
                     boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
                     border: '1px solid rgba(0,0,0,0.04)',
@@ -228,7 +228,7 @@ export function MobileFamily() {
                   {/* Avatar */}
                   <div style={{
                     width: '52px', height: '52px', borderRadius: '18px',
-                    background: '#F5F5F7',
+                    background: 'var(--theme-surface-muted)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '26px', flexShrink: 0,
                     border: '2px solid white',
@@ -239,7 +239,7 @@ export function MobileFamily() {
 
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {member.user?.name}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -251,7 +251,7 @@ export function MobileFamily() {
                       }}>
                         {member.role === 'admin' ? 'Admin' : 'Member'}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {member.user?.email || '연결됨'}
                       </span>
                     </div>
@@ -274,7 +274,7 @@ export function MobileFamily() {
                   gap: '10px',
                   fontSize: '14px',
                   fontWeight: 800,
-                  color: '#8E8E93',
+                  color: 'var(--theme-text-subtle)',
                   cursor: 'pointer',
                 }}
               >
@@ -304,7 +304,7 @@ export function MobileFamily() {
             style={{
               width: '100%',
               maxWidth: '600px',
-              background: 'white',
+              background: 'var(--theme-surface)',
               borderRadius: '32px 32px 0 0',
               padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
@@ -313,7 +313,7 @@ export function MobileFamily() {
           >
             {/* Drag handle */}
             <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px' }}>
-              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: '#E5E5EA' }} />
+              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: 'var(--theme-surface-muted)' }} />
             </div>
 
             {/* Icon */}
@@ -326,10 +326,10 @@ export function MobileFamily() {
               🔗
             </div>
 
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 8px' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 8px' }}>
               멤버 초대하기
             </h3>
-            <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 28px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 28px' }}>
               초대 링크를 공유하여 소중한 사람들을<br />이 공간으로 초대하세요.
             </p>
 
@@ -349,8 +349,8 @@ export function MobileFamily() {
               onClick={() => setShowInviteModal(false)}
               style={{
                 width: '100%', height: '58px', borderRadius: '18px',
-                background: '#F5F5F7', border: 'none', cursor: 'pointer',
-                fontSize: '15px', fontWeight: 800, color: '#8E8E93',
+                background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer',
+                fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)',
               }}
             >
               닫기
@@ -377,7 +377,7 @@ export function MobileFamily() {
             style={{
               width: '100%',
               maxWidth: '600px',
-              background: 'white',
+              background: 'var(--theme-surface)',
               borderRadius: '32px 32px 0 0',
               padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
@@ -386,7 +386,7 @@ export function MobileFamily() {
           >
             {/* Drag handle */}
             <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px' }}>
-              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: '#E5E5EA' }} />
+              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: 'var(--theme-surface-muted)' }} />
             </div>
 
             {/* Icon */}
@@ -399,10 +399,10 @@ export function MobileFamily() {
               🗝️
             </div>
 
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 8px' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 8px' }}>
               공간 참여하기
             </h3>
-            <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>
               공유받은 참여 코드를 입력해 주세요.
             </p>
 
@@ -421,12 +421,12 @@ export function MobileFamily() {
                 fontWeight: 900,
                 textAlign: 'center',
                 textTransform: 'uppercase',
-                background: '#F5F5F7',
+                background: 'var(--theme-surface-muted)',
                 border: `2px solid ${joinError ? '#EF4444' : joinCode ? '#0CC9B5' : 'transparent'}`,
                 outline: 'none',
                 boxSizing: 'border-box',
                 letterSpacing: '4px',
-                color: '#1A1B2E',
+                color: 'var(--theme-text)',
                 marginBottom: '8px',
               }}
             />
@@ -454,8 +454,8 @@ export function MobileFamily() {
                 onClick={() => setShowJoinModal(false)}
                 style={{
                   width: '100%', height: '58px', borderRadius: '18px',
-                  background: '#F5F5F7', border: 'none', cursor: 'pointer',
-                  fontSize: '15px', fontWeight: 800, color: '#8E8E93',
+                  background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer',
+                  fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)',
                 }}
               >
                 취소

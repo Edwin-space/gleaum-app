@@ -20,7 +20,7 @@ const REMINDER_OPTIONS = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', letterSpacing: '0.07em', marginBottom: '12px', textTransform: 'uppercase' }}>
+    <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', letterSpacing: '0.07em', marginBottom: '12px', textTransform: 'uppercase' }}>
       {children}
     </p>
   );
@@ -123,14 +123,14 @@ function ParticipantPicker({
           >
             <div style={{
               width: '52px', height: '52px', borderRadius: '50%',
-              background: '#F0F0F5',
+              background: 'var(--theme-surface-muted)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '13px', fontWeight: 800, color: '#0084CC',
               border: '2px solid #E0E0E8',
             }}>
               +{hidden.length}
             </div>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93' }}>더보기</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>더보기</span>
           </button>
         )}
       </div>
@@ -142,7 +142,7 @@ function ParticipantPicker({
           style={{
             marginTop: '12px', display: 'flex', alignItems: 'center', gap: '4px',
             background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '12px', fontWeight: 700, color: '#8E8E93',
+            fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)',
             padding: '4px 0',
           }}
         >
@@ -230,17 +230,17 @@ export default function SpaceScheduleNewPage() {
   };
 
   const cardBase: React.CSSProperties = {
-    background: 'white', borderRadius: '20px', padding: '20px',
+    background: 'var(--theme-surface)', borderRadius: '20px', padding: '20px',
     boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)', marginBottom: '12px',
   };
   const inputBase: React.CSSProperties = {
     width: '100%', height: '52px', padding: '0 16px', borderRadius: '14px',
     fontSize: '15px', background: '#F7F7FA', outline: 'none',
-    boxSizing: 'border-box', color: '#1A1B2E', fontWeight: 600, fontFamily: 'inherit',
+    boxSizing: 'border-box', color: 'var(--theme-text)', fontWeight: 600, fontFamily: 'inherit',
   };
 
   return (
-    <div className="min-h-dvh" style={{ background: '#FAFAFD', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}>
+    <div className="min-h-dvh" style={{ background: 'var(--theme-bg)', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}>
       {/* ── 헤더 ── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 20,
@@ -259,7 +259,7 @@ export default function SpaceScheduleNewPage() {
         </button>
 
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', margin: 0, letterSpacing: '-0.03em' }}>
+          <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.03em' }}>
             공간 일정 등록
           </p>
           {space?.name && (
@@ -339,7 +339,7 @@ export default function SpaceScheduleNewPage() {
             {typeOpen && (
               <div style={{
                 position: 'absolute', top: '56px', left: 0, right: 0, zIndex: 30,
-                background: 'white', borderRadius: '14px',
+                background: 'var(--theme-surface)', borderRadius: '14px',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                 border: '1px solid rgba(0,0,0,0.06)',
                 overflow: 'hidden',
@@ -376,7 +376,7 @@ export default function SpaceScheduleNewPage() {
         <div style={cardBase}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <SectionLabel>참여자</SectionLabel>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#8E8E93', marginBottom: '12px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--theme-text-subtle)', marginBottom: '12px' }}>
               {participants.length}/{members.length}명 선택
             </span>
           </div>
@@ -435,7 +435,7 @@ export default function SpaceScheduleNewPage() {
               fontSize: '15px', background: '#F7F7FA',
               border: `1.5px solid ${memo ? '#0084CC80' : '#EBEBF0'}`,
               outline: 'none', boxSizing: 'border-box',
-              color: '#1A1B2E', fontWeight: 500, fontFamily: 'inherit',
+              color: 'var(--theme-text)', fontWeight: 500, fontFamily: 'inherit',
               lineHeight: 1.6, resize: 'none',
             }}
           />
@@ -445,7 +445,7 @@ export default function SpaceScheduleNewPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '8px', paddingBottom: '32px' }}>
           <button
             onClick={() => router.back()}
-            style={{ height: '56px', borderRadius: '20px', border: '1.5px solid #E0E0E5', cursor: 'pointer', fontSize: '15px', fontWeight: 700, color: '#6E6E66', background: 'white' }}
+            style={{ height: '56px', borderRadius: '20px', border: '1.5px solid #E0E0E5', cursor: 'pointer', fontSize: '15px', fontWeight: 700, color: 'var(--theme-text-muted)', background: 'var(--theme-surface)' }}
           >취소</button>
           <button
             onClick={handleSave}

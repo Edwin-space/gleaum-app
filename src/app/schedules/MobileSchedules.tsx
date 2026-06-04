@@ -35,7 +35,7 @@ export function MobileSchedules({
     <div
       className="min-h-dvh"
       style={{
-        background: '#FAFAFD',
+        background: 'var(--theme-bg)',
         paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
       }}
     >
@@ -57,7 +57,7 @@ export function MobileSchedules({
             <p style={{
               fontSize: '12px',
               fontWeight: 700,
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               margin: '0 0 2px',
               letterSpacing: '0.2px',
             }}>
@@ -66,7 +66,7 @@ export function MobileSchedules({
             <h1 style={{
               fontSize: '28px',
               fontWeight: 900,
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
               margin: 0,
               letterSpacing: '-0.5px',
             }}>
@@ -221,7 +221,7 @@ export function MobileSchedules({
             padding: '0 16px',
             height: '52px',
             borderRadius: '16px',
-            background: 'white',
+            background: 'var(--theme-surface)',
             border: searchFocused ? '1.5px solid #0CC9B5' : '1.5px solid rgba(0,0,0,0.06)',
             boxShadow: searchFocused
               ? '0 0 0 3px rgba(12,201,181,0.12), 0 4px 16px rgba(0,0,0,0.08)'
@@ -251,7 +251,7 @@ export function MobileSchedules({
               outline: 'none',
               fontSize: '15px',
               fontWeight: 500,
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
             }}
           />
           {search && (
@@ -345,7 +345,7 @@ export function MobileSchedules({
                   <h2 style={{
                     fontSize: '17px',
                     fontWeight: 900,
-                    color: '#1A1B2E',
+                    color: 'var(--theme-text)',
                     margin: 0,
                     whiteSpace: 'nowrap',
                     letterSpacing: '-0.3px',
@@ -360,7 +360,7 @@ export function MobileSchedules({
                   <span style={{
                     fontSize: '11px',
                     fontWeight: 700,
-                    color: '#8E8E93',
+                    color: 'var(--theme-text-subtle)',
                     background: '#F0F0F3',
                     padding: '3px 8px',
                     borderRadius: '999px',
@@ -408,10 +408,10 @@ export function MobileSchedules({
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
               </div>
-              <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>
+              <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>
                 표시할 일정이 없습니다
               </p>
-              <p style={{ fontSize: '13px', color: '#8E8E93', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', margin: 0 }}>
                 새 일정을 추가해보세요
               </p>
               <Link

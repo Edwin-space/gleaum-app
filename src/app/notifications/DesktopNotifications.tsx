@@ -11,7 +11,7 @@ const typeConfig: Record<string, { color: string; bg: string; label: string; emo
   re_notify:  { emoji: '🔔', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  label: '재알림' },
   completion: { emoji: '✅', color: '#0CC9B5', bg: 'rgba(12,201,181,0.08)',  label: '완료' },
   invite:     { emoji: '💌', color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)',  label: '초대' },
-  system:     { emoji: '⚙️', color: '#6B7280', bg: 'rgba(107,114,128,0.08)', label: '시스템' },
+  system:     { emoji: '⚙️', color: 'var(--theme-text-subtle)', bg: 'rgba(107,114,128,0.08)', label: '시스템' },
 };
 
 function groupNotifications(notifs: Notification[]) {
@@ -112,7 +112,7 @@ export function DesktopNotifications() {
         {/* ── 왼쪽: 필터 패널 ── */}
         <div>
           <div style={{
-            background: 'white', borderRadius: '24px', padding: '20px',
+            background: 'var(--theme-surface)', borderRadius: '24px', padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
             position: 'sticky', top: '24px',
           }}>
@@ -142,9 +142,9 @@ export function DesktopNotifications() {
                 background: 'rgba(0,132,204,0.05)', border: '1px solid rgba(0,132,204,0.1)',
               }}>
                 <p style={{ fontSize: '11px', fontWeight: 800, color: '#0084CC', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>미확인</p>
-                <p style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, lineHeight: 1 }}>
                   {unreadCount}
-                  <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, marginLeft: '4px' }}>개</span>
+                  <span style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, marginLeft: '4px' }}>개</span>
                 </p>
               </div>
             )}
@@ -159,9 +159,9 @@ export function DesktopNotifications() {
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '100px 0', textAlign: 'center' }}>
-              <div style={{ width: '88px', height: '88px', borderRadius: '32px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', marginBottom: '24px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>✨</div>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>모든 소식을 확인했어요</h3>
-              <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600 }}>새로운 알림이 도착하면 알려드릴게요</p>
+              <div style={{ width: '88px', height: '88px', borderRadius: '32px', background: 'var(--theme-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', marginBottom: '24px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>✨</div>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>모든 소식을 확인했어요</h3>
+              <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>새로운 알림이 도착하면 알려드릴게요</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -170,7 +170,7 @@ export function DesktopNotifications() {
                 return (
                   <div key={title}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                      <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#AEAEA8', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>{title}</h3>
+                      <h3 style={{ fontSize: '11px', fontWeight: 900, color: 'var(--theme-text-subtle)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>{title}</h3>
                       <div style={{ flex: 1, height: '1px', background: '#F0F0F0' }} />
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#C7C7CC' }}>{items.length}</span>
                     </div>
@@ -183,7 +183,7 @@ export function DesktopNotifications() {
                             onClick={() => !n.read && handleMarkRead(n.id)}
                             style={{
                               display: 'flex', gap: '16px', padding: '20px 24px',
-                              borderRadius: '20px', background: 'white',
+                              borderRadius: '20px', background: 'var(--theme-surface)',
                               boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
                               border: `1px solid ${n.read ? 'rgba(0,0,0,0.04)' : cfg.color + '22'}`,
                               cursor: n.read ? 'default' : 'pointer',
@@ -202,8 +202,8 @@ export function DesktopNotifications() {
                                 <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: cfg.color }}>{cfg.label}</span>
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#C7C7CC' }}>{formatRelativeTime(n.createdAt)}</span>
                               </div>
-                              <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</p>
-                              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>{n.body}</p>
+                              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</p>
+                              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>{n.body}</p>
                             </div>
                           </div>
                         );

@@ -185,7 +185,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
 
       {/* Section heading */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingLeft: '4px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
           공간 일정
         </h3>
         <button
@@ -223,7 +223,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
       {/* Space expenses */}
       {spaceExpenses.length > 0 && (
         <div style={{
-          background: 'white',
+          background: 'var(--theme-surface)',
           borderRadius: '22px',
           padding: '18px',
           marginBottom: '18px',
@@ -235,11 +235,11 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
               <p style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1.2px', color: '#D97706', margin: '0 0 4px', textTransform: 'uppercase' }}>
                 Space Expenses
               </p>
-              <h4 style={{ fontSize: '16px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+              <h4 style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
                 공간 지출
               </h4>
             </div>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', background: '#F5F5F7', padding: '4px 9px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', background: 'var(--theme-surface-muted)', padding: '4px 9px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
               {spaceExpenses.length}건
             </span>
           </div>
@@ -274,10 +274,10 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
                     onClick={() => router.push(`/schedules/${expense.id}`)}
                     style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer' }}
                   >
-                    <p style={{ fontSize: '14px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '14px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {expense.title}
                     </p>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>
                       {formatAmount(expense.amount ?? 0)} · {formatDateHeader(toDateKey(expense.startTime))}
                     </p>
                   </button>
@@ -371,7 +371,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
             border: '3px solid #0084CC', borderTopColor: 'transparent',
             animation: 'spin 0.8s linear infinite',
           }} />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93' }}>일정 불러오는 중...</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>일정 불러오는 중...</span>
         </div>
       ) : displayedDates.length === 0 ? (
         /* 선택 날짜 일정 없음: 콤팩트 메시지 + 다가오는 일정 미리보기 */
@@ -388,12 +388,12 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '14px 18px', borderRadius: '16px',
-                background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+                background: 'var(--theme-surface)', border: '1px solid rgba(0,0,0,0.04)',
                 boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
                 marginBottom: upcoming.length > 0 ? '20px' : '0',
               }}>
                 <span style={{ fontSize: '20px' }}>📅</span>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>
                   이 날 등록된 공간 일정이 없어요
                 </p>
               </div>
@@ -401,7 +401,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
               {/* 다가오는 일정 미리보기 */}
               {upcoming.length > 0 && (
                 <div>
-                  <p style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93', margin: '0 0 10px', paddingLeft: '2px', letterSpacing: '0.3px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 10px', paddingLeft: '2px', letterSpacing: '0.3px' }}>
                     다가오는 일정
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -419,7 +419,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
                           style={{
                             width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
                             padding: '12px 14px', borderRadius: '16px',
-                            background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+                            background: 'var(--theme-surface)', border: '1px solid rgba(0,0,0,0.04)',
                             boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
                             cursor: 'pointer', textAlign: 'left',
                           }}
@@ -435,10 +435,10 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
                             <span style={{ fontSize: '16px', fontWeight: 900, color: typeCfg.color, lineHeight: 1.2 }}>{da}</span>
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {s.title}
                             </p>
-                            <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: '2px 0 0' }}>
+                            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>
                               {`${mo}월 ${da}일 (${wd})`} {formatTime(new Date(s.startTime))}
                             </p>
                           </div>
@@ -494,13 +494,13 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
         marginBottom: '12px', paddingLeft: '2px',
       }}>
         <div style={{ width: '3px', height: '16px', borderRadius: '2px', background: '#0084CC', flexShrink: 0 }} />
-        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.2px' }}>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.2px' }}>
           {formatDateHeader(dateKey)}
         </span>
-        <div style={{ flex: 1, height: '1px', background: '#F0F0F5' }} />
+        <div style={{ flex: 1, height: '1px', background: 'var(--theme-surface-muted)' }} />
         <span style={{
-          fontSize: '11px', fontWeight: 700, color: '#8E8E93',
-          padding: '2px 8px', background: '#F5F5F7', borderRadius: '999px',
+          fontSize: '11px', fontWeight: 700, color: 'var(--theme-text-subtle)',
+          padding: '2px 8px', background: 'var(--theme-surface-muted)', borderRadius: '999px',
         }}>
           {schedules.length}개
         </span>
@@ -545,7 +545,7 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
                 <div
                   onClick={() => onNavigate(schedule.id)}
                   style={{
-                    background: 'white',
+                    background: 'var(--theme-surface)',
                     borderRadius: '18px',
                     padding: '14px 16px',
                     boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
@@ -555,7 +555,7 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
                 >
                   {/* Top row: time + type badge */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#8E8E93' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>
                       {formatTime(new Date(schedule.startTime))}
                       {schedule.endTime && (
                         <span style={{ fontWeight: 600, color: '#C7C7CC' }}>
@@ -575,7 +575,7 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
 
                   {/* Title */}
                   <p style={{
-                    fontSize: '15px', fontWeight: 800, color: '#1A1B2E',
+                    fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)',
                     margin: '0 0 10px',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
@@ -585,7 +585,7 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
                   {/* Location */}
                   {schedule.location?.address && (
                     <p style={{
-                      fontSize: '12px', fontWeight: 600, color: '#8E8E93',
+                      fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)',
                       margin: '0 0 10px',
                       display: 'flex', alignItems: 'center', gap: '4px',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -607,9 +607,9 @@ function DateGroup({ dateKey, schedules, memberMap, currentUserId, localParticip
                         size={20}
                         radius={999}
                         fontSize={10}
-                        style={{ background: '#F0F0F5' }}
+                        style={{ background: 'var(--theme-surface-muted)' }}
                       />
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>
                         {isMe ? '나' : (creator?.user?.name ?? '멤버')}
                       </span>
                       {isMe && (

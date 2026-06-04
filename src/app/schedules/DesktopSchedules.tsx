@@ -107,7 +107,7 @@ export function DesktopSchedules({
         {/* 왼쪽: 필터 패널 */}
         <div style={{ width: '220px', flexShrink: 0, position: 'sticky', top: '0' }}>
           <div style={{
-            background: 'white', borderRadius: '24px', padding: '20px',
+            background: 'var(--theme-surface)', borderRadius: '24px', padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
           }}>
             <p style={{ fontSize: '11px', fontWeight: 800, color: '#C7C7CC', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px 4px' }}>필터</p>
@@ -158,9 +158,9 @@ export function DesktopSchedules({
               {Object.entries(grouped).map(([date, items]) => (
                 <section key={date}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0, letterSpacing: '-0.3px' }}>{date}</h2>
+                    <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.3px' }}>{date}</h2>
                     <div style={{ flex: 1, height: '1px', background: '#F0F0F0' }} />
-                    <span style={{ padding: '4px 12px', borderRadius: '999px', background: '#F5F5F9', fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>
+                    <span style={{ padding: '4px 12px', borderRadius: '999px', background: '#F5F5F9', fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>
                       {items.length}개
                     </span>
                   </div>
@@ -180,15 +180,15 @@ export function DesktopSchedules({
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               padding: '100px 20px', gap: '20px',
-              background: 'white', borderRadius: '28px',
+              background: 'var(--theme-surface)', borderRadius: '28px',
               boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
             }}>
               <div style={{ width: '88px', height: '88px', borderRadius: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,132,204,0.05)', fontSize: '40px' }}>
                 🗓️
               </div>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>일정이 비어있습니다</p>
-                <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>새로운 계획을 세워보세요</p>
+                <p style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>일정이 비어있습니다</p>
+                <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>새로운 계획을 세워보세요</p>
               </div>
               <Link
                 href="/schedules/new"

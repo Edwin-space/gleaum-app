@@ -53,7 +53,7 @@ function CloseSpaceModal({
     }}>
       <div style={{
         width: '100%', maxWidth: '360px',
-        background: 'white', borderRadius: '24px',
+        background: 'var(--theme-surface)', borderRadius: '24px',
         padding: '28px 24px 24px',
         boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
       }}>
@@ -70,7 +70,7 @@ function CloseSpaceModal({
           </div>
         </div>
 
-        <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1A1B2E', textAlign: 'center', margin: '0 0 10px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 10px' }}>
           공간 폐쇄
         </h2>
 
@@ -79,25 +79,25 @@ function CloseSpaceModal({
             <p style={{ fontSize: '14px', color: '#EF4444', fontWeight: 700, textAlign: 'center', margin: '0 0 8px' }}>
               멤버가 남아 있어 폐쇄할 수 없습니다
             </p>
-            <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.6, textAlign: 'center', margin: '0 0 20px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', lineHeight: 1.6, textAlign: 'center', margin: '0 0 20px' }}>
               공간에 참여 중인 멤버를 모두 내보낸 후<br/>공간 폐쇄를 진행해 주세요.
             </p>
             <button
               onClick={onCancel}
               style={{
                 width: '100%', height: '50px', borderRadius: '16px',
-                border: 'none', background: '#F2F2F7', cursor: 'pointer',
-                fontSize: '15px', fontWeight: 800, color: '#1A1B2E',
+                border: 'none', background: 'var(--theme-surface-muted)', cursor: 'pointer',
+                fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)',
               }}
             >확인</button>
           </>
         ) : (
           <>
-            <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.7, margin: '0 0 18px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', lineHeight: 1.7, margin: '0 0 18px' }}>
               공간을 폐쇄하면 <strong style={{ color: '#EF4444' }}>일정, 가계부, 설정 등 모든 데이터가 즉시 삭제</strong>되며 복구할 수 없습니다.
             </p>
 
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E', margin: '0 0 8px' }}>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text)', margin: '0 0 8px' }}>
               동의하시면 아래에 <span style={{ color: '#EF4444' }}>공간 폐쇄</span>를 입력해 주세요.
             </p>
 
@@ -112,7 +112,7 @@ function CloseSpaceModal({
                 background: '#F7F7FA',
                 border: `1.5px solid ${isReady ? '#EF4444' : '#E0E0E5'}`,
                 outline: 'none', boxSizing: 'border-box',
-                color: '#1A1B2E', marginBottom: '14px',
+                color: 'var(--theme-text)', marginBottom: '14px',
                 textAlign: 'center', letterSpacing: '0.04em',
               }}
             />
@@ -122,8 +122,8 @@ function CloseSpaceModal({
                 onClick={onCancel}
                 style={{
                   flex: 1, height: '50px', borderRadius: '16px',
-                  border: '1.5px solid #E0E0E5', background: 'white',
-                  cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: '#6B7280',
+                  border: '1.5px solid #E0E0E5', background: 'var(--theme-surface)',
+                  cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: 'var(--theme-text-subtle)',
                 }}
               >취소</button>
               <button
@@ -349,13 +349,13 @@ export default function SpaceSettingsPage() {
 
   // ── 공통 스타일 ──────────────────────────────────────────
   const card: React.CSSProperties = {
-    background: 'white', borderRadius: '20px', padding: '20px',
+    background: 'var(--theme-surface)', borderRadius: '20px', padding: '20px',
     boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
     marginBottom: '16px',
   };
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: '11px', fontWeight: 800, color: '#8E8E93',
+    fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)',
     letterSpacing: '0.06em', margin: '8px 0 10px 4px',
   };
 
@@ -380,7 +380,7 @@ export default function SpaceSettingsPage() {
     const desktopLabel: React.CSSProperties = {
       fontSize: '11px',
       fontWeight: 900,
-      color: '#8E8E93',
+      color: 'var(--theme-text-subtle)',
       letterSpacing: '0.12em',
       textTransform: 'uppercase',
       margin: '0 0 14px',
@@ -389,7 +389,7 @@ export default function SpaceSettingsPage() {
     const mutedText: React.CSSProperties = {
       fontSize: '13px',
       fontWeight: 600,
-      color: '#8E8E93',
+      color: 'var(--theme-text-subtle)',
       lineHeight: 1.6,
       margin: 0,
     };
@@ -406,7 +406,7 @@ export default function SpaceSettingsPage() {
 
         <main style={{
           minHeight: '100dvh',
-          background: '#FAFAFD',
+          background: 'var(--theme-bg)',
           padding: '44px 48px 64px',
           position: 'relative',
           overflow: 'hidden',
@@ -434,10 +434,10 @@ export default function SpaceSettingsPage() {
                   ← 공간으로 돌아가기
                 </button>
                 <p style={{ ...desktopLabel, marginBottom: '8px' }}>Space Admin</p>
-                <h1 style={{ fontSize: '34px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.04em', margin: '0 0 10px' }}>
+                <h1 style={{ fontSize: '34px', fontWeight: 900, color: 'var(--theme-text)', letterSpacing: '-0.04em', margin: '0 0 10px' }}>
                   공간 설정
                 </h1>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#6E6E66', lineHeight: 1.7, margin: 0 }}>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--theme-text-muted)', lineHeight: 1.7, margin: 0 }}>
                   이름, 멤버, 초대 코드와 일정 유형을 한 화면에서 관리합니다.
                 </p>
               </div>
@@ -470,7 +470,7 @@ export default function SpaceSettingsPage() {
                   <p style={desktopLabel}>기본 정보</p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '18px', alignItems: 'start' }}>
                     <div>
-                      <p style={{ fontSize: '13px', fontWeight: 800, color: '#8E8E93', margin: '0 0 8px' }}>공간 이름</p>
+                      <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 8px' }}>공간 이름</p>
                       {editingName ? (
                         <div>
                           <input
@@ -489,10 +489,10 @@ export default function SpaceSettingsPage() {
                               padding: '0 16px',
                               borderRadius: '16px',
                               border: '2px solid #0CC9B5',
-                              background: '#FFFFFF',
+                              background: 'var(--theme-surface)',
                               outline: 'none',
                               boxSizing: 'border-box',
-                              color: '#1A1B2E',
+                              color: 'var(--theme-text)',
                               fontSize: '17px',
                               fontWeight: 800,
                               boxShadow: '0 0 0 4px rgba(12,201,181,0.10)',
@@ -502,7 +502,7 @@ export default function SpaceSettingsPage() {
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button
                               onClick={() => { setEditingName(false); setSpaceName(space?.name ?? ''); }}
-                              style={{ height: '42px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'white', cursor: 'pointer', color: '#6E6E66', fontSize: '13px', fontWeight: 800 }}
+                              style={{ height: '42px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'var(--theme-surface)', cursor: 'pointer', color: 'var(--theme-text-muted)', fontSize: '13px', fontWeight: 800 }}
                             >
                               취소
                             </button>
@@ -517,7 +517,7 @@ export default function SpaceSettingsPage() {
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#1A1B2E', margin: 0, letterSpacing: '-0.03em' }}>
+                          <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.03em' }}>
                             {space?.name ?? spaceName}
                           </h2>
                           {isAdmin && (
@@ -541,7 +541,7 @@ export default function SpaceSettingsPage() {
 
                   <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '24px 0' }} />
 
-                  <p style={{ fontSize: '13px', fontWeight: 800, color: '#8E8E93', margin: '0 0 12px' }}>공간 목적</p>
+                  <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 12px' }}>공간 목적</p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '10px' }}>
                     {PURPOSES.map(p => {
                       const active = purpose === p.key;
@@ -611,7 +611,7 @@ export default function SpaceSettingsPage() {
                         onKeyDown={e => e.key === 'Enter' && addType()}
                         placeholder="새 유형 이름 입력"
                         maxLength={10}
-                        style={{ flex: 1, height: '48px', padding: '0 16px', borderRadius: '16px', border: '1.5px solid #E8E8E4', background: '#F5F5F3', color: '#1A1B2E', outline: 'none', fontSize: '14px', fontWeight: 700 }}
+                        style={{ flex: 1, height: '48px', padding: '0 16px', borderRadius: '16px', border: '1.5px solid #E8E8E4', background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', outline: 'none', fontSize: '14px', fontWeight: 700 }}
                       />
                       <button
                         onClick={addType}
@@ -632,7 +632,7 @@ export default function SpaceSettingsPage() {
                     <p style={{ ...mutedText, marginBottom: '16px' }}>공유 공간에 멤버를 초대할 때 사용하는 코드입니다.</p>
                     {currentSettingsInviteCode ? (
                       <>
-                        <code style={{ display: 'block', padding: '18px 16px', borderRadius: '18px', background: '#F5F5F3', color: '#0084CC', fontSize: '18px', fontWeight: 900, letterSpacing: '0.12em', textAlign: 'center', border: '1.5px solid rgba(0,132,204,0.14)', marginBottom: '12px' }}>
+                        <code style={{ display: 'block', padding: '18px 16px', borderRadius: '18px', background: 'var(--theme-surface-muted)', color: '#0084CC', fontSize: '18px', fontWeight: 900, letterSpacing: '0.12em', textAlign: 'center', border: '1.5px solid rgba(0,132,204,0.14)', marginBottom: '12px' }}>
                           {currentSettingsInviteCode}
                         </code>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -645,7 +645,7 @@ export default function SpaceSettingsPage() {
                           <button
                             onClick={handleRegenerateCode}
                             disabled={regenerating}
-                            style={{ height: '44px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.22)', background: 'white', color: '#0084CC', cursor: regenerating ? 'not-allowed' : 'pointer', opacity: regenerating ? 0.55 : 1, fontSize: '13px', fontWeight: 900 }}
+                            style={{ height: '44px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.22)', background: 'var(--theme-surface)', color: '#0084CC', cursor: regenerating ? 'not-allowed' : 'pointer', opacity: regenerating ? 0.55 : 1, fontSize: '13px', fontWeight: 900 }}
                           >
                             {regenerating ? '처리 중' : '재발급'}
                           </button>
@@ -704,7 +704,7 @@ export default function SpaceSettingsPage() {
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                <p style={{ fontSize: '14px', fontWeight: 900, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <p style={{ fontSize: '14px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {member.user?.name ?? '알 수 없는 사용자'}
                                 </p>
                                 {isSelf && <span style={{ fontSize: '10px', fontWeight: 900, color: '#0084CC', background: 'rgba(0,132,204,0.10)', padding: '2px 7px', borderRadius: '999px' }}>나</span>}
@@ -717,7 +717,7 @@ export default function SpaceSettingsPage() {
                               <button
                                 onClick={() => handleRemoveMember(member)}
                                 disabled={removing}
-                                style={{ height: '34px', padding: '0 12px', borderRadius: '999px', border: `1.5px solid ${isSelf ? '#E8E8E4' : 'rgba(239,68,68,0.25)'}`, background: 'white', color: isSelf ? '#8E8E93' : '#EF4444', cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.55 : 1, fontSize: '12px', fontWeight: 900 }}
+                                style={{ height: '34px', padding: '0 12px', borderRadius: '999px', border: `1.5px solid ${isSelf ? '#E8E8E4' : 'rgba(239,68,68,0.25)'}`, background: 'var(--theme-surface)', color: isSelf ? '#8E8E93' : '#EF4444', cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.55 : 1, fontSize: '12px', fontWeight: 900 }}
                               >
                                 {removing ? '처리 중' : isSelf ? '나가기' : '내보내기'}
                               </button>
@@ -732,13 +732,13 @@ export default function SpaceSettingsPage() {
                 {isAdmin && (
                   <div style={{ ...desktopCard, border: '1.5px solid rgba(239,68,68,0.18)', background: 'rgba(255,250,250,0.92)' }}>
                     <p style={{ ...desktopLabel, color: '#EF4444' }}>위험 구역</p>
-                    <h3 style={{ fontSize: '17px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>공간 폐쇄</h3>
+                    <h3 style={{ fontSize: '17px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>공간 폐쇄</h3>
                     <p style={{ ...mutedText, marginBottom: '16px' }}>
                       공간과 연결된 일정, 가계부, 설정 데이터가 삭제됩니다. 멤버가 남아 있으면 폐쇄할 수 없습니다.
                     </p>
                     <button
                       onClick={() => setShowCloseModal(true)}
-                      style={{ height: '44px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid rgba(239,68,68,0.35)', background: 'white', color: '#EF4444', cursor: 'pointer', fontSize: '13px', fontWeight: 900 }}
+                      style={{ height: '44px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid rgba(239,68,68,0.35)', background: 'var(--theme-surface)', color: '#EF4444', cursor: 'pointer', fontSize: '13px', fontWeight: 900 }}
                     >
                       공간 폐쇄
                     </button>
@@ -763,7 +763,7 @@ export default function SpaceSettingsPage() {
         />
       )}
 
-      <div style={{ background: '#F2F2F7', minHeight: '100dvh', paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
+      <div style={{ background: 'var(--theme-surface-muted)', minHeight: '100dvh', paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}>
 
         {/* ── 헤더 ── */}
         <div style={{
@@ -779,7 +779,7 @@ export default function SpaceSettingsPage() {
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#0084CC" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-          <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#1A1B2E', margin: 0, letterSpacing: '-0.03em' }}>
+          <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.03em' }}>
             공간 관리
           </h1>
         </div>
@@ -789,7 +789,7 @@ export default function SpaceSettingsPage() {
           {/* ── 공간 이름 ── */}
           <p style={sectionLabel}>공간 기본 정보</p>
           <div style={card}>
-            <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', margin: '0 0 8px' }}>공간 이름</p>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: '0 0 8px' }}>공간 이름</p>
             {editingName ? (
               <div>
                 <input
@@ -806,13 +806,13 @@ export default function SpaceSettingsPage() {
                     width: '100%', height: '50px', padding: '0 14px', borderRadius: '14px',
                     fontSize: '16px', fontWeight: 700, background: '#F7F7FA',
                     border: '1.5px solid #0084CC', outline: 'none',
-                    boxSizing: 'border-box', color: '#1A1B2E', marginBottom: '10px',
+                    boxSizing: 'border-box', color: 'var(--theme-text)', marginBottom: '10px',
                   }}
                 />
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     onClick={() => { setEditingName(false); setSpaceName(space?.name ?? ''); }}
-                    style={{ flex: 1, height: '46px', borderRadius: '14px', border: '1.5px solid #E0E0E5', background: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: '#8E8E93' }}
+                    style={{ flex: 1, height: '46px', borderRadius: '14px', border: '1.5px solid #E0E0E5', background: 'var(--theme-surface)', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}
                   >취소</button>
                   <button
                     onClick={() => handleSaveName()}
@@ -823,13 +823,13 @@ export default function SpaceSettingsPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {space?.name ?? spaceName}
                 </p>
                 {isAdmin && (
                   <button
                     onClick={() => { setSpaceName(space?.name ?? ''); setEditingName(true); }}
-                    style={{ padding: '7px 14px', borderRadius: '12px', border: '1.5px solid #E0E0E5', background: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: '#0084CC', whiteSpace: 'nowrap', flexShrink: 0 }}
+                    style={{ padding: '7px 14px', borderRadius: '12px', border: '1.5px solid #E0E0E5', background: 'var(--theme-surface)', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: '#0084CC', whiteSpace: 'nowrap', flexShrink: 0 }}
                   >편집</button>
                 )}
               </div>
@@ -862,7 +862,7 @@ export default function SpaceSettingsPage() {
           {/* ── 일정 유형 관리 ── */}
           <p style={sectionLabel}>일정 유형 관리</p>
           <div style={card}>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93', margin: '0 0 14px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '0 0 14px', lineHeight: 1.5 }}>
               공간 일정 등록 시 선택할 수 있는 유형을 관리합니다.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
@@ -889,7 +889,7 @@ export default function SpaceSettingsPage() {
                   onKeyDown={e => e.key === 'Enter' && addType()}
                   placeholder="새 유형 이름 입력"
                   maxLength={10}
-                  style={{ flex: 1, height: '46px', padding: '0 14px', borderRadius: '14px', fontSize: '14px', fontWeight: 600, background: '#F7F7FA', border: '1.5px solid #EBEBF0', outline: 'none', boxSizing: 'border-box', color: '#1A1B2E' }}
+                  style={{ flex: 1, height: '46px', padding: '0 14px', borderRadius: '14px', fontSize: '14px', fontWeight: 600, background: '#F7F7FA', border: '1.5px solid #EBEBF0', outline: 'none', boxSizing: 'border-box', color: 'var(--theme-text)' }}
                 />
                 <button
                   onClick={addType}
@@ -923,7 +923,7 @@ export default function SpaceSettingsPage() {
             <>
               <p style={sectionLabel}>초대</p>
               <div style={card}>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: '0 0 8px' }}>공간 초대 코드</p>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: '0 0 8px' }}>공간 초대 코드</p>
                 {currentSettingsInviteCode ? (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -978,7 +978,7 @@ export default function SpaceSettingsPage() {
                 <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2.5px solid #0084CC', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
               </div>
             ) : members.length === 0 ? (
-              <p style={{ fontSize: '14px', color: '#AEAEB2', textAlign: 'center', padding: '12px 0', margin: 0 }}>멤버 정보를 불러올 수 없습니다</p>
+              <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', textAlign: 'center', padding: '12px 0', margin: 0 }}>멤버 정보를 불러올 수 없습니다</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {members.map((member, idx) => {
@@ -1015,7 +1015,7 @@ export default function SpaceSettingsPage() {
                       {/* 이름 + 역할 */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A1B2E' }}>
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--theme-text)' }}>
                             {member.user?.name ?? '알 수 없는 사용자'}
                           </span>
                           {isSelf && (
@@ -1035,7 +1035,7 @@ export default function SpaceSettingsPage() {
                           style={{
                             padding: '6px 14px', borderRadius: '10px', flexShrink: 0,
                             border: `1.5px solid ${isSelf ? '#E0E0E5' : 'rgba(239,68,68,0.25)'}`,
-                            background: 'white',
+                            background: 'var(--theme-surface)',
                             color: isSelf ? '#8E8E93' : '#EF4444',
                             fontSize: '12px', fontWeight: 700, cursor: removing ? 'not-allowed' : 'pointer',
                             opacity: removing ? 0.5 : 1,
@@ -1058,8 +1058,8 @@ export default function SpaceSettingsPage() {
               <div style={{ ...card, border: '1.5px solid rgba(239,68,68,0.20)', background: 'rgba(255,250,250,1)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                   <div>
-                    <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px' }}>공간 폐쇄</p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0, lineHeight: 1.5 }}>
+                    <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px' }}>공간 폐쇄</p>
+                    <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.5 }}>
                       공간과 모든 데이터가 즉시 삭제됩니다.<br/>
                       {hasOtherMembers && <span style={{ color: '#EF4444', fontWeight: 700 }}>멤버를 모두 내보낸 후 진행하세요.</span>}
                     </p>
@@ -1069,7 +1069,7 @@ export default function SpaceSettingsPage() {
                     style={{
                       padding: '8px 16px', borderRadius: '12px', flexShrink: 0,
                       border: '1.5px solid rgba(239,68,68,0.40)',
-                      background: 'white', color: '#EF4444',
+                      background: 'var(--theme-surface)', color: '#EF4444',
                       fontSize: '13px', fontWeight: 800, cursor: 'pointer',
                     }}
                   >폐쇄</button>

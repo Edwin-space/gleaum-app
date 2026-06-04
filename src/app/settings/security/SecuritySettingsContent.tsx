@@ -73,7 +73,7 @@ function Toggle({ checked, disabled, onClick }: { checked: boolean; disabled?: b
           width: 24,
           height: 24,
           borderRadius: '50%',
-          background: '#FFFFFF',
+          background: 'var(--theme-surface)',
           transform: checked ? 'translateX(22px)' : 'translateX(0)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
           transition: 'transform 0.2s ease',

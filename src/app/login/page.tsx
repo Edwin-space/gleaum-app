@@ -391,7 +391,7 @@ function LoginForm() {
                       height: '32px',
                       minWidth: '32px',
                       minHeight: '32px',
-                      background: '#FFFFFF',
+                      background: 'var(--theme-surface)',
                       borderRadius: '8px',
                       display: 'inline-flex',
                       alignItems: 'center',

@@ -18,7 +18,7 @@ export function UserAvatar({ avatar, name, size = 52, radius = 18, fontSize = 26
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: `${radius}px`,
-    background: '#F5F5F7',
+    background: 'var(--theme-surface-muted)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

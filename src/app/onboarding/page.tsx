@@ -176,7 +176,7 @@ function LayoutPreviewMock({ layoutKey }: { layoutKey: HomeLayoutPreference }) {
 
   return (
     <div style={{
-      padding: '10px', background: '#F5F5F7', borderRadius: '14px 14px 0 0',
+      padding: '10px', background: 'var(--theme-surface-muted)', borderRadius: '14px 14px 0 0',
       display: 'flex', flexDirection: 'column', gap: '5px',
     }}>
       {/* 앱 상단 바 */}
@@ -494,7 +494,7 @@ export default function OnboardingPage() {
   return (
     <div style={{
       minHeight: '100dvh',
-      background: '#FAFAFD',
+      background: 'var(--theme-bg)',
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
@@ -543,7 +543,7 @@ export default function OnboardingPage() {
         {/* 단계 제목 */}
         <div style={{ marginBottom: '28px' }}>
           <h2 style={{
-            fontSize: '28px', fontWeight: 800, color: '#1A1B2E',
+            fontSize: '28px', fontWeight: 800, color: 'var(--theme-text)',
             letterSpacing: '-0.6px', lineHeight: 1.3,
             margin: '0 0 8px',
           }}>
@@ -563,7 +563,7 @@ export default function OnboardingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* 이름 입력 */}
             <div style={{
-              background: 'white', borderRadius: '20px',
+              background: 'var(--theme-surface)', borderRadius: '20px',
               border: '1.5px solid rgba(0,0,0,0.07)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               padding: '20px 20px 16px',
@@ -582,7 +582,7 @@ export default function OnboardingPage() {
                   border: 'none',
                   borderBottom: `2px solid ${effectiveDisplayName ? '#0084CC' : 'rgba(0,0,0,0.1)'}`,
                   outline: 'none',
-                  fontSize: '22px', fontWeight: 800, color: '#1A1B2E',
+                  fontSize: '22px', fontWeight: 800, color: 'var(--theme-text)',
                   padding: '0 0 8px',
                   boxSizing: 'border-box',
                   transition: 'border-color 0.2s',
@@ -692,7 +692,7 @@ export default function OnboardingPage() {
                       width: 'calc(100% - 64px)',
                       borderRadius: '24px',
                       border: `2px solid ${active ? '#0084CC' : 'rgba(0,0,0,0.07)'}`,
-                      background: 'white',
+                      background: 'var(--theme-surface)',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       boxShadow: active ? '0 6px 24px rgba(0,132,204,0.18)' : '0 2px 12px rgba(0,0,0,0.06)',
@@ -705,7 +705,7 @@ export default function OnboardingPage() {
                     <div style={{ padding: '14px 18px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ fontSize: '22px' }}>{item.icon}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>{item.title}</p>
+                        <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>{item.title}</p>
                         <p style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>{item.desc}</p>
                       </div>
                       <Check active={active} />
@@ -763,7 +763,7 @@ export default function OnboardingPage() {
                     {item.icon}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px' }}>
+                    <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px' }}>
                       {item.label}
                     </p>
                     <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
@@ -802,7 +802,7 @@ export default function OnboardingPage() {
                     {icon}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px' }}>
+                    <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px' }}>
                       {label}
                     </p>
                     <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
@@ -817,7 +817,7 @@ export default function OnboardingPage() {
             {/* 공간 이름 입력 */}
             {spaceSetupMode === 'create' && (
               <div style={{
-                background: 'white', borderRadius: '20px',
+                background: 'var(--theme-surface)', borderRadius: '20px',
                 border: '1.5px solid rgba(0,0,0,0.07)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                 padding: '20px',
@@ -834,7 +834,7 @@ export default function OnboardingPage() {
                     border: 'none',
                     borderBottom: `2px solid ${newSpaceName ? '#0CC9B5' : 'rgba(0,0,0,0.1)'}`,
                     outline: 'none',
-                    fontSize: '20px', fontWeight: 800, color: '#1A1B2E',
+                    fontSize: '20px', fontWeight: 800, color: 'var(--theme-text)',
                     padding: '0 0 8px', boxSizing: 'border-box',
                     transition: 'border-color 0.2s',
                   }}
@@ -845,7 +845,7 @@ export default function OnboardingPage() {
             {/* 초대 코드 입력 */}
             {spaceSetupMode === 'join' && (
               <div style={{
-                background: 'white', borderRadius: '20px',
+                background: 'var(--theme-surface)', borderRadius: '20px',
                 border: '1.5px solid rgba(0,0,0,0.07)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                 padding: '20px',
@@ -862,7 +862,7 @@ export default function OnboardingPage() {
                     border: 'none',
                     borderBottom: `2px solid ${spaceJoinCode ? '#0CC9B5' : 'rgba(0,0,0,0.1)'}`,
                     outline: 'none',
-                    fontSize: '20px', fontWeight: 800, color: '#1A1B2E',
+                    fontSize: '20px', fontWeight: 800, color: 'var(--theme-text)',
                     padding: '0 0 8px', boxSizing: 'border-box',
                     letterSpacing: '3px',
                     transition: 'border-color 0.2s',
@@ -887,12 +887,12 @@ export default function OnboardingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* 리마인더 */}
             <div style={{
-              background: 'white', borderRadius: '20px',
+              background: 'var(--theme-surface)', borderRadius: '20px',
               border: '1.5px solid rgba(0,0,0,0.07)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               padding: '20px',
             }}>
-              <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text)', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>⏰</span> 기본 리마인더
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
@@ -921,13 +921,13 @@ export default function OnboardingPage() {
 
             {/* 알림 채널 */}
             <div style={{
-              background: 'white', borderRadius: '20px',
+              background: 'var(--theme-surface)', borderRadius: '20px',
               border: '1.5px solid rgba(0,0,0,0.07)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               overflow: 'hidden',
             }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span>🔔</span> 알림 채널
                 </p>
               </div>
@@ -940,7 +940,7 @@ export default function OnboardingPage() {
                     borderBottom: idx < arr.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
                   }}
                 >
-                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#1A1B2E' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--theme-text)' }}>
                     {key === 'scheduleReminders' ? '📅 일정 리마인더'
                       : key === 'expenseReminders' ? '💰 지출 알림'
                       : key === 'routineReminders' ? '🔋 루틴 체크'
@@ -965,7 +965,7 @@ export default function OnboardingPage() {
                       left: val ? '24px' : '3px',
                       width: '22px', height: '22px',
                       borderRadius: '50%',
-                      background: 'white',
+                      background: 'var(--theme-surface)',
                       boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
                       transition: 'left 0.2s',
                     }} />
@@ -989,31 +989,31 @@ export default function OnboardingPage() {
               <div style={{
                 width: '72px', height: '72px', borderRadius: '24px',
                 margin: '0 auto 18px',
-                background: 'white',
+                background: 'var(--theme-surface)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '34px',
                 boxShadow: '0 8px 24px rgba(0,132,204,0.10)',
               }}>
                 🔐
               </div>
-              <p style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>
+              <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>
                 {getNativePlatform() === 'ios' ? 'Face ID / Touch ID 잠금' : '지문 / 기기 잠금'}
               </p>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#6E6E66', lineHeight: 1.65, margin: 0 }}>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-muted)', lineHeight: 1.65, margin: 0 }}>
                 앱을 다시 열 때 이 기기의 생체인증으로 일정, 공간, 가계부 정보를 보호합니다.
               </p>
             </div>
 
             {!isNativeApp() && (
               <div style={{
-                background: 'white', borderRadius: '20px',
+                background: 'var(--theme-surface)', borderRadius: '20px',
                 border: '1.5px solid rgba(0,0,0,0.07)',
                 padding: '18px 20px',
               }}>
-                <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px' }}>
+                <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px' }}>
                   앱에서 사용할 수 있어요
                 </p>
-                <p style={{ fontSize: '13px', fontWeight: 600, color: '#8E8E93', margin: 0, lineHeight: 1.55 }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.55 }}>
                   생체인증 잠금은 Android/iOS 앱에서만 제공됩니다. 웹에서는 이 단계를 건너뜁니다.
                 </p>
               </div>
@@ -1058,7 +1058,7 @@ export default function OnboardingPage() {
                         {item.icon}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px' }}>
+                        <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px' }}>
                           {item.label}
                         </p>
                         <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
@@ -1110,8 +1110,8 @@ export default function OnboardingPage() {
                 height: '56px', paddingInline: '24px',
                 borderRadius: '16px',
                 border: '1.5px solid rgba(0,0,0,0.1)',
-                background: 'white',
-                color: '#1A1B2E',
+                background: 'var(--theme-surface)',
+                color: 'var(--theme-text)',
                 fontSize: '15px', fontWeight: 700,
                 cursor: saving ? 'not-allowed' : 'pointer',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',

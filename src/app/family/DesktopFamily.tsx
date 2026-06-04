@@ -103,13 +103,13 @@ export function DesktopFamily() {
 
         {/* 왼쪽: 멤버 리스트 */}
         <div style={{
-          background: 'white', borderRadius: '28px', padding: '32px',
+          background: 'var(--theme-surface)', borderRadius: '28px', padding: '32px',
           boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 4px' }}>공간 멤버</h3>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>함께하는 소중한 사람들</p>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 4px' }}>공간 멤버</h3>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>함께하는 소중한 사람들</p>
             </div>
             <div style={{
               padding: '8px 16px', borderRadius: '999px',
@@ -125,8 +125,8 @@ export function DesktopFamily() {
           ) : members.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0', textAlign: 'center' }}>
               <div style={{ fontSize: '52px', marginBottom: '16px' }}>👥</div>
-              <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 8px' }}>아직 멤버가 없어요</p>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>초대 링크로 소중한 사람들을 초대해 보세요</p>
+              <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 8px' }}>아직 멤버가 없어요</p>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>초대 링크로 소중한 사람들을 초대해 보세요</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -139,13 +139,13 @@ export function DesktopFamily() {
                 }}>
                   <div style={{
                     width: '52px', height: '52px', borderRadius: '18px',
-                    background: 'white', display: 'flex', alignItems: 'center',
+                    background: 'var(--theme-surface)', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', fontSize: '28px',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.07)', flexShrink: 0,
                   }}>{member.user?.avatar}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.name}</p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.email || '연결됨'}</p>
+                    <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.name}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.email || '연결됨'}</p>
                   </div>
                   <span style={{
                     padding: '6px 14px', borderRadius: '999px', fontSize: '11px', fontWeight: 800,
@@ -164,17 +164,17 @@ export function DesktopFamily() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* 초대 카드 */}
-          <div style={{ background: 'white', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
+          <div style={{ background: 'var(--theme-surface)', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
             <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '16px' }}>🔗</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>멤버 초대하기</h3>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.65 }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>멤버 초대하기</h3>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.65 }}>
               초대 링크를 공유하여 소중한 사람들을 이 공간으로 초대하세요.
             </p>
             {inviteLink && (
               <div style={{
                 padding: '12px 14px', borderRadius: '12px', background: '#F7F7FA',
                 marginBottom: '14px', fontFamily: 'monospace', fontSize: '11px',
-                color: '#8E8E93', fontWeight: 600, wordBreak: 'break-all',
+                color: 'var(--theme-text-subtle)', fontWeight: 600, wordBreak: 'break-all',
                 border: '1px solid rgba(0,0,0,0.05)',
               }}>
                 {inviteLink}
@@ -193,10 +193,10 @@ export function DesktopFamily() {
           </div>
 
           {/* 합류 카드 */}
-          <div style={{ background: 'white', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
+          <div style={{ background: 'var(--theme-surface)', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
             <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'rgba(12,201,181,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '16px' }}>🗝️</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>다른 공간 합류</h3>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.65 }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>다른 공간 합류</h3>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.65 }}>
               공유받은 초대 코드를 입력하여 공간에 참여하세요.
             </p>
             <input
@@ -209,7 +209,7 @@ export function DesktopFamily() {
                 border: `1.5px solid ${joinError ? '#EF4444' : joinCode ? '#0CC9B5' : 'transparent'}`,
                 fontSize: '15px', fontFamily: 'monospace', fontWeight: 800,
                 textAlign: 'center', textTransform: 'uppercase', outline: 'none',
-                boxSizing: 'border-box', marginBottom: '8px', color: '#1A1B2E',
+                boxSizing: 'border-box', marginBottom: '8px', color: 'var(--theme-text)',
                 letterSpacing: '0.1em', transition: 'border-color 0.2s',
               }}
             />
@@ -229,7 +229,7 @@ export function DesktopFamily() {
 
           {/* 안내 */}
           <div style={{ padding: '18px 20px', borderRadius: '20px', background: 'rgba(0,132,204,0.04)', border: '1px solid rgba(0,132,204,0.08)' }}>
-            <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.75, margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, lineHeight: 1.75, margin: 0 }}>
               💡 공간 지기는 멤버를 관리하고 공간의 이름을 수정할 수 있습니다. 더 많은 공간 기능이 곧 업데이트됩니다.
             </p>
           </div>

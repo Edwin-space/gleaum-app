@@ -115,7 +115,7 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
 
           {/* 뷰 토글 */}
           <div style={{
-            display: 'flex', background: 'white', borderRadius: '18px',
+            display: 'flex', background: 'var(--theme-surface)', borderRadius: '18px',
             padding: '5px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
           }}>
             {(['month', 'week', 'day'] as const).map(v => (
@@ -136,7 +136,7 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
 
           {/* 캘린더 카드 */}
           <div style={{
-            background: 'white', borderRadius: '24px',
+            background: 'var(--theme-surface)', borderRadius: '24px',
             overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
             border: '1px solid rgba(0,0,0,0.04)',
             padding: view === 'month' ? '16px' : '0 0 8px 0',
@@ -156,22 +156,22 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
           {/* 개인화 메시지 카드 */}
           {!loading && profile?.onboarding_completed_at && (
             <div style={{
-              background: 'white', borderRadius: '24px', padding: '22px 24px',
+              background: 'var(--theme-surface)', borderRadius: '24px', padding: '22px 24px',
               boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '11px', fontWeight: 800, color: '#0CC9B5', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 8px' }}>PERSONAL HOME</p>
-                  <h2 style={{ fontSize: '18px', fontWeight: 800, lineHeight: 1.3, color: '#1A1B2E', margin: '0 0 6px' }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, lineHeight: 1.3, color: 'var(--theme-text)', margin: '0 0 6px' }}>
                     {personalCopy.title}
                   </h2>
-                  <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#8E8E93', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>
                     {personalCopy.body}
                   </p>
                 </div>
                 <span style={{
                   padding: '5px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 800,
-                  background: '#F5F5F9', color: '#8E8E93', whiteSpace: 'nowrap', flexShrink: 0,
+                  background: '#F5F5F9', color: 'var(--theme-text-subtle)', whiteSpace: 'nowrap', flexShrink: 0,
                 }}>
                   {primaryGoal ? '개인화됨' : '기본형'}
                 </span>
@@ -224,10 +224,10 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
           {!loading && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', padding: '0 2px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '-0.3px', color: '#1A1B2E', margin: 0 }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '-0.3px', color: 'var(--theme-text)', margin: 0 }}>
                   {formatDateShort(selectedDate)} 일정
                 </h3>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93' }}>총 {todaySchedules.length}개</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>총 {todaySchedules.length}개</span>
               </div>
 
               {todaySchedules.length > 0 ? (
@@ -244,7 +244,7 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
                 <div style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
                   justifyContent: 'center', padding: '48px 20px', gap: '12px',
-                  background: 'white', borderRadius: '24px',
+                  background: 'var(--theme-surface)', borderRadius: '24px',
                   boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
                 }}>
                   <div style={{ width: '56px', height: '56px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,132,204,0.06)' }}>
@@ -255,7 +255,7 @@ export default function DesktopHome({ user, profile, schedules, loading }: Deskt
                       <line x1="3" x2="21" y1="10" y2="10"/>
                     </svg>
                   </div>
-                  <p style={{ fontWeight: 700, fontSize: '14px', color: '#8E8E93', margin: 0 }}>
+                  <p style={{ fontWeight: 700, fontSize: '14px', color: 'var(--theme-text-subtle)', margin: 0 }}>
                     등록된 일정이 없습니다
                   </p>
                 </div>

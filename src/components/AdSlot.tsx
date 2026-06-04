@@ -92,7 +92,7 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
           display: 'block', width, height,
           borderRadius: 12, overflow: 'hidden',
           textDecoration: 'none', position: 'relative',
-          background: '#F2F2F7',
+          background: 'var(--theme-surface-muted)',
         }}
         aria-label={`광고: ${ad.title}`}
       >
@@ -106,7 +106,7 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
             padding: '0 16px', gap: 8,
             background: 'linear-gradient(135deg, #F8F9FF 0%, #EEF2FF 100%)',
           }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1B2E', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--theme-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {ad.title}
             </span>
             <span style={{

@@ -257,7 +257,7 @@ export default function MyPage() {
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }} onClick={() => setShowEditModal(false)}>
           <div className="w-full max-w-[480px] glass-card rounded-[40px] p-8 animate-slide-up shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[24px] font-black mb-6 text-[#1A1B2E]">프로필 수정</p>
+            <p className="text-[24px] font-black mb-6" style={{ color: 'var(--theme-text)' }}>프로필 수정</p>
 
             {/* 아바타 변경 버튼 */}
             <div className="flex flex-col items-center mb-6">
@@ -286,15 +286,15 @@ export default function MyPage() {
                   <span style={{ fontSize: '20px' }}>✏️</span>
                 </div>
               </div>
-              <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, marginTop: '6px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, marginTop: '6px' }}>
                 사진 또는 이모지 변경
               </p>
             </div>
 
-            <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="이름을 입력하세요" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold bg-[#F5F5F7] border-2 outline-none transition-all mb-8"
-              style={{ borderColor: editName ? 'var(--brand-blue)' : 'transparent' }} />
+            <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="이름을 입력하세요" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold border-2 outline-none transition-all mb-8"
+              style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', borderColor: editName ? 'var(--brand-blue)' : 'transparent' }} />
             <div className="grid grid-cols-2 gap-4">
-              <button onClick={() => setShowEditModal(false)} className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50">취소</button>
+              <button onClick={() => setShowEditModal(false)} className="h-14 rounded-[24px] text-[15px] font-black" style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text-subtle)' }}>취소</button>
               <button onClick={handleSaveProfile} disabled={savingProfile || !editName.trim()} className="h-14 rounded-[24px] text-[15px] font-black text-white bg-brand-gradient active:scale-95 transition-all">{savingProfile ? '저장 중...' : '저장 완료'}</button>
             </div>
           </div>
@@ -325,15 +325,15 @@ export default function MyPage() {
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }} onClick={() => setShowPasswordModal(false)}>
           <div className="w-full max-w-[480px] glass-card rounded-[40px] p-8 animate-slide-up shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-[24px] font-black mb-2 text-[#1A1B2E]">비밀번호 설정</p>
-            <p className="text-[13px] text-[#8E8E93] mb-8 font-bold">이제 이메일과 비밀번호로도 로그인할 수 있습니다.</p>
+            <p className="text-[24px] font-black mb-2" style={{ color: 'var(--theme-text)' }}>비밀번호 설정</p>
+            <p className="text-[13px] mb-8 font-bold" style={{ color: 'var(--theme-text-subtle)' }}>이제 이메일과 비밀번호로도 로그인할 수 있습니다.</p>
             <div className="space-y-4 mb-8">
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="새 비밀번호 (6자 이상)" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold bg-[#F5F5F7] border-2 outline-none transition-all" style={{ borderColor: newPassword ? 'var(--brand-blue)' : 'transparent' }} />
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="비밀번호 확인" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold bg-[#F5F5F7] border-2 outline-none transition-all" style={{ borderColor: confirmPassword === newPassword && confirmPassword ? 'var(--brand-blue)' : 'transparent' }} />
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="새 비밀번호 (6자 이상)" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold border-2 outline-none transition-all" style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', borderColor: newPassword ? 'var(--brand-blue)' : 'transparent' }} />
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="비밀번호 확인" className="w-full h-14 px-6 rounded-[24px] text-[16px] font-bold border-2 outline-none transition-all" style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', borderColor: confirmPassword === newPassword && confirmPassword ? 'var(--brand-blue)' : 'transparent' }} />
             </div>
             {passwordError && <p className="text-[13px] text-red-500 font-bold mb-6">{passwordError}</p>}
             <div className="grid grid-cols-2 gap-4">
-              <button onClick={() => setShowPasswordModal(false)} className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50">취소</button>
+              <button onClick={() => setShowPasswordModal(false)} className="h-14 rounded-[24px] text-[15px] font-black" style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text-subtle)' }}>취소</button>
               <button onClick={handleSavePassword} disabled={savingPassword || !newPassword || !confirmPassword} className="h-14 rounded-[24px] text-[15px] font-black text-white bg-brand-gradient active:scale-95 transition-all">{savingPassword ? '설정 중...' : '설정 완료'}</button>
             </div>
           </div>
@@ -385,7 +385,7 @@ export default function MyPage() {
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
                   <span style={{ fontSize: 48 }}>😢</span>
                 </div>
-                <p className="text-[22px] font-black text-center mb-3 text-[#1A1B2E]">
+                <p className="text-[22px] font-black text-center mb-3" style={{ color: 'var(--theme-text)' }}>
                   탈퇴 전에 확인해 주세요
                 </p>
                 <div style={{
@@ -407,7 +407,8 @@ export default function MyPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => { setShowDeleteModal(false); setWithdrawStep('confirm'); }}
-                    className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50"
+                    className="h-14 rounded-[24px] text-[15px] font-black"
+                    style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text-subtle)' }}
                   >
                     계속 이용하기
                   </button>
@@ -425,10 +426,10 @@ export default function MyPage() {
             {/* Step 2: 탈퇴 사유 + 최종 확인 */}
             {withdrawStep === 'reason' && (
               <>
-                <p className="text-[22px] font-black text-center mb-2 text-[#1A1B2E]">
+                <p className="text-[22px] font-black text-center mb-2" style={{ color: 'var(--theme-text)' }}>
                   탈퇴 사유를 알려주세요
                 </p>
-                <p style={{ fontSize: 12, color: '#AEAEB2', textAlign: 'center', marginBottom: 20, fontWeight: 600 }}>
+                <p style={{ fontSize: 12, color: 'var(--theme-text-subtle)', textAlign: 'center', marginBottom: 20, fontWeight: 600 }}>
                   선택 사항이며, 서비스 개선에 활용됩니다
                 </p>
                 <textarea
@@ -438,19 +439,20 @@ export default function MyPage() {
                   maxLength={200}
                   style={{
                     width: '100%', minHeight: 100, padding: '14px 16px',
-                    borderRadius: 20, border: '1.5px solid #E5E5EA',
-                    fontSize: 14, fontWeight: 600, color: '#1A1B2E',
-                    background: '#F7F7FA', resize: 'none', outline: 'none',
+                    borderRadius: 20, border: '1.5px solid var(--theme-border)',
+                    fontSize: 14, fontWeight: 600, color: 'var(--theme-text)',
+                    background: 'var(--theme-surface-muted)', resize: 'none', outline: 'none',
                     boxSizing: 'border-box', marginBottom: 6,
                   }}
                 />
-                <p style={{ fontSize: 11, color: '#AEAEB2', textAlign: 'right', marginBottom: 20 }}>
+                <p style={{ fontSize: 11, color: 'var(--theme-text-subtle)', textAlign: 'right', marginBottom: 20 }}>
                   {withdrawReason.length}/200
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setWithdrawStep('confirm')}
-                    className="h-14 rounded-[24px] text-[15px] font-black text-[#8E8E93] bg-gray-50"
+                    className="h-14 rounded-[24px] text-[15px] font-black"
+                    style={{ background: 'var(--theme-surface-muted)', color: 'var(--theme-text-subtle)' }}
                     disabled={withdrawing}
                   >
                     이전

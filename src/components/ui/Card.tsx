@@ -61,7 +61,7 @@ const STATUS_LABEL: Record<string, string> = {
   missed:      '미완료',
 };
 const STATUS_COLOR: Record<string, { bg: string; color: string }> = {
-  pending:     { bg: 'rgba(142,142,147,0.10)', color: '#8E8E93' },
+  pending:     { bg: 'rgba(142,142,147,0.10)', color: 'var(--theme-text-subtle)' },
   in_progress: { bg: 'rgba(0,132,204,0.10)',   color: '#0084CC' },
   completed:   { bg: 'rgba(46,232,149,0.12)',  color: '#2EE895' },
   missed:      { bg: 'rgba(239,68,68,0.10)',   color: '#EF4444' },
@@ -87,7 +87,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
         style={{
           display: 'flex', alignItems: 'center', gap: '12px',
           padding: '14px 16px', borderRadius: '18px',
-          background: 'white',
+          background: 'var(--theme-surface)',
           border: '1px solid rgba(0,0,0,0.06)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
           cursor: 'pointer',
@@ -98,10 +98,10 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
           background: cfg.color,
         }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {schedule.title}
           </p>
-          <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: '2px 0 0' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>
             {formatTime(schedule.startTime)}
           </p>
         </div>
@@ -114,7 +114,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
       onClick={onClick}
       style={{
         display: 'flex',
-        background: 'white',
+        background: 'var(--theme-surface)',
         borderRadius: '20px',
         border: '1px solid rgba(0,0,0,0.06)',
         boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
@@ -137,7 +137,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
         <span style={{ fontSize: '10px', fontWeight: 700, color: cfg.color, letterSpacing: '0.3px' }}>
           {ampm}
         </span>
-        <span style={{ fontSize: '17px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.5px', lineHeight: 1 }}>
+        <span style={{ fontSize: '17px', fontWeight: 900, color: 'var(--theme-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
           {time}
         </span>
       </div>
@@ -158,7 +158,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
               <span style={{
                 fontSize: '10px', fontWeight: 700,
                 padding: '2px 7px', borderRadius: '999px',
-                background: 'rgba(0,0,0,0.05)', color: '#8E8E93',
+                background: 'rgba(0,0,0,0.05)', color: 'var(--theme-text-subtle)',
               }}>
                 🔒 나만
               </span>
@@ -175,7 +175,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
 
         {/* 제목 */}
         <p style={{
-          fontSize: '16px', fontWeight: 800, color: '#1A1B2E',
+          fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)',
           margin: '0 0 6px', lineHeight: 1.3,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
@@ -188,7 +188,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>
               {formatTime(schedule.startTime)}{schedule.endTime ? ` - ${formatTime(schedule.endTime)}` : ''}
             </span>
             {schedule.amount !== undefined && (
@@ -206,7 +206,7 @@ export function ScheduleCard({ schedule, onClick, compact = false }: ScheduleCar
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
               </svg>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {schedule.location.address}
               </span>
             </div>
@@ -223,7 +223,7 @@ export function ScheduleCardSkeleton() {
     <div style={{
       display: 'flex', borderRadius: '20px',
       border: '1px solid rgba(0,0,0,0.06)',
-      overflow: 'hidden', background: 'white',
+      overflow: 'hidden', background: 'var(--theme-surface)',
     }}>
       <div style={{ width: '68px', flexShrink: 0, background: 'rgba(0,0,0,0.04)', padding: '16px 8px' }} />
       <div style={{ flex: 1, padding: '14px 16px' }}>

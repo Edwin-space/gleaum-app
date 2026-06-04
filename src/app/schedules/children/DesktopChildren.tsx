@@ -30,7 +30,7 @@ const steps: { key: ScheduleStatus; label: string }[] = [
 ];
 
 const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
-  pending:     { bg: 'rgba(156,163,175,0.12)', color: '#9CA3AF', label: '대기' },
+  pending:     { bg: 'rgba(156,163,175,0.12)', color: 'var(--theme-text-subtle)', label: '대기' },
   in_progress: { bg: 'rgba(0,132,204,0.10)',   color: '#0084CC', label: '진행중' },
   completed:   { bg: 'rgba(16,185,129,0.10)',  color: '#059669', label: '완료' },
   missed:      { bg: 'rgba(239,68,68,0.10)',   color: '#EF4444', label: '미완료' },
@@ -74,7 +74,7 @@ export function DesktopChildren() {
       {/* ── 상단 헤더 ── */}
       <div style={{
         padding: '24px 40px',
-        background: 'white',
+        background: 'var(--theme-surface)',
         borderBottom: '1px solid rgba(0,0,0,0.05)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
@@ -95,8 +95,8 @@ export function DesktopChildren() {
             </svg>
           </button>
           <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', margin: 0, letterSpacing: '-0.3px' }}>자녀 일정 관리</h1>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: '2px 0 0' }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.3px' }}>자녀 일정 관리</h1>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '2px 0 0' }}>
               {formatDateShort(today)} · {children.length}명의 자녀
             </p>
           </div>
@@ -123,7 +123,7 @@ export function DesktopChildren() {
           borderRight: '1px solid rgba(0,0,0,0.06)',
           padding: '24px 20px',
           overflowY: 'auto',
-          background: 'white',
+          background: 'var(--theme-surface)',
         }}>
 
           {/* 오늘 달성률 카드 */}
@@ -184,7 +184,7 @@ export function DesktopChildren() {
             >
               <span style={{ fontSize: '18px' }}>👥</span>
               <span style={{ flex: 1 }}>전체 보기</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>{schedules.filter(s => s.type === 'child').length}</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{schedules.filter(s => s.type === 'child').length}</span>
             </button>
 
             {children.map(child => {
@@ -204,7 +204,7 @@ export function DesktopChildren() {
                 >
                   <span style={{ fontSize: '18px' }}>{child.user?.avatar}</span>
                   <span style={{ flex: 1 }}>{child.user?.name}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>{cnt}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{cnt}</span>
                 </button>
               );
             })}
@@ -218,10 +218,10 @@ export function DesktopChildren() {
         {/* 오른쪽: 일정 목록 */}
         <div style={{ overflowY: 'auto', padding: '28px 36px', background: '#F7F7FA' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
               {activeChild === 'all' ? '전체 자녀 일정' : `${selectedChild?.user?.name}의 일정`}
             </h2>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93' }}>{childSchedules.length}개</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{childSchedules.length}개</span>
           </div>
 
           {loading ? (
@@ -231,8 +231,8 @@ export function DesktopChildren() {
           ) : childSchedules.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 0', textAlign: 'center' }}>
               <div style={{ fontSize: '52px', marginBottom: '16px' }}>📭</div>
-              <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>자녀 일정이 없어요</h3>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>일정 추가에서 자녀 일정을 등록하세요</p>
+              <h3 style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>자녀 일정이 없어요</h3>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>일정 추가에서 자녀 일정을 등록하세요</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -244,16 +244,16 @@ export function DesktopChildren() {
 
                 return (
                   <div key={schedule.id} style={{
-                    background: 'white', borderRadius: '20px', padding: '20px 24px',
+                    background: 'var(--theme-surface)', borderRadius: '20px', padding: '20px 24px',
                     boxShadow: '0 1px 8px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
                     display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', alignItems: 'start',
                   }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                        <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: 0, flex: 1 }}>{schedule.title}</p>
+                        <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, flex: 1 }}>{schedule.title}</p>
                         <span style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 800, background: ss.bg, color: ss.color, flexShrink: 0 }}>{ss.label}</span>
                       </div>
-                      <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: '0 0 10px' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '0 0 10px' }}>
                         {formatDateShort(schedule.startTime)} · {formatTime(schedule.startTime)}
                         {schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}
                       </p>
@@ -354,13 +354,13 @@ export function DesktopChildren() {
           onClick={() => setCompletionModal(null)}
         >
           <div
-            style={{ width: '100%', maxWidth: '400px', background: 'white', borderRadius: '32px', padding: '36px', margin: '0 20px', boxShadow: '0 24px 60px rgba(0,0,0,0.2)' }}
+            style={{ width: '100%', maxWidth: '400px', background: 'var(--theme-surface)', borderRadius: '32px', padding: '36px', margin: '0 20px', boxShadow: '0 24px 60px rgba(0,0,0,0.2)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ textAlign: 'center', marginBottom: '28px' }}>
               <div style={{ fontSize: '44px', marginBottom: '16px' }}>✅</div>
-              <p style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>일정을 완료했나요?</p>
-              <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>{completionModal.title}</p>
+              <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>일정을 완료했나요?</p>
+              <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>{completionModal.title}</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <button

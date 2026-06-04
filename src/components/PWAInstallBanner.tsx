@@ -127,7 +127,7 @@ export function PWAInstallBanner() {
           style={{
             width: '100%',
             maxWidth: '430px',
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '32px 32px 0 0',
             overflow: 'hidden',
             boxShadow: '0 -8px 48px rgba(0,0,0,0.18)',
@@ -232,10 +232,10 @@ export function PWAInstallBanner() {
             {/* iOS instructions */}
             {platform === 'ios' && (
               <div>
-                <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
+                <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
                   홈 화면에 추가하세요
                 </p>
-                <p style={{ fontSize: '13px', color: '#6E6E66', margin: '0 0 20px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '13px', color: 'var(--theme-text-muted)', margin: '0 0 20px', lineHeight: 1.5 }}>
                   앱처럼 빠르게 실행하고 오프라인에서도 사용할 수 있어요
                 </p>
 
@@ -293,7 +293,7 @@ export function PWAInstallBanner() {
                         {step}
                       </div>
                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1A1B2E', margin: 0 }}>{text}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text)', margin: 0 }}>{text}</p>
                         <div style={{ flexShrink: 0, marginLeft: '8px' }}>{icon}</div>
                       </div>
                     </div>
@@ -330,10 +330,10 @@ export function PWAInstallBanner() {
             {/* Android install button */}
             {platform === 'android' && (
               <div>
-                <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
+                <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
                   홈 화면에 추가하세요
                 </p>
-                <p style={{ fontSize: '13px', color: '#6E6E66', margin: '0 0 24px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '13px', color: 'var(--theme-text-muted)', margin: '0 0 24px', lineHeight: 1.5 }}>
                   앱처럼 빠르게 실행하고 오프라인에서도 사용할 수 있어요.
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -345,8 +345,8 @@ export function PWAInstallBanner() {
                       borderRadius: '16px',
                       fontSize: '14px',
                       fontWeight: 700,
-                      color: '#8E8E93',
-                      background: '#F5F5F7',
+                      color: 'var(--theme-text-subtle)',
+                      background: 'var(--theme-surface-muted)',
                       border: 'none',
                       cursor: 'pointer',
                       transition: 'opacity 0.15s',

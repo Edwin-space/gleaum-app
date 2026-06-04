@@ -97,7 +97,7 @@ function LayoutPreviewMock({ layoutKey }: { layoutKey: HomeLayoutPreference }) {
 
   return (
     <div style={{
-      padding: '10px', background: '#F5F5F7', borderRadius: '14px 14px 0 0',
+      padding: '10px', background: 'var(--theme-surface-muted)', borderRadius: '14px 14px 0 0',
       display: 'flex', flexDirection: 'column', gap: '5px',
     }}>
       <div style={{
@@ -168,7 +168,7 @@ export default function HomeLayoutSettingsPage() {
   };
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#FAFAFD', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--theme-bg)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}>
       {/* 헤더 */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 40,
@@ -183,7 +183,7 @@ export default function HomeLayoutSettingsPage() {
           onClick={() => router.back()}
           style={{
             width: '36px', height: '36px', borderRadius: '50%',
-            background: 'white', border: '1px solid rgba(0,0,0,0.06)',
+            background: 'var(--theme-surface)', border: '1px solid rgba(0,0,0,0.06)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
           }}
@@ -192,11 +192,11 @@ export default function HomeLayoutSettingsPage() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>홈 레이아웃</h1>
+        <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>홈 레이아웃</h1>
       </header>
 
       <div style={{ padding: '20px 24px 0' }}>
-        <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.5 }}>
           스와이프하여 홈 화면 구성을 미리 확인하고 선택하세요
         </p>
 
@@ -227,7 +227,7 @@ export default function HomeLayoutSettingsPage() {
                   width: 'calc(100% - 64px)',
                   borderRadius: '24px',
                   border: `2px solid ${active ? '#0084CC' : 'rgba(0,0,0,0.07)'}`,
-                  background: 'white',
+                  background: 'var(--theme-surface)',
                   overflow: 'hidden',
                   cursor: 'pointer',
                   boxShadow: active ? '0 6px 24px rgba(0,132,204,0.18)' : '0 2px 12px rgba(0,0,0,0.06)',
@@ -238,7 +238,7 @@ export default function HomeLayoutSettingsPage() {
                 <div style={{ padding: '14px 18px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '22px' }}>{item.icon}</span>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>{item.title}</p>
+                    <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>{item.title}</p>
                     <p style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(0,0,0,0.45)', margin: 0 }}>{item.desc}</p>
                   </div>
                   <div style={{

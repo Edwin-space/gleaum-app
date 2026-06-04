@@ -80,7 +80,7 @@ export function MobileChildren() {
     <div
       className="min-h-dvh"
       style={{
-        background: '#FAFAFD',
+        background: 'var(--theme-bg)',
         paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
       }}
     >
@@ -281,10 +281,10 @@ export function MobileChildren() {
               }}>
                 📭
               </div>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1B2E' }}>
+              <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--theme-text)' }}>
                 자녀 일정이 없어요
               </p>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 500 }}>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 500 }}>
                 일정 추가에서 자녀 일정을 등록하세요
               </p>
             </div>
@@ -313,7 +313,7 @@ export function MobileChildren() {
                 <div
                   key={schedule.id}
                   style={{
-                    background: 'white',
+                    background: 'var(--theme-surface)',
                     borderRadius: '20px',
                     padding: '18px',
                     boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -331,7 +331,7 @@ export function MobileChildren() {
                       <p style={{
                         fontSize: '15px',
                         fontWeight: 800,
-                        color: '#1A1B2E',
+                        color: 'var(--theme-text)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -340,7 +340,7 @@ export function MobileChildren() {
                       }}>
                         {schedule.title}
                       </p>
-                      <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 500 }}>
+                      <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 500 }}>
                         {formatDateShort(schedule.startTime)} · {formatTime(schedule.startTime)}
                         {schedule.endTime && ` ~ ${formatTime(schedule.endTime)}`}
                       </p>
@@ -541,7 +541,7 @@ export function MobileChildren() {
             style={{
               width: '100%',
               maxWidth: '430px',
-              background: 'white',
+              background: 'var(--theme-surface)',
               borderRadius: '32px 32px 0 0',
               padding: '24px 24px 40px',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.12)',
@@ -552,7 +552,7 @@ export function MobileChildren() {
             <div style={{
               width: '40px',
               height: '4px',
-              background: '#E5E5EA',
+              background: 'var(--theme-surface-muted)',
               borderRadius: '999px',
               margin: '0 auto 24px',
             }} />
@@ -560,7 +560,7 @@ export function MobileChildren() {
             <p style={{
               fontSize: '20px',
               fontWeight: 800,
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
               textAlign: 'center',
               marginBottom: '6px',
               letterSpacing: '-0.03em',
@@ -569,7 +569,7 @@ export function MobileChildren() {
             </p>
             <p style={{
               fontSize: '14px',
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               textAlign: 'center',
               marginBottom: '24px',
               fontWeight: 500,

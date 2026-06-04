@@ -86,7 +86,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
     <div
       style={{
         minHeight: '100dvh',
-        background: '#FAFAFD',
+        background: 'var(--theme-bg)',
         paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
       }}
     >
@@ -115,7 +115,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'white',
+              background: 'var(--theme-surface)',
               border: '1px solid rgba(0,0,0,0.06)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               textDecoration: 'none',
@@ -252,7 +252,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             borderRadius: '20px',
             border: '1px solid rgba(0,0,0,0.04)',
             cursor: 'pointer',
-            background: 'white',
+            background: 'var(--theme-surface)',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
             transition: 'box-shadow 0.2s',
           }}
@@ -264,7 +264,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               <line x1="8" x2="8" y1="2" y2="6"/>
               <line x1="3" x2="21" y1="10" y2="10"/>
             </svg>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#1A1B2E' }}>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--theme-text)' }}>
               {formatDateShort(selectedDate)}
             </span>
             {isToday && (
@@ -290,7 +290,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
         {/* ── 캘린더 (접기/펼치기) ── */}
         {calendarOpen && (
           <div style={{
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '24px',
             overflow: 'hidden',
             padding: '16px',
@@ -300,7 +300,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             {/* 뷰 탭 전환 */}
             <div style={{
               display: 'flex',
-              background: '#F2F2F7',
+              background: 'var(--theme-surface-muted)',
               borderRadius: '12px',
               padding: '3px',
               marginBottom: '12px',
@@ -353,7 +353,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             <h2 style={{
               fontSize: '18px',
               fontWeight: 800,
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
               letterSpacing: '-0.3px',
               margin: 0,
             }}>
@@ -391,7 +391,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             </div>
           ) : (
             <div style={{
-              background: 'white',
+              background: 'var(--theme-surface)',
               borderRadius: '24px',
               border: '1px solid rgba(0,0,0,0.04)',
               boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -419,7 +419,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
                   <line x1="3" x2="21" y1="10" y2="10"/>
                 </svg>
               </div>
-              <p style={{ fontSize: '15px', fontWeight: 600, color: '#6E6E66', margin: 0 }}>
+              <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--theme-text-muted)', margin: 0 }}>
                 등록된 일정이 없어요
               </p>
               <Link href="/schedules/new" style={{
@@ -446,7 +446,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               <h2 style={{
                 fontSize: '16px',
                 fontWeight: 800,
-                color: '#1A1B2E',
+                color: 'var(--theme-text)',
                 letterSpacing: '-0.3px',
                 margin: 0,
               }}>
@@ -455,7 +455,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
               <Link href="/schedules" style={{
                 fontSize: '13px',
                 fontWeight: 700,
-                color: '#8E8E93',
+                color: 'var(--theme-text-subtle)',
                 textDecoration: 'none',
               }}>
                 전체보기
@@ -476,7 +476,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
                     border: '1px solid rgba(0,0,0,0.04)',
                     cursor: 'pointer',
                     textAlign: 'left',
-                    background: 'white',
+                    background: 'var(--theme-surface)',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                     transition: 'box-shadow 0.15s',
                   }}
@@ -495,15 +495,15 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
                     <span style={{ fontSize: '10px', fontWeight: 700, color: '#0084CC', lineHeight: 1 }}>
                       {s.startTime.getMonth() + 1}월
                     </span>
-                    <span style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', lineHeight: 1.1 }}>
+                    <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', lineHeight: 1.1 }}>
                       {s.startTime.getDate()}
                     </span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {s.title}
                     </p>
-                    <p style={{ fontSize: '12px', color: '#6E6E66', margin: '2px 0 0' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--theme-text-muted)', margin: '2px 0 0' }}>
                       {formatDateShort(s.startTime)}
                     </p>
                   </div>
@@ -531,7 +531,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             padding: '20px 16px',
             borderRadius: '20px',
             textDecoration: 'none',
-            background: 'white',
+            background: 'var(--theme-surface)',
             border: '1px solid rgba(0,0,0,0.04)',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
           }}>
@@ -549,7 +549,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
                 <line x1="5" x2="19" y1="12" y2="12"/>
               </svg>
             </div>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E' }}>새 일정</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text)' }}>새 일정</span>
           </Link>
 
           <Link href="/budget" style={{
@@ -561,7 +561,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
             padding: '20px 16px',
             borderRadius: '20px',
             textDecoration: 'none',
-            background: 'white',
+            background: 'var(--theme-surface)',
             border: overdueFixedCount > 0 ? '1px solid rgba(239,68,68,0.18)' : '1px solid rgba(0,0,0,0.04)',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
           }}>
@@ -600,7 +600,7 @@ export default function MobileHome({ user, profile, schedules, loading }: Mobile
                 <line x1="2" x2="22" y1="10" y2="10"/>
               </svg>
             </div>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E' }}>가계부</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text)' }}>가계부</span>
             {overdueFixedCount > 0 && (
               <span style={{ fontSize: '10px', fontWeight: 700, color: '#EF4444', marginTop: '-4px' }}>미결제 {overdueFixedCount}건</span>
             )}

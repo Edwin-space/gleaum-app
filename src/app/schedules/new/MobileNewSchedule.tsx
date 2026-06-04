@@ -64,7 +64,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p style={{
       fontSize: '11px',
       fontWeight: 800,
-      color: '#8E8E93',
+      color: 'var(--theme-text-subtle)',
       letterSpacing: '0.07em',
       marginBottom: '12px',
       textTransform: 'uppercase',
@@ -87,7 +87,7 @@ export function MobileNewSchedule({
   const scheduleTypes: ScheduleType[] = ['shared', 'personal', 'child', 'expense'];
 
   const cardBase: React.CSSProperties = {
-    background: 'white',
+    background: 'var(--theme-surface)',
     borderRadius: '20px',
     padding: '20px',
     boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -104,7 +104,7 @@ export function MobileNewSchedule({
     background: '#F7F7FA',
     outline: 'none',
     boxSizing: 'border-box',
-    color: '#1A1B2E',
+    color: 'var(--theme-text)',
     fontWeight: 600,
     fontFamily: 'inherit',
     transition: 'border-color 0.15s',
@@ -116,7 +116,7 @@ export function MobileNewSchedule({
     <div
       className="min-h-dvh"
       style={{
-        background: '#FAFAFD',
+        background: 'var(--theme-bg)',
         paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))',
       }}
     >
@@ -155,7 +155,7 @@ export function MobileNewSchedule({
           </svg>
         </button>
 
-        <p style={{ fontSize: '17px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.03em' }}>
+        <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.03em' }}>
           새 일정
         </p>
 
@@ -695,7 +695,7 @@ export function MobileNewSchedule({
               border: `1.5px solid ${memo ? '#0084CC80' : '#EBEBF0'}`,
               outline: 'none',
               boxSizing: 'border-box',
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
               fontWeight: 500,
               fontFamily: 'inherit',
               lineHeight: 1.6,
@@ -721,8 +721,8 @@ export function MobileNewSchedule({
               cursor: 'pointer',
               fontSize: '15px',
               fontWeight: 700,
-              color: '#6E6E66',
-              background: 'white',
+              color: 'var(--theme-text-muted)',
+              background: 'var(--theme-surface)',
               letterSpacing: '-0.01em',
             }}
           >

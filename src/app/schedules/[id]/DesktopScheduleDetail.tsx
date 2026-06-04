@@ -44,7 +44,7 @@ const typeLabelMap: Record<string, string> = {
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: 'white', borderRadius: '24px', padding: '28px',
+      background: 'var(--theme-surface)', borderRadius: '24px', padding: '28px',
       boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
       ...style,
     }}>
@@ -56,7 +56,7 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <p style={{
-      fontSize: '11px', fontWeight: 800, color: '#8E8E93',
+      fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)',
       textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px',
     }}>
       {children}
@@ -235,7 +235,7 @@ export function DesktopScheduleDetail({
           {/* 정기지출 정보 */}
           {schedule.type === 'expense' && (
             <div style={{
-              background: 'white', borderRadius: '24px', padding: '28px',
+              background: 'var(--theme-surface)', borderRadius: '24px', padding: '28px',
               border: '2px solid rgba(245,158,11,0.15)',
               boxShadow: '0 4px 20px rgba(245,158,11,0.06)',
             }}>
@@ -243,11 +243,11 @@ export function DesktopScheduleDetail({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 <div style={{ padding: '20px', borderRadius: '18px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.12)' }}>
                   <p style={{ fontSize: '11px', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>지출 금액</p>
-                  <p style={{ fontSize: '26px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>{formatAmount(schedule.amount ?? 0)}</p>
+                  <p style={{ fontSize: '26px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>{formatAmount(schedule.amount ?? 0)}</p>
                 </div>
                 <div style={{ padding: '20px', borderRadius: '18px', background: 'rgba(0,132,204,0.04)', border: '1px solid rgba(0,132,204,0.1)' }}>
                   <p style={{ fontSize: '11px', fontWeight: 800, color: '#0084CC', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>카테고리</p>
-                  <p style={{ fontSize: '17px', fontWeight: 900, color: '#1A1B2E', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <p style={{ fontSize: '17px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {schedule.expenseCategory && (
                       <>{EXPENSE_CATEGORY_ICONS[schedule.expenseCategory]} {EXPENSE_CATEGORY_LABELS[schedule.expenseCategory]}</>
                     )}
@@ -255,7 +255,7 @@ export function DesktopScheduleDetail({
                 </div>
                 <div style={{ padding: '20px', borderRadius: '18px', background: 'rgba(12,201,181,0.04)', border: '1px solid rgba(12,201,181,0.1)' }}>
                   <p style={{ fontSize: '11px', fontWeight: 800, color: '#0CC9B5', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>결제 수단</p>
-                  <p style={{ fontSize: '17px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>
+                  <p style={{ fontSize: '17px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
                     {schedule.paymentMethod && PAYMENT_METHOD_LABELS[schedule.paymentMethod]}
                   </p>
                 </div>
@@ -267,7 +267,7 @@ export function DesktopScheduleDetail({
           {schedule.memo && (
             <Card>
               <SectionTitle>메모</SectionTitle>
-              <p style={{ fontSize: '15px', lineHeight: 1.8, color: '#1A1B2E', fontWeight: 500, whiteSpace: 'pre-wrap', margin: 0 }}>
+              <p style={{ fontSize: '15px', lineHeight: 1.8, color: 'var(--theme-text)', fontWeight: 500, whiteSpace: 'pre-wrap', margin: 0 }}>
                 {schedule.memo}
               </p>
             </Card>
@@ -277,14 +277,14 @@ export function DesktopScheduleDetail({
           {schedule.location && (
             <Card>
               <SectionTitle>장소</SectionTitle>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: '#1A1B2E', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: 'var(--theme-text)', marginBottom: '16px' }}>
                 <span>📍</span> {schedule.location.address}
               </div>
               <div style={{
                 height: '240px', borderRadius: '18px',
                 background: '#F7F7FA', border: '1px solid rgba(0,0,0,0.04)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                color: '#8E8E93',
+                color: 'var(--theme-text-subtle)',
               }}>
                 <span style={{ fontSize: '40px', marginBottom: '12px' }}>🗺️</span>
                 <p style={{ fontSize: '13px', fontWeight: 700, margin: 0 }}>지도 API 연동 준비 중</p>
@@ -297,7 +297,7 @@ export function DesktopScheduleDetail({
             <Card>
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
                 <span style={{ fontSize: '36px', display: 'block', marginBottom: '12px' }}>📋</span>
-                <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>추가 정보가 없습니다</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>추가 정보가 없습니다</p>
               </div>
             </Card>
           )}
@@ -310,7 +310,7 @@ export function DesktopScheduleDetail({
           <Card>
             <SectionTitle>참여자 ({participantUsers.length}명)</SectionTitle>
             {participantUsers.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>참여자가 없습니다</p>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>참여자가 없습니다</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {participantUsers.map((u) => (
@@ -323,8 +323,8 @@ export function DesktopScheduleDetail({
                       {u.avatar}
                     </div>
                     <div>
-                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>{u.name}</p>
-                      <p style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>Space Member</p>
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>{u.name}</p>
+                      <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>Space Member</p>
                     </div>
                   </div>
                 ))}
@@ -382,7 +382,7 @@ export function DesktopScheduleDetail({
                   onClick={() => handleUpdateStatus('pending')}
                   style={{
                     width: '100%', padding: '14px', borderRadius: '16px',
-                    background: 'transparent', color: '#8E8E93',
+                    background: 'transparent', color: 'var(--theme-text-subtle)',
                     fontSize: '14px', fontWeight: 700,
                     border: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer',
                   }}
@@ -392,7 +392,7 @@ export function DesktopScheduleDetail({
               )}
               {(schedule.status === 'completed' || schedule.status === 'missed') && (
                 <div style={{ padding: '16px', borderRadius: '16px', background: '#F7F7FA', textAlign: 'center' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>
                     {schedule.status === 'completed' ? '✅ 완료된 일정입니다' : '일정이 종료되었습니다'}
                   </p>
                 </div>
@@ -431,7 +431,7 @@ export function DesktopScheduleDetail({
             onClick={e => e.stopPropagation()}
             style={{
               width: '100%', maxWidth: '400px',
-              background: 'white', borderRadius: '32px', padding: '40px',
+              background: 'var(--theme-surface)', borderRadius: '32px', padding: '40px',
               boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
             }}
           >
@@ -439,14 +439,14 @@ export function DesktopScheduleDetail({
               <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 20px' }}>
                 🗑️
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>일정을 삭제할까요?</h3>
-              <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.6, margin: '0 0 28px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>일정을 삭제할까요?</h3>
+              <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, lineHeight: 1.6, margin: '0 0 28px' }}>
                 이 작업은 되돌릴 수 없으며,<br/>공간 멤버들의 목록에서도 삭제됩니다.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  style={{ height: '52px', borderRadius: '16px', background: '#F5F5F9', color: '#8E8E93', fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+                  style={{ height: '52px', borderRadius: '16px', background: '#F5F5F9', color: 'var(--theme-text-subtle)', fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
                 >
                   취소
                 </button>
@@ -476,7 +476,7 @@ export function DesktopScheduleDetail({
             onClick={e => e.stopPropagation()}
             style={{
               width: '100%', maxWidth: '400px',
-              background: 'white', borderRadius: '32px', padding: '40px',
+              background: 'var(--theme-surface)', borderRadius: '32px', padding: '40px',
               boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
             }}
           >
@@ -484,8 +484,8 @@ export function DesktopScheduleDetail({
               <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(16,185,129,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 20px' }}>
                 ✅
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>일정을 완료했나요?</h3>
-              <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.6, margin: '0 0 28px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>일정을 완료했나요?</h3>
+              <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, lineHeight: 1.6, margin: '0 0 28px' }}>
                 {schedule.title}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

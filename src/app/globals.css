@@ -404,13 +404,26 @@ select:focus,
 :root[data-theme='dark'] [style*="background: #F8F9FF"],
 :root[data-theme='dark'] [style*="background: #F2F2F7"],
 :root[data-theme='dark'] [style*="background: #F7F8FB"],
+:root[data-theme='dark'] [style*="background: #F9FAFB"],
+:root[data-theme='dark'] [style*="background: #F5F5F7"],
+:root[data-theme='dark'] [style*="background: #F5F5F9"],
+:root[data-theme='dark'] [style*="background: #F5F5F3"],
+:root[data-theme='dark'] [style*="background: #F0F0F5"],
+:root[data-theme='dark'] [style*="background: #E5E5EA"],
+:root[data-theme='dark'] [style*="background: #E8E8E4"],
 :root[data-theme='dark'] [style*="background:#FFF"],
 :root[data-theme='dark'] [style*="background:#fff"],
 :root[data-theme='dark'] [style*="background:#FFFFFF"],
 :root[data-theme='dark'] [style*="background:#FAFAFD"],
+:root[data-theme='dark'] [style*="background:#F5F5F7"],
+:root[data-theme='dark'] [style*="background:#F0F0F5"],
+:root[data-theme='dark'] [style*="background:#E5E5EA"],
 :root[data-theme='dark'] [style*="background-color: white"],
 :root[data-theme='dark'] [style*="background-color: #FFFFFF"],
-:root[data-theme='dark'] [style*="background-color: #FAFAFD"] {
+:root[data-theme='dark'] [style*="background-color: #FAFAFD"],
+:root[data-theme='dark'] [style*="background-color: #F5F5F7"],
+:root[data-theme='dark'] [style*="background-color: #F0F0F5"],
+:root[data-theme='dark'] [style*="background-color: #E5E5EA"] {
   background-color: var(--theme-surface) !important;
   background: var(--theme-surface) !important;
 }
@@ -420,8 +433,16 @@ select:focus,
 :root[data-theme='dark'] [style*="color: #1a1b2e"],
 :root[data-theme='dark'] [style*="color: #333"],
 :root[data-theme='dark'] [style*="color: #333333"],
+:root[data-theme='dark'] [style*="color: #111827"],
+:root[data-theme='dark'] [style*="color: #1F2937"],
+:root[data-theme='dark'] [style*="color: #1f2937"],
+:root[data-theme='dark'] [style*="color: black"],
+:root[data-theme='dark'] [style*="color: #000"],
+:root[data-theme='dark'] [style*="color: #000000"],
 :root[data-theme='dark'] [style*="color:#1A1B2E"],
-:root[data-theme='dark'] [style*="color:#1a1b2e"] {
+:root[data-theme='dark'] [style*="color:#1a1b2e"],
+:root[data-theme='dark'] [style*="color:#111827"],
+:root[data-theme='dark'] [style*="color:#000"] {
   color: var(--theme-text) !important;
 }
 
@@ -429,9 +450,27 @@ select:focus,
 :root[data-theme='dark'] [style*="color: #6E6E66"],
 :root[data-theme='dark'] [style*="color: #8E8E93"],
 :root[data-theme='dark'] [style*="color: #AEAEA8"],
+:root[data-theme='dark'] [style*="color: #AEAEB2"],
+:root[data-theme='dark'] [style*="color: #6B7280"],
+:root[data-theme='dark'] [style*="color: #6b7280"],
+:root[data-theme='dark'] [style*="color: #9CA3AF"],
+:root[data-theme='dark'] [style*="color: #9ca3af"],
+:root[data-theme='dark'] [style*="color: #C7C7CC"],
 :root[data-theme='dark'] [style*="color:#6E6E66"],
-:root[data-theme='dark'] [style*="color:#8E8E93"] {
+:root[data-theme='dark'] [style*="color:#8E8E93"],
+:root[data-theme='dark'] [style*="color:#6B7280"],
+:root[data-theme='dark'] [style*="color:#C7C7CC"] {
   color: var(--theme-text-muted) !important;
+}
+
+/* 다크모드에서 런타임 조건부 inline border가 밝은 회색으로 남는 경우 */
+:root[data-theme='dark'] [style*="border: 1px solid rgba(0,0,0"],
+:root[data-theme='dark'] [style*="border: '1px solid rgba(0,0,0"],
+:root[data-theme='dark'] [style*="border: 1.5px solid #E5E5EA"],
+:root[data-theme='dark'] [style*="border: 2px solid #E5E5EA"],
+:root[data-theme='dark'] [style*="border: 1.5px solid #E8E8E4"],
+:root[data-theme='dark'] [style*="border: 2px dashed #E5E5EA"] {
+  border-color: var(--theme-border) !important;
 }
 
 /* 스플래시 로고 펄스 (별도 pseudo-element 불가, ::before로만) */

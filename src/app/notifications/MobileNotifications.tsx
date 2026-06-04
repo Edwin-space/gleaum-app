@@ -11,7 +11,7 @@ const typeConfig: Record<string, { color: string; bg: string; icon: string; labe
   re_notify:  { emoji: '🔔', color: '#F59E0B', bg: 'rgba(245,158,11,0.07)', label: '재알림', icon: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0' },
   completion: { emoji: '✅', color: '#0CC9B5', bg: 'rgba(12,201,181,0.07)', label: '완료', icon: 'M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3' },
   invite:     { emoji: '💌', color: '#8B5CF6', bg: 'rgba(139,92,246,0.07)', label: '초대', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
-  system:     { emoji: '⚙️', color: '#6B7280', bg: 'rgba(107,114,128,0.07)', label: '시스템', icon: 'M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z M12 16v-4 M12 8h.01' },
+  system:     { emoji: '⚙️', color: 'var(--theme-text-subtle)', bg: 'rgba(107,114,128,0.07)', label: '시스템', icon: 'M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z M12 16v-4 M12 8h.01' },
 };
 
 function groupNotifications(notifs: Notification[]) {
@@ -67,7 +67,7 @@ export function MobileNotifications() {
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
+      style={{ background: 'var(--theme-bg)', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
     >
       {/* ── Sticky frosted header ── */}
       <header style={{
@@ -81,7 +81,7 @@ export function MobileNotifications() {
         borderBottom: '1px solid rgba(0,0,0,0.04)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.5px', margin: 0 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.5px', margin: 0 }}>
             알림 센터
           </h1>
           {unreadCount > 0 && (
@@ -157,7 +157,7 @@ export function MobileNotifications() {
             animation: 'spin 0.8s linear infinite',
           }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: '#8E8E93' }}>알림을 동기화 중...</p>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>알림을 동기화 중...</p>
         </div>
       ) : (
         <div style={{ padding: '20px 16px 0' }}>
@@ -168,14 +168,14 @@ export function MobileNotifications() {
                 <div key={title} style={{ marginBottom: '32px' }}>
                   {/* Group header */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', paddingLeft: '4px' }}>
-                    <h3 style={{ fontSize: '12px', fontWeight: 900, color: '#1A1B2E', textTransform: 'uppercase', letterSpacing: '1.4px', margin: 0 }}>
+                    <h3 style={{ fontSize: '12px', fontWeight: 900, color: 'var(--theme-text)', textTransform: 'uppercase', letterSpacing: '1.4px', margin: 0 }}>
                       {title}
                     </h3>
                     <div style={{ flex: 1, height: '1px', background: '#EBEBEB' }} />
                     <span style={{
                       fontSize: '11px', fontWeight: 800,
                       padding: '2px 8px', borderRadius: '999px',
-                      background: '#F0F0F0', color: '#8E8E93',
+                      background: '#F0F0F0', color: 'var(--theme-text-subtle)',
                     }}>
                       {items.length}
                     </span>
@@ -191,7 +191,7 @@ export function MobileNotifications() {
                           onClick={() => !n.read && handleMarkRead(n.id)}
                           style={{
                             position: 'relative',
-                            background: 'white',
+                            background: 'var(--theme-surface)',
                             borderRadius: '20px',
                             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
                             border: '1px solid rgba(0,0,0,0.04)',
@@ -220,14 +220,14 @@ export function MobileNotifications() {
                                 <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: cfg.color }}>
                                   {cfg.label}
                                 </span>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', whiteSpace: 'nowrap' }}>
                                   {formatRelativeTime(n.createdAt)}
                                 </span>
                               </div>
-                              <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px', lineHeight: 1.3 }}>
+                              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px', lineHeight: 1.3 }}>
                                 {n.title}
                               </p>
-                              <p style={{ fontSize: '13px', color: '#6E6E66', fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
+                              <p style={{ fontSize: '13px', color: 'var(--theme-text-muted)', fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
                                 {n.body}
                               </p>
                             </div>
@@ -243,7 +243,7 @@ export function MobileNotifications() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '100px', textAlign: 'center' }}>
               <div style={{
                 width: '96px', height: '96px', borderRadius: '36px',
-                background: 'white',
+                background: 'var(--theme-surface)',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
                 border: '1px solid rgba(0,0,0,0.04)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -252,10 +252,10 @@ export function MobileNotifications() {
               }}>
                 ✨
               </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 10px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 10px' }}>
                 모든 소식을 확인했어요
               </h3>
-              <p style={{ fontSize: '15px', color: '#8E8E93', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '15px', color: 'var(--theme-text-subtle)', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
                 새로운 알림이 도착하면<br />가장 먼저 알려드릴게요.
               </p>
             </div>

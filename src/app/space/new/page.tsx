@@ -162,7 +162,7 @@ export default function SpaceNewPage() {
     return (
       <main style={{
         minHeight: '100dvh',
-        background: '#FAFAFD',
+        background: 'var(--theme-bg)',
         padding: '44px 48px 64px',
         position: 'relative',
         overflow: 'hidden',
@@ -253,13 +253,13 @@ export default function SpaceNewPage() {
               <>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', marginBottom: '30px' }}>
                   <div>
-                    <p style={{ fontSize: '11px', fontWeight: 900, color: '#8E8E93', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                    <p style={{ fontSize: '11px', fontWeight: 900, color: 'var(--theme-text-subtle)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>
                       Space Setup
                     </p>
-                    <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.04em', margin: '0 0 8px' }}>
+                    <h2 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', letterSpacing: '-0.04em', margin: '0 0 8px' }}>
                       공간 기본값 설정
                     </h2>
-                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#8E8E93', lineHeight: 1.65, margin: 0 }}>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)', lineHeight: 1.65, margin: 0 }}>
                       이름과 목적만 정하면 바로 초대 링크를 만들 수 있습니다.
                     </p>
                   </div>
@@ -270,7 +270,7 @@ export default function SpaceNewPage() {
 
                 <div style={{ display: 'grid', gap: '26px', flex: 1 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 900, color: '#1A1B2E', marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 900, color: 'var(--theme-text)', marginBottom: '10px' }}>
                       공간 이름
                     </label>
                     <input
@@ -286,7 +286,7 @@ export default function SpaceNewPage() {
                         borderRadius: '18px',
                         border: `2px solid ${spaceName.trim() ? '#0CC9B5' : '#E8E8E4'}`,
                         background: spaceName.trim() ? 'white' : '#F5F5F3',
-                        color: '#1A1B2E',
+                        color: 'var(--theme-text)',
                         outline: 'none',
                         fontSize: '17px',
                         fontWeight: 800,
@@ -299,7 +299,7 @@ export default function SpaceNewPage() {
                         <button
                           key={s}
                           onClick={() => setSpaceName(s)}
-                          style={{ height: '34px', padding: '0 14px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'white', color: '#6E6E66', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
+                          style={{ height: '34px', padding: '0 14px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'var(--theme-surface)', color: 'var(--theme-text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
                         >
                           {s}
                         </button>
@@ -308,7 +308,7 @@ export default function SpaceNewPage() {
                   </div>
 
                   <div>
-                    <p style={{ fontSize: '13px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 12px' }}>공간 목적</p>
+                    <p style={{ fontSize: '13px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 12px' }}>공간 목적</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
                       {PURPOSES.map(p => {
                         const active = purpose === p.key;
@@ -336,7 +336,7 @@ export default function SpaceNewPage() {
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <p style={{ fontSize: '15px', fontWeight: 900, color: active ? color : '#1A1B2E', margin: '0 0 3px' }}>{p.label}</p>
-                              <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0, lineHeight: 1.45 }}>{p.desc}</p>
+                              <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.45 }}>{p.desc}</p>
                             </div>
                             {active && (
                               <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -353,7 +353,7 @@ export default function SpaceNewPage() {
                 </div>
 
                 <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'center' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>
                     {selectedPurpose ? `${selectedPurpose.label} 목적의 공간으로 시작합니다.` : '공간 목적을 선택해 주세요.'}
                   </p>
                   <button
@@ -386,10 +386,10 @@ export default function SpaceNewPage() {
                 <p style={{ fontSize: '11px', fontWeight: 900, color: '#0CC9B5', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>
                   Space Created
                 </p>
-                <h2 style={{ fontSize: '32px', fontWeight: 900, color: '#1A1B2E', letterSpacing: '-0.04em', lineHeight: 1.15, margin: '0 0 12px' }}>
+                <h2 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--theme-text)', letterSpacing: '-0.04em', lineHeight: 1.15, margin: '0 0 12px' }}>
                   <span style={{ color: '#0084CC' }}>{spaceName}</span> 공간이<br />준비되었습니다.
                 </h2>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#8E8E93', lineHeight: 1.7, margin: '0 0 30px' }}>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--theme-text-subtle)', lineHeight: 1.7, margin: '0 0 30px' }}>
                   초대 링크를 공유하거나 바로 공간으로 이동해 첫 일정을 등록해 보세요.
                 </p>
 
@@ -410,25 +410,25 @@ export default function SpaceNewPage() {
                     <button
                       key={item.title}
                       onClick={item.onClick}
-                      style={{ minHeight: '132px', borderRadius: '24px', border: '1.5px solid #E8E8E4', background: 'white', cursor: 'pointer', padding: '18px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                      style={{ minHeight: '132px', borderRadius: '24px', border: '1.5px solid #E8E8E4', background: 'var(--theme-surface)', cursor: 'pointer', padding: '18px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                     >
                       <span style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>{item.icon}</span>
                       <span>
-                        <strong style={{ display: 'block', fontSize: '14px', fontWeight: 900, color: '#1A1B2E', marginBottom: '4px' }}>{item.title}</strong>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93' }}>{item.desc}</span>
+                        <strong style={{ display: 'block', fontSize: '14px', fontWeight: 900, color: 'var(--theme-text)', marginBottom: '4px' }}>{item.title}</strong>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{item.desc}</span>
                       </span>
                     </button>
                   ))}
                 </div>
 
-                <code style={{ display: 'block', borderRadius: '20px', background: '#F5F5F3', border: '1.5px solid rgba(0,132,204,0.14)', padding: '18px 20px', color: '#0084CC', fontSize: '13px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 'auto' }}>
+                <code style={{ display: 'block', borderRadius: '20px', background: 'var(--theme-surface-muted)', border: '1.5px solid rgba(0,132,204,0.14)', padding: '18px 20px', color: '#0084CC', fontSize: '13px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 'auto' }}>
                   {inviteLink}
                 </code>
 
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '30px' }}>
                   <button
                     onClick={goToSpace}
-                    style={{ height: '52px', padding: '0 24px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'white', color: '#6E6E66', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
+                    style={{ height: '52px', padding: '0 24px', borderRadius: '999px', border: '1.5px solid #E8E8E4', background: 'var(--theme-surface)', color: 'var(--theme-text-muted)', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
                   >
                     나중에 초대
                   </button>
@@ -451,7 +451,7 @@ export default function SpaceNewPage() {
   return (
     <div style={{
       minHeight: '100dvh',
-      background: '#FAFAFD',
+      background: 'var(--theme-bg)',
       display: 'flex',
       flexDirection: 'column',
       paddingTop: 'env(safe-area-inset-top)',
@@ -472,10 +472,10 @@ export default function SpaceNewPage() {
             </button>
           )}
           {step === 1 && <div style={{ width: '30px' }} />}
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#8E8E93' }}>{step} / {TOTAL_STEPS}</span>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{step} / {TOTAL_STEPS}</span>
           <button
             onClick={skip}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: '#8E8E93', padding: '4px 0' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)', padding: '4px 0' }}
           >
             건너뛰기
           </button>
@@ -506,10 +506,10 @@ export default function SpaceNewPage() {
               boxShadow: '0 20px 60px rgba(26,27,46,0.25)',
             }}>🏠</div>
 
-            <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 16px', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 16px', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
               공간이란<br />무엇인가요?
             </h1>
-            <p style={{ fontSize: '16px', fontWeight: 500, color: '#8E8E93', lineHeight: 1.7, margin: '0 0 48px', maxWidth: '320px' }}>
+            <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--theme-text-subtle)', lineHeight: 1.7, margin: '0 0 48px', maxWidth: '320px' }}>
               공간은 가족, 연인, 친구 등<br />나만의 그룹을 만들어<br />
               <strong style={{ color: '#0084CC' }}>일정 · 지출 · 정보</strong>를<br />함께 공유하는 곳입니다.
             </p>
@@ -524,13 +524,13 @@ export default function SpaceNewPage() {
                 <div key={f.title} style={{
                   display: 'flex', alignItems: 'center', gap: '14px',
                   padding: '14px 18px', borderRadius: '16px',
-                  background: 'white', border: '1px solid rgba(0,0,0,0.05)',
+                  background: 'var(--theme-surface)', border: '1px solid rgba(0,0,0,0.05)',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)', textAlign: 'left',
                 }}>
                   <span style={{ fontSize: '26px' }}>{f.icon}</span>
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>{f.title}</p>
-                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#8E8E93', margin: '2px 0 0' }}>{f.desc}</p>
+                    <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>{f.title}</p>
+                    <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>{f.desc}</p>
                   </div>
                 </div>
               ))}
@@ -558,10 +558,10 @@ export default function SpaceNewPage() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '48px 24px 0' }}>
           <div style={{ flex: 1 }}>
             <span style={{ fontSize: '13px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.5px' }}>STEP 2</span>
-            <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1A1B2E', margin: '8px 0 10px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 900, color: 'var(--theme-text)', margin: '8px 0 10px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
               공간 이름을<br />정해주세요
             </h1>
-            <p style={{ fontSize: '14px', color: '#8E8E93', margin: '0 0 36px', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', margin: '0 0 36px', lineHeight: 1.6 }}>
               나중에 언제든지 변경할 수 있어요
             </p>
 
@@ -576,15 +576,15 @@ export default function SpaceNewPage() {
               style={{
                 width: '100%', height: '60px', padding: '0 20px',
                 borderRadius: '18px', fontSize: '19px', fontWeight: 700,
-                background: 'white', border: `2px solid ${spaceName ? '#0084CC' : '#E5E5EA'}`,
-                outline: 'none', color: '#1A1B2E', boxSizing: 'border-box',
+                background: 'var(--theme-surface)', border: `2px solid ${spaceName ? '#0084CC' : '#E5E5EA'}`,
+                outline: 'none', color: 'var(--theme-text)', boxSizing: 'border-box',
                 boxShadow: spaceName ? '0 0 0 4px rgba(0,132,204,0.12)' : 'none',
                 transition: 'all 0.15s',
               }}
             />
 
             {/* Suggestions */}
-            <p style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', margin: '20px 0 12px' }}>추천 예시</p>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: '20px 0 12px' }}>추천 예시</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {['우리 가족 🏠', '오늘도 사랑해 💕', '친구들 모임 🙌', '우리 팀 💼', '소중한 우리 ✨'].map(s => (
                 <button
@@ -592,8 +592,8 @@ export default function SpaceNewPage() {
                   onClick={() => setSpaceName(s.replace(/\s*[🏠💕🙌💼✨]/u, '').trim())}
                   style={{
                     padding: '8px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 700,
-                    background: 'white', border: '1.5px solid #E5E5EA',
-                    color: '#1A1B2E', cursor: 'pointer',
+                    background: 'var(--theme-surface)', border: '1.5px solid #E5E5EA',
+                    color: 'var(--theme-text)', cursor: 'pointer',
                     transition: 'all 0.12s',
                   }}
                 >{s}</button>
@@ -626,10 +626,10 @@ export default function SpaceNewPage() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '48px 24px 0' }}>
           <div style={{ flex: 1 }}>
             <span style={{ fontSize: '13px', fontWeight: 800, color: '#0084CC', letterSpacing: '0.5px' }}>STEP 3</span>
-            <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1A1B2E', margin: '8px 0 10px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 900, color: 'var(--theme-text)', margin: '8px 0 10px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
               어떤 목적으로<br />사용하실 건가요?
             </h1>
-            <p style={{ fontSize: '14px', color: '#8E8E93', margin: '0 0 28px', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', margin: '0 0 28px', lineHeight: 1.6 }}>
               목적에 맞게 기본 설정이 최적화됩니다
             </p>
 
@@ -652,7 +652,7 @@ export default function SpaceNewPage() {
                     <p style={{ fontSize: '15px', fontWeight: 800, color: purpose === p.key ? p.color : '#1A1B2E', margin: 0 }}>
                       {p.label}
                     </p>
-                    <p style={{ fontSize: '12px', fontWeight: 500, color: '#8E8E93', margin: '2px 0 0' }}>
+                    <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>
                       {p.desc}
                     </p>
                   </div>
@@ -711,10 +711,10 @@ export default function SpaceNewPage() {
               boxShadow: '0 8px 24px rgba(0,132,204,0.30)',
             }}>🎉</div>
 
-            <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 10px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 10px', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
               <span style={{ color: '#0084CC' }}>{spaceName}</span><br />공간이 만들어졌어요!
             </h1>
-            <p style={{ fontSize: '14px', color: '#8E8E93', margin: '0 0 36px', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', margin: '0 0 36px', lineHeight: 1.6 }}>
               멤버를 초대해 함께 시작해보세요.<br />지금 초대하지 않아도 나중에 할 수 있어요.
             </p>
 
@@ -733,8 +733,8 @@ export default function SpaceNewPage() {
               >
                 <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(0,132,204,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🔗</div>
                 <div>
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>초대 링크 복사</p>
-                  <p style={{ fontSize: '12px', color: '#8E8E93', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>초대 링크 복사</p>
+                  <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>
                     {linkCopied ? '✓ 링크가 복사되었어요!' : '링크를 공유해 초대하세요'}
                   </p>
                 </div>
@@ -746,14 +746,14 @@ export default function SpaceNewPage() {
                 style={{
                   width: '100%', padding: '18px 20px', borderRadius: '18px', textAlign: 'left',
                   display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
-                  background: 'white', border: '2px solid #E5E5EA',
+                  background: 'var(--theme-surface)', border: '2px solid #E5E5EA',
                   transition: 'all 0.15s',
                 }}
               >
                 <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: '#FEE500', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>💬</div>
                 <div>
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>카카오톡으로 공유</p>
-                  <p style={{ fontSize: '12px', color: '#8E8E93', margin: '2px 0 0' }}>카카오 친구에게 바로 전달</p>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>카카오톡으로 공유</p>
+                  <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>카카오 친구에게 바로 전달</p>
                 </div>
               </button>
 
@@ -769,14 +769,14 @@ export default function SpaceNewPage() {
                 style={{
                   width: '100%', padding: '18px 20px', borderRadius: '18px', textAlign: 'left',
                   display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
-                  background: 'white', border: '2px solid #E5E5EA',
+                  background: 'var(--theme-surface)', border: '2px solid #E5E5EA',
                   transition: 'all 0.15s',
                 }}
               >
                 <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(52,199,89,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>📱</div>
                 <div>
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>연락처에서 초대</p>
-                  <p style={{ fontSize: '12px', color: '#8E8E93', margin: '2px 0 0' }}>스마트폰 연락처 공유 기능 활용</p>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>연락처에서 초대</p>
+                  <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: '2px 0 0' }}>스마트폰 연락처 공유 기능 활용</p>
                 </div>
               </button>
             </div>
@@ -801,7 +801,7 @@ export default function SpaceNewPage() {
               style={{
                 width: '100%', height: '52px', borderRadius: '18px',
                 background: 'transparent', border: 'none', cursor: 'pointer',
-                fontSize: '15px', fontWeight: 700, color: '#8E8E93',
+                fontSize: '15px', fontWeight: 700, color: 'var(--theme-text-subtle)',
               }}
             >
               나중에 초대하기

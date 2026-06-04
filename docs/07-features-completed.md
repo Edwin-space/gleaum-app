@@ -772,3 +772,14 @@ npm run cap:open:android # Android Studio 열기
 - [x] 이메일 OTP는 앱 코드에서 Supabase `/auth/v1/otp`, `/auth/v1/verify`를 호출하는 구조임을 확인
 - [x] 실제 메일 발송은 Supabase Auth Email/SMTP 설정에 의존함
 - [x] `npm run build`, Android `:app:assembleDebug`, iOS Simulator Debug 빌드 통과
+
+---
+
+## 다크모드 대비/토큰 안정화 1차 (완료 — 2026-06-04)
+
+- [x] 다크모드에서 하드코딩된 밝은 카드/어두운 텍스트가 보이지 않는 문제 원인 확인
+- [x] 컨트롤/비활성 상태용 테마 토큰 추가
+- [x] 전역 다크모드 inline-style 보정 범위 확장
+- [x] 홈, 일정, 공간, 가계부, 알림, 온보딩, 마이페이지 등 주요 화면의 하드코딩 배경/텍스트 색상 1차 토큰화
+- [x] 마이페이지 공통 모달 다크모드 대비 보정
+- [x] `npm run build` 통과

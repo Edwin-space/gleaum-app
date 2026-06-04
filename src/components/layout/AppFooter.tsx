@@ -28,7 +28,7 @@ export function AppFooter() {
         borderTop: '1px solid rgba(0,0,0,0.06)',
         background: 'rgba(250,250,253,0.8)',
         fontSize: '12px',
-        color: '#8E8E93',
+        color: 'var(--theme-text-subtle)',
         marginTop: 'auto',
       }}
     >
@@ -41,19 +41,19 @@ export function AppFooter() {
       </Link>
       <Link
         href="/legal/terms"
-        style={{ color: '#8E8E93', textDecoration: 'none' }}
+        style={{ color: 'var(--theme-text-subtle)', textDecoration: 'none' }}
       >
         이용약관
       </Link>
       <Link
         href="/legal/delete-account"
-        style={{ color: '#8E8E93', textDecoration: 'none' }}
+        style={{ color: 'var(--theme-text-subtle)', textDecoration: 'none' }}
       >
         계정 삭제
       </Link>
       <a
         href="mailto:helper@gleaum.com"
-        style={{ color: '#8E8E93', textDecoration: 'none' }}
+        style={{ color: 'var(--theme-text-subtle)', textDecoration: 'none' }}
       >
         문의
       </a>

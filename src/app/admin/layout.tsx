@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!profile?.is_admin) redirect('/home');
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#F8F9FF', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--theme-surface-muted)', fontFamily: 'system-ui, sans-serif' }}>
       {/* 관리자 헤더 */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,

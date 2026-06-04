@@ -71,7 +71,7 @@ function fieldInput(focused: boolean, hasValue: boolean, accentColor = '#0CC9B5'
     background: focused ? 'white' : '#F7F7FA',
     border: `1.5px solid ${focused ? accentColor : hasValue ? 'rgba(0,132,204,0.2)' : 'transparent'}`,
     outline: 'none',
-    color: '#1A1B2E',
+    color: 'var(--theme-text)',
     boxSizing: 'border-box' as const,
     transition: 'all 0.2s',
     boxShadow: focused ? `0 0 0 3px ${accentColor}18` : 'none',
@@ -80,7 +80,7 @@ function fieldInput(focused: boolean, hasValue: boolean, accentColor = '#0CC9B5'
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
+    <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
       {children}
     </p>
   );
@@ -89,7 +89,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: 'white', borderRadius: '24px', padding: '28px',
+      background: 'var(--theme-surface)', borderRadius: '24px', padding: '28px',
       boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)',
       ...style,
     }}>
@@ -204,7 +204,7 @@ export function DesktopNewSchedule({
                     <span style={{ fontSize: '28px' }}>{cfg.icon}</span>
                     <div style={{ textAlign: 'center' }}>
                       <p style={{ fontSize: '13px', fontWeight: 800, color: selected ? cfg.color : '#6E6E66', margin: '0 0 2px' }}>{cfg.label}</p>
-                      <p style={{ fontSize: '11px', fontWeight: 600, color: '#AEAEA8', margin: 0 }}>{cfg.desc}</p>
+                      <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>{cfg.desc}</p>
                     </div>
                   </button>
                 );
@@ -276,7 +276,7 @@ export function DesktopNewSchedule({
           {/* 정기지출 섹션 */}
           {type === 'expense' && (
             <div style={{
-              background: 'white', borderRadius: '24px', padding: '28px',
+              background: 'var(--theme-surface)', borderRadius: '24px', padding: '28px',
               border: '2px solid rgba(245,158,11,0.2)',
               boxShadow: '0 4px 20px rgba(245,158,11,0.08)',
             }}>
@@ -303,7 +303,7 @@ export function DesktopNewSchedule({
                       }}>
                         <span style={{ fontSize: '20px' }}>{icon}</span>
                         <span style={{ fontSize: '13px', fontWeight: 800, color: expenseVisibility === val ? '#D97706' : '#1A1B2E' }}>{label}</span>
-                        <span style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 600 }}>{desc}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>{desc}</span>
                       </button>
                     ))}
                   </div>
@@ -381,7 +381,7 @@ export function DesktopNewSchedule({
                 width: '100%', padding: '16px 18px', borderRadius: '14px',
                 fontSize: '15px', fontWeight: 600, background: '#F7F7FA',
                 border: `1.5px solid ${focusedField === 'memo' ? '#0CC9B5' : memo ? 'rgba(0,132,204,0.2)' : 'transparent'}`,
-                outline: 'none', color: '#1A1B2E', boxSizing: 'border-box',
+                outline: 'none', color: 'var(--theme-text)', boxSizing: 'border-box',
                 resize: 'none', lineHeight: 1.6, transition: 'all 0.2s',
                 boxShadow: focusedField === 'memo' ? '0 0 0 3px rgba(12,201,181,0.12)' : 'none',
               }}
@@ -396,7 +396,7 @@ export function DesktopNewSchedule({
           <Card>
             <FieldLabel>참여자</FieldLabel>
             {members.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>멤버를 불러오는 중...</p>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>멤버를 불러오는 중...</p>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {members.map(u => {
@@ -516,7 +516,7 @@ export function DesktopNewSchedule({
             >
               <span style={{ fontSize: '28px' }}>📁</span>
               <span style={{ fontSize: '13px', fontWeight: 700 }}>파일을 드래그하거나 클릭해서 업로드</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93' }}>이미지, PDF 지원 · 최대 10개</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>이미지, PDF 지원 · 최대 10개</span>
             </button>
             {attachments.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginTop: '12px' }}>

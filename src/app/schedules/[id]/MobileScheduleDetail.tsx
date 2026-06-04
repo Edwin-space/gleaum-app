@@ -37,7 +37,7 @@ export function MobileScheduleDetail({
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
+      style={{ background: 'var(--theme-bg)', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
     >
       {/* ── 히어로 헤더 ── */}
       <div
@@ -193,7 +193,7 @@ export function MobileScheduleDetail({
         {/* 자녀 일정 상태 스텝퍼 */}
         {schedule.type === 'child' && (
           <div style={{
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '20px',
             padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -203,7 +203,7 @@ export function MobileScheduleDetail({
             <p style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: '16px',
@@ -287,7 +287,7 @@ export function MobileScheduleDetail({
         {/* 정기지출 정보 */}
         {schedule.type === 'expense' && schedule.amount !== undefined && (
           <div style={{
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '20px',
             padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -297,7 +297,7 @@ export function MobileScheduleDetail({
             <p style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: '16px',
@@ -312,8 +312,8 @@ export function MobileScheduleDetail({
               justifyContent: 'space-between',
               marginBottom: '16px',
             }}>
-              <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 500 }}>금액</span>
-              <span style={{ fontSize: '26px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.03em' }}>
+              <span style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 500 }}>금액</span>
+              <span style={{ fontSize: '26px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.03em' }}>
                 {formatAmount(schedule.amount)}
               </span>
             </div>
@@ -327,8 +327,8 @@ export function MobileScheduleDetail({
                 paddingBottom: '14px',
                 borderTop: '1px solid rgba(0,0,0,0.05)',
               }}>
-                <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 500 }}>카테고리</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 700, color: '#1A1B2E' }}>
+                <span style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 500 }}>카테고리</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 700, color: 'var(--theme-text)' }}>
                   <span>{EXPENSE_CATEGORY_ICONS[schedule.expenseCategory]}</span>
                   {EXPENSE_CATEGORY_LABELS[schedule.expenseCategory]}
                 </span>
@@ -343,8 +343,8 @@ export function MobileScheduleDetail({
                 paddingTop: '14px',
                 borderTop: '1px solid rgba(0,0,0,0.05)',
               }}>
-                <span style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 500 }}>결제 수단</span>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#1A1B2E' }}>
+                <span style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 500 }}>결제 수단</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text)' }}>
                   {PAYMENT_METHOD_LABELS[schedule.paymentMethod]}
                 </span>
               </div>
@@ -355,7 +355,7 @@ export function MobileScheduleDetail({
         {/* 참여자 카드 */}
         {participantUsers.length > 0 && (
           <div style={{
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '20px',
             padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -365,7 +365,7 @@ export function MobileScheduleDetail({
             <p style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: '14px',
@@ -384,7 +384,7 @@ export function MobileScheduleDetail({
                   border: '1px solid rgba(0,132,204,0.12)',
                 }}>
                   <span style={{ fontSize: '16px' }}>{u.avatar}</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1B2E' }}>{u.name}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text)' }}>{u.name}</span>
                 </div>
               ))}
             </div>
@@ -394,7 +394,7 @@ export function MobileScheduleDetail({
         {/* 장소 카드 */}
         {schedule.location && (
           <div style={{
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '20px',
             padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -404,14 +404,14 @@ export function MobileScheduleDetail({
             <p style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: '12px',
             }}>
               📍 장소
             </p>
-            <p style={{ fontSize: '14px', fontWeight: 600, color: '#1A1B2E', marginBottom: '14px' }}>
+            <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text)', marginBottom: '14px' }}>
               {schedule.location.address}
             </p>
             <div style={{
@@ -426,7 +426,7 @@ export function MobileScheduleDetail({
               gap: '6px',
             }}>
               <span style={{ fontSize: '36px' }}>🗺️</span>
-              <p style={{ fontSize: '11px', color: '#8E8E93' }}>지도 표시 영역</p>
+              <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)' }}>지도 표시 영역</p>
             </div>
           </div>
         )}
@@ -434,7 +434,7 @@ export function MobileScheduleDetail({
         {/* 메모 카드 */}
         {schedule.memo && (
           <div style={{
-            background: 'white',
+            background: 'var(--theme-surface)',
             borderRadius: '20px',
             padding: '20px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
@@ -444,14 +444,14 @@ export function MobileScheduleDetail({
             <p style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: '12px',
             }}>
               📝 메모
             </p>
-            <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#1A1B2E' }}>{schedule.memo}</p>
+            <p style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--theme-text)' }}>{schedule.memo}</p>
           </div>
         )}
 
@@ -530,7 +530,7 @@ export function MobileScheduleDetail({
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#8E8E93',
+                color: 'var(--theme-text-subtle)',
                 background: 'rgba(0,0,0,0.04)',
                 letterSpacing: '-0.01em',
               }}
@@ -577,7 +577,7 @@ export function MobileScheduleDetail({
             style={{
               width: '100%',
               maxWidth: '430px',
-              background: 'white',
+              background: 'var(--theme-surface)',
               borderRadius: '32px 32px 0 0',
               padding: '24px 24px 40px',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.12)',
@@ -588,14 +588,14 @@ export function MobileScheduleDetail({
             <div style={{
               width: '40px',
               height: '4px',
-              background: '#E5E5EA',
+              background: 'var(--theme-surface-muted)',
               borderRadius: '999px',
               margin: '0 auto 24px',
             }} />
             <p style={{
               fontSize: '20px',
               fontWeight: 800,
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
               textAlign: 'center',
               marginBottom: '6px',
               letterSpacing: '-0.03em',
@@ -604,7 +604,7 @@ export function MobileScheduleDetail({
             </p>
             <p style={{
               fontSize: '14px',
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               textAlign: 'center',
               marginBottom: '24px',
               fontWeight: 500,
@@ -666,7 +666,7 @@ export function MobileScheduleDetail({
             style={{
               width: '100%',
               maxWidth: '430px',
-              background: 'white',
+              background: 'var(--theme-surface)',
               borderRadius: '32px 32px 0 0',
               padding: '24px 24px 40px',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.12)',
@@ -677,14 +677,14 @@ export function MobileScheduleDetail({
             <div style={{
               width: '40px',
               height: '4px',
-              background: '#E5E5EA',
+              background: 'var(--theme-surface-muted)',
               borderRadius: '999px',
               margin: '0 auto 24px',
             }} />
             <p style={{
               fontSize: '20px',
               fontWeight: 800,
-              color: '#1A1B2E',
+              color: 'var(--theme-text)',
               textAlign: 'center',
               marginBottom: '6px',
               letterSpacing: '-0.03em',
@@ -693,7 +693,7 @@ export function MobileScheduleDetail({
             </p>
             <p style={{
               fontSize: '14px',
-              color: '#8E8E93',
+              color: 'var(--theme-text-subtle)',
               textAlign: 'center',
               marginBottom: '24px',
               fontWeight: 500,
@@ -710,8 +710,8 @@ export function MobileScheduleDetail({
                   cursor: 'pointer',
                   fontSize: '15px',
                   fontWeight: 600,
-                  color: '#8E8E93',
-                  background: '#FAFAFD',
+                  color: 'var(--theme-text-subtle)',
+                  background: 'var(--theme-bg)',
                 }}
               >
                 취소

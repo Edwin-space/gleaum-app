@@ -366,13 +366,13 @@ export function DesktopSpace() {
 
         {/* 왼쪽: 멤버 리스트 */}
         <div style={{
-          background: 'white', borderRadius: '28px', padding: '32px',
+          background: 'var(--theme-surface)', borderRadius: '28px', padding: '32px',
           boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 4px' }}>공간 멤버</h3>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>함께하는 소중한 사람들</p>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 4px' }}>공간 멤버</h3>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>함께하는 소중한 사람들</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {!isPersonalSpace && memberAtLimit && (
@@ -397,13 +397,13 @@ export function DesktopSpace() {
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>👥</div>
               {isPersonalSpace ? (
                 <>
-                  <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 8px' }}>개인 공간은 나만 사용하는 공간이에요</p>
-                  <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>공유 공간을 만들어 다른 사람과 함께해보세요!</p>
+                  <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 8px' }}>개인 공간은 나만 사용하는 공간이에요</p>
+                  <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>공유 공간을 만들어 다른 사람과 함께해보세요!</p>
                 </>
               ) : (
                 <>
-                  <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 8px' }}>이 공간에는 멤버가 없어요!</p>
-                  <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600 }}>초대 링크로 소중한 사람들을 초대해 보세요</p>
+                  <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 8px' }}>이 공간에는 멤버가 없어요!</p>
+                  <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>초대 링크로 소중한 사람들을 초대해 보세요</p>
                 </>
               )}
             </div>
@@ -423,13 +423,13 @@ export function DesktopSpace() {
                         size={52}
                         radius={18}
                         fontSize={28}
-                        style={{ background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.07)' }}
+                        style={{ background: 'var(--theme-surface)', boxShadow: '0 2px 10px rgba(0,0,0,0.07)' }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {member.userId === user?.id ? `${member.user?.name} (나)` : member.user?.name}
                         </p>
-                        <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.email || '연결됨'}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.user?.email || '연결됨'}</p>
                       </div>
                       {/* 역할 배지 */}
                       <button
@@ -461,7 +461,7 @@ export function DesktopSpace() {
                     {/* 역할 변경 드롭다운 */}
                     {isEditingThisRole && (
                       <div style={{ borderTop: '1px solid #F2F2F7', padding: '10px 20px 16px' }}>
-                        <p style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', margin: '0 0 8px' }}>역할 변경</p>
+                        <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 8px' }}>역할 변경</p>
                         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                           {ROLE_OPTIONS.map(role => (
                             <button
@@ -481,8 +481,8 @@ export function DesktopSpace() {
                         </div>
                         <div>
                           {ROLE_OPTIONS.map(role => (
-                            <p key={role} style={{ fontSize: '10px', color: '#8E8E93', margin: '2px 0', fontWeight: 500 }}>
-                              <strong style={{ color: '#1A1B2E' }}>{ROLE_LABELS[role]}</strong>: {role === 'admin' ? '공간 설정, 초대/추방, 일정 관리' : role === 'editor' ? '일정 등록·수정·삭제' : '일정 조회만 가능'}
+                            <p key={role} style={{ fontSize: '10px', color: 'var(--theme-text-subtle)', margin: '2px 0', fontWeight: 500 }}>
+                              <strong style={{ color: 'var(--theme-text)' }}>{ROLE_LABELS[role]}</strong>: {role === 'admin' ? '공간 설정, 초대/추방, 일정 관리' : role === 'editor' ? '일정 등록·수정·삭제' : '일정 조회만 가능'}
                             </p>
                           ))}
                         </div>
@@ -500,10 +500,10 @@ export function DesktopSpace() {
 
           {/* 멤버 초대 카드 — 공유 공간만 */}
           {!isPersonalSpace && (
-            <div style={{ background: 'white', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div style={{ background: 'var(--theme-surface)', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
               <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '16px' }}>🔗</div>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>멤버 초대하기</h3>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.65 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>멤버 초대하기</h3>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.65 }}>
                 카카오톡, 문자, 링크 복사로 소중한 사람들을 초대하세요.
               </p>
               {currentInviteCode && (
@@ -513,10 +513,10 @@ export function DesktopSpace() {
                   border: '1px solid rgba(0,0,0,0.05)',
                 }}>
                   <div>
-                    <p style={{ fontSize: '9px', fontWeight: 800, color: '#8E8E93', margin: '0 0 3px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
+                    <p style={{ fontSize: '9px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 3px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
                     <span style={{ fontSize: '20px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
                   </div>
-                  <button onClick={copyInviteCode} style={{ padding: '8px 14px', borderRadius: '10px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap' }}>
+                  <button onClick={copyInviteCode} style={{ padding: '8px 14px', borderRadius: '10px', background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', fontWeight: 800, color: 'var(--theme-text)', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap' }}>
                     코드만 복사
                   </button>
                 </div>
@@ -543,10 +543,10 @@ export function DesktopSpace() {
 
           {/* 개인 공간 안내 */}
           {isPersonalSpace && (
-            <div style={{ background: 'white', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div style={{ background: 'var(--theme-surface)', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
               <div style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'rgba(12,201,181,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '16px' }}>🔒</div>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>개인 공간</h3>
-              <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: 0, lineHeight: 1.65 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>개인 공간</h3>
+              <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0, lineHeight: 1.65 }}>
                 개인 공간은 나만 사용하는 공간으로 외부 사람을 초대하거나 공유형 일정을 만들 수 없어요.
               </p>
             </div>
@@ -554,7 +554,7 @@ export function DesktopSpace() {
 
           {/* 안내 */}
           <div style={{ padding: '18px 20px', borderRadius: '20px', background: 'rgba(0,132,204,0.04)', border: '1px solid rgba(0,132,204,0.08)' }}>
-            <p style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, lineHeight: 1.75, margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, lineHeight: 1.75, margin: 0 }}>
               💡 공간 지기는 멤버를 관리하고 공간의 이름을 수정할 수 있습니다. 더 많은 공간 기능이 곧 업데이트됩니다.
             </p>
           </div>
@@ -562,10 +562,10 @@ export function DesktopSpace() {
       </div>
 
       {/* ── 내 공간 관리 ── */}
-      <div style={{ marginTop: '24px', background: 'white', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ marginTop: '24px', background: 'var(--theme-surface)', borderRadius: '28px', padding: '28px', boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 4px' }}>내 공간 관리</h3>
-          <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>다른 공간에 합류하거나 새로운 공간을 만들어보세요</p>
+          <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 4px' }}>내 공간 관리</h3>
+          <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>다른 공간에 합류하거나 새로운 공간을 만들어보세요</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
 
@@ -581,8 +581,8 @@ export function DesktopSpace() {
             }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'rgba(12,201,181,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🗝️</div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 3px' }}>공간 참여하기</p>
-              <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
+              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px' }}>공간 참여하기</p>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
             </div>
             {joinSuccess && <span style={{ fontSize: '13px', fontWeight: 800, color: '#0CC9B5' }}>✓ 합류됨</span>}
           </button>
@@ -604,7 +604,7 @@ export function DesktopSpace() {
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: '15px', fontWeight: 800, color: spaceAtLimit ? '#C7C7CC' : '#1A1B2E', margin: '0 0 3px' }}>새 공간 만들기</p>
-              <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>
                 {spaceAtLimit
                   ? `공유 공간 ${FREE_MAX_SPACES}개 한도 도달 (무료 플랜)`
                   : `현재 공유 공간 ${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
@@ -621,24 +621,24 @@ export function DesktopSpace() {
           onClick={() => setShowInviteModal(false)}
         >
           <div
-            style={{ background: 'white', borderRadius: '32px', padding: '36px', width: '100%', maxWidth: '480px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
+            style={{ background: 'var(--theme-surface)', borderRadius: '32px', padding: '36px', width: '100%', maxWidth: '480px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ width: '64px', height: '64px', borderRadius: '22px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 16px' }}>🔗</div>
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 6px' }}>멤버 초대하기</h3>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', margin: '0 0 4px' }}>{group?.name ?? '이 공간'}</p>
-            <p style={{ fontSize: '12px', color: '#AEAEB2', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 6px' }}>멤버 초대하기</h3>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', margin: '0 0 4px' }}>{group?.name ?? '이 공간'}</p>
+            <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>
               현재 {memberCount}명 · {FREE_MAX_MEMBERS - memberCount}명 더 초대 가능
             </p>
 
             {/* 초대 코드 */}
             {currentInviteCode && (
-              <div style={{ background: '#F5F5F7', borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ background: 'var(--theme-surface-muted)', borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 800, color: '#8E8E93', margin: '0 0 4px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
+                  <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 4px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
                   <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
                 </div>
-                <button onClick={copyInviteCode} style={{ padding: '8px 16px', borderRadius: '12px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <button onClick={copyInviteCode} style={{ padding: '8px 16px', borderRadius: '12px', background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: 'var(--theme-text)', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                   코드만 복사
                 </button>
               </div>
@@ -648,7 +648,7 @@ export function DesktopSpace() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
               {/* 카카오톡 */}
               <button onClick={shareViaKakao} disabled={generatingCode || shareKakao}
-                style={{ width: '100%', height: '56px', borderRadius: '16px', background: '#FEE500', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '15px', fontWeight: 800, color: '#1A1B2E', opacity: shareKakao ? 0.7 : 1 }}>
+                style={{ width: '100%', height: '56px', borderRadius: '16px', background: '#FEE500', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', opacity: shareKakao ? 0.7 : 1 }}>
                 <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
                   <path d="M24 4C12.95 4 4 11.82 4 21.4c0 6.06 3.84 11.38 9.6 14.44L11.2 44l10.56-5.44c.72.1 1.46.16 2.24.16 11.05 0 20-7.82 20-17.4C44 11.82 35.05 4 24 4z" fill="#1A1B2E"/>
                 </svg>
@@ -676,17 +676,17 @@ export function DesktopSpace() {
 
             {/* 공유 메시지 미리보기 */}
             <details style={{ marginBottom: '16px' }}>
-              <summary style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', cursor: 'pointer', padding: '4px 0', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <summary style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', cursor: 'pointer', padding: '4px 0', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
                 공유될 메시지 미리보기
               </summary>
-              <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: '#F5F5F7', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: 'var(--theme-surface-muted)', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {currentInviteCode ? buildShareMessage(currentInviteCode) : '초대 코드가 준비되면 최신 링크와 함께 초대문이 생성됩니다.'}
               </div>
             </details>
 
             <button onClick={() => setShowInviteModal(false)}
-              style={{ width: '100%', height: '50px', borderRadius: '16px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>
+              style={{ width: '100%', height: '50px', borderRadius: '16px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>
               닫기
             </button>
           </div>
@@ -700,12 +700,12 @@ export function DesktopSpace() {
           onClick={() => setShowJoinModal(false)}
         >
           <div
-            style={{ background: 'white', borderRadius: '32px', padding: '36px', width: '100%', maxWidth: '440px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
+            style={{ background: 'var(--theme-surface)', borderRadius: '32px', padding: '36px', width: '100%', maxWidth: '440px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: 'rgba(12,201,181,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', margin: '0 auto 20px' }}>🗝️</div>
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 8px' }}>공간 참여하기</h3>
-            <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>공유받은 초대 코드를 입력하여 공간에 참여하세요.</p>
+            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 8px' }}>공간 참여하기</h3>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>공유받은 초대 코드를 입력하여 공간에 참여하세요.</p>
             <input
               value={joinCode}
               onChange={e => { setJoinCode(e.target.value); setJoinError(''); }}
@@ -717,14 +717,14 @@ export function DesktopSpace() {
                 border: `1.5px solid ${joinError ? '#EF4444' : joinCode ? '#0CC9B5' : 'transparent'}`,
                 fontSize: '20px', fontFamily: 'monospace', fontWeight: 900,
                 textAlign: 'center', textTransform: 'uppercase', outline: 'none',
-                boxSizing: 'border-box', marginBottom: '8px', color: '#1A1B2E',
+                boxSizing: 'border-box', marginBottom: '8px', color: 'var(--theme-text)',
                 letterSpacing: '0.15em', transition: 'border-color 0.2s',
               }}
             />
             {joinError && <p style={{ fontSize: '12px', color: '#EF4444', fontWeight: 700, textAlign: 'center', marginBottom: '12px' }}>{joinError}</p>}
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
               <button onClick={() => setShowJoinModal(false)}
-                style={{ flex: 1, height: '52px', borderRadius: '16px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>취소</button>
+                style={{ flex: 1, height: '52px', borderRadius: '16px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>취소</button>
               <button onClick={handleJoin} disabled={joining || !joinCode.trim()}
                 style={{ flex: 2, height: '52px', borderRadius: '16px', background: joinCode.trim() ? 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)' : '#F0F0F5', border: 'none', cursor: joinCode.trim() ? 'pointer' : 'default', fontSize: '15px', fontWeight: 800, color: joinCode.trim() ? 'white' : '#AEAEA8', opacity: joining ? 0.7 : 1 }}>
                 {joining ? '확인 중...' : '참여 완료'}
@@ -741,11 +741,11 @@ export function DesktopSpace() {
           onClick={() => setShowRenameModal(false)}
         >
           <div
-            style={{ background: 'white', borderRadius: '28px', padding: '36px', width: '100%', maxWidth: '440px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
+            style={{ background: 'var(--theme-surface)', borderRadius: '28px', padding: '36px', width: '100%', maxWidth: '440px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 6px', textAlign: 'center' }}>공간 이름 수정</h3>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>새로운 공간 이름을 입력하세요.</p>
+            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 6px', textAlign: 'center' }}>공간 이름 수정</h3>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>새로운 공간 이름을 입력하세요.</p>
             <input
               value={renamingTo}
               onChange={e => setRenamingTo(e.target.value)}
@@ -754,15 +754,15 @@ export function DesktopSpace() {
               autoFocus
               style={{
                 width: '100%', height: '56px', padding: '0 18px', borderRadius: '16px',
-                fontSize: '17px', fontWeight: 700, background: '#F5F5F7',
+                fontSize: '17px', fontWeight: 700, background: 'var(--theme-surface-muted)',
                 border: `2px solid ${renamingTo ? '#0084CC' : 'transparent'}`,
-                outline: 'none', boxSizing: 'border-box', color: '#1A1B2E', marginBottom: '16px',
+                outline: 'none', boxSizing: 'border-box', color: 'var(--theme-text)', marginBottom: '16px',
                 transition: 'border-color 0.2s',
               }}
             />
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setShowRenameModal(false)}
-                style={{ flex: 1, height: '52px', borderRadius: '16px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>취소</button>
+                style={{ flex: 1, height: '52px', borderRadius: '16px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>취소</button>
               <button onClick={handleRename} disabled={renaming || !renamingTo.trim()}
                 style={{ flex: 2, height: '52px', borderRadius: '16px', background: '#0084CC', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'white', opacity: renaming || !renamingTo.trim() ? 0.5 : 1, transition: 'opacity 0.2s' }}>
                 {renaming ? '저장 중...' : '저장하기'}

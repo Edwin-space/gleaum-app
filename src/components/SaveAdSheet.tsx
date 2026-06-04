@@ -135,7 +135,7 @@ export function useSaveAdSheet() {
         {/* 바텀시트 */}
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9001,
-          background: 'white', borderRadius: '24px 24px 0 0',
+          background: 'var(--theme-surface)', borderRadius: '24px 24px 0 0',
           padding: '20px 20px 36px',
           boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
           animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
@@ -150,7 +150,7 @@ export function useSaveAdSheet() {
           <button onClick={close} style={{
             position: 'absolute', top: 16, right: 16,
             background: 'none', border: 'none',
-            fontSize: 16, color: '#8E8E93', cursor: 'pointer', padding: '4px 8px',
+            fontSize: 16, color: 'var(--theme-text-subtle)', cursor: 'pointer', padding: '4px 8px',
           }}>× 닫기</button>
 
           {/* 하우스 광고 */}
@@ -162,16 +162,16 @@ export function useSaveAdSheet() {
                 <div style={{
                   width: '100%', borderRadius: 16, overflow: 'hidden',
                   marginBottom: 16, aspectRatio: '16/9', position: 'relative',
-                  background: '#F2F2F7',
+                  background: 'var(--theme-surface-muted)',
                 }}>
                   <Image src={ad.image_url} alt={ad.title} fill
                     style={{ objectFit: 'cover' }} sizes="100vw" />
                 </div>
               )}
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', margin: '0 0 6px', letterSpacing: '0.05em' }}>AD</p>
-              <p style={{ fontSize: 17, fontWeight: 800, color: '#1A1B2E', margin: '0 0 6px', lineHeight: 1.3 }}>{ad.title}</p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '0 0 6px', letterSpacing: '0.05em' }}>AD</p>
+              <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 6px', lineHeight: 1.3 }}>{ad.title}</p>
               {ad.description && (
-                <p style={{ fontSize: 13, color: '#6E6E66', margin: '0 0 16px', lineHeight: 1.5 }}>{ad.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--theme-text-muted)', margin: '0 0 16px', lineHeight: 1.5 }}>{ad.description}</p>
               )}
               <div style={{
                 width: '100%', height: 52, borderRadius: 14,

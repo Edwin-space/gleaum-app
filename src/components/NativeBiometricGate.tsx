@@ -77,7 +77,7 @@ function PinPad({
                 height: 60, borderRadius: 16, border: 'none',
                 background: isDelete ? 'transparent' : 'rgba(0,0,0,0.06)',
                 fontSize: isDelete ? 22 : 26,
-                fontWeight: 700, color: '#1A1B2E', cursor: 'pointer',
+                fontWeight: 700, color: 'var(--theme-text)', cursor: 'pointer',
                 transition: 'background 0.1s',
               }}
             >
@@ -461,12 +461,12 @@ const iconStyle: CSSProperties = {
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: '22px', fontWeight: 900, color: '#1A1B2E',
+  fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)',
   margin: '0 0 10px', letterSpacing: '-0.4px',
 };
 
 const descStyle: CSSProperties = {
-  fontSize: '14px', fontWeight: 600, color: '#6E6E66',
+  fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-muted)',
   lineHeight: 1.65, margin: '0 0 4px',
 };
 
@@ -486,6 +486,6 @@ const primaryButtonStyle: CSSProperties = {
 const ghostButtonStyle: CSSProperties = {
   width: '100%', height: '48px', marginTop: '8px',
   border: 'none', borderRadius: '999px',
-  background: 'transparent', color: '#8E8E93',
+  background: 'transparent', color: 'var(--theme-text-subtle)',
   fontSize: '14px', fontWeight: 800, cursor: 'pointer',
 };

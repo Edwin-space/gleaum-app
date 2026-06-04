@@ -160,7 +160,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                 ) : (
                   <>
                     <span style={{
-                      width: '32px', height: '32px', background: 'white',
+                      width: '32px', height: '32px', background: 'var(--theme-surface)',
                       borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <svg width="18" height="18" viewBox="0 0 48 48">
@@ -438,7 +438,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                   <div style={{
                     borderRadius: '16px',
                     padding: '12px',
-                    background: 'white',
+                    background: 'var(--theme-surface)',
                     border: '1px solid rgba(0,132,204,0.06)',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -480,7 +480,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                         gap: '10px',
                         padding: '10px 12px',
                         borderRadius: '12px',
-                        background: 'white',
+                        background: 'var(--theme-surface)',
                         border: '1px solid rgba(0,132,204,0.06)',
                       }}>
                         <div style={{

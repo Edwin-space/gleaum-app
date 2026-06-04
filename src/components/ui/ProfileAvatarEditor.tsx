@@ -269,7 +269,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 20px 0',
         }}>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#1A1B2E', margin: 0 }}>
+          <p style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>
             프로필 사진
           </p>
           <button
@@ -278,7 +278,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
               width: '32px', height: '32px', borderRadius: '50%',
               background: '#EBEBF0', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px', color: '#8E8E93', fontWeight: 700,
+              fontSize: '16px', color: 'var(--theme-text-subtle)', fontWeight: 700,
             }}
           >
             ✕
@@ -331,7 +331,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
               /* ── Upload buttons ── */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {/* Description */}
-                <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, margin: '0 0 4px', textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '0 0 4px', textAlign: 'center' }}>
                   프로필에 사용할 사진을 선택하거나 촬영하세요
                 </p>
 
@@ -342,7 +342,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
                     style={{
                       padding: '28px 16px',
                       borderRadius: '20px',
-                      background: 'white',
+                      background: 'var(--theme-surface)',
                       border: '1.5px solid rgba(0,132,204,0.15)',
                       boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
                       cursor: 'pointer',
@@ -359,8 +359,8 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
                       📷
                     </div>
                     <div>
-                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>카메라</p>
-                      <p style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>즉시 촬영</p>
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>카메라</p>
+                      <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>즉시 촬영</p>
                     </div>
                   </button>
 
@@ -370,7 +370,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
                     style={{
                       padding: '28px 16px',
                       borderRadius: '20px',
-                      background: 'white',
+                      background: 'var(--theme-surface)',
                       border: '1.5px solid rgba(12,201,181,0.15)',
                       boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
                       cursor: 'pointer',
@@ -387,8 +387,8 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
                       🖼️
                     </div>
                     <div>
-                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>앨범</p>
-                      <p style={{ fontSize: '11px', color: '#8E8E93', fontWeight: 600, margin: 0 }}>갤러리에서 선택</p>
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>앨범</p>
+                      <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>갤러리에서 선택</p>
                     </div>
                   </button>
                 </div>
@@ -446,7 +446,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
                   {/* Drag hint */}
                   <p style={{
                     position: 'absolute', bottom: -26, left: 0, right: 0,
-                    textAlign: 'center', fontSize: '11px', color: '#8E8E93', fontWeight: 600,
+                    textAlign: 'center', fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600,
                   }}>
                     드래그로 위치 조정
                   </p>
@@ -484,7 +484,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
                     style={{
                       height: '52px', borderRadius: '18px', fontSize: '15px',
                       fontWeight: 700, border: 'none', cursor: 'pointer',
-                      background: '#EBEBF0', color: '#8E8E93',
+                      background: '#EBEBF0', color: 'var(--theme-text-subtle)',
                     }}
                   >
                     다시 선택
@@ -584,7 +584,7 @@ export function ProfileAvatarEditor({ currentAvatar, onClose, onSaved }: Profile
             </div>
 
             {saving && (
-              <div style={{ textAlign: 'center', padding: '8px 0', color: '#8E8E93', fontSize: '13px', fontWeight: 600 }}>
+              <div style={{ textAlign: 'center', padding: '8px 0', color: 'var(--theme-text-subtle)', fontSize: '13px', fontWeight: 600 }}>
                 저장 중...
               </div>
             )}

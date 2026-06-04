@@ -260,8 +260,8 @@ export default function AdsAdminPage() {
       {/* ── 페이지 헤더 ── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1B2E', margin: 0 }}>광고 관리</h1>
-          <p style={{ fontSize: 13, color: '#6E6E66', margin: '4px 0 0' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>광고 관리</h1>
+          <p style={{ fontSize: 13, color: 'var(--theme-text-muted)', margin: '4px 0 0' }}>
             총 {ads.length}개 · 활성 {ads.filter(a => a.is_active && !isExpiredAd(a)).length}개
             {expiredCount > 0 && (
               <span style={{ color: '#FF3B30', marginLeft: 8 }}>· 만료 {expiredCount}개</span>
@@ -270,7 +270,7 @@ export default function AdsAdminPage() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* 기간 필터 */}
-          <div style={{ display: 'flex', background: '#F2F2F7', borderRadius: 10, padding: 3, gap: 2 }}>
+          <div style={{ display: 'flex', background: 'var(--theme-surface-muted)', borderRadius: 10, padding: 3, gap: 2 }}>
             {PERIOD_OPTIONS.map(({ value, label }) => (
               <button key={value} onClick={() => setPeriod(value)} style={{
                 padding: '5px 12px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 600,
@@ -347,14 +347,14 @@ export default function AdsAdminPage() {
 
       {/* ── 광고 목록 ── */}
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#8E8E93' }}>
+        <div style={{ padding: 60, textAlign: 'center', color: 'var(--theme-text-subtle)' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
           불러오는 중...
         </div>
       ) : filteredAds.length === 0 ? (
         <div style={{
-          background: 'white', borderRadius: 20, padding: 60,
-          textAlign: 'center', color: '#8E8E93',
+          background: 'var(--theme-surface)', borderRadius: 20, padding: 60,
+          textAlign: 'center', color: 'var(--theme-text-subtle)',
           boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
         }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
@@ -422,7 +422,7 @@ function AdForm({
 
   return (
     <div style={{
-      background: 'white', borderRadius: 20,
+      background: 'var(--theme-surface)', borderRadius: 20,
       boxShadow: '0 4px 32px rgba(0,0,0,0.1)',
       marginBottom: 32, overflow: 'hidden',
     }}>
@@ -430,7 +430,7 @@ function AdForm({
 
         {/* ── 왼쪽: 폼 ── */}
         <form onSubmit={onSave} style={{ padding: 28 }}>
-          <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800, color: '#1A1B2E' }}>
+          <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800, color: 'var(--theme-text)' }}>
             {editId ? '✏️ 광고 수정' : '✨ 새 광고 등록'}
           </h2>
 
@@ -459,7 +459,7 @@ function AdForm({
 
             {/* 이미지 업로드 */}
             <div style={{ gridColumn: '1/-1' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#6E6E66', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
                 광고 이미지
               </span>
               <div
@@ -498,8 +498,8 @@ function AdForm({
                       <img src={form.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#1A1B2E' }}>이미지 등록됨</p>
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: '#8E8E93' }}>클릭하여 변경</p>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--theme-text)' }}>이미지 등록됨</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--theme-text-subtle)' }}>클릭하여 변경</p>
                     </div>
                     <button type="button" onClick={e => { e.stopPropagation(); setForm(f => ({ ...f, image_url: '' })); }}
                       style={{ marginLeft: 'auto', fontSize: 11, color: '#FF3B30', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
@@ -509,7 +509,7 @@ function AdForm({
                 ) : (
                   <div style={{ textAlign: 'center', width: '100%' }}>
                     <div style={{ fontSize: 24, marginBottom: 4 }}>🖼️</div>
-                    <p style={{ margin: 0, fontSize: 13, color: '#8E8E93' }}>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--theme-text-subtle)' }}>
                       클릭하거나 이미지를 드래그하여 업로드
                     </p>
                     <p style={{ margin: '4px 0 0', fontSize: 11, color: '#C7C7CC' }}>
@@ -553,7 +553,7 @@ function AdForm({
 
             {/* 플랫폼 타겟 */}
             <div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#6E6E66', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>
                 노출 플랫폼
               </span>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -595,7 +595,7 @@ function AdForm({
               </button>
               <button type="button" onClick={onCancel} style={{
                 padding: '12px 20px', borderRadius: 12,
-                border: '1px solid #E0E0E0', background: 'white',
+                border: '1px solid #E0E0E0', background: 'var(--theme-surface)',
                 fontSize: 14, fontWeight: 600, cursor: 'pointer',
               }}>취소</button>
             </div>
@@ -605,21 +605,21 @@ function AdForm({
         {/* ── 오른쪽: 미리보기 ── */}
         <div style={{
           borderLeft: '1px solid #F2F2F7',
-          background: '#F8F9FF',
+          background: 'var(--theme-surface-muted)',
           padding: 28,
           display: 'flex', flexDirection: 'column', gap: 20,
         }}>
           <div>
-            <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#6E6E66', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: 'var(--theme-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               실시간 미리보기
             </p>
 
             {/* 슬롯 크기 기준 미리보기 */}
-            <p style={{ margin: '0 0 8px', fontSize: 11, color: '#8E8E93' }}>배너 (320 × 60)</p>
+            <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--theme-text-subtle)' }}>배너 (320 × 60)</p>
             <AdPreview form={form} width={280} height={55} />
 
-            <p style={{ margin: '16px 0 8px', fontSize: 11, color: '#8E8E93' }}>정보 요약</p>
-            <div style={{ background: 'white', borderRadius: 12, padding: 14, fontSize: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ margin: '16px 0 8px', fontSize: 11, color: 'var(--theme-text-subtle)' }}>정보 요약</p>
+            <div style={{ background: 'var(--theme-surface)', borderRadius: 12, padding: 14, fontSize: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <InfoRow label="슬롯" value={SLOT_LABELS[form.slot_id] ?? form.slot_id} />
               <InfoRow label="플랫폼" value={
                 form.platforms.length === 3 ? '전체'
@@ -638,7 +638,7 @@ function AdForm({
 
           {/* 체크리스트 */}
           <div>
-            <p style={{ margin: '0 0 8px', fontSize: 11, color: '#8E8E93' }}>등록 전 체크</p>
+            <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--theme-text-subtle)' }}>등록 전 체크</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <CheckItem ok={!!form.title}     label="제목 입력됨" />
               <CheckItem ok={!!form.link_url}  label="랜딩 URL 입력됨" />
@@ -657,7 +657,7 @@ function AdPreview({ form, width, height }: { form: typeof emptyForm; width: num
   return (
     <div style={{
       width, height, borderRadius: 10, overflow: 'hidden',
-      position: 'relative', background: '#F2F2F7', flexShrink: 0,
+      position: 'relative', background: 'var(--theme-surface-muted)', flexShrink: 0,
       boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
     }}>
       {form.image_url ? (
@@ -670,7 +670,7 @@ function AdPreview({ form, width, height }: { form: typeof emptyForm; width: num
           padding: '0 12px', gap: 8, boxSizing: 'border-box',
           background: 'linear-gradient(135deg, #F8F9FF 0%, #EEF2FF 100%)',
         }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#1A1B2E', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {form.title || '광고 제목 미리보기'}
           </span>
           <span style={{
@@ -705,7 +705,7 @@ function AdRow({
 
   return (
     <div style={{
-      background: 'white', borderRadius: 16, padding: '14px 18px',
+      background: 'var(--theme-surface)', borderRadius: 16, padding: '14px 18px',
       boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
       display: 'flex', alignItems: 'center', gap: 14,
       opacity: expired ? 0.65 : 1,
@@ -721,7 +721,7 @@ function AdRow({
         <span style={{
           position: 'absolute', top: 2,
           left: (ad.is_active && !expired) ? 18 : 2,
-          width: 16, height: 16, borderRadius: '50%', background: 'white',
+          width: 16, height: 16, borderRadius: '50%', background: 'var(--theme-surface)',
           boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
           transition: 'left 0.2s',
         }} />
@@ -729,7 +729,7 @@ function AdRow({
 
       {/* 썸네일 */}
       {ad.image_url && (
-        <div style={{ width: 48, height: 32, borderRadius: 6, overflow: 'hidden', flexShrink: 0, position: 'relative', background: '#F2F2F7' }}>
+        <div style={{ width: 48, height: 32, borderRadius: 6, overflow: 'hidden', flexShrink: 0, position: 'relative', background: 'var(--theme-surface-muted)' }}>
           <Image src={ad.image_url} alt={ad.title} fill style={{ objectFit: 'cover' }} sizes="48px" />
         </div>
       )}
@@ -745,7 +745,7 @@ function AdRow({
       {/* 제목 + 광고주 */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#1A1B2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {ad.title}
           </p>
           {expired && (
@@ -756,12 +756,12 @@ function AdRow({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
           {ad.advertiser && (
-            <p style={{ margin: 0, fontSize: 11, color: '#8E8E93' }}>{ad.advertiser}</p>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--theme-text-subtle)' }}>{ad.advertiser}</p>
           )}
           {/* 플랫폼 뱃지 */}
           <div style={{ display: 'flex', gap: 3 }}>
             {(ad.platforms ?? ['web', 'android', 'ios']).map(p => (
-              <span key={p} style={{ fontSize: 9, fontWeight: 700, color: '#8E8E93', background: '#F2F2F7', borderRadius: 4, padding: '1px 5px' }}>
+              <span key={p} style={{ fontSize: 9, fontWeight: 700, color: 'var(--theme-text-subtle)', background: 'var(--theme-surface-muted)', borderRadius: 4, padding: '1px 5px' }}>
                 {PLATFORM_OPTIONS.find(o => o.value === p)?.emoji} {p}
               </span>
             ))}
@@ -778,10 +778,10 @@ function AdRow({
 
       {/* 기간 */}
       <div style={{ flexShrink: 0, textAlign: 'right', minWidth: 100 }}>
-        <p style={{ margin: 0, fontSize: 11, color: '#8E8E93' }}>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--theme-text-subtle)' }}>
           {new Date(ad.starts_at).toLocaleDateString('ko')}
         </p>
-        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#8E8E93' }}>
+        <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--theme-text-subtle)' }}>
           {ad.ends_at ? `~ ${new Date(ad.ends_at).toLocaleDateString('ko')}` : '~ 무기한'}
         </p>
       </div>
@@ -801,13 +801,13 @@ function AdRow({
 function SummaryCard({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
     <div style={{
-      background: 'white', borderRadius: 16, padding: '16px 20px',
+      background: 'var(--theme-surface)', borderRadius: 16, padding: '16px 20px',
       boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
       borderTop: `3px solid ${color}`,
     }}>
-      <p style={{ margin: 0, fontSize: 12, color: '#8E8E93', fontWeight: 600 }}>{label}</p>
-      <p style={{ margin: '6px 0 4px', fontSize: 24, fontWeight: 800, color: '#1A1B2E' }}>{value}</p>
-      <p style={{ margin: 0, fontSize: 11, color: '#8E8E93' }}>{sub}</p>
+      <p style={{ margin: 0, fontSize: 12, color: 'var(--theme-text-subtle)', fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: '6px 0 4px', fontSize: 24, fontWeight: 800, color: 'var(--theme-text)' }}>{value}</p>
+      <p style={{ margin: 0, fontSize: 11, color: 'var(--theme-text-subtle)' }}>{sub}</p>
     </div>
   );
 }
@@ -815,7 +815,7 @@ function SummaryCard({ label, value, sub, color }: { label: string; value: strin
 function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label style={{ gridColumn: full ? '1/-1' : undefined, display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 12, fontWeight: 700, color: '#6E6E66', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </span>
       <style>{`
@@ -836,7 +836,7 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
   return (
     <div style={{ textAlign: 'center' }}>
       <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: highlight ? '#34C759' : '#1A1B2E' }}>{value}</p>
-      <p style={{ margin: 0, fontSize: 10, color: '#8E8E93', fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: 0, fontSize: 10, color: 'var(--theme-text-subtle)', fontWeight: 600 }}>{label}</p>
     </div>
   );
 }
@@ -845,7 +845,7 @@ function ActionBtn({ onClick, color, children }: { onClick: () => void; color: s
   return (
     <button onClick={onClick} style={{
       padding: '5px 10px', borderRadius: 8, border: `1.5px solid ${color}`,
-      background: 'white', color, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+      background: 'var(--theme-surface)', color, fontSize: 11, fontWeight: 700, cursor: 'pointer',
     }}>
       {children}
     </button>
@@ -864,8 +864,8 @@ function CheckItem({ ok, label }: { ok: boolean; label: string }) {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ color: '#8E8E93', fontWeight: 600 }}>{label}</span>
-      <span style={{ color: '#1A1B2E', fontWeight: 700, textAlign: 'right', maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+      <span style={{ color: 'var(--theme-text-subtle)', fontWeight: 600 }}>{label}</span>
+      <span style={{ color: 'var(--theme-text)', fontWeight: 700, textAlign: 'right', maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
     </div>
   );
 }

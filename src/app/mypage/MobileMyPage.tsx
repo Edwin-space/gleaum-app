@@ -405,7 +405,7 @@ export function MobileMyPage({
                   {insights?.spaceCount ?? 0}/2
                 </span>
               </div>
-              <div style={{ height: '6px', borderRadius: '999px', background: '#F0F0F5', overflow: 'hidden' }}>
+              <div style={{ height: '6px', borderRadius: '999px', background: 'var(--theme-surface-muted)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.min(((insights?.spaceCount ?? 0) / 2) * 100, 100)}%`, borderRadius: '999px', background: (insights?.spaceCount ?? 0) >= 2 ? 'linear-gradient(90deg,#EF4444,#F97316)' : 'linear-gradient(90deg,#0CC9B5,#0084CC)', transition: 'width 0.4s' }} />
               </div>
             </div>
@@ -417,7 +417,7 @@ export function MobileMyPage({
                   {insights?.memberCount ?? 0}/10
                 </span>
               </div>
-              <div style={{ height: '6px', borderRadius: '999px', background: '#F0F0F5', overflow: 'hidden' }}>
+              <div style={{ height: '6px', borderRadius: '999px', background: 'var(--theme-surface-muted)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.min(((insights?.memberCount ?? 0) / 10) * 100, 100)}%`, borderRadius: '999px', background: (insights?.memberCount ?? 0) >= 10 ? 'linear-gradient(90deg,#EF4444,#F97316)' : 'linear-gradient(90deg,#0CC9B5,#0084CC)', transition: 'width 0.4s' }} />
               </div>
             </div>

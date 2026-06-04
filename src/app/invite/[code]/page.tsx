@@ -335,7 +335,7 @@ export default function InvitePage() {
                 </>
               ) : (
                 <>
-                  <div style={{ width: '32px', height: '32px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: '32px', height: '32px', background: 'var(--theme-surface)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <GoogleIcon />
                   </div>
                   구글 계정으로 공간 참여하기
@@ -357,14 +357,14 @@ export default function InvitePage() {
   // ── 합류 중 ──────────────────────────────────────────────────────────────────
   if (pageState === 'joining') {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FAFAFD' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--theme-bg)' }}>
         <div style={{ position: 'fixed', top: '-80px', left: '-80px', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,235,153,0.55) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'fixed', bottom: '-40px', right: '-40px', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(200,153,255,0.35) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: '#0084CC', boxShadow: '0 12px 40px rgba(0,132,204,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', marginBottom: '24px' }}>🏠</div>
         <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid rgba(0,132,204,0.2)', borderTopColor: '#0084CC', animation: 'spin 0.8s linear infinite', marginBottom: '16px' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1B2E', margin: 0 }}>공간에 합류하는 중...</p>
-        <p style={{ fontSize: '13px', color: '#8E8E93', marginTop: '8px' }}>잠시만 기다려주세요</p>
+        <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--theme-text)', margin: 0 }}>공간에 합류하는 중...</p>
+        <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', marginTop: '8px' }}>잠시만 기다려주세요</p>
       </div>
     );
   }
@@ -372,7 +372,7 @@ export default function InvitePage() {
   // ── 성공 ──────────────────────────────────────────────────────────────────────
   if (pageState === 'success') {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: 'var(--theme-bg)' }}>
         <div style={{ position: 'fixed', top: '-80px', left: '-80px', width: '380px', height: '380px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,235,153,0.55) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -380,9 +380,9 @@ export default function InvitePage() {
             <path d="M14 24L21 31L34 17" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px', letterSpacing: '-0.5px' }}>합류 완료!</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px', letterSpacing: '-0.5px' }}>합류 완료!</h1>
         {spaceName && <p style={{ fontSize: '17px', fontWeight: 700, color: '#0084CC', margin: '0 0 4px' }}>{spaceName}</p>}
-        <p style={{ fontSize: '15px', color: '#8E8E93', margin: 0 }}>이제 새로운 공간의 멤버입니다 🎉</p>
+        <p style={{ fontSize: '15px', color: 'var(--theme-text-subtle)', margin: 0 }}>이제 새로운 공간의 멤버입니다 🎉</p>
         <p style={{ fontSize: '13px', color: '#C7C7CC', marginTop: '32px' }}>잠시 후 관리 페이지로 이동합니다...</p>
       </div>
     );
@@ -391,11 +391,11 @@ export default function InvitePage() {
   // ── 이미 멤버 ─────────────────────────────────────────────────────────────────
   if (pageState === 'already_member') {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: 'var(--theme-bg)' }}>
         <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'rgba(0,132,204,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', marginBottom: '24px' }}>🏠</div>
-        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>이미 멤버예요</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>이미 멤버예요</h1>
         {spaceName && <p style={{ fontSize: '16px', fontWeight: 700, color: '#0084CC', margin: '0 0 4px' }}>{spaceName}</p>}
-        <p style={{ fontSize: '14px', color: '#8E8E93', margin: '8px 0 0' }}>이미 이 공간에 속해 있습니다</p>
+        <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', margin: '8px 0 0' }}>이미 이 공간에 속해 있습니다</p>
         <button onClick={() => router.replace('/space')} style={{ marginTop: '40px', width: '100%', maxWidth: '360px', height: '56px', borderRadius: '20px', background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: 'white' }}>
           공간 관리로 이동
         </button>
@@ -406,15 +406,15 @@ export default function InvitePage() {
   // ── 유효하지 않은 코드 ───────────────────────────────────────────────────────
   if (pageState === 'invalid_code') {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: 'var(--theme-bg)' }}>
         <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'rgba(239,68,68,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="24" fill="rgba(239,68,68,0.12)"/>
             <path d="M17 17L31 31M31 17L17 31" stroke="#EF4444" strokeWidth="3" strokeLinecap="round"/>
           </svg>
         </div>
-        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>유효하지 않은 초대 코드</h1>
-        <p style={{ fontSize: '14px', color: '#8E8E93' }}>초대 링크가 만료되었거나 올바르지 않습니다.<br />새로운 링크를 요청해 주세요.</p>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>유효하지 않은 초대 코드</h1>
+        <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)' }}>초대 링크가 만료되었거나 올바르지 않습니다.<br />새로운 링크를 요청해 주세요.</p>
         <button onClick={() => router.replace('/home')} style={{ marginTop: '40px', width: '100%', maxWidth: '360px', height: '56px', borderRadius: '20px', background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: 'white' }}>
           홈으로 이동
         </button>
@@ -425,10 +425,10 @@ export default function InvitePage() {
   // ── 만료된 코드 ───────────────────────────────────────────────────────────────
   if (pageState === 'expired_code') {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: 'var(--theme-bg)' }}>
         <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'rgba(245,158,11,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', marginBottom: '24px' }}>⏰</div>
-        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>만료된 초대 코드</h1>
-        <p style={{ fontSize: '14px', color: '#8E8E93' }}>이 초대 링크는 유효 기간이 지났습니다.<br />공간 지기에게 새 초대 코드를 요청해 주세요.</p>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>만료된 초대 코드</h1>
+        <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)' }}>이 초대 링크는 유효 기간이 지났습니다.<br />공간 지기에게 새 초대 코드를 요청해 주세요.</p>
         <button onClick={() => router.replace('/home')} style={{ marginTop: '40px', width: '100%', maxWidth: '360px', height: '56px', borderRadius: '20px', background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: 'white' }}>
           홈으로 이동
         </button>
@@ -439,10 +439,10 @@ export default function InvitePage() {
   // ── Rate Limit ────────────────────────────────────────────────────────────────
   if (pageState === 'rate_limited') {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: 'var(--theme-bg)' }}>
         <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'rgba(239,68,68,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', marginBottom: '24px' }}>🚫</div>
-        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#1A1B2E', margin: '0 0 8px' }}>잠시 후 시도해주세요</h1>
-        <p style={{ fontSize: '14px', color: '#8E8E93' }}>너무 많은 시도가 있었습니다.<br />10분 후 다시 시도해 주세요.</p>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>잠시 후 시도해주세요</h1>
+        <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)' }}>너무 많은 시도가 있었습니다.<br />10분 후 다시 시도해 주세요.</p>
         <button onClick={() => router.replace('/home')} style={{ marginTop: '40px', width: '100%', maxWidth: '360px', height: '56px', borderRadius: '20px', background: '#0084CC', boxShadow: '0 8px 24px rgba(0,132,204,0.35)', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: 'white' }}>
           홈으로 이동
         </button>
@@ -452,8 +452,8 @@ export default function InvitePage() {
 
   // ── 에러 fallback ─────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: '#FAFAFD' }}>
-      <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1B2E' }}>오류가 발생했습니다</p>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', background: 'var(--theme-bg)' }}>
+      <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--theme-text)' }}>오류가 발생했습니다</p>
       <button onClick={() => router.replace('/home')} style={{ marginTop: '24px', padding: '12px 32px', borderRadius: '16px', background: '#0084CC', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: 'white' }}>
         홈으로
       </button>

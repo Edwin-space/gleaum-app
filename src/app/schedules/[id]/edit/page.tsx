@@ -32,7 +32,7 @@ const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; acti
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[11px] font-bold tracking-widest uppercase mb-2"
-      style={{ color: '#8E8E93' }}>
+      style={{ color: 'var(--theme-text-subtle)' }}>
       {children}
     </p>
   );
@@ -157,7 +157,7 @@ export default function EditSchedulePage() {
   // 로딩
   if (loading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center" style={{ background: '#FAFAFD' }}>
+      <div className="min-h-dvh flex items-center justify-center" style={{ background: 'var(--theme-bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
           style={{ borderColor: 'rgba(0,132,204,0.2)', borderTopColor: '#0084CC' }} />
       </div>
@@ -167,9 +167,9 @@ export default function EditSchedulePage() {
   // 없는 일정
   if (notFound) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: '#FAFAFD' }}>
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: 'var(--theme-bg)' }}>
         <span className="text-5xl">📭</span>
-        <p style={{ color: '#8E8E93' }}>일정을 찾을 수 없습니다</p>
+        <p style={{ color: 'var(--theme-text-subtle)' }}>일정을 찾을 수 없습니다</p>
         <button onClick={() => router.back()}
           className="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white"
           style={{ background: 'var(--brand-blue)' }}>
@@ -207,7 +207,7 @@ export default function EditSchedulePage() {
   }
 
   return (
-    <div className="min-h-dvh pb-10" style={{ background: '#FAFAFD' }}>
+    <div className="min-h-dvh pb-10" style={{ background: 'var(--theme-bg)' }}>
 
       {/* ── 상단 헤더 ── */}
       <div
@@ -229,7 +229,7 @@ export default function EditSchedulePage() {
           </svg>
         </button>
 
-        <p className="text-[16px] font-bold" style={{ color: '#1A1B2E' }}>
+        <p className="text-[16px] font-bold" style={{ color: 'var(--theme-text)' }}>
           일정 수정
         </p>
 
@@ -391,7 +391,7 @@ export default function EditSchedulePage() {
         <div>
           <SectionLabel>참여자</SectionLabel>
           {members.length === 0 ? (
-            <p className="text-[13px]" style={{ color: '#8E8E93' }}>
+            <p className="text-[13px]" style={{ color: 'var(--theme-text-subtle)' }}>
               그룹 멤버를 불러오는 중...
             </p>
           ) : (
@@ -503,7 +503,7 @@ export default function EditSchedulePage() {
         <div className="grid grid-cols-2 gap-3 pt-2 pb-8">
           <button onClick={() => router.back()}
             className="h-[56px] rounded-[20px] text-[15px] font-bold transition-all active:scale-95"
-            style={{ border: '2px solid rgba(0,132,204,0.15)', color: '#8E8E93' }}>
+            style={{ border: '2px solid rgba(0,132,204,0.15)', color: 'var(--theme-text-subtle)' }}>
             취소
           </button>
           <button onClick={handleSave} disabled={saving}

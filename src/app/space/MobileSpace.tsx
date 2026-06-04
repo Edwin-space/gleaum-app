@@ -442,7 +442,7 @@ export function MobileSpace() {
   return (
     <div
       className="min-h-dvh"
-      style={{ background: '#FAFAFD', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
+      style={{ background: 'var(--theme-bg)', paddingBottom: 'var(--scroll-bottom, calc(env(safe-area-inset-bottom) + 80px))' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -466,7 +466,7 @@ export function MobileSpace() {
             </svg>
           </button>
 
-          <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1B2E', letterSpacing: '-0.5px', margin: 0, flex: 1 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.5px', margin: 0, flex: 1 }}>
             공간
           </h1>
 
@@ -488,7 +488,7 @@ export function MobileSpace() {
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: '120px', gap: '16px' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px solid #0084CC', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-          <p style={{ fontSize: '14px', fontWeight: 600, color: '#8E8E93' }}>공간 정보를 불러오는 중...</p>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>공간 정보를 불러오는 중...</p>
         </div>
       ) : (
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -548,7 +548,7 @@ export function MobileSpace() {
                           style={{
                             position: 'absolute', bottom: '-4px', right: '-4px',
                             width: '22px', height: '22px', borderRadius: '50%',
-                            background: 'white', border: '2px solid rgba(0,0,0,0.10)',
+                            background: 'var(--theme-surface)', border: '2px solid rgba(0,0,0,0.10)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             cursor: 'pointer', fontSize: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                           }}
@@ -693,7 +693,7 @@ export function MobileSpace() {
                   />
                 ))}
               </div>
-              <p style={{ fontSize: '10px', fontWeight: 600, color: '#AEAEB2', margin: 0 }}>
+              <p style={{ fontSize: '10px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>
                 ← 스와이프로 공간 전환 →
               </p>
             </div>
@@ -709,7 +709,7 @@ export function MobileSpace() {
           {/* ── 공간 멤버 관리 ── */}
           <div style={{ padding: '0 16px', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingLeft: '4px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1A1B2E', margin: 0 }}>공간 멤버</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>공간 멤버</h3>
               {!isPersonalSpace && (
                 memberAtLimit ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: '#EF4444', padding: '5px 12px', borderRadius: '999px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
@@ -730,7 +730,7 @@ export function MobileSpace() {
                 const isEditingThisRole = editingRole === member.id;
                 return (
                   <div key={member.id} style={{
-                    background: 'white', borderRadius: '20px',
+                    background: 'var(--theme-surface)', borderRadius: '20px',
                     boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)',
                   }}>
                     <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -746,7 +746,7 @@ export function MobileSpace() {
 
                       {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {member.userId === user?.id ? `${member.user?.name} (나)` : member.user?.name}
                         </p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -766,7 +766,7 @@ export function MobileSpace() {
                             {ROLE_LABELS[member.role]}
                             {isAdmin && member.userId !== user?.id && ' ▾'}
                           </button>
-                          <span style={{ fontSize: '12px', color: '#8E8E93', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {member.user?.email || '연결됨'}
                           </span>
                         </div>
@@ -784,7 +784,7 @@ export function MobileSpace() {
                     {/* 역할 변경 드롭다운 */}
                     {isEditingThisRole && (
                       <div style={{ borderTop: '1px solid #F2F2F7', padding: '8px 18px 14px' }}>
-                        <p style={{ fontSize: '11px', fontWeight: 800, color: '#8E8E93', margin: '0 0 8px' }}>역할 변경</p>
+                        <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 8px' }}>역할 변경</p>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           {ROLE_OPTIONS.map(role => (
                             <button
@@ -804,8 +804,8 @@ export function MobileSpace() {
                         </div>
                         <div style={{ marginTop: '8px' }}>
                           {ROLE_OPTIONS.map(role => (
-                            <p key={role} style={{ fontSize: '10px', color: '#8E8E93', margin: '2px 0', fontWeight: 500 }}>
-                              <strong style={{ color: '#1A1B2E' }}>{ROLE_LABELS[role]}</strong>: {role === 'admin' ? '공간 설정, 초대/추방, 일정 관리' : role === 'editor' ? '일정 등록·수정·삭제' : '일정 조회만 가능'}
+                            <p key={role} style={{ fontSize: '10px', color: 'var(--theme-text-subtle)', margin: '2px 0', fontWeight: 500 }}>
+                              <strong style={{ color: 'var(--theme-text)' }}>{ROLE_LABELS[role]}</strong>: {role === 'admin' ? '공간 설정, 초대/추방, 일정 관리' : role === 'editor' ? '일정 등록·수정·삭제' : '일정 조회만 가능'}
                             </p>
                           ))}
                         </div>
@@ -819,18 +819,18 @@ export function MobileSpace() {
               {members.length === 0 && (
                 <div style={{
                   padding: '24px 20px', borderRadius: '20px',
-                  background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+                  background: 'var(--theme-surface)', border: '1px solid rgba(0,0,0,0.04)',
                   boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center',
                 }}>
                   <span style={{ fontSize: '28px' }}>👥</span>
                   {isPersonalSpace ? (
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0, lineHeight: 1.5 }}>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.5 }}>
                       개인 공간은 나만 사용하는 공간이에요.<br/>
                       <span style={{ fontWeight: 600, fontSize: '12px' }}>공유 공간을 만들어 다른 사람과 함께해보세요!</span>
                     </p>
                   ) : (
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#8E8E93', margin: 0 }}>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>
                       이 공간에는 멤버가 존재하지 않아요!<br/>
                       <span style={{ fontWeight: 600, fontSize: '12px' }}>멤버를 초대해 함께 공간을 만들어가세요.</span>
                     </p>
@@ -843,7 +843,7 @@ export function MobileSpace() {
           {/* ── 내 공간 관리 (다른 공간 합류·생성) ── */}
           <div style={{ padding: '0 16px', marginBottom: '32px' }}>
             <div style={{ paddingLeft: '4px', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#8E8E93', margin: 0 }}>내 공간 관리</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: 0 }}>내 공간 관리</h3>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {/* 공간 참여하기 */}
@@ -851,15 +851,15 @@ export function MobileSpace() {
                 onClick={() => setShowJoinModal(true)}
                 style={{
                   width: '100%', padding: '18px 20px', borderRadius: '20px',
-                  border: '1.5px solid rgba(0,0,0,0.07)', background: 'white',
+                  border: '1.5px solid rgba(0,0,0,0.07)', background: 'var(--theme-surface)',
                   display: 'flex', alignItems: 'center', gap: '14px',
                   cursor: 'pointer', textAlign: 'left',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                 }}>
                 <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(12,201,181,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🗝️</div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1B2E', margin: '0 0 2px' }}>공간 참여하기</p>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>공간 참여하기</p>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
               </button>
@@ -881,7 +881,7 @@ export function MobileSpace() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '15px', fontWeight: 800, color: spaceAtLimit ? '#C7C7CC' : '#1A1B2E', margin: '0 0 2px' }}>새 공간 만들기</p>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#8E8E93', margin: 0 }}>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>
                     {spaceAtLimit
                       ? `공유 공간 ${FREE_MAX_SPACES}개 한도 도달 (무료 플랜)`
                       : `현재 공유 공간 ${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
@@ -901,36 +901,36 @@ export function MobileSpace() {
           onClick={() => setShowInviteModal(false)}
         >
           <div
-            style={{ width: '100%', maxWidth: '600px', background: 'white', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 28px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
+            style={{ width: '100%', maxWidth: '600px', background: 'var(--theme-surface)', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 28px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
             onClick={e => e.stopPropagation()}
           >
             {/* 핸들 */}
             <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 20px' }}>
-              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: '#E5E5EA' }} />
+              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: 'var(--theme-surface-muted)' }} />
             </div>
 
             {/* 아이콘 + 제목 */}
             <div style={{ width: '64px', height: '64px', borderRadius: '22px', background: 'rgba(0,132,204,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 16px' }}>🔗</div>
-            <h3 style={{ fontSize: '21px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 6px' }}>
+            <h3 style={{ fontSize: '21px', fontWeight: 900, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 6px' }}>
               멤버 초대하기
             </h3>
-            <p style={{ fontSize: '13px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', margin: '0 0 4px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', margin: '0 0 4px' }}>
               {optimisticSpaceName ?? group?.name ?? '이 공간'}
             </p>
-            <p style={{ fontSize: '12px', color: '#AEAEB2', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', margin: '0 0 24px' }}>
               현재 {memberCount}명 · {FREE_MAX_MEMBERS - memberCount}명 더 초대 가능
             </p>
 
             {/* 초대 코드 표시 */}
             {currentInviteCode && (
-              <div style={{ background: '#F5F5F7', borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ background: 'var(--theme-surface-muted)', borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                 <div>
-                  <p style={{ fontSize: '10px', fontWeight: 800, color: '#8E8E93', margin: '0 0 4px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
+                  <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-text-subtle)', margin: '0 0 4px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>초대 코드</p>
                   <span style={{ fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, letterSpacing: '4px', color: '#0CC9B5' }}>{currentInviteCode}</span>
                 </div>
                 <button
                   onClick={copyInviteCode}
-                  style={{ padding: '8px 16px', borderRadius: '12px', background: 'white', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: '#1A1B2E', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                  style={{ padding: '8px 16px', borderRadius: '12px', background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', fontWeight: 800, color: 'var(--theme-text)', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
                 >
                   코드만 복사
                 </button>
@@ -948,7 +948,7 @@ export function MobileSpace() {
                   width: '100%', height: '58px', borderRadius: '18px',
                   background: '#FEE500', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                  fontSize: '16px', fontWeight: 800, color: '#1A1B2E',
+                  fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)',
                   opacity: shareKakao ? 0.7 : 1, transition: 'opacity 0.2s',
                 }}
               >
@@ -1000,18 +1000,18 @@ export function MobileSpace() {
 
             {/* 공유 메시지 미리보기 */}
             <details style={{ marginBottom: '16px' }}>
-              <summary style={{ fontSize: '12px', fontWeight: 700, color: '#8E8E93', cursor: 'pointer', padding: '4px 0', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <summary style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', cursor: 'pointer', padding: '4px 0', listStyle: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
                 공유될 메시지 미리보기
               </summary>
-              <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: '#F5F5F7', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              <div style={{ marginTop: '10px', padding: '14px 16px', borderRadius: '14px', background: 'var(--theme-surface-muted)', fontSize: '12px', fontWeight: 500, color: '#3C3C43', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {currentInviteCode ? buildShareMessage(currentInviteCode) : '초대 코드가 준비되면 최신 링크와 함께 초대문이 생성됩니다.'}
               </div>
             </details>
 
             <button
               onClick={() => setShowInviteModal(false)}
-              style={{ width: '100%', height: '52px', borderRadius: '18px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}
+              style={{ width: '100%', height: '52px', borderRadius: '18px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}
             >
               닫기
             </button>
@@ -1023,20 +1023,20 @@ export function MobileSpace() {
       {showJoinModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           onClick={() => setShowJoinModal(false)}>
-          <div style={{ width: '100%', maxWidth: '600px', background: 'white', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
+          <div style={{ width: '100%', maxWidth: '600px', background: 'var(--theme-surface)', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
             onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px' }}>
-              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: '#E5E5EA' }} />
+              <div style={{ width: '40px', height: '5px', borderRadius: '999px', background: 'var(--theme-surface-muted)' }} />
             </div>
             <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: 'rgba(12,201,181,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', margin: '0 auto 20px' }}>🗝️</div>
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#1A1B2E', textAlign: 'center', margin: '0 0 8px' }}>공간 참여하기</h3>
-            <p style={{ fontSize: '14px', color: '#8E8E93', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 8px' }}>공간 참여하기</h3>
+            <p style={{ fontSize: '14px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>
               공유받은 참여 코드를 입력해 주세요.
             </p>
             <input
               value={joinCode} onChange={e => { setJoinCode(e.target.value); setJoinError(''); }}
               placeholder="참여 코드 입력"
-              style={{ width: '100%', height: '60px', padding: '0 20px', borderRadius: '18px', fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, textAlign: 'center', textTransform: 'uppercase', background: '#F5F5F7', border: `2px solid ${joinError ? '#EF4444' : joinCode ? '#0CC9B5' : 'transparent'}`, outline: 'none', boxSizing: 'border-box', letterSpacing: '4px', color: '#1A1B2E', marginBottom: '8px' }}
+              style={{ width: '100%', height: '60px', padding: '0 20px', borderRadius: '18px', fontSize: '22px', fontFamily: 'monospace', fontWeight: 900, textAlign: 'center', textTransform: 'uppercase', background: 'var(--theme-surface-muted)', border: `2px solid ${joinError ? '#EF4444' : joinCode ? '#0CC9B5' : 'transparent'}`, outline: 'none', boxSizing: 'border-box', letterSpacing: '4px', color: 'var(--theme-text)', marginBottom: '8px' }}
             />
             {joinError && <p style={{ fontSize: '12px', fontWeight: 700, color: '#EF4444', textAlign: 'center', marginBottom: '12px' }}>{joinError}</p>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
@@ -1045,7 +1045,7 @@ export function MobileSpace() {
                 {joining ? '확인 중...' : '참여 완료'}
               </button>
               <button onClick={() => setShowJoinModal(false)}
-                style={{ width: '100%', height: '58px', borderRadius: '18px', background: '#F5F5F7', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: '#8E8E93' }}>
+                style={{ width: '100%', height: '58px', borderRadius: '18px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 800, color: 'var(--theme-text-subtle)' }}>
                 취소
               </button>
             </div>

@@ -34,7 +34,7 @@ function NativeAdCard({ ad }: { ad: NativeAdData }) {
   return (
     <div style={{
       width: '100%', borderRadius: 16, overflow: 'hidden',
-      background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+      background: 'var(--theme-surface)', boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
     }}>
       {/* 이미지 */}
       {ad.imageUrl && (
@@ -48,20 +48,20 @@ function NativeAdCard({ ad }: { ad: NativeAdData }) {
       <div style={{ padding: '12px 16px 16px' }}>
         {/* AD 라벨 */}
         <span style={{
-          fontSize: 10, fontWeight: 700, color: '#8E8E93',
+          fontSize: 10, fontWeight: 700, color: 'var(--theme-text-subtle)',
           letterSpacing: '0.05em', display: 'block', marginBottom: 6,
         }}>AD{ad.advertiser ? ` · ${ad.advertiser}` : ''}</span>
 
         {/* 헤드라인 */}
         <p style={{
-          fontSize: 15, fontWeight: 800, color: '#1A1B2E',
+          fontSize: 15, fontWeight: 800, color: 'var(--theme-text)',
           margin: '0 0 4px', lineHeight: 1.3,
         }}>{ad.headline}</p>
 
         {/* 본문 */}
         {ad.body ? (
           <p style={{
-            fontSize: 12, color: '#6E6E66',
+            fontSize: 12, color: 'var(--theme-text-muted)',
             margin: '0 0 12px', lineHeight: 1.5,
           }}>{ad.body}</p>
         ) : <div style={{ height: 12 }} />}
