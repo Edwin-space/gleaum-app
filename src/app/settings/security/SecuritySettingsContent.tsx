@@ -9,10 +9,14 @@ import {
   getBiometricAvailability,
   getBiometricLockScopes,
   getBiometricRelockInterval,
+  hasPinCode,
   isBiometricLockEnabled,
+  removePinCode,
   setBiometricLockEnabled,
   setBiometricLockScopes,
   setBiometricRelockInterval,
+  setPinCode,
+  verifyPinCode,
   type BiometricLockScope,
   type BiometricRelockInterval,
   type NativeBiometricAvailability,
@@ -38,13 +42,15 @@ function biometryLabel(availability: NativeBiometricAvailability): string {
   if (availability.biometryType === 'faceId') return 'Face ID 사용 가능';
   if (availability.biometryType === 'touchId') return 'Touch ID 사용 가능';
   if (availability.biometryType === 'fingerprint') return '지문 인증 사용 가능';
-  if (availability.biometryType === 'deviceCredential') return '기기 잠금 사용 가능';
+  if (availability.biometryType === 'deviceCredential') return '기기 암호 잠금 사용 가능';
   return '생체인증 사용 가능';
 }
 
 function unavailableHelp(availability: NativeBiometricAvailability): string {
   if (!isNativeApp()) return '생체인증 앱 잠금은 Android/iOS 앱에서만 사용할 수 있어요.';
   if (availability.available) return '이 기기에서 사용할 수 있어요.';
+  if (availability.reason === 'biometry_not_enrolled') return 'Face ID/Touch ID가 등록되어 있지 않지만, 기기 암호가 설정되어 있으면 앱 잠금으로 사용할 수 있어요.';
+  if (availability.reason === 'passcode_not_set') return '휴대폰 설정에서 기기 암호를 먼저 등록해야 앱 잠금을 사용할 수 있어요.';
   return '휴대폰 설정에서 지문, Face ID 또는 기기 잠금을 먼저 등록해야 사용할 수 있어요.';
 }
 
@@ -110,9 +116,17 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
   const platform = getNativePlatform();
   const [availability, setAvailability] = useState<NativeBiometricAvailability>({ available: false, biometryType: 'none' });
   const [enabled, setEnabled] = useState(false);
+  const [pinExists, setPinExists] = useState(false);
   const [scopes, setScopes] = useState<BiometricLockScope[]>(['app']);
   const [interval, setIntervalState] = useState<BiometricRelockInterval>('always');
   const [busy, setBusy] = useState(false);
+
+  // PIN 설정 모달 상태
+  const [showPinSetup, setShowPinSetup] = useState<'idle' | 'enter' | 'confirm' | 'change-old' | 'change-new' | 'change-confirm'>('idle');
+  const [pinInput, setPinInput] = useState('');
+  const [pinFirst, setPinFirst] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
 
   const platformLabel = useMemo(() => {
     if (!native) return 'Web';
@@ -122,17 +136,19 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
   useEffect(() => {
     let mounted = true;
     async function load() {
-      const [nextAvailability, nextEnabled, nextScopes, nextInterval] = await Promise.all([
+      const [nextAvailability, nextEnabled, nextScopes, nextInterval, nextPinExists] = await Promise.all([
         getBiometricAvailability(),
         isBiometricLockEnabled(),
         getBiometricLockScopes(),
         getBiometricRelockInterval(),
+        hasPinCode(),
       ]);
       if (!mounted) return;
       setAvailability(nextAvailability);
       setEnabled(nextEnabled);
       setScopes(nextScopes);
       setIntervalState(nextInterval);
+      setPinExists(nextPinExists);
     }
     void load();
     return () => { mounted = false; };
@@ -160,11 +176,74 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
         alert('인증이 완료되어야 생체인증 잠금을 켤 수 있습니다.');
         return;
       }
+
+      // 생체인식 활성화 후 PIN 설정 (폴백 비상용)
+      const alreadyHasPin = await hasPinCode();
+      if (!alreadyHasPin) {
+        // PIN 설정 모달 표시 (setBiometricLockEnabled는 PIN 설정 완료 후 호출)
+        setPinInput('');
+        setPinFirst('');
+        setPinError('');
+        setShowPinSetup('enter');
+        return; // PIN 설정 완료 콜백에서 setEnabled(true) 처리
+      }
+
       await setBiometricLockEnabled(true);
       setEnabled(true);
     } finally {
       setBusy(false);
     }
+  };
+
+  // PIN 키 입력 핸들러 (설정 화면용)
+  const handlePinKey = async (key: string) => {
+    if (key === '⌫') { setPinInput(p => p.slice(0, -1)); setPinError(''); return; }
+    if (pinInput.length >= 6) return;
+    const next = pinInput + key;
+    setPinInput(next);
+    if (next.length < 6) return;
+
+    // 6자리 완성
+    if (showPinSetup === 'enter') {
+      setPinFirst(next); setPinInput(''); setShowPinSetup('confirm');
+    } else if (showPinSetup === 'confirm') {
+      if (next !== pinFirst) {
+        setPinError('PIN이 일치하지 않아요. 처음부터 다시 입력해 주세요.');
+        setPinInput(''); setPinFirst(''); setShowPinSetup('enter');
+        return;
+      }
+      setPinLoading(true);
+      await setPinCode(next);
+      await setBiometricLockEnabled(true);
+      setPinLoading(false);
+      setPinExists(true);
+      setEnabled(true);
+      setShowPinSetup('idle');
+    } else if (showPinSetup === 'change-old') {
+      const valid = await verifyPinCode(next);
+      if (!valid) {
+        setPinError('현재 PIN이 일치하지 않아요.');
+        setPinInput(''); return;
+      }
+      setPinInput(''); setShowPinSetup('change-new');
+    } else if (showPinSetup === 'change-new') {
+      setPinFirst(next); setPinInput(''); setShowPinSetup('change-confirm');
+    } else if (showPinSetup === 'change-confirm') {
+      if (next !== pinFirst) {
+        setPinError('PIN이 일치하지 않아요.'); setPinInput('');
+        setPinFirst(''); setShowPinSetup('change-new'); return;
+      }
+      setPinLoading(true);
+      await setPinCode(next);
+      setPinLoading(false);
+      setShowPinSetup('idle');
+    }
+  };
+
+  const handleRemovePin = async () => {
+    if (!confirm('PIN을 삭제하면 생체인식 실패 시 잠금을 해제할 수 없어요. 삭제하시겠어요?')) return;
+    await removePinCode();
+    setPinExists(false);
   };
 
   const toggleScope = async (scope: BiometricLockScope) => {
@@ -210,9 +289,66 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
     margin: 0,
   };
 
+  // ── PIN 숫자 키패드 (설정 화면 인라인) ───────────────────────────────────────
+  const PinModal = () => {
+    if (showPinSetup === 'idle') return null;
+    const titleMap: Record<string, string> = {
+      'enter': '비상용 PIN 설정',
+      'confirm': 'PIN 한 번 더 입력',
+      'change-old': '현재 PIN 입력',
+      'change-new': '새 PIN 입력',
+      'change-confirm': '새 PIN 한 번 더 입력',
+    };
+    const descMap: Record<string, string> = {
+      'enter': '생체인식 불가 시 사용할 6자리 PIN을 설정해요.',
+      'confirm': '앞서 입력한 PIN과 동일하게 입력하세요.',
+      'change-old': '현재 설정된 PIN을 입력하세요.',
+      'change-new': '새로운 6자리 PIN을 입력하세요.',
+      'change-confirm': '새 PIN을 한 번 더 입력하세요.',
+    };
+    const digits = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        onClick={() => { if (!pinLoading) setShowPinSetup('idle'); }}>
+        <div style={{ width: '100%', maxWidth: 420, background: 'var(--theme-surface)', borderRadius: '28px 28px 0 0', padding: '24px 24px calc(env(safe-area-inset-bottom) + 24px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}
+          onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 36 }}>🔢</span>
+            <h3 style={{ margin: '8px 0 4px', fontSize: 18, fontWeight: 900, color: 'var(--theme-text)' }}>{titleMap[showPinSetup]}</h3>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--theme-text-muted)' }}>{descMap[showPinSetup]}</p>
+          </div>
+          {/* 점 표시 */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, margin: '20px 0 8px' }}>
+            {[0,1,2,3,4,5].map(i => (
+              <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: i < pinInput.length ? '#0084CC' : 'rgba(0,0,0,0.12)', transition: 'background 0.15s' }} />
+            ))}
+          </div>
+          {pinError && <p style={{ fontSize: 13, color: '#EF4444', textAlign: 'center', margin: '0 0 8px', fontWeight: 700 }}>{pinError}</p>}
+          {/* 키패드 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 12 }}>
+            {digits.map((d, i) => {
+              if (d === '') return <div key={i} />;
+              return (
+                <button key={i} onClick={() => handlePinKey(d)} disabled={pinLoading}
+                  style={{ height: 58, borderRadius: 14, border: 'none', background: d === '⌫' ? 'transparent' : 'rgba(0,0,0,0.06)', fontSize: d === '⌫' ? 20 : 24, fontWeight: 700, color: 'var(--theme-text)', cursor: 'pointer' }}>
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={() => setShowPinSetup('idle')} disabled={pinLoading}
+            style={{ marginTop: 16, width: '100%', height: 48, borderRadius: 14, border: '1px solid var(--theme-border)', background: 'transparent', color: 'var(--theme-text-muted)', fontSize: 14, cursor: 'pointer' }}>
+            취소
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={pageStyle}>
       <AppHeader title="보안 설정" showLogo={false} showBack showNotification={false} />
+      <PinModal />
 
       <main style={mainStyle}>
         <section style={{ ...cardStyle, background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)', color: '#FFFFFF', alignSelf: 'start' }}>
@@ -243,6 +379,37 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
               <Toggle checked={enabled} disabled={busy || !native} onClick={toggleEnabled} />
             </div>
           </div>
+
+          {/* PIN 설정 카드 — 생체인식 활성 시 표시 */}
+          {native && (
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontSize: 17, fontWeight: 900, color: 'var(--theme-text, #1A1B2E)', margin: '0 0 4px' }}>
+                    비상용 PIN
+                    {pinExists && (
+                      <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: '#2EE895', background: 'rgba(46,232,149,0.12)', borderRadius: 6, padding: '2px 7px' }}>설정됨</span>
+                    )}
+                  </h2>
+                  <p style={mutedText}>
+                    생체인식이 불가능할 때 사용하는 6자리 숫자 잠금입니다.
+                    {!pinExists && enabled && <span style={{ color: '#F59E0B', fontWeight: 700 }}> 생체인식 잠금 사용 시 필수입니다.</span>}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setPinInput(''); setPinError(''); setShowPinSetup(pinExists ? 'change-old' : 'enter'); }}
+                  disabled={!enabled}
+                  style={{ flexShrink: 0, height: 36, padding: '0 14px', borderRadius: 10, border: '1.5px solid var(--theme-border)', background: 'transparent', color: 'var(--theme-text)', fontSize: 13, fontWeight: 700, cursor: enabled ? 'pointer' : 'not-allowed', opacity: enabled ? 1 : 0.45 }}>
+                  {pinExists ? 'PIN 변경' : 'PIN 설정'}
+                </button>
+              </div>
+              {pinExists && (
+                <button onClick={handleRemovePin} style={{ marginTop: 10, fontSize: 12, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>
+                  PIN 삭제
+                </button>
+              )}
+            </div>
+          )}
 
           <div style={cardStyle}>
             <h2 style={{ fontSize: 17, fontWeight: 900, color: 'var(--theme-text, #1A1B2E)', margin: '0 0 6px' }}>잠금 적용 범위</h2>

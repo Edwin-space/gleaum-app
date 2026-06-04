@@ -223,7 +223,7 @@ export default function CalendarSyncPage() {
               📅
             </div>
             <div>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'var(--theme-text, #1A1B2E)', letterSpacing: '-0.03em' }}>Android 기기 캘린더 연동</h1>
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'var(--theme-text, #1A1B2E)', letterSpacing: '-0.03em' }}>기기 캘린더 연동</h1>
               <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, color: 'var(--theme-text-muted, #8E8E93)', lineHeight: 1.5 }}>
                 글리움 일정을 스마트폰 기본 캘린더에 저장합니다.
               </p>
@@ -246,9 +246,9 @@ export default function CalendarSyncPage() {
 
         {!supported ? (
           <section style={{ ...cardStyle, background: 'rgba(0,132,204,0.07)' }}>
-            <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 900, color: '#0084CC' }}>Android 앱에서 먼저 지원합니다</p>
+            <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 900, color: '#0084CC' }}>네이티브 앱에서 지원합니다</p>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--theme-text-muted, #8E8E93)', lineHeight: 1.6 }}>
-              기기 캘린더 연동은 Android 네이티브 앱의 캘린더 권한과 연결됩니다. 웹과 iOS는 이후 단계에서 같은 정책으로 확장할 예정입니다.
+              기기 캘린더 연동은 Android/iOS 앱의 캘린더 권한과 연결됩니다. 웹 브라우저에서는 스마트폰 기본 캘린더에 직접 저장할 수 없습니다.
             </p>
           </section>
         ) : (

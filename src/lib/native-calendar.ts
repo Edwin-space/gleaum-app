@@ -1,7 +1,7 @@
 /**
- * NativeCalendar — Android 기기 캘린더 연동 브리지.
+ * NativeCalendar — Android/iOS 기기 캘린더 연동 브리지.
  *
- * 1차 범위는 Android 우선 지원입니다. Web/iOS에서는 지원 상태를 false로 반환합니다.
+ * Web에서는 지원 상태를 false로 반환합니다.
  */
 import { registerPlugin } from '@capacitor/core';
 import { getNativePlatform, isNativeApp, secureStorage } from '@/lib/native';
@@ -66,7 +66,7 @@ export const NativeCalendar = registerPlugin<NativeCalendarPlugin>('NativeCalend
 });
 
 export function isNativeCalendarSupported(): boolean {
-  return isNativeApp() && getNativePlatform() === 'android';
+  return isNativeApp() && ['android', 'ios'].includes(getNativePlatform());
 }
 
 export async function getCalendarPermissionStatus(): Promise<NativeCalendarPermissionStatus> {

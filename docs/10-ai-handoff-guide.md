@@ -1086,3 +1086,50 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - `AppDelegate.swift` 변경은 네이티브 코드 변경이므로 Vercel 배포만으로는 기존 설치 앱에 반영되지 않음.
 - 반드시 Xcode/TestFlight/스토어용 iOS 앱을 다시 빌드해 설치해야 네이티브 로그인 표시 재시도 로직이 적용됨.
 - `RootPageRouter.tsx` 변경은 웹 배포로 반영되지만, 네이티브 로그인 표시 문제의 핵심 수정은 iOS 재빌드가 필요함.
+
+---
+
+## 2026-06-04 — iOS 생체인증 문구/판정 보정 + iOS 기기 캘린더 연동 추가
+
+### 배경
+- iOS 기기에서 보안 설정의 생체인증 잠금 활성화 시, Face ID/Touch ID 등록 상태와 기기 암호 fallback 판정이 사용자에게 혼동되게 보일 수 있었음.
+- 기기 캘린더 연동은 Android `NativeCalendarPlugin.kt`만 존재했고, iOS는 `src/lib/native-calendar.ts`에서 지원 불가로 처리되고 있었음.
+
+### 생체인증 보정
+- `ios/App/App/NativeBiometricPlugin.swift`
+  - `isAvailable()` 응답에 `reason`을 명확히 추가.
+  - Face ID/Touch ID가 없더라도 iOS 기기 암호가 설정되어 있으면 `available: true`, `biometryType: deviceCredential`로 반환.
+  - `authenticate()`에 `localizedFallbackTitle = "암호 사용"` 적용.
+  - `LAError`를 `biometry_not_enrolled`, `passcode_not_set`, `biometry_not_available`, `biometry_lockout` 등 내부 reason 코드로 정규화.
+- `src/app/settings/security/SecuritySettingsContent.tsx`
+  - `deviceCredential` 문구를 `기기 암호 잠금 사용 가능`으로 명확화.
+  - Face ID/Touch ID 미등록과 기기 암호 미설정 상태를 구분해 안내 문구 표시.
+
+### iOS 캘린더 연동 추가
+- `ios/App/App/NativeCalendarPlugin.swift` 신규 추가.
+  - EventKit 기반 `NativeCalendar` Capacitor 플러그인.
+  - Android와 동일한 JS 메서드 제공:
+    - `checkPermissions()`
+    - `requestPermissions()`
+    - `listCalendars()`
+    - `createEvent()`
+    - `listEvents()`
+  - iOS 17+는 `requestFullAccessToEvents`, 이전 버전은 `requestAccess(to: .event)` 사용.
+  - `EKEventStore.authorizationStatus(for: .event)`의 `fullAccess`, `writeOnly`, `authorized`를 `granted`로 매핑.
+- `ios/App/Gleaum.xcodeproj/project.pbxproj`
+  - `NativeCalendarPlugin.swift`를 App group과 Sources build phase에 등록.
+- `ios/App/App/Info.plist`
+  - `NSCalendarsUsageDescription` 추가.
+  - `NSCalendarsFullAccessUsageDescription` 추가.
+- `src/lib/native-calendar.ts`
+  - 지원 플랫폼을 Android 전용에서 Android/iOS 네이티브 앱으로 확장.
+- `src/app/settings/calendar/page.tsx`
+  - 화면 문구를 Android 전용에서 Android/iOS 네이티브 앱 기준으로 수정.
+
+### 검증
+- `npm run build` 통과.
+- `xcodebuild -project ios/App/Gleaum.xcodeproj -scheme Gleaum -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build` 통과.
+
+### 주의
+- 생체인증/캘린더 모두 네이티브 코드 변경이 포함되어 있으므로 Vercel 배포만으로 기존 설치 앱에 반영되지 않음.
+- iOS 실기기에서 확인하려면 Xcode/TestFlight/스토어용 iOS 앱 재빌드가 필요함.
