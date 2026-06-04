@@ -1133,3 +1133,28 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 ### 주의
 - 생체인증/캘린더 모두 네이티브 코드 변경이 포함되어 있으므로 Vercel 배포만으로 기존 설치 앱에 반영되지 않음.
 - iOS 실기기에서 확인하려면 Xcode/TestFlight/스토어용 iOS 앱 재빌드가 필요함.
+
+---
+
+## 2026-06-04 — Android 릴리즈/Google 로그인/AdMob 잔여 변경 정리
+
+### 확인한 잔여 변경
+- `android/app/build.gradle`
+  - Android 앱 버전을 `versionCode 15`, `versionName 1.0.15`로 상향.
+- `android/app/google-services.json`
+  - Android OAuth client 추가.
+  - 릴리즈/실기기 Google 로그인 인증서 SHA 연결에 필요한 설정으로 판단.
+- `android/app/src/main/java/com/gleaum/app/NativeBiometricPlugin.kt`
+  - Android 생체인증 오류/취소 시 `call.reject()` 대신 `{ success: false }`를 resolve하도록 변경.
+  - JS 측 생체인증 처리 흐름과 iOS 처리 방식에 맞춰 오류 throw 대신 성공 여부로 통일.
+- `src/lib/admob.ts`
+  - 인라인 배너 광고 단위 ID를 배너 형식 ID(`6211229285`)로 교체.
+  - 기존 `1438321314`는 네이티브 고급형 광고 ID라 배너 요청 시 403이 발생할 수 있음.
+
+### 제외한 변경
+- `android/.idea/deploymentTargetSelector.xml`
+  - Android Studio 실행 대상 timestamp 변경이므로 커밋 제외.
+- `ios/App/App/Base.lproj/LaunchScreen.storyboard`
+  - 사용자가 직접 조정한 LaunchScreen 아이콘 위치 변경으로 보이나 `misplaced="YES"`가 포함되어 있어 별도 실기기/Xcode 확인 후 커밋 권장.
+- `gleaum-mail-auth-only.txt`, `gleaum.com.cleaned.txt`
+  - DNS/메일 운영 참고 파일로 앱 코드 변경과 분리.

@@ -22,7 +22,9 @@ const IS_TESTING = process.env.NODE_ENV === 'development';
 
 const AD_UNIT = {
   INTERSTITIAL:    IS_TESTING ? 'ca-app-pub-3940256099942544/1033173712' : 'ca-app-pub-7426507548879721/5949776341',
-  INLINE_BANNER:   IS_TESTING ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-7426507548879721/1438321314',
+  // 홈_상단 배너 (6211229285) — 배너 형식
+  // 1438321314는 네이티브 고급형이라 배너 요청 시 403 오류 발생
+  INLINE_BANNER:   IS_TESTING ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-7426507548879721/6211229285',
 } as const;
 
 // ── 테스트 기기 해시 목록 ─────────────────────────────────────────────────────

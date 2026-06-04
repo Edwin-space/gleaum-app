@@ -88,7 +88,12 @@ class NativeBiometricPlugin : Plugin() {
             }
 
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-                call.reject(errString?.toString() ?: "authentication_error")
+                // 사용자 취소(ERROR_USER_CANCELED=10, ERROR_NEGATIVE_BUTTON=13) 포함 모든 오류를
+                // call.reject() 대신 resolve({ success: false }) 로 반환.
+                // JS에서 try/catch 없이 success 여부만 체크하도록 통일.
+                val response = JSObject()
+                response.put("success", false)
+                call.resolve(response)
             }
 
             override fun onAuthenticationFailed() {

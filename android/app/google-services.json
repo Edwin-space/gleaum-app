@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "913127709928-5fht1k22g2elb8k95ipl7ccvvopcfe5a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gleaum.app",
+            "certificate_hash": "e66b76a0bfb88726cbec2bc36a5925806bcc5543"
+          }
+        },
+        {
           "client_id": "913127709928-uba2o16d4dic4cs008b8jrhfpfprqguj.apps.googleusercontent.com",
           "client_type": 3
         }
