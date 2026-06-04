@@ -760,3 +760,15 @@ npm run cap:open:android # Android Studio 열기
 - [x] 네이티브 앱 루트(`/`) 진입 시 `RootPageRouter`가 직접 `/home`으로 이동하지 않도록 변경
 - [x] 네이티브 세션 적용 완료 후 `/home` 또는 온보딩 미완료 시 `/onboarding`으로 이동하도록 일원화
 - [x] `npm run build`, Android `:app:assembleDebug` 통과
+
+---
+
+## iOS/Android OAuth 계정 선택 및 이메일 OTP 요청 보강 (완료 — 2026-06-04)
+
+- [x] iOS 네이티브 Google OAuth에 `prompt=select_account` 추가
+- [x] Android 네이티브 Google OAuth에 `prompt=select_account` 추가
+- [x] Web/Native WebView Supabase OAuth 옵션에도 `queryParams.prompt='select_account'` 추가
+- [x] iOS/Android 이메일 OTP 요청과 검증 요청에 `Authorization: Bearer <anon key>` 헤더 추가
+- [x] 이메일 OTP는 앱 코드에서 Supabase `/auth/v1/otp`, `/auth/v1/verify`를 호출하는 구조임을 확인
+- [x] 실제 메일 발송은 Supabase Auth Email/SMTP 설정에 의존함
+- [x] `npm run build`, Android `:app:assembleDebug`, iOS Simulator Debug 빌드 통과

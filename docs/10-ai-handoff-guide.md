@@ -956,3 +956,45 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - Google 로그인 후 모바일 웹 `/login`이 다시 노출되지 않는지 확인.
 - 로그인 완료 후 기존 사용자 `/home`, 온보딩 미완료 사용자 `/onboarding` 이동 확인.
 - 이미 배포된 Play 빌드에는 포함되지 않으므로 Android 새 빌드/AAB 생성 후 재배포 필요.
+
+---
+
+## 2026-06-04 Codex 인수인계 — OAuth 계정 선택/메일 OTP 확인
+
+### 사용자 문의
+
+1. Apple 디바이스에서 Google 로그인을 누르면 계정 목록이 나오지 않고 최근 로그인 계정으로 바로 진행됨.
+2. 메일 로그인에서 인증코드를 보낸다고 하는데 실제 메일 발송 구현이 없는 것 같음.
+
+### 확인 결과
+
+- iOS 네이티브 로그인은 `LoginViewController.swift`에서 `SFSafariViewController`로 Supabase Google OAuth URL을 직접 열고 있었다.
+- Safari/Google 세션이 재사용되면 Google이 최근 계정으로 바로 진행할 수 있다.
+- 이메일 OTP는 미구현이 아니라 iOS/Android 네이티브 코드에 구현되어 있다.
+  - 발송: Supabase `/auth/v1/otp`
+  - 검증: Supabase `/auth/v1/verify`
+  - `create_user: false`라 기존 가입 이메일에 대해서만 OTP 발송을 시도한다.
+- 실제 이메일 도착 여부는 Supabase Auth Email Provider, SMTP 설정, 템플릿, Rate Limit, 수신함/스팸함 정책에 의존한다.
+
+### 수정
+
+- `ios/App/App/LoginViewController.swift`
+  - Google OAuth URL에 `prompt=select_account` 추가.
+  - OTP 발송/검증 요청에 `Authorization: Bearer <anon key>` 헤더 추가.
+- `android/app/src/main/java/com/gleaum/app/LoginActivity.kt`
+  - Google OAuth URL에 `prompt=select_account` 추가.
+  - OTP 발송/검증 요청에 `Authorization: Bearer <anon key>` 헤더 추가.
+- `src/hooks/useAuth.ts`
+  - Supabase OAuth `queryParams: { prompt: 'select_account' }` 추가.
+
+### 검증
+
+- `npm run build` 통과.
+- `cd android && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew :app:assembleDebug --quiet` 통과.
+- `xcodebuild -project ios/App/Gleaum.xcodeproj -scheme Gleaum -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build` 통과.
+
+### 남은 확인
+
+- iOS 실기기에서 Google 계정 선택 화면이 뜨는지 확인해야 한다.
+- 여전히 최근 계정으로 바로 진행되면 다음 단계는 `SFSafariViewController` 대신 `ASWebAuthenticationSession` + `prefersEphemeralWebBrowserSession` 전환을 검토한다. 단, 이 방식은 사용자가 매번 더 자주 로그인해야 할 수 있어 UX 비용이 있다.
+- 메일 OTP가 도착하지 않으면 Supabase Dashboard → Authentication → Email 설정/SMTP/템플릿/로그를 확인해야 한다.

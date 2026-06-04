@@ -87,6 +87,8 @@ class LoginViewController: UIViewController, SFSafariViewControllerDelegate {
             URLQueryItem(name: "provider",    value: "google"),
             URLQueryItem(name: "redirect_to", value: "gleaum://auth/callback"),
             URLQueryItem(name: "flow_type",   value: "implicit"),
+            // Google 계정 선택 화면을 항상 노출해 최근 계정 자동 로그인을 방지한다.
+            URLQueryItem(name: "prompt",      value: "select_account"),
         ]
         guard let url = components.url else { return }
 
@@ -405,6 +407,7 @@ class EmailLoginViewController: UIViewController {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONSerialization.data(withJSONObject: ["email": email, "create_user": false])
 
@@ -434,6 +437,7 @@ class EmailLoginViewController: UIViewController {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONSerialization.data(withJSONObject: [
             "type": "email", "token": otp, "email": currentEmail,

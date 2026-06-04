@@ -93,6 +93,8 @@ class LoginActivity : AppCompatActivity() {
             // PKCE 없이 브라우저에서 직접 시작하므로 implicit flow 사용
             // → 콜백 URL에 access_token/refresh_token 이 직접 포함됨
             .appendQueryParameter("flow_type", "implicit")
+            // Google 계정 선택 화면을 항상 노출해 최근 계정 자동 로그인을 방지
+            .appendQueryParameter("prompt", "select_account")
             .build()
 
         try {
@@ -149,6 +151,7 @@ class LoginActivity : AppCompatActivity() {
                 val conn = (URL("${getString(R.string.supabase_url)}/auth/v1/otp").openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
                     setRequestProperty("apikey", getString(R.string.supabase_anon_key))
+                    setRequestProperty("Authorization", "Bearer ${getString(R.string.supabase_anon_key)}")
                     setRequestProperty("Content-Type", "application/json")
                     doOutput = true
                 }
@@ -178,6 +181,7 @@ class LoginActivity : AppCompatActivity() {
                     val conn = (URL("${getString(R.string.supabase_url)}/auth/v1/verify").openConnection() as HttpURLConnection).apply {
                         requestMethod = "POST"
                         setRequestProperty("apikey", getString(R.string.supabase_anon_key))
+                        setRequestProperty("Authorization", "Bearer ${getString(R.string.supabase_anon_key)}")
                         setRequestProperty("Content-Type", "application/json")
                         doOutput = true
                     }

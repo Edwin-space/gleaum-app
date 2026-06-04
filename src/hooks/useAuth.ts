@@ -55,6 +55,7 @@ export function useAuth() {
         options: {
           redirectTo: 'gleaum://auth/callback',
           skipBrowserRedirect: true,
+          queryParams: { prompt: 'select_account' },
         },
       });
       if (error) {
@@ -74,6 +75,7 @@ export function useAuth() {
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
+          queryParams: { prompt: 'select_account' },
         },
       });
       if (error) console.error('Google 로그인 오류:', error.message);
