@@ -37,14 +37,72 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // 스플래시가 3초 유지되는 동안 LoginVC를 미리 올려둔다.
         // 스플래시가 사라질 때 WebView /login이 아니라 네이티브 로그인 화면이 바로 보이게 한다.
         DispatchQueue.main.asyncAfter(deadline: .now() + loginPresentationDelay) { [weak self] in
-            guard let self = self,
-                  let rootVC = self.window?.rootViewController else { return }
-            if rootVC.presentedViewController is LoginViewController { return }
-            let loginVC = LoginViewController()
-            loginVC.modalPresentationStyle = .fullScreen
-            loginVC.modalTransitionStyle   = .crossDissolve
-            rootVC.present(loginVC, animated: false)
+            self?.presentLoginScreenWhenReady()
         }
+    }
+
+    private func presentLoginScreenWhenReady(attempt: Int = 0) {
+        if SessionManager.shared.hasValidSession() { return }
+
+        guard let rootVC = currentRootViewController() else {
+            if attempt < 20 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                    self?.presentLoginScreenWhenReady(attempt: attempt + 1)
+                }
+            }
+            return
+        }
+
+        guard rootVC.isViewLoaded, rootVC.view.window != nil else {
+            if attempt < 20 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                    self?.presentLoginScreenWhenReady(attempt: attempt + 1)
+                }
+            }
+            return
+        }
+
+        let presenter = topMostViewController(from: rootVC)
+        if presenter is LoginViewController { return }
+        if presenter is SFSafariViewController { return }
+        if presenter.presentedViewController is LoginViewController { return }
+        if presenter.presentedViewController is SFSafariViewController { return }
+
+        let loginVC = LoginViewController()
+        loginVC.modalPresentationStyle = .fullScreen
+        loginVC.modalTransitionStyle   = .crossDissolve
+        presenter.present(loginVC, animated: false)
+    }
+
+    private func currentRootViewController() -> UIViewController? {
+        if let rootVC = window?.rootViewController {
+            return rootVC
+        }
+
+        let keyWindow = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+
+        if let keyWindow {
+            window = keyWindow
+            return keyWindow.rootViewController
+        }
+
+        return UIApplication.shared.windows.first { $0.isKeyWindow }?.rootViewController
+    }
+
+    private func topMostViewController(from root: UIViewController) -> UIViewController {
+        if let nav = root as? UINavigationController, let visible = nav.visibleViewController {
+            return topMostViewController(from: visible)
+        }
+        if let tab = root as? UITabBarController, let selected = tab.selectedViewController {
+            return topMostViewController(from: selected)
+        }
+        if let presented = root.presentedViewController {
+            return topMostViewController(from: presented)
+        }
+        return root
     }
 
     // ── FCM 토큰 갱신 시 콜백 ─────────────────────────────────────────────────
@@ -151,6 +209,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // ── WKWebView 성능 최적화 ────────────────────────────────────────────
         setupWebView()
 
+        // window/rootViewController 준비 타이밍에 따라 didFinishLaunching 시점의
+        // 네이티브 로그인 화면 표시가 누락될 수 있어 앱 활성화 시 한 번 더 보장한다.
+        if !SessionManager.shared.hasValidSession() {
+            presentLoginScreenWhenReady()
+        }
 
         #if targetEnvironment(macCatalyst)
         // Mac Catalyst: 최소/최대 윈도우 크기 설정
@@ -166,7 +229,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
 
     // ── WKWebView 성능 설정 (Android WebView 최적화와 대칭) ─────────────────
     private func setupWebView() {
-        guard let rootVC = window?.rootViewController as? CAPBridgeViewController,
+        guard let rootVC = currentRootViewController() as? CAPBridgeViewController,
               let webView = rootVC.webView else { return }
 
         // 네이티브 로그인 세션 → WebView localStorage 주입

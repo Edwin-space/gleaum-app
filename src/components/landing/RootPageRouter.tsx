@@ -21,7 +21,12 @@ export function RootPageRouter() {
 
     // 네이티브 앱은 NativeAppProvider가 네이티브 세션 적용 후 /home 또는 /onboarding으로 이동시킨다.
     // 여기서 먼저 /home으로 이동하면 서버 proxy가 쿠키 없는 요청을 /login으로 돌려보내는 레이스가 생긴다.
-    if (isNativeApp()) return;
+    if (isNativeApp()) {
+      const timer = window.setTimeout(() => {
+        if (window.location.pathname === '/') router.replace('/login');
+      }, 4200);
+      return () => window.clearTimeout(timer);
+    }
 
     router.replace('/login');
   }, [isDesktop, router]);
@@ -29,7 +34,21 @@ export function RootPageRouter() {
   // 데스크탑이면 랜딩 페이지, 모바일이면 빈 화면(리다이렉트 중)
   if (!isDesktop) {
     return (
-      <div style={{ minHeight: '100dvh', background: '#08080E' }} />
+      <div
+        style={{
+          minHeight: '100dvh',
+          background: '#08080E',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'rgba(255,255,255,0.62)',
+          fontSize: '13px',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+        }}
+      >
+        GLEAUM
+      </div>
     );
   }
 

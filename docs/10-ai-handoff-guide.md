@@ -1057,3 +1057,32 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 남은 확인:
 - iOS 실기기에서 스플래시 후 `/home` 또는 네이티브 로그인 화면이 정상 표시되는지 확인.
 - FCM/APNS 경고는 화면 정지와 별개로 Apple Push Notifications 설정/권한/실기기 APNS 토큰 발급 흐름에서 따로 정리 필요.
+
+---
+
+## 2026-06-04 — iOS splash 이후 검은 화면 재보정
+
+### 증상
+- iOS/Apple 디바이스에서 LaunchScreen 이후 검은 화면에 머물고 네이티브 로그인 화면으로 넘어가지 않는 증상이 재현됨.
+- Xcode 콘솔에는 `No APNS token specified before fetching FCM Token` 로그가 보였지만, 이는 FCM 푸시 토큰 발급 실패 로그이며 화면 정지의 직접 원인으로 보기는 어려움.
+
+### 원인 판단
+- 네이티브 앱의 `/` 루트는 마케팅 랜딩/웹 로그인 플래시를 막기 위해 어두운 대기 화면을 보여주고, `NativeAppProvider` 또는 iOS `LoginViewController` 표시를 기다리는 구조임.
+- iOS에서 `AppDelegate.window?.rootViewController`가 아직 준비되지 않았거나 root view가 window에 붙기 전이면 `LoginViewController` 표시가 한 번 누락될 수 있음.
+- 이 경우 `/` 루트 대기 화면이 계속 남아 검은 화면처럼 보일 수 있음.
+
+### 수정 내용
+- `ios/App/App/AppDelegate.swift`
+  - `window?.rootViewController`만 보지 않고 `UIApplication.shared.connectedScenes`의 key window를 찾아 root view controller를 보정.
+  - root view가 아직 window에 붙지 않았으면 최대 20회, 0.2초 간격으로 재시도.
+  - 이미 `LoginViewController` 또는 `SFSafariViewController`가 표시 중이면 중복 표시하지 않음.
+  - `setupWebView()`도 동일한 root view 탐색 로직을 사용하도록 변경.
+- `src/components/landing/RootPageRouter.tsx`
+  - 네이티브 앱 `/` 대기 화면에 `GLEAUM` 텍스트를 표시.
+  - 네이티브 로그인 표시가 실패해도 영구 검은 화면이 되지 않도록 4.2초 후 `/login` fallback 이동.
+  - fallback은 최후 안전망이며 정상 케이스에서는 iOS 네이티브 로그인 화면이 먼저 떠야 함.
+
+### 검증/배포 메모
+- `AppDelegate.swift` 변경은 네이티브 코드 변경이므로 Vercel 배포만으로는 기존 설치 앱에 반영되지 않음.
+- 반드시 Xcode/TestFlight/스토어용 iOS 앱을 다시 빌드해 설치해야 네이티브 로그인 표시 재시도 로직이 적용됨.
+- `RootPageRouter.tsx` 변경은 웹 배포로 반영되지만, 네이티브 로그인 표시 문제의 핵심 수정은 iOS 재빌드가 필요함.
