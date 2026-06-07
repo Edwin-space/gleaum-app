@@ -1266,3 +1266,44 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 최초 `npm run build`는 Google Fonts 네트워크 fetch 실패로 중단.
 - 네트워크 권한으로 `npm run build` 재실행 후 통과.
 - 기존 `/_next/static/(.*)` Cache-Control 경고는 이번 변경과 무관한 기존 설정 경고.
+
+---
+
+## 2026-06-08 — 일정 등록 실패 제보 조사 및 1차 방어 수정
+
+### 제보
+- 앱 빌드/배포 이후 사용자들이 일정 등록이 진행되지 않는다고 보고.
+
+### 로그/운영 확인
+- Vercel runtime/deployment logs는 현재 MCP 권한 부족으로 `403 Forbidden` 발생.
+  - scope: `edwin-spaces-projects`
+  - Vercel 재인증 또는 권한 있는 토큰 필요.
+- Supabase 운영 DB 확인 결과:
+  - 최근 24시간 `schedules` 신규 생성: `0건`
+  - 최근 7일 신규 생성: `7건`
+  - 마지막 일정 생성: `2026-06-05 08:05:32 UTC`
+- 운영 DB의 `schedules` 신규 컬럼(`category`, `visibility`, `automation_policy`, 지출 반영 컬럼 등)은 존재함.
+- 개인공간 멤버십 누락은 확인되지 않음. `personalSpaceId`가 있는 온보딩 완료 사용자는 개인공간 `admin` 멤버십 보유.
+- 일부 계정에서 `profiles.family_group_id`가 멤버십 없는 공간을 가리키는 상태가 확인됨. 이 경우 공유/자녀 일정 등록은 RLS에서 실패할 수 있음.
+
+### 원인 후보
+- 개인 일정 저장은 RLS 시뮬레이션상 정상 통과.
+- 공유/자녀/공간 지출 등록은 공유 공간 역할(`myRole`) 확인이 필요함.
+- 기존 `/schedules/new`는 `myRole === 'viewer'`만 차단하고, `myRole === null` 또는 공간 권한 로딩 중 상태를 차단하지 않아 RLS 실패가 사용자에게 일반 실패로 보일 수 있었음.
+- 기존 catch는 실제 Supabase 오류 메시지를 숨기고 `일정 저장에 실패했습니다`만 표시해 현장 원인 파악이 어려웠음.
+
+### 이번 수정
+- `src/app/schedules/new/page.tsx`
+  - `useSpace(sharedSpaceId)`의 `spaceLoading`을 사용.
+  - 공유 공간 대상 저장 시 권한 로딩 중이면 저장을 막고 재시도 안내.
+  - 공유 공간 대상 저장 시 `admin/editor`가 아니면 명확히 차단.
+  - 저장 실패 catch에서 실제 오류 메시지를 토스트와 콘솔에 표시.
+
+### 검증
+- `npm run build` 통과.
+- 기존 `/_next/static/(.*)` Cache-Control 경고는 이번 변경과 무관한 기존 설정 경고.
+
+### 후속 권장
+- Vercel 로그 접근 권한을 재인증해 production runtime log 확인 필요.
+- 클라이언트 오류를 서버로 수집하는 `/api/client-errors` 또는 Firebase Crashlytics/Sentry 연동 권장.
+- `profiles.family_group_id`가 실제 멤버십 없는 공간을 가리키는 레거시 데이터를 보정하는 SQL 검토 필요.

@@ -27,7 +27,7 @@ export default function NewSchedulePage() {
     sharedSpaceId,
     user,
   } = useCurrentUser();
-  const { members, myRole } = useSpace(sharedSpaceId);
+  const { members, myRole, loading: spaceLoading } = useSpace(sharedSpaceId);
 
   // 로딩 완료 후에도 familyGroupId 가 null 이면 공간 생성 재시도
   useEffect(() => {
@@ -124,10 +124,16 @@ export default function NewSchedulePage() {
       return;
     }
 
-    // 공유 공간 viewer 역할은 일정 생성 불가
-    if (targetSpaceId === sharedSpaceId && myRole === 'viewer') {
-      toast.error('조회 권한만 있어 일정을 생성할 수 없습니다');
-      return;
+    // 공유/자녀/공간 지출은 공유 공간 권한 확인이 끝난 뒤 editor 이상만 생성 가능.
+    if (targetSpaceId === sharedSpaceId) {
+      if (spaceLoading) {
+        toast.error('공간 권한을 확인하는 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      if (myRole !== 'admin' && myRole !== 'editor') {
+        toast.error('공간 운영자 이상만 공유 일정을 생성할 수 있습니다');
+        return;
+      }
     }
 
     setSaving(true);
@@ -167,8 +173,9 @@ export default function NewSchedulePage() {
       showAd();
       setTimeout(() => router.push('/schedules'), 500);
     } catch (err) {
-      console.error(err);
-      toast.error('일정 저장에 실패했습니다');
+      const message = err instanceof Error ? err.message : '알 수 없는 오류';
+      console.error('[NewSchedule] 일정 저장 실패:', err);
+      toast.error(`일정 저장에 실패했습니다: ${message}`);
     } finally {
       setSaving(false);
     }
