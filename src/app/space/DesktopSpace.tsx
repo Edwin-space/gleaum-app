@@ -11,10 +11,13 @@ import {
   updateSpaceMemberNickname,
 } from '@/lib/db';
 import { SpaceFeed } from './SpaceFeed';
+import { SpaceEntryModal } from './SpaceEntryModal';
 import { formatAmount } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { Space, SpaceRole } from '@/types';
+import type { Space, SpaceRole, Schedule } from '@/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { usePushSubscription } from '@/hooks/usePushSubscription';
+import { sendSpaceNotification } from '@/lib/spaceNotify';
 
 const FREE_MAX_SPACES  = 2;
 const FREE_MAX_MEMBERS = 10;
@@ -41,8 +44,15 @@ export function DesktopSpace() {
 
   const displaySpaceId = activeSpaceId ?? spaceId;
   const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
-  const { schedules } = useSchedules(displaySpaceId);
+  const { schedules, refresh: refreshSchedules } = useSchedules(displaySpaceId);
   const isAdmin = myRole === 'admin';
+
+  // 푸시 알림 구독 (자동 등록)
+  usePushSubscription();
+
+  // ── 인라인 모달 상태 ───────────────────────────────────────
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showExpenseModal,  setShowExpenseModal]  = useState(false);
 
   const personalSpaceId  = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
   const isPersonalSpace  = !!displaySpaceId && displaySpaceId === personalSpaceId;
@@ -370,7 +380,7 @@ export function DesktopSpace() {
             {/* 빠른 액션 버튼 */}
             <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
               <button
-                onClick={() => router.push(`/space/schedule/new?spaceId=${displaySpaceId ?? ''}`)}
+                onClick={() => setShowScheduleModal(true)}
                 style={{
                   padding: '12px 22px', borderRadius: '16px',
                   background: 'linear-gradient(135deg, #0084CC, #0CC9B5)',
@@ -570,6 +580,7 @@ export function DesktopSpace() {
         <div style={{ minWidth: 0 }}>
           <SpaceFeed
             spaceId={displaySpaceId}
+            spaceName={isPersonalSpace ? undefined : group?.name}
             members={members}
             currentUser={user ?? null}
             currentUserRole={myRole}
@@ -598,7 +609,7 @@ export function DesktopSpace() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                   <h3 style={{ fontSize: '15px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>다가오는 일정</h3>
                   <button
-                    onClick={() => router.push(`/space/schedule/new?spaceId=${displaySpaceId ?? ''}`)}
+                    onClick={() => setShowScheduleModal(true)}
                     style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '10px', background: 'rgba(0,132,204,0.08)', border: '1px solid rgba(0,132,204,0.15)', color: '#0084CC', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
@@ -771,7 +782,7 @@ export function DesktopSpace() {
                   </p>
                 </div>
                 <button
-                  onClick={() => router.push(`/space/schedule/new?spaceId=${displaySpaceId ?? ''}&type=expense`)}
+                  onClick={() => setShowExpenseModal(true)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '4px',
                     padding: '7px 13px', borderRadius: '12px',
@@ -857,6 +868,58 @@ export function DesktopSpace() {
       {/* ════════════════════════════════════════════════
           MODALS
       ════════════════════════════════════════════════ */}
+
+      {/* ════ 일정 추가 모달 ════ */}
+      {showScheduleModal && displaySpaceId && (
+        <SpaceEntryModal
+          type="schedule"
+          spaceId={displaySpaceId}
+          members={members}
+          currentUserId={user?.id ?? ''}
+          onClose={() => setShowScheduleModal(false)}
+          onSaved={async (s: Schedule) => {
+            await refreshSchedules();
+            setShowScheduleModal(false);
+            if (!isPersonalSpace && group?.name) {
+              const d = new Date(s.startTime);
+              const dateStr = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+              void sendSpaceNotification({
+                spaceId: displaySpaceId,
+                spaceName: group.name,
+                message: `${dateStr} 일정 "${s.title}"이 추가되었어요. 확인해보세요.`,
+                url: '/space',
+                excludeUserId: user?.id,
+              });
+            }
+          }}
+        />
+      )}
+
+      {/* ════ 지출 등록 모달 ════ */}
+      {showExpenseModal && displaySpaceId && (
+        <SpaceEntryModal
+          type="expense"
+          spaceId={displaySpaceId}
+          members={members}
+          currentUserId={user?.id ?? ''}
+          onClose={() => setShowExpenseModal(false)}
+          onSaved={async (s: Schedule) => {
+            await refreshSchedules();
+            setShowExpenseModal(false);
+            if (!isPersonalSpace && group?.name) {
+              const d = new Date(s.startTime);
+              const dateStr = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+              void sendSpaceNotification({
+                spaceId: displaySpaceId,
+                spaceName: group.name,
+                message: `${group.name} 공간에 ${dateStr} 지출항목 "${s.title}"이 추가되었어요. 확인해보세요.`,
+                url: '/space',
+                excludeUserId: user?.id,
+              });
+            }
+          }}
+        />
+      )}
 
       {/* ════ 공간 관리 모달 ════ */}
       {showMgmtModal && (

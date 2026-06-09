@@ -1446,10 +1446,9 @@ export async function getSpacePosts(spaceId: string): Promise<SpacePost[]> {
     .from('space_posts')
     .select(`
       *,
-      author:profiles!space_posts_author_id_fkey(name, avatar),
-      comment_count:space_post_comments(count),
-      dues:space_dues(*, payments:space_dues_payments(*, user:profiles!space_dues_payments_user_id_fkey(name, avatar))),
-      vote:space_votes(*, options:space_vote_options(*, voters:space_vote_results(user_id)))
+      space_post_comments(count),
+      space_dues(*, space_dues_payments(*)),
+      space_votes(*, space_vote_options(*, space_vote_results(user_id)))
     `)
     .eq('space_id', spaceId)
     .order('pinned', { ascending: false })
@@ -1477,30 +1476,43 @@ export async function createSpacePost(spaceId: string, input: CreateSpacePostInp
   if (postError || !postData) { console.error('[createSpacePost]', postError?.message); return null; }
   // 회비 생성
   if (input.dues && input.type === 'dues') {
-    await supabase.from('space_dues').insert({
+    const { error: duesError } = await supabase.from('space_dues').insert({
       post_id: postData.id,
       title: input.content ?? '회비 요청',
       total_amount: input.dues.totalAmount,
       per_person: input.dues.perPerson ?? null,
       due_date: input.dues.dueDate ?? null,
     });
+    if (duesError) console.error('[createSpacePost dues]', duesError.message);
   }
   // 투표 생성
   if (input.vote && input.type === 'vote') {
-    const { data: voteData } = await supabase.from('space_votes').insert({
+    const { data: voteData, error: voteError } = await supabase.from('space_votes').insert({
       post_id: postData.id,
       title: input.vote.title,
       multiple_choice: input.vote.multipleChoice,
       ends_at: input.vote.endsAt ?? null,
     }).select().single();
+    if (voteError) console.error('[createSpacePost vote]', voteError.message);
     if (voteData && input.vote.options.length > 0) {
-      await supabase.from('space_vote_options').insert(
+      const { error: optError } = await supabase.from('space_vote_options').insert(
         input.vote.options.map((label, i) => ({ vote_id: voteData.id, label, sort_order: i }))
       );
+      if (optError) console.error('[createSpacePost vote options]', optError.message);
     }
   }
-  const posts = await getSpacePosts(spaceId);
-  return posts.find(p => p.id === postData.id) ?? null;
+  // 최소 SpacePost 반환 (즉시 UI에 추가 가능, 실제 dues/vote 데이터는 refresh로 반영)
+  return {
+    id: postData.id as string,
+    spaceId: postData.space_id as string,
+    authorId: postData.author_id as string,
+    type: postData.type as SpacePostType,
+    content: postData.content as string | null,
+    pinned: postData.pinned as boolean,
+    scheduleId: postData.schedule_id as string | null,
+    createdAt: new Date(postData.created_at as string),
+    commentCount: 0,
+  };
 }
 
 export async function deleteSpacePost(postId: string): Promise<boolean> {
@@ -1513,7 +1525,7 @@ export async function getPostComments(postId: string): Promise<import('@/types')
   const supabase = createClient();
   const { data, error } = await supabase
     .from('space_post_comments')
-    .select('*, author:profiles!space_post_comments_author_id_fkey(name, avatar)')
+    .select('*')
     .eq('post_id', postId)
     .order('created_at', { ascending: true });
   if (error) { console.error('[getPostComments]', error.message); return []; }
@@ -1523,7 +1535,6 @@ export async function getPostComments(postId: string): Promise<import('@/types')
     authorId: row.author_id as string,
     content: row.content as string,
     createdAt: new Date(row.created_at as string),
-    author: row.author ? { name: (row.author as { name?: string; avatar?: string }).name ?? '멤버', avatar: (row.author as { name?: string; avatar?: string }).avatar ?? undefined } : undefined,
   }));
 }
 
@@ -1534,7 +1545,7 @@ export async function addComment(postId: string, content: string): Promise<impor
   const { data, error } = await supabase
     .from('space_post_comments')
     .insert({ post_id: postId, author_id: user.id, content: content.trim() })
-    .select('*, author:profiles!space_post_comments_author_id_fkey(name, avatar)')
+    .select('*')
     .single();
   if (error || !data) return null;
   const row = data as Record<string, unknown>;
@@ -1544,7 +1555,6 @@ export async function addComment(postId: string, content: string): Promise<impor
     authorId: row.author_id as string,
     content: row.content as string,
     createdAt: new Date(row.created_at as string),
-    author: row.author ? { name: (row.author as { name?: string; avatar?: string }).name ?? '멤버', avatar: (row.author as { name?: string; avatar?: string }).avatar ?? undefined } : undefined,
   };
 }
 
@@ -1581,10 +1591,9 @@ export async function castVote(optionId: string, isSelected: boolean): Promise<b
 
 // ── 매핑 헬퍼 (private) ───────────────────────────────────
 function mapSpacePost(row: Record<string, unknown>): SpacePost {
-  const authorRow = row.author as { name?: string; avatar?: string } | null;
-  const commentCountArr = row.comment_count as { count: number }[] | null;
-  const duesArr = row.dues as Record<string, unknown>[] | null;
-  const voteArr = row.vote as Record<string, unknown>[] | null;
+  const commentCountArr = row.space_post_comments as { count: number }[] | null;
+  const duesArr = row.space_dues as Record<string, unknown>[] | null;
+  const voteArr = row.space_votes as Record<string, unknown>[] | null;
   const dues = duesArr?.[0];
   const vote = voteArr?.[0];
   return {
@@ -1596,7 +1605,6 @@ function mapSpacePost(row: Record<string, unknown>): SpacePost {
     pinned: row.pinned as boolean,
     scheduleId: row.schedule_id as string | null,
     createdAt: new Date(row.created_at as string),
-    author: authorRow ? { name: authorRow.name ?? '멤버', avatar: authorRow.avatar ?? undefined } : undefined,
     commentCount: Array.isArray(commentCountArr) ? (commentCountArr[0]?.count ?? 0) : 0,
     dues: dues ? mapDues(dues) : undefined,
     vote: vote ? mapVote(vote) : undefined,
@@ -1604,7 +1612,7 @@ function mapSpacePost(row: Record<string, unknown>): SpacePost {
 }
 
 function mapDues(row: Record<string, unknown>): SpaceDues {
-  const paymentsArr = row.payments as Record<string, unknown>[] | null;
+  const paymentsArr = row.space_dues_payments as Record<string, unknown>[] | null;
   return {
     id: row.id as string,
     postId: row.post_id as string,
@@ -1617,17 +1625,12 @@ function mapDues(row: Record<string, unknown>): SpaceDues {
       userId: p.user_id as string,
       paid: p.paid as boolean,
       paidAt: p.paid_at ? new Date(p.paid_at as string) : null,
-      user: (() => {
-        const u = p.user as { name?: string; avatar?: string } | null;
-        if (!u) return undefined;
-        return { name: u.name ?? '멤버', avatar: u.avatar };
-      })(),
     })),
   };
 }
 
 function mapVote(row: Record<string, unknown>): SpaceVote {
-  const optionsArr = row.options as Record<string, unknown>[] | null;
+  const optionsArr = row.space_vote_options as Record<string, unknown>[] | null;
   return {
     id: row.id as string,
     postId: row.post_id as string,
@@ -1639,7 +1642,7 @@ function mapVote(row: Record<string, unknown>): SpaceVote {
       voteId: o.vote_id as string,
       label: o.label as string,
       sortOrder: o.sort_order as number,
-      voters: ((o.voters as { user_id: string }[] | null) ?? []).map(v => v.user_id),
+      voters: ((o.space_vote_results as { user_id: string }[] | null) ?? []).map(v => v.user_id),
     })),
   };
 }

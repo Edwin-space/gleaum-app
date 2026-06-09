@@ -6,6 +6,7 @@ import { useSpacePosts } from '@/hooks/useSpacePosts';
 import { getPostComments, addComment, deleteComment, toggleDuesPayment, castVote } from '@/lib/db';
 import { formatAmount } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { sendSpaceNotification } from '@/lib/spaceNotify';
 import type { SpacePost, SpacePostComment, SpaceMember, User, SpaceRole } from '@/types';
 
 // ── 상수 ─────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ function formatRelativeTime(date: Date): string {
 // ── Props ─────────────────────────────────────────────────────
 interface SpaceFeedProps {
   spaceId: string | null;
+  spaceName?: string;
   members: SpaceMember[];
   currentUser: User | null;
   currentUserRole: SpaceRole | null;
@@ -290,10 +292,11 @@ function CreatePostModal({ onClose, onCreate }: CreatePostModalProps) {
 interface CommentsProps {
   postId: string;
   currentUserId: string;
+  members: SpaceMember[];
   onRefreshPost: () => void;
 }
 
-function CommentSection({ postId, currentUserId, onRefreshPost }: CommentsProps) {
+function CommentSection({ postId, currentUserId, members, onRefreshPost }: CommentsProps) {
   const [comments, setComments] = useState<SpacePostComment[]>([]);
   const [loading, setLoading]   = useState(true);
   const [text, setText]         = useState('');
@@ -338,12 +341,16 @@ function CommentSection({ postId, currentUserId, onRefreshPost }: CommentsProps)
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
-          {comments.map(c => (
+          {comments.map(c => {
+            const commentAuthorMember = members.find(m => m.userId === c.authorId);
+            const commentAuthorName = commentAuthorMember?.nickname ?? commentAuthorMember?.user?.name ?? c.author?.name ?? '멤버';
+            const commentAuthorAvatar = commentAuthorMember?.user?.avatar ?? c.author?.avatar;
+            return (
             <div key={c.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-              <UserAvatar avatar={c.author?.avatar} name={c.author?.name} size={28} radius={999} fontSize={12} />
+              <UserAvatar avatar={commentAuthorAvatar} name={commentAuthorName} size={28} radius={999} fontSize={12} />
               <div style={{ flex: 1, background: 'var(--theme-surface-muted)', borderRadius: '12px', padding: '8px 12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-text)' }}>{c.author?.name ?? '멤버'}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-text)' }}>{commentAuthorName}</span>
                   <span style={{ fontSize: '10px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>{formatRelativeTime(c.createdAt)}</span>
                 </div>
                 <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--theme-text)', margin: '3px 0 0', lineHeight: 1.5 }}>{c.content}</p>
@@ -355,7 +362,8 @@ function CommentSection({ postId, currentUserId, onRefreshPost }: CommentsProps)
                 >✕</button>
               )}
             </div>
-          ))}
+            );
+          })}
           {comments.length === 0 && (
             <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, textAlign: 'center', margin: 0 }}>첫 댓글을 남겨보세요 ✍️</p>
           )}
@@ -388,11 +396,12 @@ interface PostCardProps {
   post: SpacePost;
   currentUserId: string;
   currentUserRole: SpaceRole | null;
+  members: SpaceMember[];
   onDelete: (id: string) => void;
   onRefresh: () => void;
 }
 
-function PostCard({ post, currentUserId, currentUserRole, onDelete, onRefresh }: PostCardProps) {
+function PostCard({ post, currentUserId, currentUserRole, members, onDelete, onRefresh }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [localVoters, setLocalVoters]   = useState<Record<string, string[]>>(
     () => {
@@ -411,6 +420,11 @@ function PostCard({ post, currentUserId, currentUserRole, onDelete, onRefresh }:
   const isAuthor = post.authorId === currentUserId;
   const isAdmin  = currentUserRole === 'admin';
   const canDelete = isAuthor || isAdmin;
+
+  // members 배열에서 작성자 조회
+  const authorMember = members.find(m => m.userId === post.authorId);
+  const authorName = authorMember?.nickname ?? authorMember?.user?.name ?? post.author?.name ?? '멤버';
+  const authorAvatar = authorMember?.user?.avatar ?? post.author?.avatar;
 
   const handleVote = async (optionId: string) => {
     const isSelected = localVoters[optionId]?.includes(currentUserId) ?? false;
@@ -463,10 +477,10 @@ function PostCard({ post, currentUserId, currentUserRole, onDelete, onRefresh }:
       {/* 헤더 */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <UserAvatar avatar={post.author?.avatar} name={post.author?.name} size={36} radius={12} fontSize={16} />
+          <UserAvatar avatar={authorAvatar} name={authorName} size={36} radius={12} fontSize={16} />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)' }}>{post.author?.name ?? '멤버'}</span>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)' }}>{authorName}</span>
               <span style={{
                 padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 800,
                 background: cfg.bg, color: cfg.color,
@@ -623,6 +637,7 @@ function PostCard({ post, currentUserId, currentUserRole, onDelete, onRefresh }:
         <CommentSection
           postId={post.id}
           currentUserId={currentUserId}
+          members={members}
           onRefreshPost={onRefresh}
         />
       )}
@@ -631,12 +646,26 @@ function PostCard({ post, currentUserId, currentUserRole, onDelete, onRefresh }:
 }
 
 // ── 메인 SpaceFeed 컴포넌트 ──────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function SpaceFeed({ spaceId, members: _members, currentUser, currentUserRole }: SpaceFeedProps) {
+export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUserRole }: SpaceFeedProps) {
   const { posts, loading, refresh, create, remove } = useSpacePosts(spaceId);
   const [showCreate, setShowCreate] = useState(false);
 
   const currentUserId = currentUser?.id ?? '';
+
+  const handleCreate = async (input: Parameters<typeof create>[0]) => {
+    const result = await create(input);
+    if (result && spaceId && spaceName) {
+      // 공유 공간에서만 알림 전송
+      void sendSpaceNotification({
+        spaceId,
+        spaceName,
+        message: `새 게시물이 등록되었습니다. 확인해보세요.`,
+        url: `/space`,
+        excludeUserId: currentUserId,
+      });
+    }
+    return result;
+  };
 
   return (
     <div>
@@ -684,6 +713,7 @@ export function SpaceFeed({ spaceId, members: _members, currentUser, currentUser
               post={post}
               currentUserId={currentUserId}
               currentUserRole={currentUserRole}
+              members={members}
               onDelete={remove}
               onRefresh={refresh}
             />
@@ -695,7 +725,7 @@ export function SpaceFeed({ spaceId, members: _members, currentUser, currentUser
       {showCreate && (
         <CreatePostModal
           onClose={() => setShowCreate(false)}
-          onCreate={create}
+          onCreate={handleCreate}
         />
       )}
     </div>

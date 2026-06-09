@@ -66,3 +66,24 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// ── 푸시 알림 수신 ──
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? '글리움', {
+      body: data.body ?? '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-72.png',
+      tag: data.tag ?? 'gleaum',
+      data: { url: data.url ?? '/space' },
+      requireInteraction: false,
+    })
+  );
+});
+
+// ── 알림 클릭 처리 ──
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow(event.notification.data?.url ?? '/space'));
+});
