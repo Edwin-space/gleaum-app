@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface KakaoAdBannerProps {
   adUnit: string;
@@ -13,28 +13,38 @@ interface KakaoAdBannerProps {
 /**
  * 카카오 AdFit 배너 컴포넌트
  *
- * next/script 대신 useEffect로 스크립트를 직접 주입한다.
- * 이유: ba.min.js 는 로드 시점에 DOM을 스캔하므로, <ins> 요소가
- * 이미 렌더링된 뒤에 스크립트가 실행되어야 광고가 표시된다.
- * SPA 내비게이션 시에도 컴포넌트 재마운트 → useEffect 재실행 →
- * 스크립트 재삽입으로 항상 올바르게 동작한다.
+ * 공식 가이드(https://github.com/adfit/adfit-web-sdk) 기준:
+ *  - <ins> 바로 뒤에 <script async> 가 위치해야 함
+ *  - <ins> style 에 width:100% 포함 필요
+ *  - 스크립트는 body 하단에 위치 권장
+ *
+ * React SPA 대응:
+ *  - useEffect: <ins> 가 DOM에 마운트된 뒤 스크립트 삽입 보장
+ *  - 기존 스크립트 제거 후 재삽입 → SPA 이동 후에도 재실행
+ *  - document.body 에 append (가이드 권장 위치)
  */
 export function KakaoAdBanner({ adUnit, width, height, className, style }: KakaoAdBannerProps) {
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
+
   useEffect(() => {
-    // 동일 스크립트가 이미 있으면 제거 (SPA 이동 후 재실행 보장)
+    // 이전에 삽입된 동일 스크립트 제거 (SPA 재진입 시 재실행 보장)
     const existing = document.querySelector('script[src*="ba.min.js"]');
     if (existing) existing.remove();
 
     const script = document.createElement('script');
-    script.type  = 'text/javascript';
-    script.src   = '//t1.kakaocdn.net/kas/static/ba.min.js';
-    script.async = true;
-    document.head.appendChild(script);
+    script.type      = 'text/javascript';
+    script.charset   = 'utf-8';
+    script.src       = 'https://t1.kakaocdn.net/kas/static/ba.min.js';
+    script.async     = true;
+
+    // 공식 가이드: </body> 바로 위 배치 권장
+    document.body.appendChild(script);
+    scriptRef.current = script;
 
     return () => {
       try { script.remove(); } catch { /* 이미 제거됨 */ }
     };
-  }, []); // 마운트 1회 — <ins>가 DOM에 있을 때 실행됨
+  }, []); // 마운트 1회 — <ins>가 DOM에 존재한 뒤 실행
 
   return (
     <div
@@ -46,9 +56,14 @@ export function KakaoAdBanner({ adUnit, width, height, className, style }: Kakao
         ...style,
       }}
     >
+      {/*
+        공식 가이드 스펙:
+          style="display:none;width:100%;"  ← width:100% 필수
+          data-ad-unit / data-ad-width / data-ad-height
+      */}
       <ins
         className="kakao_ad_area"
-        style={{ display: 'none' }}
+        style={{ display: 'none', width: '100%' }}
         data-ad-unit={adUnit}
         data-ad-width={String(width)}
         data-ad-height={String(height)}
