@@ -344,7 +344,7 @@ export function DesktopSpace() {
             {/* 빠른 액션 버튼 */}
             <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
               <button
-                onClick={() => router.push('/space/schedule/new')}
+                onClick={() => router.push(`/space/schedule/new?spaceId=${displaySpaceId ?? ''}`)}
                 style={{
                   padding: '12px 22px', borderRadius: '16px',
                   background: 'linear-gradient(135deg, #0084CC, #0CC9B5)',
@@ -461,13 +461,14 @@ export function DesktopSpace() {
       {/* ════════════════════════════════════════════
           MAIN LAYOUT — 2 columns
       ════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start', minWidth: 0 }}>
 
         {/* ── 왼쪽 메인: 공간 일정 타임라인 ────────────── */}
         <div style={{
           background: 'var(--theme-surface)', borderRadius: '28px',
           padding: '28px 24px',
           boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
+          minWidth: 0, overflow: 'hidden',
         }}>
           <SpaceScheduleTimeline
             spaceId={displaySpaceId}
@@ -658,7 +659,7 @@ export function DesktopSpace() {
                   </p>
                 </div>
                 <button
-                  onClick={() => router.push('/space/schedule/new?type=expense')}
+                  onClick={() => router.push(`/space/schedule/new?spaceId=${displaySpaceId ?? ''}&type=expense`)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '4px',
                     padding: '7px 13px', borderRadius: '12px',

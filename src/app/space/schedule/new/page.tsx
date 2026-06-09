@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { createSchedule, getSpaceSettings } from '@/lib/db';
 import { toast } from 'sonner';
-import type { RepeatType, SpaceMember } from '@/types';
+import type { RepeatType, SpaceMember, ExpenseCategory } from '@/types';
 
 const DEFAULT_SCHEDULE_TYPES = ['공지', '약속', '활동', '행사', '기타'];
 
@@ -156,11 +156,31 @@ function ParticipantPicker({
   );
 }
 
+const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; emoji: string }[] = [
+  { value: 'food',         label: '식비',   emoji: '🍽️' },
+  { value: 'transport',    label: '교통',   emoji: '🚗' },
+  { value: 'housing',      label: '주거',   emoji: '🏠' },
+  { value: 'culture',      label: '여가',   emoji: '🎮' },
+  { value: 'medical',      label: '건강',   emoji: '💊' },
+  { value: 'education',    label: '교육',   emoji: '📚' },
+  { value: 'daily',        label: '생활',   emoji: '🛍️' },
+  { value: 'social',       label: '경조사', emoji: '🎁' },
+];
+
 // ── 메인 페이지 ───────────────────────────────────────────
 export default function SpaceScheduleNewPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const { spaceId, user, loading: userLoading } = useCurrentUser();
+
+  // URL에서 spaceId를 받으면 우선 사용 (다중 공간 지원)
+  const { spaceId: userSpaceId } = useCurrentUser();
+  const urlSpaceId  = searchParams.get('spaceId') || null;
+  const spaceId     = urlSpaceId || userSpaceId;
+
+  // URL에서 type 파라미터 읽기 (expense | schedule)
+  const urlType     = searchParams.get('type');
+  const isExpense   = urlType === 'expense';
+
   const { space, members, myRole } = useSpace(spaceId);
 
   const [saving,        setSaving]        = useState(false);
@@ -172,14 +192,18 @@ export default function SpaceScheduleNewPage() {
   const [participants,  setParticipants]  = useState<string[]>([]);
   const [address,       setAddress]       = useState('');
   const [reminder,      setReminder]      = useState(15);
-  const [repeat,        setRepeat]        = useState<RepeatType>('none');
+  const [repeat]                           = useState<RepeatType>('none');
   const [memo,          setMemo]          = useState('');
   const [customTypes,   setCustomTypes]   = useState<string[]>(DEFAULT_SCHEDULE_TYPES);
   const [typeOpen,      setTypeOpen]      = useState(false);
 
+  // ── 지출 전용 상태 ─────────────────────────────────────
+  const [amount,       setAmount]       = useState('');
+  const [expCategory,  setExpCategory]  = useState<ExpenseCategory>('food');
+
   // 공간 커스텀 유형 로드
   useEffect(() => {
-    if (!spaceId) return;
+    if (!spaceId || isExpense) return;
     getSpaceSettings(spaceId).then(settings => {
       if (settings.scheduleTypes?.length) {
         setCustomTypes(settings.scheduleTypes);
@@ -188,42 +212,60 @@ export default function SpaceScheduleNewPage() {
         setScheduleType(DEFAULT_SCHEDULE_TYPES[0]);
       }
     });
-  }, [spaceId]);
+  }, [spaceId, isExpense]);
 
   // 참여자 초기화 (전체 선택) — userId(auth UUID) 사용
   useEffect(() => {
     if (members.length > 0 && participants.length === 0) {
-      setParticipants(members.map(m => m.userId));
+      setParticipants(members.map(m => m.userId)); // eslint-disable-line react-hooks/set-state-in-effect
     }
-  }, [members]);
+  }, [members]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleParticipant = (id: string) => {
     setParticipants(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
   };
 
   const handleSave = async () => {
-    if (!title.trim()) { toast.error('일정 제목을 입력해주세요'); return; }
+    if (!title.trim()) { toast.error('제목을 입력해주세요'); return; }
     if (!spaceId) { toast.error('공간 정보를 불러오는 중입니다'); return; }
-    if (myRole === 'viewer') { toast.error('조회 권한만 있어 일정을 등록할 수 없습니다'); return; }
+    if (myRole === 'viewer') { toast.error('조회 권한만 있어 등록할 수 없습니다'); return; }
+    if (isExpense && (!amount || Number(amount.replace(/,/g, '')) <= 0)) {
+      toast.error('금액을 입력해주세요'); return;
+    }
 
     setSaving(true);
     try {
-      await createSchedule(spaceId, {
-        title: title.trim(),
-        type: 'shared',
-        startTime: new Date(`${date}T${startTime}`),
-        endTime:   new Date(`${date}T${endTime}`),
-        participantIds: participants,
-        locationAddress: address || undefined,
-        reminder,
-        repeat,
-        memo: memo || undefined,
-      });
-      toast.success('공간 일정이 등록되었습니다');
+      if (isExpense) {
+        await createSchedule(spaceId, {
+          title:           title.trim(),
+          type:            'expense',
+          visibility:      'space',
+          startTime:       new Date(`${date}T${startTime}`),
+          endTime:         new Date(`${date}T${endTime}`),
+          participantIds:  participants,
+          amount:          Number(amount.replace(/,/g, '')),
+          expenseCategory: expCategory,
+          memo:            memo || undefined,
+        });
+        toast.success('공간 지출이 등록되었습니다');
+      } else {
+        await createSchedule(spaceId, {
+          title:           title.trim(),
+          type:            'shared',
+          startTime:       new Date(`${date}T${startTime}`),
+          endTime:         new Date(`${date}T${endTime}`),
+          participantIds:  participants,
+          locationAddress: address || undefined,
+          reminder,
+          repeat,
+          memo:            memo || undefined,
+        });
+        toast.success('공간 일정이 등록되었습니다');
+      }
       router.back();
     } catch (e) {
       console.error(e);
-      toast.error('일정 저장에 실패했습니다');
+      toast.error('저장에 실패했습니다');
     } finally {
       setSaving(false);
     }
@@ -260,7 +302,7 @@ export default function SpaceScheduleNewPage() {
 
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '17px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.03em' }}>
-            공간 일정 등록
+            {isExpense ? '공간 지출 등록' : '공간 일정 등록'}
           </p>
           {space?.name && (
             <p style={{ fontSize: '12px', color: '#0084CC', fontWeight: 700, margin: '2px 0 0' }}>
@@ -298,6 +340,59 @@ export default function SpaceScheduleNewPage() {
           />
         </div>
 
+        {/* ── 금액 (지출 전용) ── */}
+        {isExpense && (
+          <div style={cardBase}>
+            <SectionLabel>금액 *</SectionLabel>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', fontWeight: 800, color: '#D97706' }}>₩</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amount}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9]/g, '');
+                  setAmount(raw ? Number(raw).toLocaleString() : '');
+                }}
+                placeholder="0"
+                style={{
+                  ...inputBase,
+                  height: '56px', fontSize: '22px', fontWeight: 900,
+                  paddingLeft: '40px', textAlign: 'right',
+                  border: `1.5px solid ${amount ? 'rgba(217,119,6,0.5)' : '#EBEBF0'}`,
+                  color: '#D97706',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── 카테고리 (지출 전용) ── */}
+        {isExpense && (
+          <div style={cardBase}>
+            <SectionLabel>지출 카테고리</SectionLabel>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {EXPENSE_CATEGORIES.map(cat => (
+                <button
+                  key={cat.value}
+                  onClick={() => setExpCategory(cat.value)}
+                  style={{
+                    padding: '8px 14px', borderRadius: '999px',
+                    border: `1.5px solid ${expCategory === cat.value ? 'transparent' : '#EBEBF0'}`,
+                    background: expCategory === cat.value ? 'rgba(217,119,6,0.12)' : '#F7F7FA',
+                    fontSize: '13px', fontWeight: 700,
+                    color: expCategory === cat.value ? '#D97706' : '#6E6E66',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                  }}
+                >
+                  <span>{cat.emoji}</span>{cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 날짜 & 시간 */}
         <div style={cardBase}>
           <SectionLabel>날짜 &amp; 시간</SectionLabel>
@@ -316,61 +411,63 @@ export default function SpaceScheduleNewPage() {
           </div>
         </div>
 
-        {/* 일정 유형 드롭다운 (item 8) */}
-        <div style={cardBase}>
-          <SectionLabel>일정 유형</SectionLabel>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setTypeOpen(o => !o)}
-              style={{
-                ...inputBase, height: '52px', border: `1.5px solid ${scheduleType ? '#0084CC80' : '#EBEBF0'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                paddingRight: '14px', cursor: 'pointer', background: '#F7F7FA',
-              } as React.CSSProperties}
-            >
-              <span style={{ fontSize: '15px', fontWeight: 700, color: scheduleType ? '#1A1B2E' : '#AEAEB2' }}>
-                {scheduleType || '일정 유형 선택'}
-              </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round">
-                <path d={typeOpen ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'}/>
-              </svg>
-            </button>
+        {/* 일정 유형 드롭다운 — 일정 모드만 */}
+        {!isExpense && (
+          <div style={cardBase}>
+            <SectionLabel>일정 유형</SectionLabel>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setTypeOpen(o => !o)}
+                style={{
+                  ...inputBase, height: '52px', border: `1.5px solid ${scheduleType ? '#0084CC80' : '#EBEBF0'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  paddingRight: '14px', cursor: 'pointer', background: '#F7F7FA',
+                } as React.CSSProperties}
+              >
+                <span style={{ fontSize: '15px', fontWeight: 700, color: scheduleType ? '#1A1B2E' : '#AEAEB2' }}>
+                  {scheduleType || '일정 유형 선택'}
+                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round">
+                  <path d={typeOpen ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'}/>
+                </svg>
+              </button>
 
-            {typeOpen && (
-              <div style={{
-                position: 'absolute', top: '56px', left: 0, right: 0, zIndex: 30,
-                background: 'var(--theme-surface)', borderRadius: '14px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                border: '1px solid rgba(0,0,0,0.06)',
-                overflow: 'hidden',
-              }}>
-                {customTypes.map((t, i) => (
-                  <button
-                    key={t}
-                    onClick={() => { setScheduleType(t); setTypeOpen(false); }}
-                    style={{
-                      width: '100%', padding: '14px 18px', textAlign: 'left',
-                      background: scheduleType === t ? 'rgba(0,132,204,0.06)' : 'white',
-                      border: 'none',
-                      borderTop: i > 0 ? '1px solid #F2F2F7' : 'none',
-                      cursor: 'pointer',
-                      fontSize: '15px', fontWeight: scheduleType === t ? 800 : 600,
-                      color: scheduleType === t ? '#0084CC' : '#1A1B2E',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    }}
-                  >
-                    {t}
-                    {scheduleType === t && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.5" strokeLinecap="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+              {typeOpen && (
+                <div style={{
+                  position: 'absolute', top: '56px', left: 0, right: 0, zIndex: 30,
+                  background: 'var(--theme-surface)', borderRadius: '14px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  overflow: 'hidden',
+                }}>
+                  {customTypes.map((t, i) => (
+                    <button
+                      key={t}
+                      onClick={() => { setScheduleType(t); setTypeOpen(false); }}
+                      style={{
+                        width: '100%', padding: '14px 18px', textAlign: 'left',
+                        background: scheduleType === t ? 'rgba(0,132,204,0.06)' : 'white',
+                        border: 'none',
+                        borderTop: i > 0 ? '1px solid #F2F2F7' : 'none',
+                        cursor: 'pointer',
+                        fontSize: '15px', fontWeight: scheduleType === t ? 800 : 600,
+                        color: scheduleType === t ? '#0084CC' : '#1A1B2E',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      }}
+                    >
+                      {t}
+                      {scheduleType === t && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.5" strokeLinecap="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 참여자 (item 9) */}
         <div style={cardBase}>
@@ -387,41 +484,45 @@ export default function SpaceScheduleNewPage() {
           />
         </div>
 
-        {/* 장소 */}
-        <div style={cardBase}>
-          <SectionLabel>장소 (선택)</SectionLabel>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', pointerEvents: 'none' }}>📍</span>
-            <input
-              value={address} onChange={e => setAddress(e.target.value)}
-              placeholder="장소를 입력하세요"
-              style={{ ...inputBase, border: `1.5px solid ${address ? '#0084CC80' : '#EBEBF0'}`, paddingLeft: '42px' }}
-            />
+        {/* 장소 — 일정 모드만 */}
+        {!isExpense && (
+          <div style={cardBase}>
+            <SectionLabel>장소 (선택)</SectionLabel>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', pointerEvents: 'none' }}>📍</span>
+              <input
+                value={address} onChange={e => setAddress(e.target.value)}
+                placeholder="장소를 입력하세요"
+                style={{ ...inputBase, border: `1.5px solid ${address ? '#0084CC80' : '#EBEBF0'}`, paddingLeft: '42px' }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* 알림 */}
-        <div style={cardBase}>
-          <SectionLabel>알림 설정</SectionLabel>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {REMINDER_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setReminder(opt.value)}
-                style={{
-                  padding: '9px 16px', borderRadius: '100px',
-                  border: `1.5px solid ${reminder === opt.value ? 'transparent' : '#EBEBF0'}`,
-                  cursor: 'pointer',
-                  background: reminder === opt.value ? '#0084CC' : '#F7F7FA',
-                  fontSize: '12px', fontWeight: 700,
-                  color: reminder === opt.value ? 'white' : '#6E6E66',
-                  boxShadow: reminder === opt.value ? '0 3px 12px rgba(0,132,204,0.30)' : 'none',
-                  transition: 'all 0.15s',
-                }}
-              >{opt.label}</button>
-            ))}
+        {/* 알림 — 일정 모드만 */}
+        {!isExpense && (
+          <div style={cardBase}>
+            <SectionLabel>알림 설정</SectionLabel>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {REMINDER_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setReminder(opt.value)}
+                  style={{
+                    padding: '9px 16px', borderRadius: '100px',
+                    border: `1.5px solid ${reminder === opt.value ? 'transparent' : '#EBEBF0'}`,
+                    cursor: 'pointer',
+                    background: reminder === opt.value ? '#0084CC' : '#F7F7FA',
+                    fontSize: '12px', fontWeight: 700,
+                    color: reminder === opt.value ? 'white' : '#6E6E66',
+                    boxShadow: reminder === opt.value ? '0 3px 12px rgba(0,132,204,0.30)' : 'none',
+                    transition: 'all 0.15s',
+                  }}
+                >{opt.label}</button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 메모 */}
         <div style={cardBase}>

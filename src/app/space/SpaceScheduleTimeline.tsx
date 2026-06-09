@@ -181,7 +181,7 @@ export function SpaceScheduleTimeline({ spaceId, members, currentUserId }: Props
 
   // ── 렌더 ──────────────────────────────────────────────
   return (
-    <div style={{ padding: '0 16px', marginBottom: '32px' }}>
+    <div style={{ marginBottom: '32px' }}>
 
       {/* Section heading */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', paddingLeft: '4px' }}>
