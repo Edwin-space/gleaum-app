@@ -84,6 +84,9 @@ export function DesktopSpace() {
   const [joinError,     setJoinError]     = useState('');
   const [joinSuccess,   setJoinSuccess]   = useState(false);
 
+  // ── 공간 관리 드롭다운 ──────────────────────────────────────
+  const [showSpaceMgmt, setShowSpaceMgmt] = useState(false);
+
   // ── 이름 수정 모달 ─────────────────────────────────────────
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renamingTo,      setRenamingTo]      = useState('');
@@ -393,25 +396,97 @@ export function DesktopSpace() {
             </div>
           </div>
 
-          {/* 다중 공간 탭 */}
-          {mySpaces.length > 1 && (
-            <div style={{ display: 'flex', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
-              {mySpaces.map((s, i) => (
-                <button
-                  key={s.id}
-                  onClick={() => { setSpaceIndex(i); setActiveSpaceId(s.id); }}
-                  style={{
-                    padding: '6px 16px', borderRadius: '999px', fontSize: '12px', fontWeight: 800,
-                    background: i === spaceIndex ? 'rgba(0,132,204,0.35)' : 'rgba(255,255,255,0.08)',
-                    border: `1px solid ${i === spaceIndex ? 'rgba(0,132,204,0.60)' : 'rgba(255,255,255,0.12)'}`,
-                    color: 'white', cursor: 'pointer', transition: 'all 0.2s',
-                  }}
-                >
-                  {s.id === personalSpaceId ? '🔒 ' : ''}{s.name}
-                </button>
-              ))}
+          {/* 공간 탭 + 공간 관리 버튼 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px', flexWrap: 'wrap' }}>
+            {mySpaces.map((s, i) => (
+              <button
+                key={s.id}
+                onClick={() => { setSpaceIndex(i); setActiveSpaceId(s.id); }}
+                style={{
+                  padding: '6px 16px', borderRadius: '999px', fontSize: '12px', fontWeight: 800,
+                  background: i === spaceIndex ? 'rgba(0,132,204,0.35)' : 'rgba(255,255,255,0.08)',
+                  border: `1px solid ${i === spaceIndex ? 'rgba(0,132,204,0.60)' : 'rgba(255,255,255,0.12)'}`,
+                  color: 'white', cursor: 'pointer', transition: 'all 0.2s',
+                }}
+              >
+                {s.id === personalSpaceId ? '🔒 ' : ''}{s.name}
+                {joinSuccess && s.id === activeSpaceId && (
+                  <span style={{ marginLeft: '6px', fontSize: '10px', color: '#0CC9B5' }}>✓</span>
+                )}
+              </button>
+            ))}
+
+            {/* 공간 관리 드롭다운 (참여 / 새 공간) */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowSpaceMgmt(v => !v)}
+                title="공간 참여 · 새 공간 만들기"
+                style={{
+                  width: '30px', height: '30px', borderRadius: '50%',
+                  background: showSpaceMgmt ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.10)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  color: 'white', fontSize: '16px', fontWeight: 900,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.15s', lineHeight: 1,
+                }}
+              >+</button>
+
+              {showSpaceMgmt && (
+                <>
+                  {/* 바깥 클릭 닫기 */}
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 98 }}
+                    onClick={() => setShowSpaceMgmt(false)}
+                  />
+                  <div style={{
+                    position: 'absolute', top: '38px', left: 0, zIndex: 99,
+                    background: 'var(--theme-surface)', borderRadius: '18px', padding: '8px',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: '1px solid rgba(0,0,0,0.06)',
+                    minWidth: '200px',
+                  }}>
+                    {/* 공간 참여하기 */}
+                    <button
+                      onClick={() => { setShowSpaceMgmt(false); setShowJoinModal(true); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 12px', borderRadius: '12px', width: '100%',
+                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--theme-surface-muted)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                    >
+                      <span style={{ fontSize: '18px' }}>🗝️</span>
+                      <div>
+                        <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>공간 참여하기</p>
+                        <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '1px 0 0' }}>초대 코드로 입장</p>
+                      </div>
+                    </button>
+                    {/* 새 공간 만들기 */}
+                    <button
+                      disabled={spaceAtLimit}
+                      onClick={() => { if (!spaceAtLimit) { setShowSpaceMgmt(false); router.push('/space/new'); } }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 12px', borderRadius: '12px', width: '100%',
+                        background: 'none', border: 'none', cursor: spaceAtLimit ? 'not-allowed' : 'pointer',
+                        textAlign: 'left', opacity: spaceAtLimit ? 0.5 : 1,
+                      }}
+                      onMouseEnter={e => { if (!spaceAtLimit) e.currentTarget.style.background = 'var(--theme-surface-muted)'; }}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                    >
+                      <span style={{ fontSize: '18px' }}>{spaceAtLimit ? '🔒' : '🏡'}</span>
+                      <div>
+                        <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>새 공간 만들기</p>
+                        <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '1px 0 0' }}>
+                          {spaceAtLimit ? `${FREE_MAX_SPACES}개 한도 (무료)` : `${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -571,31 +646,13 @@ export function DesktopSpace() {
             background: 'var(--theme-surface)', borderRadius: '24px', padding: '24px',
             boxShadow: '0 2px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 2px' }}>
-                  공간 멤버
-                </h3>
-                <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>
-                  {memberAtLimit
-                    ? `${memberCount}명 · 최대 도달`
-                    : `${memberCount}명`}
-                </p>
-              </div>
-              {!isPersonalSpace && !memberAtLimit && (
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '5px',
-                    padding: '7px 13px', borderRadius: '12px',
-                    background: 'rgba(0,132,204,0.08)', border: '1px solid rgba(0,132,204,0.15)',
-                    color: '#0084CC', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-                  초대
-                </button>
-              )}
+            <div style={{ marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 2px' }}>
+                공간 멤버
+              </h3>
+              <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>
+                {memberAtLimit ? `${memberCount}명 · 최대 도달` : `${memberCount}명`}
+              </p>
             </div>
 
             {loading ? (
@@ -857,62 +914,6 @@ export function DesktopSpace() {
               )}
             </div>
           )}
-
-          {/* ── 공간 관리 (미니) ── */}
-          <div style={{
-            background: 'var(--theme-surface)', borderRadius: '24px', padding: '20px',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
-          }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 12px' }}>
-              공간 관리
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-
-              {/* 공간 참여하기 */}
-              <button
-                onClick={() => setShowJoinModal(true)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '12px 14px', borderRadius: '14px',
-                  background: 'var(--theme-surface-muted)', border: 'none',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                }}
-              >
-                <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(12,201,181,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>🗝️</div>
-                <div>
-                  <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>
-                    공간 참여하기
-                    {joinSuccess && <span style={{ marginLeft: '8px', fontSize: '11px', color: '#0CC9B5' }}>✓ 합류됨</span>}
-                  </p>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '1px 0 0' }}>초대 코드로 입장</p>
-                </div>
-              </button>
-
-              {/* 새 공간 만들기 */}
-              <button
-                disabled={spaceAtLimit}
-                onClick={() => !spaceAtLimit && router.push('/space/new')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '12px 14px', borderRadius: '14px',
-                  background: spaceAtLimit ? 'rgba(0,0,0,0.02)' : 'var(--theme-surface-muted)',
-                  border: 'none',
-                  cursor: spaceAtLimit ? 'not-allowed' : 'pointer', textAlign: 'left', width: '100%',
-                  opacity: spaceAtLimit ? 0.6 : 1,
-                }}
-              >
-                <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(0,132,204,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
-                  {spaceAtLimit ? '🔒' : '🏡'}
-                </div>
-                <div>
-                  <p style={{ fontSize: '13px', fontWeight: 800, color: spaceAtLimit ? '#C7C7CC' : 'var(--theme-text)', margin: 0 }}>새 공간 만들기</p>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '1px 0 0' }}>
-                    {spaceAtLimit ? `공유 공간 ${FREE_MAX_SPACES}개 한도 (무료)` : `${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
 
         </div>
         {/* ── 사이드바 끝 ── */}
