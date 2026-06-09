@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { joinSpaceByCode, getSpaceByCode } from '@/lib/db';
+import { joinSpaceByCode, updateSpaceMemberNickname } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { trackEvent } from '@/lib/analytics';
 
@@ -24,7 +24,13 @@ export default function SpaceJoinPage() {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
+  const [joinedSpaceId, setJoinedSpaceId] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  // ── 닉네임 설정 단계 ──
+  const [showNicknameStep, setShowNicknameStep] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [savingNickname, setSavingNickname] = useState(false);
 
   // 공간 정보 로드
   useEffect(() => {
@@ -54,6 +60,12 @@ export default function SpaceJoinPage() {
   // ★ 자동 참여 제거: 사용자가 명시적으로 버튼을 눌러야 참여됨
   // (자동 참여는 사용자 동의 없이 공간에 추가되는 보안 문제 있음)
 
+  const proceedAfterJoin = (spaceId: string) => {
+    setJoinedSpaceId(spaceId);
+    setJoined(true);
+    setShowNicknameStep(true);
+  };
+
   const handleJoin = async () => {
     if (!space) return;
     if (!space.invite_code) {
@@ -70,8 +82,7 @@ export default function SpaceJoinPage() {
         await refresh();
         try { localStorage.setItem('gleaum_lastSpaceId', space.id); } catch {}
         void trackEvent('join_group', { group_id: space.id });
-        setJoined(true);
-        setTimeout(() => router.replace(`/space?sid=${space.id}`), 1500);
+        proceedAfterJoin(space.id);
       }
       setJoining(false);
       return;
@@ -83,12 +94,21 @@ export default function SpaceJoinPage() {
       await refresh();
       try { localStorage.setItem('gleaum_lastSpaceId', space.id); } catch {}
       if (result.success) void trackEvent('join_group', { group_id: space.id });
-      setJoined(true);
-      setTimeout(() => router.replace(`/space?sid=${space.id}`), 1500);
+      proceedAfterJoin(space.id);
     } else {
       setError('공간 참여에 실패했습니다. 다시 시도해주세요.');
     }
     setJoining(false);
+  };
+
+  const handleNicknameSave = async () => {
+    if (!joinedSpaceId) return;
+    if (nickname.trim()) {
+      setSavingNickname(true);
+      await updateSpaceMemberNickname(joinedSpaceId, nickname.trim());
+      setSavingNickname(false);
+    }
+    router.replace(`/space?sid=${joinedSpaceId}`);
   };
 
   const goToLogin = () => {
@@ -206,11 +226,47 @@ export default function SpaceJoinPage() {
         </div>
 
         {/* CTA 버튼 */}
-        {joined ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
-            <p style={{ fontSize: '16px', fontWeight: 800, color: '#0CC9B5', margin: 0 }}>공간에 참여했어요!</p>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: '4px 0 0' }}>잠시 후 공간으로 이동합니다</p>
+        {joined && showNicknameStep ? (
+          <div style={{ animation: 'fadeUp 0.4s ease' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎉</div>
+              <p style={{ fontSize: '18px', fontWeight: 900, color: '#0CC9B5', margin: '0 0 4px' }}>공간에 참여했어요!</p>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', margin: 0 }}>
+                이 공간에서 사용할 닉네임을 설정하세요.<br />나중에 언제든 변경할 수 있어요.
+              </p>
+            </div>
+            <input
+              value={nickname}
+              onChange={e => setNickname(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && void handleNicknameSave()}
+              placeholder={`${user?.displayName ?? user?.name ?? '나'}의 닉네임`}
+              style={{
+                width: '100%', height: '54px', padding: '0 20px', borderRadius: '16px',
+                fontSize: '16px', fontWeight: 700,
+                background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.15)',
+                color: 'white', outline: 'none', boxSizing: 'border-box', marginBottom: '12px',
+              }}
+            />
+            <button
+              onClick={handleNicknameSave}
+              disabled={savingNickname}
+              style={{
+                width: '100%', height: '54px', borderRadius: '16px',
+                background: 'linear-gradient(135deg, #0CC9B5, #0084CC)',
+                border: 'none', cursor: savingNickname ? 'not-allowed' : 'pointer',
+                fontSize: '16px', fontWeight: 900, color: 'white',
+                boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
+                opacity: savingNickname ? 0.7 : 1, marginBottom: '10px',
+              }}
+            >
+              {savingNickname ? '저장 중...' : (nickname.trim() ? '닉네임 저장하고 입장하기' : '건너뛰고 입장하기')}
+            </button>
+            <button
+              onClick={() => router.replace(`/space?sid=${joinedSpaceId ?? ''}`)}
+              style={{ width: '100%', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}
+            >
+              건너뛰기
+            </button>
           </div>
         ) : user ? (
           <button

@@ -23,6 +23,10 @@ import type {
   SpaceRole,
   SpaceMember,
   Space,
+  SpacePost,
+  SpacePostType,
+  SpaceDues,
+  SpaceVote,
 } from '@/types';
 
 // [전역 상태] 세션 내 무한 루프 방지용
@@ -72,6 +76,7 @@ export interface SpaceMemberRow {
   user_id:   string;
   role:      SpaceRole;
   joined_at: string;
+  nickname?: string | null;
   // join 시 포함될 수 있는 profiles 데이터
   profiles?: ProfileRow | null;
 }
@@ -185,6 +190,7 @@ export function rowToSpaceMember(row: SpaceMemberRow): SpaceMember {
     userId:   row.user_id,
     role:     row.role,
     joinedAt: new Date(row.joined_at),
+    nickname: row.nickname ?? undefined,
     user:     row.profiles ? rowToUser(row.profiles) : undefined,
   };
 }
@@ -1408,5 +1414,232 @@ export async function getMyPageInsights(spaceId: string | undefined) {
     memberCount:    memberCount || 0,
     spaceCount:     spaceCount || 0,
     month:          now.getMonth() + 1,
+  };
+}
+
+// ── 공간 멤버 닉네임 ──────────────────────────────────
+export async function updateSpaceMemberNickname(spaceId: string, nickname: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { error } = await supabase
+    .from('space_members')
+    .update({ nickname: nickname.trim() || null })
+    .eq('space_id', spaceId)
+    .eq('user_id', user.id);
+  return !error;
+}
+
+// ── 공간 게시물 ────────────────────────────────────────
+export interface CreateSpacePostInput {
+  type: SpacePostType;
+  content?: string;
+  pinned?: boolean;
+  scheduleId?: string;
+  dues?: { totalAmount: number; perPerson?: number; dueDate?: string };
+  vote?: { title: string; multipleChoice: boolean; endsAt?: string; options: string[] };
+}
+
+export async function getSpacePosts(spaceId: string): Promise<SpacePost[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('space_posts')
+    .select(`
+      *,
+      author:profiles!space_posts_author_id_fkey(name, avatar),
+      comment_count:space_post_comments(count),
+      dues:space_dues(*, payments:space_dues_payments(*, user:profiles!space_dues_payments_user_id_fkey(name, avatar))),
+      vote:space_votes(*, options:space_vote_options(*, voters:space_vote_results(user_id)))
+    `)
+    .eq('space_id', spaceId)
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) { console.error('[getSpacePosts]', error.message); return []; }
+  return (data ?? []).map(mapSpacePost);
+}
+
+export async function createSpacePost(spaceId: string, input: CreateSpacePostInput): Promise<SpacePost | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: postData, error: postError } = await supabase
+    .from('space_posts')
+    .insert({
+      space_id: spaceId,
+      author_id: user.id,
+      type: input.type,
+      content: input.content ?? null,
+      pinned: input.pinned ?? false,
+      schedule_id: input.scheduleId ?? null,
+    })
+    .select()
+    .single();
+  if (postError || !postData) { console.error('[createSpacePost]', postError?.message); return null; }
+  // 회비 생성
+  if (input.dues && input.type === 'dues') {
+    await supabase.from('space_dues').insert({
+      post_id: postData.id,
+      title: input.content ?? '회비 요청',
+      total_amount: input.dues.totalAmount,
+      per_person: input.dues.perPerson ?? null,
+      due_date: input.dues.dueDate ?? null,
+    });
+  }
+  // 투표 생성
+  if (input.vote && input.type === 'vote') {
+    const { data: voteData } = await supabase.from('space_votes').insert({
+      post_id: postData.id,
+      title: input.vote.title,
+      multiple_choice: input.vote.multipleChoice,
+      ends_at: input.vote.endsAt ?? null,
+    }).select().single();
+    if (voteData && input.vote.options.length > 0) {
+      await supabase.from('space_vote_options').insert(
+        input.vote.options.map((label, i) => ({ vote_id: voteData.id, label, sort_order: i }))
+      );
+    }
+  }
+  const posts = await getSpacePosts(spaceId);
+  return posts.find(p => p.id === postData.id) ?? null;
+}
+
+export async function deleteSpacePost(postId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.from('space_posts').delete().eq('id', postId);
+  return !error;
+}
+
+export async function getPostComments(postId: string): Promise<import('@/types').SpacePostComment[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('space_post_comments')
+    .select('*, author:profiles!space_post_comments_author_id_fkey(name, avatar)')
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('[getPostComments]', error.message); return []; }
+  return (data ?? []).map((row: Record<string, unknown>) => ({
+    id: row.id as string,
+    postId: row.post_id as string,
+    authorId: row.author_id as string,
+    content: row.content as string,
+    createdAt: new Date(row.created_at as string),
+    author: row.author ? { name: (row.author as { name?: string; avatar?: string }).name ?? '멤버', avatar: (row.author as { name?: string; avatar?: string }).avatar ?? undefined } : undefined,
+  }));
+}
+
+export async function addComment(postId: string, content: string): Promise<import('@/types').SpacePostComment | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !content.trim()) return null;
+  const { data, error } = await supabase
+    .from('space_post_comments')
+    .insert({ post_id: postId, author_id: user.id, content: content.trim() })
+    .select('*, author:profiles!space_post_comments_author_id_fkey(name, avatar)')
+    .single();
+  if (error || !data) return null;
+  const row = data as Record<string, unknown>;
+  return {
+    id: row.id as string,
+    postId: row.post_id as string,
+    authorId: row.author_id as string,
+    content: row.content as string,
+    createdAt: new Date(row.created_at as string),
+    author: row.author ? { name: (row.author as { name?: string; avatar?: string }).name ?? '멤버', avatar: (row.author as { name?: string; avatar?: string }).avatar ?? undefined } : undefined,
+  };
+}
+
+export async function deleteComment(commentId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.from('space_post_comments').delete().eq('id', commentId);
+  return !error;
+}
+
+export async function toggleDuesPayment(duesId: string, paid: boolean): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { error } = await supabase.from('space_dues_payments').upsert({
+    dues_id: duesId, user_id: user.id,
+    paid, paid_at: paid ? new Date().toISOString() : null,
+  }, { onConflict: 'dues_id,user_id' });
+  return !error;
+}
+
+export async function castVote(optionId: string, isSelected: boolean): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  if (isSelected) {
+    const { error } = await supabase.from('space_vote_results').insert({ option_id: optionId, user_id: user.id });
+    return !error;
+  } else {
+    const { error } = await supabase.from('space_vote_results').delete()
+      .eq('option_id', optionId).eq('user_id', user.id);
+    return !error;
+  }
+}
+
+// ── 매핑 헬퍼 (private) ───────────────────────────────────
+function mapSpacePost(row: Record<string, unknown>): SpacePost {
+  const authorRow = row.author as { name?: string; avatar?: string } | null;
+  const commentCountArr = row.comment_count as { count: number }[] | null;
+  const duesArr = row.dues as Record<string, unknown>[] | null;
+  const voteArr = row.vote as Record<string, unknown>[] | null;
+  const dues = duesArr?.[0];
+  const vote = voteArr?.[0];
+  return {
+    id: row.id as string,
+    spaceId: row.space_id as string,
+    authorId: row.author_id as string,
+    type: row.type as SpacePostType,
+    content: row.content as string | null,
+    pinned: row.pinned as boolean,
+    scheduleId: row.schedule_id as string | null,
+    createdAt: new Date(row.created_at as string),
+    author: authorRow ? { name: authorRow.name ?? '멤버', avatar: authorRow.avatar ?? undefined } : undefined,
+    commentCount: Array.isArray(commentCountArr) ? (commentCountArr[0]?.count ?? 0) : 0,
+    dues: dues ? mapDues(dues) : undefined,
+    vote: vote ? mapVote(vote) : undefined,
+  };
+}
+
+function mapDues(row: Record<string, unknown>): SpaceDues {
+  const paymentsArr = row.payments as Record<string, unknown>[] | null;
+  return {
+    id: row.id as string,
+    postId: row.post_id as string,
+    title: row.title as string,
+    totalAmount: row.total_amount as number,
+    perPerson: row.per_person as number | null,
+    dueDate: row.due_date as string | null,
+    payments: paymentsArr?.map(p => ({
+      duesId: p.dues_id as string,
+      userId: p.user_id as string,
+      paid: p.paid as boolean,
+      paidAt: p.paid_at ? new Date(p.paid_at as string) : null,
+      user: (() => {
+        const u = p.user as { name?: string; avatar?: string } | null;
+        if (!u) return undefined;
+        return { name: u.name ?? '멤버', avatar: u.avatar };
+      })(),
+    })),
+  };
+}
+
+function mapVote(row: Record<string, unknown>): SpaceVote {
+  const optionsArr = row.options as Record<string, unknown>[] | null;
+  return {
+    id: row.id as string,
+    postId: row.post_id as string,
+    title: row.title as string,
+    multipleChoice: row.multiple_choice as boolean,
+    endsAt: row.ends_at ? new Date(row.ends_at as string) : null,
+    options: optionsArr?.map(o => ({
+      id: o.id as string,
+      voteId: o.vote_id as string,
+      label: o.label as string,
+      sortOrder: o.sort_order as number,
+      voters: ((o.voters as { user_id: string }[] | null) ?? []).map(v => v.user_id),
+    })),
   };
 }

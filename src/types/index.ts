@@ -88,7 +88,71 @@ export interface SpaceMember {
   userId:   string;
   role:     SpaceRole;
   joinedAt: Date;
+  nickname?: string;
   user?:    User;       // join 시 포함
+}
+
+// ── 공간 커뮤니티 피드 ────────────────────────────────────
+
+export type SpacePostType = 'general' | 'schedule' | 'dues' | 'vote' | 'notice';
+
+export interface SpacePost {
+  id: string;
+  spaceId: string;
+  authorId: string;
+  type: SpacePostType;
+  content: string | null;
+  pinned: boolean;
+  scheduleId: string | null;
+  createdAt: Date;
+  author?: { name: string; avatar?: string };
+  commentCount?: number;
+  dues?: SpaceDues;
+  vote?: SpaceVote;
+}
+
+export interface SpacePostComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  content: string;
+  createdAt: Date;
+  author?: { name: string; avatar?: string };
+}
+
+export interface SpaceDues {
+  id: string;
+  postId: string;
+  title: string;
+  totalAmount: number;
+  perPerson: number | null;
+  dueDate: string | null;
+  payments?: SpaceDuesPayment[];
+}
+
+export interface SpaceDuesPayment {
+  duesId: string;
+  userId: string;
+  paid: boolean;
+  paidAt: Date | null;
+  user?: { name: string; avatar?: string };
+}
+
+export interface SpaceVote {
+  id: string;
+  postId: string;
+  title: string;
+  multipleChoice: boolean;
+  endsAt: Date | null;
+  options?: SpaceVoteOption[];
+}
+
+export interface SpaceVoteOption {
+  id: string;
+  voteId: string;
+  label: string;
+  sortOrder: number;
+  voters?: string[]; // userId 배열
 }
 
 /** 공간 목적 */

@@ -8,8 +8,9 @@ import { useSchedules } from '@/hooks/useSchedules';
 import {
   joinSpaceByCode, updateSpaceName, removeSpaceMember,
   getMySpaces, updateSpaceMemberRole, regenerateInviteCode,
+  updateSpaceMemberNickname,
 } from '@/lib/db';
-import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
+import { SpaceFeed } from './SpaceFeed';
 import { formatAmount } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Space, SpaceRole } from '@/types';
@@ -90,6 +91,11 @@ export function DesktopSpace() {
 
   // ── 역할 편집 ──────────────────────────────────────────────
   const [editingRole, setEditingRole] = useState<string | null>(null);
+
+  // ── 닉네임 편집 ────────────────────────────────────────────
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [nicknameInput, setNicknameInput]     = useState('');
+  const [savingNickname, setSavingNickname]   = useState(false);
 
   const currentInviteCode = liveInviteCode ?? group?.inviteCode;
 
@@ -244,6 +250,20 @@ export function DesktopSpace() {
     await updateSpaceMemberRole(displaySpaceId, userId, role);
     setEditingRole(null);
     await refresh();
+  };
+
+  const handleSaveNickname = async () => {
+    if (!displaySpaceId) return;
+    setSavingNickname(true);
+    const ok = await updateSpaceMemberNickname(displaySpaceId, nicknameInput);
+    setSavingNickname(false);
+    if (ok) {
+      toast.success('닉네임이 저장되었습니다');
+      setEditingNickname(false);
+      await refresh();
+    } else {
+      toast.error('닉네임 저장에 실패했습니다');
+    }
   };
 
   // ── 렌더 ──────────────────────────────────────────────────
@@ -463,22 +483,88 @@ export function DesktopSpace() {
       ════════════════════════════════════════════ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start', minWidth: 0 }}>
 
-        {/* ── 왼쪽 메인: 공간 일정 타임라인 ────────────── */}
-        <div style={{
-          background: 'var(--theme-surface)', borderRadius: '28px',
-          padding: '28px 24px',
-          boxShadow: '0 2px 20px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
-          minWidth: 0, overflow: 'hidden',
-        }}>
-          <SpaceScheduleTimeline
+        {/* ── 왼쪽 메인: 커뮤니티 피드 (65%) ────────── */}
+        <div style={{ minWidth: 0 }}>
+          <SpaceFeed
             spaceId={displaySpaceId}
             members={members}
-            currentUserId={user?.id ?? ''}
+            currentUser={user ?? null}
+            currentUserRole={myRole}
           />
         </div>
 
         {/* ── 오른쪽 사이드바 ───────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* ── 다가오는 일정 위젯 ── */}
+          {(() => {
+            const nowDate = new Date(); nowDate.setHours(0, 0, 0, 0);
+            const upcoming = schedules
+              .filter(s => {
+                if (s.type === 'expense' || s.visibility === 'private') return false;
+                const d = new Date(s.startTime); d.setHours(0, 0, 0, 0);
+                return d >= nowDate;
+              })
+              .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))
+              .slice(0, 3);
+            return (
+              <div style={{
+                background: 'var(--theme-surface)', borderRadius: '24px', padding: '20px',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>다가오는 일정</h3>
+                  <button
+                    onClick={() => router.push(`/space/schedule/new?spaceId=${displaySpaceId ?? ''}`)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '10px', background: 'rgba(0,132,204,0.08)', border: '1px solid rgba(0,132,204,0.15)', color: '#0084CC', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+                    추가
+                  </button>
+                </div>
+                {upcoming.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                    <p style={{ fontSize: '20px', margin: '0 0 6px' }}>📅</p>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0 }}>예정된 일정이 없어요</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {upcoming.map(s => {
+                      const d = new Date(s.startTime);
+                      const mo = d.getMonth() + 1;
+                      const da = d.getDate();
+                      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                      const wd = weekdays[d.getDay()];
+                      const todayCheck = new Date(); todayCheck.setHours(0,0,0,0);
+                      const isToday = d.getTime() === todayCheck.getTime();
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => router.push(`/schedules/${s.id}`)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '14px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                        >
+                          <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: isToday ? 'rgba(0,132,204,0.12)' : 'rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ fontSize: '9px', fontWeight: 800, color: isToday ? '#0084CC' : 'var(--theme-text-subtle)' }}>{mo}월</span>
+                            <span style={{ fontSize: '15px', fontWeight: 900, color: isToday ? '#0084CC' : 'var(--theme-text)', lineHeight: 1.1 }}>{da}</span>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</p>
+                            <p style={{ fontSize: '10px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '1px 0 0' }}>{isToday ? '오늘' : `${mo}/${da} (${wd})`}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => router.push(`/space/schedule?spaceId=${displaySpaceId ?? ''}`)}
+                      style={{ fontSize: '12px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}
+                    >
+                      모든 일정 보기 →
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── 공간 멤버 (컴팩트) ── */}
           <div style={{
@@ -549,8 +635,42 @@ export function DesktopSpace() {
                             fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)',
                             margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>
-                            {member.user?.name ?? '멤버'}{isMe ? ' (나)' : ''}
+                            {member.nickname ?? member.user?.name ?? '멤버'}{isMe ? ' (나)' : ''}
                           </p>
+                          {member.nickname && (
+                            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {member.user?.name}
+                            </p>
+                          )}
+                          {isMe && !editingNickname && (
+                            <button
+                              onClick={() => { setNicknameInput(member.nickname ?? ''); setEditingNickname(true); }}
+                              style={{ fontSize: '10px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '0', margin: '1px 0 0' }}
+                            >
+                              닉네임 {member.nickname ? '수정' : '설정'}
+                            </button>
+                          )}
+                          {isMe && editingNickname && (
+                            <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }} onClick={e => e.stopPropagation()}>
+                              <input
+                                value={nicknameInput}
+                                onChange={e => setNicknameInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && void handleSaveNickname()}
+                                placeholder="공간 닉네임"
+                                autoFocus
+                                style={{ flex: 1, padding: '4px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, background: 'var(--theme-surface)', border: '1.5px solid #0084CC', outline: 'none', color: 'var(--theme-text)', minWidth: 0 }}
+                              />
+                              <button
+                                onClick={handleSaveNickname}
+                                disabled={savingNickname}
+                                style={{ padding: '4px 8px', borderRadius: '8px', background: '#0084CC', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 800, color: 'white', flexShrink: 0 }}
+                              >{savingNickname ? '...' : '저장'}</button>
+                              <button
+                                onClick={() => setEditingNickname(false)}
+                                style={{ padding: '4px 6px', borderRadius: '8px', background: 'var(--theme-surface-muted)', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 800, color: 'var(--theme-text-subtle)', flexShrink: 0 }}
+                              >취소</button>
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <button
