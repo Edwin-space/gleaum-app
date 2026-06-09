@@ -10,7 +10,7 @@ import {
   getMySpaces, updateSpaceMemberRole, regenerateInviteCode,
   updateSpaceMemberNickname,
 } from '@/lib/db';
-import Script from 'next/script';
+import { KakaoAdBanner } from '@/components/ads/KakaoAdBanner';
 import { SpaceFeed } from './SpaceFeed';
 import { SpaceEntryModal } from './SpaceEntryModal';
 import { formatAmount } from '@/lib/utils';
@@ -581,26 +581,12 @@ export function DesktopSpace() {
         <div style={{ minWidth: 0 }}>
 
           {/* ── 카카오 광고 배너 (728×90) ── */}
-          <div style={{
-            marginBottom: '20px',
-            display: 'flex', justifyContent: 'flex-start',
-            overflow: 'hidden',
-            borderRadius: '12px',
-            minHeight: '90px',
-            background: 'transparent',
-          }}>
-            <ins
-              className="kakao_ad_area"
-              style={{ display: 'none' }}
-              data-ad-unit="DAN-UmNjtEgKug6zpii0"
-              data-ad-width="728"
-              data-ad-height="90"
-            />
-            <Script
-              src="https://t1.kakaocdn.net/kas/static/ba.min.js"
-              strategy="afterInteractive"
-            />
-          </div>
+          <KakaoAdBanner
+            adUnit="DAN-UmNjtEgKug6zpii0"
+            width={728}
+            height={90}
+            style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden' }}
+          />
 
           <SpaceFeed
             spaceId={displaySpaceId}
