@@ -10,27 +10,15 @@ import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.databinding.ActivityLoginBinding
-import com.gleaum.app.databinding.ActivityLoginEmailBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * LoginActivity — 네이티브 로그인 화면
  *
- * 로그인 방식:
- *  1. Google로 계속하기
- *     → Chrome Custom Tab으로 Supabase Google OAuth 실행
- *     → gleaum://auth/callback 딥링크 → RouterActivity → MainActivity
- *     → NativeAppProvider가 코드 교환 + NativeSession.saveSession() 저장
- *     → onResume() 에서 SessionManager 확인 후 MainActivity 이동
- *
- *  2. 이메일 주소로 사용하기 (기존 Google 가입 계정 OTP)
+ * 로그인 방식: Google로 계속하기
+ *  → Chrome Custom Tab으로 Supabase Google OAuth 실행
+ *  → gleaum://auth/callback 딥링크 → RouterActivity → MainActivity
+ *  → NativeAppProvider가 코드 교환 + NativeSession.saveSession() 저장
+ *  → onResume() 에서 SessionManager 확인 후 MainActivity 이동
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -55,11 +43,7 @@ class LoginActivity : AppCompatActivity() {
             )
         }
 
-        binding.btnEmail.paintFlags =
-            binding.btnEmail.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
-
         binding.btnGoogle.setOnClickListener { handleGoogleSignIn() }
-        binding.btnEmail.setOnClickListener  { startEmailLogin() }
     }
 
     /**
@@ -111,106 +95,9 @@ class LoginActivity : AppCompatActivity() {
         binding.btnGoogleText.visibility = if (loading) View.GONE   else View.VISIBLE
         binding.googleIcon.visibility    = if (loading) View.GONE   else View.VISIBLE
         binding.btnGoogle.isClickable    = !loading
-        binding.btnEmail.isClickable     = !loading
-    }
-
-    // ── 이메일 OTP 로그인 ────────────────────────────────────────────────────
-
-    private fun startEmailLogin() {
-        val emailBinding = ActivityLoginEmailBinding.inflate(layoutInflater)
-        setContentView(emailBinding.root)
-
-        emailBinding.btnResend.paintFlags =
-            emailBinding.btnResend.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
-
-        var currentEmail = ""
-
-        emailBinding.btnBack.setOnClickListener { setContentView(binding.root) }
-
-        emailBinding.btnSendOtp.setOnClickListener {
-            val email = emailBinding.inputEmail.text?.toString()?.trim() ?: ""
-            if (email.isEmpty()) { showToast("이메일을 입력해 주세요."); return@setOnClickListener }
-            currentEmail = email
-            sendOtp(email, emailBinding)
-        }
-
-        emailBinding.btnVerifyOtp.setOnClickListener {
-            val otp = emailBinding.inputOtp.text?.toString()?.trim() ?: ""
-            if (otp.length != 6) { showToast("6자리 코드를 입력해 주세요."); return@setOnClickListener }
-            verifyOtp(currentEmail, otp)
-        }
-
-        emailBinding.btnResend.setOnClickListener {
-            if (currentEmail.isNotEmpty()) sendOtp(currentEmail, emailBinding)
-        }
-    }
-
-    private fun sendOtp(email: String, emailBinding: ActivityLoginEmailBinding) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val conn = (URL("${getString(R.string.supabase_url)}/auth/v1/otp").openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    setRequestProperty("apikey", getString(R.string.supabase_anon_key))
-                    setRequestProperty("Authorization", "Bearer ${getString(R.string.supabase_anon_key)}")
-                    setRequestProperty("Content-Type", "application/json")
-                    doOutput = true
-                }
-                OutputStreamWriter(conn.outputStream).use {
-                    it.write(JSONObject().apply { put("email", email); put("create_user", false) }.toString())
-                }
-                val success = conn.responseCode == 200
-                withContext(Dispatchers.Main) {
-                    if (success) {
-                        emailBinding.otpDesc.text = "${email}으로\n6자리 코드를 보냈습니다."
-                        emailBinding.emailStep.visibility = View.GONE
-                        emailBinding.otpStep.visibility   = View.VISIBLE
-                    } else {
-                        showToast("이메일을 찾을 수 없습니다.\nGoogle 로그인을 먼저 이용해 주세요.")
-                    }
-                }
-            } catch (_: Exception) {
-                withContext(Dispatchers.Main) { showToast("네트워크 오류가 발생했습니다.") }
-            }
-        }
-    }
-
-    private fun verifyOtp(email: String, otp: String) {
-        CoroutineScope(Dispatchers.Main).launch {
-            val session = withContext(Dispatchers.IO) {
-                try {
-                    val conn = (URL("${getString(R.string.supabase_url)}/auth/v1/verify").openConnection() as HttpURLConnection).apply {
-                        requestMethod = "POST"
-                        setRequestProperty("apikey", getString(R.string.supabase_anon_key))
-                        setRequestProperty("Authorization", "Bearer ${getString(R.string.supabase_anon_key)}")
-                        setRequestProperty("Content-Type", "application/json")
-                        doOutput = true
-                    }
-                    OutputStreamWriter(conn.outputStream).use {
-                        it.write(JSONObject().apply {
-                            put("type", "email"); put("token", otp); put("email", email)
-                        }.toString())
-                    }
-                    if (conn.responseCode == 200)
-                        addExpiresAt(conn.inputStream.bufferedReader().readText())
-                    else null
-                } catch (_: Exception) { null }
-            }
-            if (session != null) {
-                SessionManager.save(this@LoginActivity, session)
-                goToMain()
-            } else {
-                showToast("인증 코드가 올바르지 않습니다.")
-            }
-        }
     }
 
     // ── 유틸 ────────────────────────────────────────────────────────────────
-
-    private fun addExpiresAt(json: String): String = try {
-        val obj = JSONObject(json)
-        obj.put("expires_at", System.currentTimeMillis() / 1000L + obj.optLong("expires_in", 3600L))
-        obj.toString()
-    } catch (_: Exception) { json }
 
     private fun showToast(msg: String) =
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()

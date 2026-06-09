@@ -27,17 +27,23 @@ export default function SchedulesPage() {
   const [search, setSearch] = useState('');
 
   const { familyGroupId, profile, loading: userLoading } = useCurrentUser();
-  const { schedules, loading: schedulesLoading } = useSchedules(familyGroupId);
+  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
+  const { schedules: activeSpaceSchedules, loading: activeSchedulesLoading } = useSchedules(familyGroupId);
+  // 활성 공간이 공유 공간이라 개인 공간과 다를 경우, 개인 공간 일정도 별도로 가져와 합친다.
+  const shouldFetchPersonalSeparately = !!personalSpaceId && personalSpaceId !== familyGroupId;
+  const { schedules: personalSpaceSchedules, loading: personalSchedulesLoading } = useSchedules(shouldFetchPersonalSeparately ? personalSpaceId : null);
 
-  const loading = userLoading || schedulesLoading;
+  const loading = userLoading || activeSchedulesLoading || (shouldFetchPersonalSeparately && personalSchedulesLoading);
+
+  const schedules = shouldFetchPersonalSeparately
+    ? [...activeSpaceSchedules, ...personalSpaceSchedules]
+    : activeSpaceSchedules;
 
   // 필터링 및 그룹화 로직
   // 일회성 지출은 이미 발생한 돈의 흐름이므로 일정 타임라인에는 노출하지 않는다.
-  const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
-  const isPersonalSpace = !!familyGroupId && familyGroupId === personalSpaceId;
   const timelineSchedules = schedules
     .filter(isTimelineSchedule)
-    .filter((s) => isPersonalSpace || s.visibility !== 'private');
+    .filter((s) => s.spaceId === personalSpaceId || s.familyGroupId === personalSpaceId || s.visibility !== 'private');
   const filtered = timelineSchedules.filter((s) => {
     const matchType   = filter === 'all' || s.type === filter;
     const q = search.toLowerCase();

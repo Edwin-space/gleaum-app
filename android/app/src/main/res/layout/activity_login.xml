@@ -92,19 +92,6 @@
 
         </RelativeLayout>
 
-        <!-- 이메일 링크 -->
-        <TextView
-            android:id="@+id/btnEmail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp"
-            android:text="이메일 주소로 사용하기"
-            android:textColor="#8E8E93"
-            android:textSize="13sp"
-            android:clickable="true"
-            android:focusable="true" />
-
         <!-- 약관 -->
         <TextView
             android:layout_width="wrap_content"

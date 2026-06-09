@@ -82,15 +82,6 @@ export function useAuth() {
     }
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-  };
-
   const updatePassword = async (password: string) => {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({
@@ -130,7 +121,6 @@ export function useAuth() {
     session,
     loading,
     signInWithGoogle,
-    signInWithEmail,
     updatePassword,
     linkProvider,
     signOut,

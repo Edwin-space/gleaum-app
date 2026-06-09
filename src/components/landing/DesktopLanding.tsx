@@ -9,32 +9,12 @@ interface DesktopLandingProps {
 }
 
 export function DesktopLanding({ next }: DesktopLandingProps) {
-  const { signInWithGoogle, signInWithEmail } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     await signInWithGoogle(next);
-  };
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    setEmailLoading(true);
-    setEmailError('');
-    try {
-      await signInWithEmail(email, password);
-      window.location.href = next || '/home';
-    } catch {
-      setEmailError('이메일 또는 비밀번호가 일치하지 않습니다.');
-    } finally {
-      setEmailLoading(false);
-    }
   };
 
   return (
@@ -134,7 +114,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
               {/* 구글 로그인 */}
               <button
                 onClick={handleGoogleLogin}
-                disabled={loading || emailLoading}
+                disabled={loading}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -152,7 +132,7 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                   boxShadow: '0 12px 32px rgba(26,27,46,0.2)',
                   transition: 'all 0.2s',
                   width: '100%',
-                  opacity: (loading || emailLoading) ? 0.7 : 1,
+                  opacity: loading ? 0.7 : 1,
                 }}
               >
                 {loading ? (
@@ -174,140 +154,6 @@ export function DesktopLanding({ next }: DesktopLandingProps) {
                   </>
                 )}
               </button>
-
-              {/* OR 구분선 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(26,27,46,0.08)' }} />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-ink-muted-48)' }}>또는</span>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(26,27,46,0.08)' }} />
-              </div>
-
-              {/* 이메일 로그인 영역 */}
-              {!showEmailForm ? (
-                /* 이메일 버튼 (접힌 상태) */
-                <button
-                  onClick={() => setShowEmailForm(true)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '10px',
-                    height: '52px',
-                    width: '100%',
-                    borderRadius: '18px',
-                    fontWeight: 700,
-                    fontSize: '15px',
-                    background: 'rgba(255,255,255,0.7)',
-                    color: 'var(--color-ink)',
-                    border: '1px solid rgba(26,27,46,0.1)',
-                    cursor: 'pointer',
-                    backdropFilter: 'blur(12px)',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round">
-                    <rect width="20" height="16" x="2" y="4" rx="2"/>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                  </svg>
-                  이메일 주소로 계속하기
-                </button>
-              ) : (
-                /* 이메일 폼 (펼친 상태) */
-                <form
-                  onSubmit={handleEmailLogin}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
-                >
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="이메일 주소"
-                    required
-                    style={{
-                      width: '100%',
-                      height: '52px',
-                      padding: '0 18px',
-                      borderRadius: '16px',
-                      fontSize: '15px',
-                      fontWeight: 500,
-                      border: `1.5px solid ${emailError ? '#EF4444' : 'rgba(26,27,46,0.12)'}`,
-                      background: 'rgba(255,255,255,0.8)',
-                      backdropFilter: 'blur(12px)',
-                      outline: 'none',
-                      color: 'var(--color-ink)',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.2s',
-                    }}
-                  />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="비밀번호"
-                    required
-                    style={{
-                      width: '100%',
-                      height: '52px',
-                      padding: '0 18px',
-                      borderRadius: '16px',
-                      fontSize: '15px',
-                      fontWeight: 500,
-                      border: `1.5px solid ${emailError ? '#EF4444' : 'rgba(26,27,46,0.12)'}`,
-                      background: 'rgba(255,255,255,0.8)',
-                      backdropFilter: 'blur(12px)',
-                      outline: 'none',
-                      color: 'var(--color-ink)',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.2s',
-                    }}
-                  />
-                  {emailError && (
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#EF4444', margin: 0 }}>
-                      {emailError}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="submit"
-                      disabled={emailLoading}
-                      style={{
-                        flex: 1,
-                        height: '52px',
-                        borderRadius: '16px',
-                        fontWeight: 700,
-                        fontSize: '15px',
-                        background: 'var(--color-ink)',
-                        color: 'white',
-                        border: 'none',
-                        cursor: 'pointer',
-                        opacity: emailLoading ? 0.7 : 1,
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      {emailLoading ? '로그인 중...' : '로그인'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowEmailForm(false); setEmailError(''); setEmail(''); setPassword(''); }}
-                      style={{
-                        height: '52px',
-                        padding: '0 20px',
-                        borderRadius: '16px',
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        background: 'rgba(26,27,46,0.05)',
-                        color: 'var(--color-ink-muted-80)',
-                        border: '1px solid rgba(26,27,46,0.08)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      취소
-                    </button>
-                  </div>
-                </form>
-              )}
 
               <p style={{ fontSize: '12px', color: 'var(--color-ink-muted-48)', margin: 0 }}>
                 무료로 시작 · 신용카드 불필요

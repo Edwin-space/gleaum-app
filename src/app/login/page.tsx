@@ -21,16 +21,6 @@ function GoogleIcon() {
   );
 }
 
-// ─── 이메일 아이콘 ────────────────────────────────────────────────────────────
-function MailIcon({ color = '#8E8E93' }: { color?: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <rect width="20" height="16" x="2" y="4" rx="2"/>
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-    </svg>
-  );
-}
-
 // ─── 디버그 패널 (로고 5번 탭 → 활성화) ──────────────────────────────────────
 function DebugPanel({ logs }: { logs: string[] }) {
   return (
@@ -54,15 +44,11 @@ function DebugPanel({ logs }: { logs: string[] }) {
 
 // ─── 로그인 폼 ─────────────────────────────────────────────────────────────────
 function LoginForm() {
-  const { signInWithGoogle, signInWithEmail } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? undefined;
 
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [showEmail, setShowEmail] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
   const [error, setError] = useState('');
   // ★ 인앱 브라우저 감지
   const [blockedBrowser, setBlockedBrowser] = useState<BlockedBrowserInfo | null>(null);
@@ -215,22 +201,6 @@ function LoginForm() {
     addLog('   → 인앱 브라우저 오픈 완료 (대기 중)');
   };
 
-  const handleEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    setEmailLoading(true);
-    setError('');
-    try {
-      await signInWithEmail(email, password);
-      void trackEvent('login', { method: 'email' });
-      window.location.href = next || '/home';
-    } catch {
-      setError('이메일 또는 비밀번호가 일치하지 않습니다.');
-    } finally {
-      setEmailLoading(false);
-    }
-  };
-
   return (
     <div className="landing-fullscreen" style={{
       minHeight: '100dvh',
@@ -347,7 +317,7 @@ function LoginForm() {
                 </p>
               )}
             </div>
-          ) : !showEmail ? (
+          ) : (
             <>
               {/* 헤더 */}
               <div style={{ marginBottom: '32px' }}>
@@ -406,145 +376,23 @@ function LoginForm() {
                 )}
               </button>
 
-              {/* OR 구분선 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>또는</span>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-              </div>
-
-              {/* 이메일 버튼 */}
-              <button
-                onClick={() => setShowEmail(true)}
-                style={{
-                  width: '100%', height: '52px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                  borderRadius: '16px', border: '1.5px solid rgba(255,255,255,0.1)',
-                  background: 'transparent',
-                  color: 'rgba(255,255,255,0.7)', fontSize: '14px', fontWeight: 600,
-                  cursor: 'pointer', transition: 'all 0.2s',
-                  fontFamily: 'var(--font-body)',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-              >
-                <MailIcon color="currentColor" />
-                이메일 주소로 계속하기
-              </button>
+              {/* 에러 메시지 */}
+              {error && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 14px', borderRadius: '12px', marginTop: '12px',
+                  background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+                  </svg>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#EF4444' }}>{error}</span>
+                </div>
+              )}
 
               {/* 약관 동의 문구 */}
               <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)', marginTop: '20px', lineHeight: 1.65, margin: '20px 0 0' }}>
                 가입 시 글리움의{' '}
-                <Link href="/legal/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>서비스 약관</Link>
-                {' '}및{' '}
-                <Link href="/legal/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>개인정보 처리방침</Link>
-                에 동의하게 됩니다.
-              </p>
-            </>
-          ) : (
-            /* 이메일 폼 */
-            <>
-              {/* 헤더 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-                <button
-                  onClick={() => { setShowEmail(false); setError(''); setPassword(''); setEmail(''); }}
-                  style={{
-                    width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M15 18L9 12L15 6"/>
-                  </svg>
-                </button>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'white', margin: 0, letterSpacing: '-0.5px' }}>
-                  이메일 로그인
-                </h2>
-              </div>
-
-              <form onSubmit={handleEmail} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {/* 이메일 */}
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <MailIcon color="rgba(255,255,255,0.4)" />
-                  </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="이메일 주소"
-                    required
-                    style={{
-                      width: '100%', height: '52px', padding: '0 16px 0 44px',
-                      borderRadius: '14px', fontSize: '15px', fontWeight: 500,
-                      border: `1.5px solid ${error ? 'rgba(239,68,68,0.6)' : 'rgba(255,255,255,0.12)'}`,
-                      background: 'rgba(255,255,255,0.06)',
-                      outline: 'none', color: 'white', boxSizing: 'border-box',
-                      fontFamily: 'var(--font-body)',
-                    }}
-                  />
-                </div>
-
-                {/* 비밀번호 */}
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round">
-                      <rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="비밀번호"
-                    required
-                    style={{
-                      width: '100%', height: '52px', padding: '0 16px 0 44px',
-                      borderRadius: '14px', fontSize: '15px', fontWeight: 500,
-                      border: `1.5px solid ${error ? 'rgba(239,68,68,0.6)' : 'rgba(255,255,255,0.12)'}`,
-                      background: 'rgba(255,255,255,0.06)',
-                      outline: 'none', color: 'white', boxSizing: 'border-box',
-                      fontFamily: 'var(--font-body)',
-                    }}
-                  />
-                </div>
-
-                {/* 에러 메시지 */}
-                {error && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '10px 14px', borderRadius: '12px',
-                    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
-                    </svg>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#EF4444' }}>{error}</span>
-                  </div>
-                )}
-
-                {/* 로그인 버튼 */}
-                <button
-                  type="submit"
-                  disabled={emailLoading}
-                  style={{
-                    width: '100%', height: '54px',
-                    borderRadius: '16px', border: 'none', cursor: emailLoading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg, #0084CC, #0CC9B5)',
-                    color: 'white', fontSize: '15px', fontWeight: 700,
-                    opacity: emailLoading ? 0.7 : 1, transition: 'all 0.2s',
-                    marginTop: '4px',
-                    fontFamily: 'var(--font-body)',
-                  }}
-                >
-                  {emailLoading ? '로그인 중...' : '로그인'}
-                </button>
-              </form>
-
-              <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)', marginTop: '20px', lineHeight: 1.65 }}>
-                가입 시{' '}
                 <Link href="/legal/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>서비스 약관</Link>
                 {' '}및{' '}
                 <Link href="/legal/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>개인정보 처리방침</Link>
