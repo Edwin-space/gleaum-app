@@ -10,6 +10,7 @@ import {
   getMySpaces, updateSpaceMemberRole, regenerateInviteCode,
   updateSpaceMemberNickname,
 } from '@/lib/db';
+import Script from 'next/script';
 import { SpaceFeed } from './SpaceFeed';
 import { SpaceEntryModal } from './SpaceEntryModal';
 import { formatAmount } from '@/lib/utils';
@@ -576,8 +577,31 @@ export function DesktopSpace() {
       ════════════════════════════════════════════ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start', minWidth: 0 }}>
 
-        {/* ── 왼쪽 메인: 커뮤니티 피드 (65%) ────────── */}
+        {/* ── 왼쪽 메인: 커뮤니티 피드 ────────── */}
         <div style={{ minWidth: 0 }}>
+
+          {/* ── 카카오 광고 배너 (728×90) ── */}
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex', justifyContent: 'flex-start',
+            overflow: 'hidden',
+            borderRadius: '12px',
+            minHeight: '90px',
+            background: 'transparent',
+          }}>
+            <ins
+              className="kakao_ad_area"
+              style={{ display: 'none' }}
+              data-ad-unit="DAN-UmNjtEgKug6zpii0"
+              data-ad-width="728"
+              data-ad-height="90"
+            />
+            <Script
+              src="https://t1.kakaocdn.net/kas/static/ba.min.js"
+              strategy="afterInteractive"
+            />
+          </div>
+
           <SpaceFeed
             spaceId={displaySpaceId}
             spaceName={isPersonalSpace ? undefined : group?.name}

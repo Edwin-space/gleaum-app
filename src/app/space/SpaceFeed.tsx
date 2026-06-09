@@ -671,28 +671,6 @@ export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUse
     <div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* 작성 버튼 */}
-      <button
-        onClick={() => setShowCreate(true)}
-        style={{
-          width: '100%', padding: '16px 20px', borderRadius: '18px', marginBottom: '20px',
-          background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.06)',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-          display: 'flex', alignItems: 'center', gap: '12px',
-          cursor: 'pointer', textAlign: 'left',
-        }}
-      >
-        <UserAvatar avatar={currentUser?.avatar} name={currentUser?.name} size={36} radius={12} fontSize={16} />
-        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>
-          무슨 이야기를 나눌까요?
-        </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-          {['💬', '📅', '💰', '🗳️'].map(e => (
-            <span key={e} style={{ fontSize: '18px' }}>{e}</span>
-          ))}
-        </div>
-      </button>
-
       {/* 게시물 목록 */}
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0', gap: '12px' }}>
@@ -720,6 +698,29 @@ export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUse
           ))}
         </div>
       )}
+
+      {/* ── 작성 버튼 (피드 하단) ── */}
+      <button
+        onClick={() => setShowCreate(true)}
+        style={{
+          width: '100%', padding: '16px 20px', borderRadius: '18px',
+          marginTop: posts.length > 0 ? '16px' : '0',
+          background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+          display: 'flex', alignItems: 'center', gap: '12px',
+          cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <UserAvatar avatar={currentUser?.avatar} name={currentUser?.name} size={36} radius={12} fontSize={16} />
+        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>
+          무슨 이야기를 나눌까요?
+        </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+          {['💬', '📅', '💰', '🗳️'].map(e => (
+            <span key={e} style={{ fontSize: '18px' }}>{e}</span>
+          ))}
+        </div>
+      </button>
 
       {/* 게시물 생성 모달 */}
       {showCreate && (
