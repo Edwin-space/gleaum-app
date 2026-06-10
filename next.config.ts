@@ -6,9 +6,9 @@ import type { NextConfig } from "next";
 //   그러나 connect-src·img-src·object-src 제한으로 데이터 유출 경로를 차단.
 const CSP = [
   "default-src 'self'",
-  // Next.js 인라인 스크립트 + Google 서비스 (GA4, OAuth, Maps)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://maps.googleapis.com",
-  "style-src 'self' 'unsafe-inline'",
+  // Next.js 인라인 스크립트 + Google 서비스 (GA4, OAuth, Maps) + 카카오 AdFit
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://maps.googleapis.com https://t1.kakaocdn.net https://*.daumcdn.net",
+  "style-src 'self' 'unsafe-inline' https://t1.kakaocdn.net https://*.daumcdn.net",
   // 외부 이미지: Google 프로필, Supabase Storage
   "img-src 'self' data: blob: https: ",
   "font-src 'self' data:",
@@ -24,8 +24,13 @@ const CSP = [
     "https://analytics.google.com",
     "https://www.googletagmanager.com",
     "https://maps.googleapis.com",
+    "https://t1.kakaocdn.net",
+    "https://*.daumcdn.net",
+    "https://*.kakao.com",
+    "https://*.daum.net",
   ].join(" "),
-  "frame-src https://accounts.google.com",
+  // 카카오 AdFit 광고 iframe
+  "frame-src https://accounts.google.com https://t1.kakaocdn.net https://*.daumcdn.net https://*.kakao.com",
   // Flash/ActiveX 완전 차단
   "object-src 'none'",
   "base-uri 'self'",
