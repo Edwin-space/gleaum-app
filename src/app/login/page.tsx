@@ -2,12 +2,43 @@
 
 import { useState, Suspense, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
 import { trackEvent } from '@/lib/analytics';
 import { isNativeApp } from '@/lib/native';
 import { getBlockedBrowserInfo, tryOpenInChrome, type BlockedBrowserInfo } from '@/lib/browser';
+
+// ─── 소셜 로그인 버튼 공통 스타일 ──────────────────────────────────────────────
+const socialButtonStyle: React.CSSProperties = {
+  width: '100%', height: '56px',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+  borderRadius: '16px', border: '1.5px solid rgba(255,255,255,0.15)',
+  background: 'rgba(255,255,255,0.08)',
+  color: 'white', fontSize: '15px', fontWeight: 700,
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+  marginBottom: '12px',
+  fontFamily: 'var(--font-body)',
+};
+
+const socialIconBoxStyle: React.CSSProperties = {
+  width: '32px', height: '32px', minWidth: '32px', minHeight: '32px',
+  background: 'var(--theme-surface)', borderRadius: '8px',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  flexShrink: 0, lineHeight: 0,
+};
+
+// ─── 이메일/비밀번호 입력 스타일 ───────────────────────────────────────────────
+const inputStyle: React.CSSProperties = {
+  width: '100%', height: '48px', padding: '0 16px',
+  borderRadius: '14px', border: '1.5px solid rgba(255,255,255,0.12)',
+  background: 'rgba(255,255,255,0.05)', color: 'white',
+  fontSize: '14px', fontWeight: 600,
+  fontFamily: 'var(--font-body)', outline: 'none',
+  boxSizing: 'border-box',
+};
 
 // ─── Google 아이콘 ────────────────────────────────────────────────────────────
 function GoogleIcon() {
@@ -17,6 +48,25 @@ function GoogleIcon() {
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+  );
+}
+
+// ─── Apple 아이콘 ─────────────────────────────────────────────────────────────
+function AppleIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="black" aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
+      <path d="M16.365 1.43c0 1.14-.46 2.13-1.32 2.95-.94.88-2.07 1.36-3.27 1.27-.07-1.16.47-2.27 1.31-3.06.92-.88 2.21-1.43 3.27-1.16.01.01.01 0 .01 0zM20.21 17.51c-.53 1.17-.78 1.69-1.46 2.72-.95 1.45-2.29 3.26-3.95 3.27-1.48.02-1.86-.97-3.86-.96-2 .01-2.42.98-3.9.96-1.66-.02-2.93-1.65-3.88-3.1-2.66-4.04-2.94-8.78-1.3-11.31 1.16-1.79 3-2.85 4.74-2.85 1.77 0 2.88.97 4.34.97 1.42 0 2.27-.97 4.32-.97 1.55 0 3.2.85 4.37 2.31-3.84 2.1-3.22 7.55.58 9.96z"/>
+    </svg>
+  );
+}
+
+// ─── 카카오 아이콘 ─────────────────────────────────────────────────────────────
+function KakaoIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
+      <rect width="36" height="36" rx="8" fill="#FEE500"/>
+      <path fill="#3C1E1E" d="M18 8.5c-6.35 0-11.5 4.06-11.5 9.07 0 3.18 2.08 5.97 5.22 7.58-.23.86-.83 3.08-.95 3.56-.15.59.22.59.46.43.19-.13 3-2.04 4.22-2.86.83.12 1.69.18 2.55.18 6.35 0 11.5-4.06 11.5-9.07S24.35 8.5 18 8.5z"/>
     </svg>
   );
 }
@@ -44,12 +94,77 @@ function DebugPanel({ logs }: { logs: string[] }) {
 
 // ─── 로그인 폼 ─────────────────────────────────────────────────────────────────
 function LoginForm() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? undefined;
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // ── 소셜 / 이메일 화면 전환 ──────────────────────────────────────────
+  const [view, setView] = useState<'social' | 'email'>('social');
+
+  // ── 이메일 로그인/회원가입 ──────────────────────────────────────────
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [signupDone, setSignupDone] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+
+  // ── 회원가입 약관 동의 ────────────────────────────────────────────────
+  const [consents, setConsents] = useState({ age: false, terms: false, privacy: false });
+  const allConsented = consents.age && consents.terms && consents.privacy;
+  const toggleAllConsents = () => {
+    const next = !allConsented;
+    setConsents({ age: next, terms: next, privacy: next });
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!form.email || !form.password || (authMode === 'signup' && !form.name)) {
+      setError('모든 항목을 입력해 주세요.');
+      return;
+    }
+    if (authMode === 'signup' && form.password.length < 6) {
+      setError('비밀번호는 6자 이상이어야 합니다.');
+      return;
+    }
+    if (authMode === 'signup' && !allConsented) {
+      setError('필수 약관에 모두 동의해 주세요.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      if (authMode === 'signup') {
+        void trackEvent('sign_up', { method: 'email' });
+        const { session } = await signUpWithEmail(form.email, form.password, form.name);
+        if (!session) {
+          // 이메일 확인이 필요한 경우
+          setSignupDone(true);
+        } else {
+          router.push(next ?? '/home');
+        }
+      } else {
+        void trackEvent('login', { method: 'email' });
+        await signInWithEmail(form.email, form.password);
+        router.push(next ?? '/home');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Invalid login credentials')) {
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+      } else if (msg.includes('User already registered')) {
+        setError('이미 가입된 이메일입니다. 로그인을 이용해 주세요.');
+      } else {
+        setError(authMode === 'signup' ? '회원가입에 실패했습니다. 다시 시도해 주세요.' : '로그인에 실패했습니다. 다시 시도해 주세요.');
+      }
+    } finally {
+      setEmailLoading(false);
+    }
+  };
   // ★ 인앱 브라우저 감지
   const [blockedBrowser, setBlockedBrowser] = useState<BlockedBrowserInfo | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
@@ -333,22 +448,40 @@ function LoginForm() {
                 </p>
               </div>
 
+              {signupDone ? (
+                /* ── 이메일 인증 안내 ── */
+                <div>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '16px',
+                  }}>
+                    <div style={{ fontSize: '36px', marginBottom: '10px' }}>📩</div>
+                    <p style={{ fontSize: '14px', fontWeight: 800, color: 'white', margin: '0 0 6px' }}>
+                      인증 메일을 보냈어요
+                    </p>
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
+                      {form.email}로 전송된 메일의 링크를 눌러<br />가입을 완료해 주세요.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setSignupDone(false); setAuthMode('login'); setForm({ name: '', email: '', password: '' }); setConsents({ age: false, terms: false, privacy: false }); setView('social'); }}
+                    style={{
+                      width: '100%', height: '48px', borderRadius: '14px',
+                      border: '1.5px solid rgba(255,255,255,0.15)', background: 'transparent',
+                      color: 'rgba(255,255,255,0.8)', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                    }}
+                  >
+                    로그인 화면으로 돌아가기
+                  </button>
+                </div>
+              ) : view === 'social' ? (
+              <>
               {/* 구글 로그인 */}
               <button
                 onClick={handleGoogle}
                 disabled={googleLoading}
-                style={{
-                  width: '100%', height: '56px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                  borderRadius: '16px', border: '1.5px solid rgba(255,255,255,0.15)',
-                  background: 'rgba(255,255,255,0.08)',
-                  color: 'white', fontSize: '15px', fontWeight: 700,
-                  cursor: googleLoading ? 'not-allowed' : 'pointer',
-                  opacity: googleLoading ? 0.6 : 1,
-                  transition: 'all 0.2s',
-                  marginBottom: '12px',
-                  fontFamily: 'var(--font-body)',
-                }}
+                style={{ ...socialButtonStyle, cursor: googleLoading ? 'not-allowed' : 'pointer', opacity: googleLoading ? 0.6 : 1 }}
                 onMouseEnter={(e) => { if (!googleLoading) e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
               >
@@ -356,25 +489,192 @@ function LoginForm() {
                   <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white' }} />
                 ) : (
                   <>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      minWidth: '32px',
-                      minHeight: '32px',
-                      background: 'var(--theme-surface)',
-                      borderRadius: '8px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      lineHeight: 0,
-                    }}>
-                      <GoogleIcon />
-                    </div>
+                    <div style={socialIconBoxStyle}><GoogleIcon /></div>
                     구글 계정으로 계속하기
                   </>
                 )}
               </button>
+
+              {/* 애플 로그인 — 연동 준비 중 */}
+              <button
+                onClick={() => toast.info('애플 로그인은 연동 준비 중입니다.')}
+                style={socialButtonStyle}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+              >
+                <div style={socialIconBoxStyle}><AppleIcon /></div>
+                애플로 계속하기
+              </button>
+
+              {/* 카카오 로그인 — 연동 준비 중 */}
+              <button
+                onClick={() => toast.info('카카오 로그인은 연동 준비 중입니다.')}
+                style={socialButtonStyle}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+              >
+                <KakaoIcon />
+                카카오로 계속하기
+              </button>
+
+              {/* 구분선 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>또는</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+
+              {/* 메일로 로그인 / 회원가입 */}
+              <button
+                type="button"
+                onClick={() => { setAuthMode('login'); setError(''); setView('email'); }}
+                style={{
+                  width: '100%', height: '48px', borderRadius: '14px',
+                  border: '1.5px solid rgba(255,255,255,0.12)', background: 'transparent',
+                  color: 'rgba(255,255,255,0.85)', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                  fontFamily: 'var(--font-body)', marginBottom: '8px',
+                }}
+              >
+                메일로 로그인
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode('signup'); setError(''); setView('email'); }}
+                style={{
+                  width: '100%', height: '48px', borderRadius: '14px',
+                  border: 'none', background: 'transparent',
+                  color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                  fontFamily: 'var(--font-body)', textDecoration: 'underline',
+                }}
+              >
+                메일주소로 회원가입
+              </button>
+
+              {/* 약관 동의 문구 */}
+              <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)', marginTop: '20px', lineHeight: 1.65, margin: '20px 0 0' }}>
+                가입 시 글리움의{' '}
+                <Link href="/legal/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>서비스 약관</Link>
+                {' '}및{' '}
+                <Link href="/legal/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>개인정보 처리방침</Link>
+                에 동의하게 됩니다.
+              </p>
+              </>
+              ) : (
+              <>
+              {/* ── 뒤로가기 ── */}
+              <button
+                type="button"
+                onClick={() => { setView('social'); setError(''); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  border: 'none', background: 'transparent', cursor: 'pointer',
+                  color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 700,
+                  fontFamily: 'var(--font-body)', padding: 0, marginBottom: '20px',
+                }}
+              >
+                ← 다른 방법으로 계속하기
+              </button>
+
+              {/* ── 로그인 / 회원가입 탭 ── */}
+              <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px', marginBottom: '20px' }}>
+                {(['login', 'signup'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => { setAuthMode(mode); setError(''); }}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '9px', border: 'none',
+                      fontSize: '13px', fontWeight: 800, cursor: 'pointer',
+                      background: authMode === mode ? 'rgba(255,255,255,0.12)' : 'transparent',
+                      color: authMode === mode ? 'white' : 'rgba(255,255,255,0.45)',
+                      transition: 'all 0.15s', fontFamily: 'var(--font-body)',
+                    }}
+                  >
+                    {mode === 'login' ? '로그인' : '회원가입'}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── 이메일 폼 ── */}
+              <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
+                {authMode === 'signup' && (
+                  <input
+                    type="text"
+                    placeholder="이름"
+                    value={form.name}
+                    onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+                    autoComplete="name"
+                    style={inputStyle}
+                  />
+                )}
+                <input
+                  type="email"
+                  placeholder="이메일 주소"
+                  value={form.email}
+                  onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                  autoComplete="email"
+                  style={inputStyle}
+                />
+                <input
+                  type="password"
+                  placeholder={authMode === 'signup' ? '비밀번호 (6자 이상)' : '비밀번호'}
+                  value={form.password}
+                  onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                  autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+                  style={inputStyle}
+                />
+
+                {/* 약관 동의 (회원가입 전용) — 정보통신망법/개인정보보호법 준수 */}
+                {authMode === 'signup' && (
+                  <div style={{
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '14px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px',
+                  }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <input type="checkbox" checked={allConsented} onChange={toggleAllConsents} style={{ width: '16px', height: '16px', accentColor: '#0084CC' }} />
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'white' }}>전체 동의</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={consents.age} onChange={(e) => setConsents(c => ({ ...c, age: e.target.checked }))} style={{ width: '16px', height: '16px', accentColor: '#0084CC' }} />
+                      <span style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.75)' }}>
+                        <span style={{ color: '#0CC9B5', fontWeight: 800 }}>[필수]</span> 만 14세 이상입니다
+                      </span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={consents.terms} onChange={(e) => setConsents(c => ({ ...c, terms: e.target.checked }))} style={{ width: '16px', height: '16px', accentColor: '#0084CC' }} />
+                      <span style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.75)' }}>
+                        <span style={{ color: '#0CC9B5', fontWeight: 800 }}>[필수]</span>{' '}
+                        <Link href="/legal/terms" target="_blank" style={{ color: 'white', textDecoration: 'underline' }}>이용약관</Link> 동의
+                      </span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={consents.privacy} onChange={(e) => setConsents(c => ({ ...c, privacy: e.target.checked }))} style={{ width: '16px', height: '16px', accentColor: '#0084CC' }} />
+                      <span style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.75)' }}>
+                        <span style={{ color: '#0CC9B5', fontWeight: 800 }}>[필수]</span>{' '}
+                        <Link href="/legal/privacy" target="_blank" style={{ color: 'white', textDecoration: 'underline' }}>개인정보 수집 및 이용</Link> 동의
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={emailLoading}
+                  style={{
+                    width: '100%', height: '52px', borderRadius: '16px', border: 'none',
+                    background: 'linear-gradient(135deg, #0CC9B5, #0084CC)',
+                    color: 'white', fontSize: '15px', fontWeight: 800,
+                    cursor: emailLoading ? 'not-allowed' : 'pointer',
+                    opacity: emailLoading ? 0.6 : 1,
+                    boxShadow: '0 6px 20px rgba(0,132,204,0.30)',
+                    fontFamily: 'var(--font-body)', marginTop: '4px',
+                  }}
+                >
+                  {emailLoading
+                    ? <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', margin: '0 auto' }} />
+                    : authMode === 'signup' ? '이메일로 회원가입' : '이메일로 로그인'}
+                </button>
+              </form>
 
               {/* 에러 메시지 */}
               {error && (
@@ -389,15 +689,8 @@ function LoginForm() {
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#EF4444' }}>{error}</span>
                 </div>
               )}
-
-              {/* 약관 동의 문구 */}
-              <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)', marginTop: '20px', lineHeight: 1.65, margin: '20px 0 0' }}>
-                가입 시 글리움의{' '}
-                <Link href="/legal/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>서비스 약관</Link>
-                {' '}및{' '}
-                <Link href="/legal/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>개인정보 처리방침</Link>
-                에 동의하게 됩니다.
-              </p>
+              </>
+              )}
             </>
           )}
         </div>

@@ -82,6 +82,29 @@ export function useAuth() {
     }
   };
 
+  // 이메일/비밀번호 회원가입
+  const signUpWithEmail = async (email: string, password: string, name: string) => {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: isNativeApp() ? 'gleaum://auth/callback' : `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  // 이메일/비밀번호 로그인
+  const signInWithEmail = async (email: string, password: string) => {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+  };
+
   const updatePassword = async (password: string) => {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({
@@ -121,6 +144,8 @@ export function useAuth() {
     session,
     loading,
     signInWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
     updatePassword,
     linkProvider,
     signOut,
