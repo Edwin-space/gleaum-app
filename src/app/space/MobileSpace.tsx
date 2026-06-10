@@ -13,6 +13,7 @@ import {
   regenerateInviteCode, updateSpaceMemberNickname,
 } from '@/lib/db';
 import { SpaceFeed } from './SpaceFeed';
+import { KakaoAdBanner } from '@/components/ads/KakaoAdBanner';
 import { SpaceEntryModal } from './SpaceEntryModal';
 import { toast } from 'sonner';
 import type { Space, SpaceMember, SpaceRole } from '@/types';
@@ -208,6 +209,13 @@ export function MobileSpace() {
   useEffect(() => {
     if (group?.name) setOptimisticSpaceName(null);
   }, [group?.name]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // SpaceFeed의 + 버튼 → FAB 액션 시트 열기
+  useEffect(() => {
+    const handler = () => setShowFabSheet(true);
+    window.addEventListener('gleaum:openFabSheet', handler);
+    return () => window.removeEventListener('gleaum:openFabSheet', handler);
+  }, []);
 
   // 다른 페이지에서 이름 변경 후 돌아왔을 때 재조회
   const prevPathname = useRef(pathname);
@@ -584,13 +592,25 @@ export function MobileSpace() {
           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>공간 정보를 불러오는 중...</p>
         </div>
       ) : (
-        <SpaceFeed
-          spaceId={displaySpaceId}
-          members={members}
-          currentUser={user ?? null}
-          currentUserRole={myRole}
-          spaceName={currentSpaceName}
-        />
+        <>
+          {/* ── 카카오 광고 배너 (320×100) ── */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+            <KakaoAdBanner
+              adUnit="DAN-9QO2xcl8YeUyiixc"
+              width={320}
+              height={100}
+              style={{ borderRadius: '12px', overflow: 'hidden' }}
+            />
+          </div>
+          <SpaceFeed
+            spaceId={displaySpaceId}
+            members={members}
+            currentUser={user ?? null}
+            currentUserRole={myRole}
+            spaceName={currentSpaceName}
+            isMobile
+          />
+        </>
       )}
 
       {/* ── FAB ── */}

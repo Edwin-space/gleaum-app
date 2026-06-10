@@ -12,6 +12,7 @@ import {
 import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 import type { AddExpenseInput, EditExpenseInput } from './page';
 import { ExpenseDoughnut } from '@/components/budget/ExpenseDoughnut';
+import { KakaoAdBanner } from '@/components/ads/KakaoAdBanner';
 
 interface DesktopBudgetProps {
   loading: boolean;
@@ -325,6 +326,16 @@ export function DesktopBudget({
                 </div>
               </div>
             )}
+
+            {/* ── 카카오 광고 배너 (728×90) ── */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <KakaoAdBanner
+                adUnit="DAN-xQORr9CDyPI97gRM"
+                width={728}
+                height={90}
+                style={{ borderRadius: '12px', overflow: 'hidden' }}
+              />
+            </div>
 
             {/* 지출 목록 */}
             <div style={{ background: 'var(--theme-surface)', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.04)' }}>

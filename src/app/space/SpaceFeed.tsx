@@ -39,6 +39,7 @@ interface SpaceFeedProps {
   members: SpaceMember[];
   currentUser: User | null;
   currentUserRole: SpaceRole | null;
+  isMobile?: boolean;
 }
 
 // ── 게시물 생성 모달 ──────────────────────────────────────────
@@ -646,7 +647,7 @@ function PostCard({ post, currentUserId, currentUserRole, members, onDelete, onR
 }
 
 // ── 메인 SpaceFeed 컴포넌트 ──────────────────────────────────
-export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUserRole }: SpaceFeedProps) {
+export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUserRole, isMobile }: SpaceFeedProps) {
   const { posts, loading, refresh, create, remove } = useSpacePosts(spaceId);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -700,27 +701,45 @@ export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUse
       )}
 
       {/* ── 작성 버튼 (피드 하단) ── */}
-      <button
-        onClick={() => setShowCreate(true)}
-        style={{
-          width: '100%', padding: '16px 20px', borderRadius: '18px',
-          marginTop: posts.length > 0 ? '16px' : '0',
-          background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.06)',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-          display: 'flex', alignItems: 'center', gap: '12px',
-          cursor: 'pointer', textAlign: 'left',
-        }}
-      >
-        <UserAvatar avatar={currentUser?.avatar} name={currentUser?.name} size={36} radius={12} fontSize={16} />
-        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>
-          무슨 이야기를 나눌까요?
-        </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-          {['💬', '📅', '💰', '🗳️'].map(e => (
-            <span key={e} style={{ fontSize: '18px' }}>{e}</span>
-          ))}
-        </div>
-      </button>
+      {isMobile ? (
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('gleaum:openFabSheet'))}
+          aria-label="게시물·일정·지출 추가"
+          style={{
+            width: '52px', height: '52px', borderRadius: '50%',
+            margin: posts.length > 0 ? '16px auto 0' : '0 auto',
+            background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '24px', color: 'white', fontWeight: 400,
+            boxShadow: '0 4px 16px rgba(0,132,204,0.35)',
+          }}
+        >
+          ＋
+        </button>
+      ) : (
+        <button
+          onClick={() => setShowCreate(true)}
+          style={{
+            width: '100%', padding: '16px 20px', borderRadius: '18px',
+            marginTop: posts.length > 0 ? '16px' : '0',
+            background: 'var(--theme-surface)', border: '1.5px solid rgba(0,0,0,0.06)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            display: 'flex', alignItems: 'center', gap: '12px',
+            cursor: 'pointer', textAlign: 'left',
+          }}
+        >
+          <UserAvatar avatar={currentUser?.avatar} name={currentUser?.name} size={36} radius={12} fontSize={16} />
+          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>
+            무슨 이야기를 나눌까요?
+          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            {['💬', '📅', '💰', '🗳️'].map(e => (
+              <span key={e} style={{ fontSize: '18px' }}>{e}</span>
+            ))}
+          </div>
+        </button>
+      )}
 
       {/* 게시물 생성 모달 */}
       {showCreate && (
