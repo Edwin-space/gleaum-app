@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
+import { materializeRecurringExpenses } from '@/lib/db';
 import type { Schedule, ScheduleStatus, ExpenseCategory, PaymentMethod, RepeatType } from '@/types';
 
 import { MobileBudget } from './MobileBudget';
@@ -31,6 +32,9 @@ export interface EditExpenseInput {
   paymentMethod: PaymentMethod;
 }
 
+// 정기지출 이월은 세션당 달·공간별 1회만 실행
+let materializedKey: string | null = null;
+
 export default function BudgetPage() {
   const isDesktop = useIsDesktop();
   const today = new Date();
@@ -40,8 +44,20 @@ export default function BudgetPage() {
 
   const { familyGroupId, user, personalSpaceId } = useCurrentUser();
   const effectivePersonalSpaceId = personalSpaceId ?? familyGroupId;
-  const { schedules, loading, updateStatus, create, update, remove } = useSchedules(effectivePersonalSpaceId);
+  const { schedules, loading, refresh, updateStatus, create, update, remove } = useSchedules(effectivePersonalSpaceId);
   const userId = user?.id;
+
+  // ── 정기지출 이월: 이번 달에 누락된 매월/매주/매년 지출 인스턴스 생성 ──
+  useEffect(() => {
+    if (loading || !effectivePersonalSpaceId) return;
+    const now = new Date();
+    const key = `${now.getFullYear()}-${now.getMonth()}-${effectivePersonalSpaceId}`;
+    if (materializedKey === key) return;
+    materializedKey = key;
+    void materializeRecurringExpenses(effectivePersonalSpaceId).then((createdCount) => {
+      if (createdCount > 0) void refresh();
+    });
+  }, [loading, effectivePersonalSpaceId, refresh]);
 
   // 현재 달 개인 지출
   const allExpenses = schedules.filter(
@@ -72,7 +88,8 @@ export default function BudgetPage() {
   const diff           = total - lastMonthTotal;
   const isLess         = diff < 0;
 
-  const completedCnt = expenses.filter((e) => e.status === 'completed').length;
+  // '반영 N건'은 변동지출 박스에 표시되므로 변동지출만 집계 (이전: 고정지출 완료분 포함 오류)
+  const completedCnt = variableExpenses.filter((e) => e.status === 'completed').length;
   const pendingCnt   = fixedExpenses.filter((e) => e.status !== 'completed').length;
   const completePct  = total > 0 ? Math.min((expenses.filter((e) => e.status === 'completed').reduce((s, e) => s + (e.amount ?? 0), 0) / total) * 100, 100) : 0;
 
@@ -144,11 +161,14 @@ export default function BudgetPage() {
 
   const handleUpdateExpense = async (input: EditExpenseInput): Promise<boolean> => {
     try {
+      // 정기지출은 end_time 미설정 유지 (크론 missed 전환 방지) — 일회성 지출만 동기화
+      const target  = schedules.find((s) => s.id === input.id);
+      const isFixed = !!(target?.repeat && target.repeat !== 'none');
       const ok = await update(input.id, {
         title:           input.title,
         amount:          input.amount,
         startTime:       input.date,
-        endTime:         input.date,
+        ...(isFixed ? {} : { endTime: input.date }),
         expenseCategory: input.category,
         paymentMethod:   input.paymentMethod,
       });

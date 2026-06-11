@@ -69,6 +69,7 @@ export function useSchedules(spaceId: string | null): SchedulesState {
             ...(updates.title             !== undefined && { title:           updates.title }),
             ...(updates.amount            !== undefined && { amount:          updates.amount }),
             ...(updates.startTime         !== undefined && { startTime:       updates.startTime }),
+            ...(updates.endTime           !== undefined && { endTime:         updates.endTime }),
             ...(updates.expenseCategory   !== undefined && { expenseCategory: updates.expenseCategory }),
             ...(updates.paymentMethod     !== undefined && { paymentMethod:   updates.paymentMethod }),
           };

@@ -40,6 +40,16 @@ export function formatAmount(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`;
 }
 
+/** 'YYYY-MM-DD' 입력값을 UTC 정오로 파싱
+ *  new Date('YYYY-MM-DD')는 UTC 자정이라 UTC 서쪽 타임존에서 하루 밀린다.
+ *  UTC 정오는 모든 타임존(UTC±12)에서 같은 달력 날짜로 표시되고,
+ *  UTC 날짜 기준으로 동작하는 연체 알림 크론과도 어긋나지 않는다.
+ */
+export function parseDateInput(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12));
+}
+
 export function formatMonthYear(date: Date): string {
   return format(date, 'yyyy년 MM월', { locale: ko });
 }

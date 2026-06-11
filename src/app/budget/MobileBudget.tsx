@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { formatAmount, formatMonthYear, getCategoryColor } from '@/lib/utils';
+import { formatAmount, formatMonthYear, getCategoryColor, parseDateInput } from '@/lib/utils';
 import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_ICONS,
@@ -143,7 +143,7 @@ export function MobileBudget({
     const ok = await handleAddExpense({
       title:         newTitle.trim(),
       amount:        Number(newAmountRaw),
-      date:          new Date(newDate),
+      date:          parseDateInput(newDate),
       category:      newCategory,
       paymentMethod: newPayment,
       repeat,
@@ -170,7 +170,7 @@ export function MobileBudget({
       id:            editTarget.id,
       title:         editTitle.trim(),
       amount:        Number(editAmountRaw),
-      date:          new Date(editDate),
+      date:          parseDateInput(editDate),
       category:      editCategory,
       paymentMethod: editPayment,
     });

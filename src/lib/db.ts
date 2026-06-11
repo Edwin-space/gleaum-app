@@ -1101,6 +1101,121 @@ export async function updateScheduleStatus(id: string, status: ScheduleStatus): 
   return true;
 }
 
+/** 정기지출(고정지출) 이월 — 이번 달에 누락된 반복 인스턴스를 생성한다.
+ *
+ *  '매월/매주/매년' 지출은 등록된 달의 단일 레코드일 뿐, 다음 주기 레코드를
+ *  만들어주는 서버 크론이 없다. 가계부 페이지 로드 시 이 함수를 호출해
+ *  현재 달에 빠진 인스턴스를 lazy하게 생성한다(과거 공백 달은 소급 생성하지 않음).
+ *
+ *  시리즈 식별: 같은 제목 + 같은 반복 주기(title + repeat)의 최신 인스턴스 기준.
+ *  생성된 레코드 수를 반환한다.
+ */
+export async function materializeRecurringExpenses(spaceId: string): Promise<number> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const { data, error } = await supabase
+    .from('schedules')
+    .select('*')
+    .eq('family_group_id', spaceId)
+    .eq('type', 'expense')
+    .eq('visibility', 'private')
+    .eq('created_by', user.id)
+    .neq('repeat', 'none')
+    .order('start_time', { ascending: true });
+
+  if (error || !data?.length) return 0;
+  const rows = data as ScheduleRow[];
+
+  // 시리즈 그룹핑 (start_time 오름차순이므로 마지막 요소가 최신 인스턴스)
+  const series = new Map<string, ScheduleRow[]>();
+  for (const row of rows) {
+    const key = `${row.title}__${row.repeat}`;
+    const list = series.get(key) ?? [];
+    list.push(row);
+    series.set(key, list);
+  }
+
+  let created = 0;
+
+  for (const instances of series.values()) {
+    const latest = instances[instances.length - 1];
+    const latestDate = new Date(latest.start_time);
+    const repeatEnd  = latest.repeat_end_date ? new Date(latest.repeat_end_date) : null;
+
+    // 이번 달에 생성할 결제일 목록 (UTC 정오 — 전 타임존에서 같은 달력 날짜 유지)
+    const targets: Date[] = [];
+    const lastDayOfMonth = monthEnd.getDate();
+
+    if (latest.repeat === 'monthly') {
+      if (latestDate >= monthStart) continue; // 이미 이번 달(또는 미래) 인스턴스 존재
+      const day = Math.min(latestDate.getDate(), lastDayOfMonth);
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day, 12)));
+    } else if (latest.repeat === 'yearly') {
+      if (latestDate >= monthStart) continue;
+      if (latestDate.getMonth() !== now.getMonth()) continue; // 결제 월이 아님
+      const day = Math.min(latestDate.getDate(), lastDayOfMonth);
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day, 12)));
+    } else if (latest.repeat === 'weekly') {
+      const cursor = new Date(latestDate);
+      for (let i = 0; i < 60; i++) { // 안전 상한 (약 1년)
+        cursor.setDate(cursor.getDate() + 7);
+        if (cursor > monthEnd) break;
+        if (cursor >= monthStart) {
+          targets.push(new Date(Date.UTC(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 12)));
+        }
+      }
+    } else {
+      continue; // daily 등 가계부 UI에서 제공하지 않는 주기는 미지원
+    }
+
+    for (const target of targets) {
+      if (repeatEnd && target > repeatEnd) continue;
+
+      // 중복 방지: 같은 시리즈가 주간은 같은 날짜, 월간·연간은 같은 달에 이미 있으면 스킵
+      const dup = instances.some((inst) => {
+        const d = new Date(inst.start_time);
+        const sameMonth = d.getFullYear() === target.getFullYear() && d.getMonth() === target.getMonth();
+        return latest.repeat === 'weekly' ? sameMonth && d.getDate() === target.getDate() : sameMonth;
+      });
+      if (dup) continue;
+
+      const { error: insertError } = await supabase.from('schedules').insert({
+        title:             latest.title,
+        type:              'expense',
+        category:          'expense',
+        visibility:        'private',
+        automation_policy: 'reminder_only',
+        start_time:        target.toISOString(),
+        end_time:          null, // 정기지출은 end_time 미설정 — 크론 missed 전환 방지
+        all_day:           latest.all_day,
+        status:            'pending',
+        reminder:          latest.reminder ?? 0,
+        repeat:            latest.repeat,
+        repeat_end_date:   latest.repeat_end_date,
+        memo:              latest.memo,
+        family_group_id:   spaceId,
+        created_by:        user.id,
+        amount:            latest.amount,
+        expense_category:  latest.expense_category,
+        payment_method:    latest.payment_method,
+      });
+      if (insertError) {
+        console.error('[materializeRecurringExpenses]', insertError.message);
+      } else {
+        created++;
+      }
+    }
+  }
+
+  return created;
+}
+
 export async function reflectSpaceExpenseToPersonalBudget(
   sourceExpense: Schedule,
   options: {
