@@ -40,14 +40,14 @@ export function formatAmount(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`;
 }
 
-/** 'YYYY-MM-DD' 입력값을 UTC 정오로 파싱
- *  new Date('YYYY-MM-DD')는 UTC 자정이라 UTC 서쪽 타임존에서 하루 밀린다.
- *  UTC 정오는 모든 타임존(UTC±12)에서 같은 달력 날짜로 표시되고,
- *  UTC 날짜 기준으로 동작하는 연체 알림 크론과도 어긋나지 않는다.
+/** 'YYYY-MM-DD' 입력값을 UTC 자정으로 파싱
+ *  KST에서 오전 9시로 표시되어 일정 뷰의 시간 노출이 자연스럽고(정오 저장 시
+ *  오후 9시로 표시되는 문제), UTC 날짜 기준으로 동작하는 연체 알림 크론과
+ *  KST 달력 날짜가 일치한다. (한국 중심 서비스 전제)
  */
 export function parseDateInput(value: string): Date {
   const [y, m, d] = value.split('-').map(Number);
-  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12));
+  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1));
 }
 
 export function formatMonthYear(date: Date): string {

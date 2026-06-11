@@ -1148,26 +1148,26 @@ export async function materializeRecurringExpenses(spaceId: string): Promise<num
     const latestDate = new Date(latest.start_time);
     const repeatEnd  = latest.repeat_end_date ? new Date(latest.repeat_end_date) : null;
 
-    // 이번 달에 생성할 결제일 목록 (UTC 정오 — 전 타임존에서 같은 달력 날짜 유지)
+    // 이번 달에 생성할 결제일 목록 (UTC 자정 = KST 오전 9시 — 일정 뷰 시간 표시가 자연스럽고 연체 크론의 UTC 날짜와 일치)
     const targets: Date[] = [];
     const lastDayOfMonth = monthEnd.getDate();
 
     if (latest.repeat === 'monthly') {
       if (latestDate >= monthStart) continue; // 이미 이번 달(또는 미래) 인스턴스 존재
       const day = Math.min(latestDate.getDate(), lastDayOfMonth);
-      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day, 12)));
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day)));
     } else if (latest.repeat === 'yearly') {
       if (latestDate >= monthStart) continue;
       if (latestDate.getMonth() !== now.getMonth()) continue; // 결제 월이 아님
       const day = Math.min(latestDate.getDate(), lastDayOfMonth);
-      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day, 12)));
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day)));
     } else if (latest.repeat === 'weekly') {
       const cursor = new Date(latestDate);
       for (let i = 0; i < 60; i++) { // 안전 상한 (약 1년)
         cursor.setDate(cursor.getDate() + 7);
         if (cursor > monthEnd) break;
         if (cursor >= monthStart) {
-          targets.push(new Date(Date.UTC(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 12)));
+          targets.push(new Date(Date.UTC(cursor.getFullYear(), cursor.getMonth(), cursor.getDate())));
         }
       }
     } else {

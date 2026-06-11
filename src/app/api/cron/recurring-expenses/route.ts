@@ -90,20 +90,20 @@ export async function GET(req: NextRequest) {
     const latestDate = new Date(latest.start_time);
     const repeatEnd  = latest.repeat_end_date ? new Date(latest.repeat_end_date) : null;
 
-    // 이번 달에 생성할 결제일 목록 (UTC 정오 — 모든 타임존에서 같은 달력 날짜)
+    // 이번 달에 생성할 결제일 목록 (UTC 자정 = KST 오전 9시 — 일정 뷰 시간 표시가 자연스럽고 연체 크론의 UTC 날짜와 일치)
     const targets: Date[] = [];
 
     if (latest.repeat === 'monthly') {
       if (latestDate >= monthStart) continue;
       const kstLatest = new Date(latestDate.getTime() + KST_OFFSET_MS);
       const day = Math.min(kstLatest.getUTCDate(), lastDayOfMonth);
-      targets.push(new Date(Date.UTC(year, month, day, 12)));
+      targets.push(new Date(Date.UTC(year, month, day)));
     } else if (latest.repeat === 'yearly') {
       if (latestDate >= monthStart) continue;
       const kstLatest = new Date(latestDate.getTime() + KST_OFFSET_MS);
       if (kstLatest.getUTCMonth() !== month) continue;
       const day = Math.min(kstLatest.getUTCDate(), lastDayOfMonth);
-      targets.push(new Date(Date.UTC(year, month, day, 12)));
+      targets.push(new Date(Date.UTC(year, month, day)));
     } else if (latest.repeat === 'weekly') {
       const cursor = new Date(latestDate);
       for (let i = 0; i < 60; i++) {
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
         if (cursor > monthEnd) break;
         if (cursor >= monthStart) {
           const kstCursor = new Date(cursor.getTime() + KST_OFFSET_MS);
-          targets.push(new Date(Date.UTC(kstCursor.getUTCFullYear(), kstCursor.getUTCMonth(), kstCursor.getUTCDate(), 12)));
+          targets.push(new Date(Date.UTC(kstCursor.getUTCFullYear(), kstCursor.getUTCMonth(), kstCursor.getUTCDate())));
         }
       }
     } else {

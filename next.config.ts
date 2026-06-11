@@ -7,11 +7,15 @@ import type { NextConfig } from "next";
 const CSP = [
   "default-src 'self'",
   // Next.js 인라인 스크립트 + Google 서비스 (GA4, OAuth, Maps) + 카카오 AdFit
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://maps.googleapis.com https://t1.kakaocdn.net https://*.daumcdn.net",
-  "style-src 'self' 'unsafe-inline' https://t1.kakaocdn.net https://*.daumcdn.net",
+  // www.gstatic.com: firebase-messaging-sw.js의 importScripts(FCM SDK) — 누락 시 SW 평가 실패로 웹 푸시 전체 미작동
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://maps.googleapis.com https://www.gstatic.com https://t1.kakaocdn.net https://*.daumcdn.net",
+  // cdn.jsdelivr.net: Pretendard 폰트 CSS/woff2
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://t1.kakaocdn.net https://*.daumcdn.net",
   // 외부 이미지: Google 프로필, Supabase Storage
   "img-src 'self' data: blob: https: ",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://cdn.jsdelivr.net",
+  // 서비스워커(sw.js, firebase-messaging-sw.js)는 same-origin만 허용
+  "worker-src 'self'",
   // XHR/fetch 허용 도메인 — 이 목록 외 도메인으로의 데이터 전송 차단
   [
     "connect-src 'self'",
