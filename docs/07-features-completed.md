@@ -789,10 +789,19 @@ npm run cap:open:android # Android Studio 열기
 ## 이메일 회원가입·로그인 + 로그인 화면 소셜 우선 재구성 (완료 — 2026-06-15)
 
 - [x] `useAuth`에 `signUpWithEmail(email, password, name)` / `signInWithEmail(email, password)` 추가 (`src/hooks/useAuth.ts`)
-- [x] `/login`을 소셜 우선 구조로 재구성: 구글 → 애플 → 카카오 버튼 우선 배치, 그 아래 "메일로 로그인" / "메일주소로 회원가입" 진입
-- [x] 애플·카카오는 미연동 — 클릭 시 "연동 준비 중" sonner 토스트
+- [x] `/login`을 소셜 우선 구조로 재구성: 구글 버튼 우선, 그 아래 "이메일로 로그인" / "이메일로 회원가입" 진입
+- [x] 애플·카카오 로그인은 심사·연동 부담으로 **UI에서 제외(보류)** — 추후 재도입
 - [x] 이메일 회원가입 폼에 `[필수]` 만 14세 이상 / 이용약관 / 개인정보 수집·이용 동의 체크박스 + "전체 동의" 토글 (정보통신망법·개인정보보호법 준수, 미동의 시 제출 차단)
 - [x] Confirm signup 이메일 템플릿 한글화(대시보드 적용 완료). 실제 발송은 Supabase Email/SMTP 설정 의존
+- [x] `/login` `?view=email`·`?mode=signup` 딥링크 지원
+
+## 네이티브 앱 이메일 로그인 파리티 (완료 — 2026-06-15)
+
+- [x] 네이티브 `LoginActivity`(Google 전용)에 "이메일로 계속하기" 버튼 추가 (`activity_login.xml` + `btn_email_bg.xml`)
+- [x] 버튼 → `MainActivity`를 `start_path=/login?view=email`로 실행 → WebView가 웹 이메일 폼 표시 (`?view=email`은 Google 버튼 없이 이메일만 → WebView Google OAuth 차단 회피)
+- [x] `MainActivity`가 `start_path` extra를 받아 WebView를 해당 경로로 이동
+- [x] `NativeAppProvider`: `onAuthStateChange(SIGNED_IN/TOKEN_REFRESHED)`에서 `saveNativeSession()` 호출 → WebView 이메일 로그인 세션을 네이티브 `SessionManager`에 저장(콜드 재실행 로그인 유지)
+- [x] `android :app:assembleDebug` 통과(APK 생성 확인). ⚠️ 런타임 동작은 에뮬레이터/기기 스모크 테스트 권장
 
 ## 가계부 정기지출 이월 + 데이터/날짜 버그 수정 (완료 — 2026-06-15)
 

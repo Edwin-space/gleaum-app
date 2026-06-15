@@ -7,9 +7,12 @@
 | 방식 | 상태 | 비고 |
 |------|------|------|
 | 구글 로그인 (OAuth) | ✅ 사용 | 웹/네이티브 모두. `signInWithGoogle()` |
-| 이메일/비밀번호 회원가입·로그인 | ✅ 사용 | `signUpWithEmail()` / `signInWithEmail()`. 회원가입 시 이름·메일·비밀번호(6자+) + 약관 동의 체크박스 |
-| 애플 로그인 | ⏳ 준비 중 | 버튼만 노출, 클릭 시 "연동 준비 중" 토스트. 실연동은 유료 Apple Developer + Services ID/Key 필요 |
-| 카카오 로그인 | ⏳ 준비 중 | 버튼만 노출, 클릭 시 "연동 준비 중" 토스트. 실연동은 카카오 비즈 인증(이메일 동의항목) 필요 |
+| 이메일/비밀번호 회원가입·로그인 | ✅ 사용 | `signUpWithEmail()` / `signInWithEmail()`. 회원가입 시 이름·이메일·비밀번호(6자+) + 약관 동의 체크박스. **웹·모바일 웹·네이티브 앱 모두 지원** |
+| 애플 로그인 | ⛔ 보류(2026-06-15) | 심사·연동 절차 부담으로 UI에서 제외. 추후 재도입 시 유료 Apple Developer + Services ID/Key(.p8) 필요 |
+| 카카오 로그인 | ⛔ 보류(2026-06-15) | 심사·연동 절차 부담으로 UI에서 제외. 추후 재도입 시 카카오 비즈 인증(이메일 동의항목) 필요 |
+
+### 네이티브 앱 이메일 로그인 (파리티)
+네이티브 앱은 자체 `LoginActivity`(Google 버튼)를 쓰므로, **"이메일로 계속하기" 버튼 → `MainActivity` WebView가 웹 `/login?view=email`로 진입**해 웹 이메일 폼을 재사용한다. 로그인 성공 시 `NativeAppProvider`의 `onAuthStateChange(SIGNED_IN)`이 `saveNativeSession()`을 호출해 네이티브 `SessionManager`에 세션을 저장 → 콜드 재실행에도 로그인 유지. (`?view=email`은 Google 버튼 없이 이메일 폼만 노출 → WebView 내 Google OAuth 차단 이슈 회피)
 
 ### 이메일 회원가입 약관 동의 (법적 준수)
 정보통신망법·개인정보보호법 준수를 위해 회원가입 폼에 개별 체크박스 제공:
