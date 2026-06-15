@@ -783,3 +783,36 @@ npm run cap:open:android # Android Studio 열기
 - [x] 홈, 일정, 공간, 가계부, 알림, 온보딩, 마이페이지 등 주요 화면의 하드코딩 배경/텍스트 색상 1차 토큰화
 - [x] 마이페이지 공통 모달 다크모드 대비 보정
 - [x] `npm run build` 통과
+
+---
+
+## 이메일 회원가입·로그인 + 로그인 화면 소셜 우선 재구성 (완료 — 2026-06-15)
+
+- [x] `useAuth`에 `signUpWithEmail(email, password, name)` / `signInWithEmail(email, password)` 추가 (`src/hooks/useAuth.ts`)
+- [x] `/login`을 소셜 우선 구조로 재구성: 구글 → 애플 → 카카오 버튼 우선 배치, 그 아래 "메일로 로그인" / "메일주소로 회원가입" 진입
+- [x] 애플·카카오는 미연동 — 클릭 시 "연동 준비 중" sonner 토스트
+- [x] 이메일 회원가입 폼에 `[필수]` 만 14세 이상 / 이용약관 / 개인정보 수집·이용 동의 체크박스 + "전체 동의" 토글 (정보통신망법·개인정보보호법 준수, 미동의 시 제출 차단)
+- [x] Confirm signup 이메일 템플릿 한글화(대시보드 적용 완료). 실제 발송은 Supabase Email/SMTP 설정 의존
+
+## 가계부 정기지출 이월 + 데이터/날짜 버그 수정 (완료 — 2026-06-15)
+
+- [x] **치명적 결함 수정**: 매월/매주/매년 정기지출의 다음 주기 인스턴스가 어디서도 생성되지 않던 문제 → 달마다 별도 `schedules` row로 이월
+- [x] 클라이언트 `materializeRecurringExpenses(spaceId)` (가계부 진입 시 lazy, 세션당 달·공간별 1회) — `src/lib/db.ts`
+- [x] 서버 크론 `/api/cron/recurring-expenses` + `supabase/migrations/016` (매일 00:10 KST). 둘 다 멱등
+- [x] 고정지출 수정 시 `end_time`이 설정돼 크론 missed 전환 설계와 충돌하던 버그 수정 (일회성만 동기화)
+- [x] 변동지출 "반영 N건" 집계에 고정지출 완료분이 포함되던 오류 수정
+- [x] 날짜 입력 UTC 자정 파싱 → `parseDateInput`으로 타임존 보정
+- [x] 운영(www.gleaum.com)에서 변동/고정 등록·결제완료 토글·수정·삭제 E2E 검증
+
+## 웹 푸시(FCM)·폰트·하이드레이션 운영 버그 수정 (완료 — 2026-06-15)
+
+- [x] **웹 푸시 전체 미작동 수정**: `src/proxy.ts` matcher가 `.js/.json`을 제외하지 않아 `sw.js`·`firebase-messaging-sw.js`·`manifest.json`의 Content-Type이 `text/plain`으로 변질 → nosniff와 겹쳐 서비스워커 등록 실패. matcher 제외 확장자 추가로 해결, 운영 콘솔 `[FCM] 토큰 발급 성공` 검증
+- [x] **Pretendard 폰트 미적용 수정**: `layout.tsx` 문자열 `onLoad` 핸들러를 React가 무시해 폰트가 `media="print"`로 고착되던 문제 + CSP에 `www.gstatic.com`·`cdn.jsdelivr.net` 허용, `worker-src 'self'` 추가
+- [x] **데스크탑 레이아웃 밀림(React #418) 수정**: `useMediaQuery`를 `useSyncExternalStore`로 변경(SSR/첫 렌더 일치). 인사말 `useTimeGreeting` 훅 분리, 날짜 표시 `suppressHydrationWarning` 적용
+- [x] 운영 데스크탑/모바일에서 #418 콘솔 오류 0건 확인
+
+## Supabase 크론 도메인 통일 + 등록 SQL 정리 (완료 — 2026-06-15)
+
+- [x] 크론 6종 타깃을 `https://www.gleaum.com`으로 통일 (automations·reminders의 구 `gleaum-app.vercel.app`, cleanup의 apex `gleaum.com` 정리)
+- [x] `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성
+- [x] CRON_SECRET=`gleaum-cron-2026` — Vercel·로컬·크론 6종 일치 확인 (overdue-expenses 200 응답 검증)

@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-06-02
+> **최종 업데이트**: 2026-06-15
 
 ---
 
@@ -44,6 +44,12 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-15 | 이메일/비밀번호 회원가입·로그인 추가 + 로그인 화면 소셜 우선 재구성. 구글/애플/카카오 버튼을 우선 배치(애플·카카오는 "연동 준비 중" sonner 토스트), 그 아래 메일 로그인/회원가입 진입 버튼. 이메일 회원가입에 `[필수]` 만 14세 이상 / 이용약관 / 개인정보 수집·이용 동의 체크박스(전체 동의 토글) 추가 — 정보통신망법·개인정보보호법 준수. `useAuth`에 `signUpWithEmail`/`signInWithEmail` 추가 (`src/hooks/useAuth.ts`, `src/app/login/page.tsx`) |
+| 2026-06-15 | 가계부 정기지출(매월/매주/매년) 이월 구현. 기존엔 다음 주기 인스턴스가 어디서도 생성되지 않던 치명적 결함 → `materializeRecurringExpenses()`(가계부 진입 시 lazy, `src/lib/db.ts`) + 서버 크론 `/api/cron/recurring-expenses`(`016`, 매일 00:10 KST) 이중 보강. 부수: 고정지출 수정 시 end_time이 설정돼 크론 missed 전환 설계와 충돌하던 버그, 변동지출 "반영 N건" 집계 오류, 날짜 입력 UTC 자정 파싱(타임존) 수정 |
+| 2026-06-15 | 웹 푸시(FCM)가 운영에서 전체 미작동하던 문제 수정. `src/proxy.ts` 미들웨어 matcher가 `.js/.json`을 제외하지 않아 `firebase-messaging-sw.js`·`sw.js`·`manifest.json`이 미들웨어를 통과 → `NextResponse.next()` 처리로 Content-Type이 `text/plain`이 되고 전역 `nosniff`와 겹쳐 서비스워커 등록이 "ServiceWorker script evaluation failed"로 실패. matcher 제외 확장자에 `js/mjs/json/css/woff/woff2/webmanifest` 추가. 운영 콘솔에서 `[FCM] 토큰 발급 성공` 검증 |
+| 2026-06-15 | Pretendard 폰트가 전 서비스에서 미적용되던 문제 수정. `layout.tsx`의 문자열 `onLoad="this.media='all'"` 핸들러를 React가 무시해 폰트 CSS가 `media="print"`로 영구 고착 → 일반 stylesheet 로드로 변경. CSP에 `www.gstatic.com`(FCM SW의 importScripts)·`cdn.jsdelivr.net`(Pretendard CSS/woff2)을 허용하고 `worker-src 'self'` 추가 (`next.config.ts`) |
+| 2026-06-15 | 데스크탑에서 레이아웃이 통째로 다시 그려지던 밀림현상(React #418 hydration) 수정. `useMediaQuery`가 SSR=false / 데스크탑 클라이언트=true를 반환해 서버는 Mobile, 클라이언트는 Desktop 레이아웃을 기대 → 전체 트리 hydration 불일치. `useSyncExternalStore`(getServerSnapshot=false)로 서버/첫 렌더 일치. 시간대 인사말은 `useTimeGreeting` 훅으로 분리, `new Date()` 기반 날짜 표시는 `suppressHydrationWarning` 적용 (`src/hooks/useMediaQuery.ts`, `src/hooks/useTimeGreeting.ts`, 홈 2종) |
+| 2026-06-15 | Supabase 크론 6종을 `www.gleaum.com` 도메인으로 통일(automations·reminders가 구 `gleaum-app.vercel.app`, cleanup이 apex `gleaum.com` 사용하던 것 정리). `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그(DO 블록 안 `format($$...$$)`가 "syntax error" 유발)를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성. CRON_SECRET은 `gleaum-cron-2026`으로 Vercel·로컬·크론 6종 모두 일치 확인 |
 | 2026-06-02 | Android 기기 캘린더 연동 1차 구현. `NativeCalendarPlugin` 추가, READ/WRITE_CALENDAR 권한 연결, 설정 화면에서 권한 요청/캘린더 선택/앞으로 30일 일정 수동 내보내기 지원 |
 | 2026-06-02 | iOS 스플래시 후 웹 로그인 flash 보정. JS `hideSplash()`가 300ms에 스플래시를 강제 종료하던 문제를 3000ms로 맞추고, 네이티브 LoginViewController는 0.45초에 미리 올리도록 조정 |
 | 2026-06-02 | iOS 스플래시/로그인 전환 UX 보정. Capacitor SplashScreen 3초 적용, iOS LoginViewController 표시를 2.75초 지연시켜 스플래시 종료 직전 cross-dissolve로 부드럽게 전환 |
@@ -173,11 +179,13 @@ page.tsx (thin router — 상태 + 핸들러)
 Claude가 진행한 뒤 문서 반영이 누락되어 있던 핵심 변경입니다.
 
 ### 지출/알림
+- `/api/cron/recurring-expenses`: 정기지출(매월/매주/매년) 이번 달 인스턴스 이월 생성 (매일 00:10 KST). 클라이언트 `materializeRecurringExpenses()`(가계부 진입 시)와 동일 로직의 서버 보강
 - `/api/cron/overdue-expenses`: 고정지출 미결제 D+0/3/7 FCM + in-app 알림
 - `/api/cron/weekly-digest`: 매주 월요일 09:00 KST 지난 7일 개인 지출 다이제스트
-- `supabase/migrations/012_cron_overdue_and_digest.sql`: Supabase pg_cron 등록 SQL. 실행 전 `app_url`, `cron_secret` 수정 필수
+- `supabase/migrations/012_cron_overdue_and_digest.sql`, `016_cron_recurring_expenses.sql`: Supabase pg_cron 등록 SQL. **DO/format 없이 평문 `cron.schedule(name, schedule, '명령문')` 형태**(`$$` 중첩 금지). 실행 전 `<CRON_SECRET>` 치환 필수
 - 가계부 PC/모바일 D-day UI: D-N, 내일 결제, 오늘 결제일, N일 경과 표시
 - 모바일 홈 가계부 카드: 미결제 고정지출 건수 배지 표시
+- ⚠️ 등록된 Supabase 크론 6종은 모두 `https://www.gleaum.com` 도메인 기준. `CRON_SECRET`은 `gleaum-cron-2026`(Vercel 환경변수와 일치). 상세는 `docs/09-deployment.md` 참조
 
 ### Firebase/Android
 - `FirebaseServicesProvider`: App Check, Remote Config, Crashlytics 사용자 ID 초기화
@@ -1240,6 +1248,14 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 수입 기능을 `schedules.type`에 억지로 추가하면 일정/가계부 경계가 더 흐려진다.
 - 고정지출 자동 반영을 단일 schedule row의 `repeat`와 `status`만으로 처리하면 월별 납부 상태가 분리되지 않는다.
 - 다음 작업자는 먼저 SQL 마이그레이션을 설계하고 Supabase RLS까지 포함해야 한다.
+
+### 현재 구현 상태 (2026-06-15) — 임시 이월 방식
+> 위 Phase 2(별도 `recurring_budget_rules`/`budget_occurrences` 테이블)는 **아직 미구현**이며, 그 사이의 임시 해법으로 다음을 적용했다.
+- 정기지출은 **달마다 별도의 `schedules` row로 이월 생성**된다 → 6월분/7월분 납부(`status`) 상태가 자연히 분리된다(라인 1210~1211의 우려를 부분 해소).
+- 시리즈 식별 키: **`title` + `repeat`**의 최신 인스턴스. (전용 rule 테이블이 없으므로 제목이 바뀌면 별도 시리즈로 인식되는 한계 존재)
+- 생성 위치: 클라이언트 `materializeRecurringExpenses(spaceId)`(가계부 진입 시 lazy, `src/lib/db.ts`) + 서버 크론 `/api/cron/recurring-expenses`(매일 00:10 KST). 둘 다 멱등(같은 달 중복 생성 방지).
+- 정기지출 row는 `end_time = null` + `automation_policy = 'reminder_only'`로 저장해 `automations` 크론의 missed 전환을 피한다.
+- **장기적으로는 여전히 위 Phase 2 모델(특히 수입 기능 도입 시)로 전환 권장.** 현재 방식은 제목 변경/규칙 중단(일시정지) 관리가 약하다.
 
 ### 검증
 - `npm run build` 통과.

@@ -4,7 +4,7 @@
 
 - **플랫폼**: Vercel (Next.js 공식 호스팅)
 - **프로젝트명**: `gleaum-app`
-- **프로덕션 URL**: https://gleaum-app.vercel.app
+- **프로덕션 URL(정식 도메인)**: https://www.gleaum.com (구 `gleaum-app.vercel.app`도 동일 배포를 가리킴)
 - **GitHub 저장소**: `Edwin-space/gleaum-app`
 - **브랜치**: `main` → 자동 배포 트리거
 
@@ -102,24 +102,33 @@ CRON_SECRET=
    - Redirect URLs: `https://gleaum-app.vercel.app/auth/callback`
 3. **Database → RLS**: 모든 테이블 RLS 활성화됨
 4. **Database → Extensions**: `pg_net`, `pg_cron` 활성화됨
-5. **Cron Job**: `gleaum-reminders`가 5분마다 `/api/cron/reminders` 호출
+5. **Cron Job**: 아래 표의 6종 등록됨 (전부 `https://www.gleaum.com` 기준)
 
-### Supabase Cron / pg_net
+### Supabase Cron / pg_net (2026-06-15 기준)
 
-Vercel Hobby 플랜에서는 Vercel Cron 사용이 제한되므로, 리마인더 자동 실행은 Supabase에서 처리합니다.
+Vercel Hobby 플랜에서는 Vercel Cron 사용이 제한되므로, **모든 정기 실행은 Supabase `pg_cron` + `pg_net`**에서 처리합니다. (`vercel.json`에는 cron 설정을 두지 않음)
+
+| jobname | schedule (UTC → KST) | 대상 API |
+|---------|----------------------|----------|
+| `gleaum-recurring-expenses` | `10 15 * * *` → 매일 00:10 KST | `/api/cron/recurring-expenses` (정기지출 이월) |
+| `gleaum-overdue-expenses` | `0 0 * * *` → 매일 09:00 KST | `/api/cron/overdue-expenses` (미결제 D+0/3/7) |
+| `gleaum-weekly-digest` | `0 0 * * 1` → 월 09:00 KST | `/api/cron/weekly-digest` (주간 다이제스트) |
+| `gleaum-reminders` | `*/5 * * * *` → 5분마다 | `/api/cron/reminders` (일정 리마인더) |
+| `gleaum-automations` | `*/5 * * * *` → 5분마다 | `/api/cron/automations` (자동화 상태전환) |
+| `cleanup-withdrawals-daily` | `0 18 * * *` → 매일 03:00 KST | `/api/cron/cleanup-withdrawals` (탈퇴 데이터 정리) |
+
+각 잡의 요청 헤더는 `Authorization: Bearer <CRON_SECRET>`이며, **Vercel 환경변수 `CRON_SECRET`과 반드시 일치**해야 함. 현재 값은 `gleaum-cron-2026` (Vercel·로컬 `.env.local`·크론 6종 모두 동일).
 
 ```sql
-SELECT jobname, schedule, command, active
-FROM cron.job
-WHERE jobname = 'gleaum-reminders';
+-- 전체 등록 상태 + 타깃 도메인 확인
+SELECT jobname, schedule, active,
+       substring(command from 'url[^'']*''([^'']+)') AS target_url
+FROM cron.job ORDER BY jobname;
 ```
 
-대상 API:
-
-```text
-GET https://gleaum-app.vercel.app/api/cron/reminders
-Authorization: Bearer <CRON_SECRET>
-```
+> ⚠️ **등록 SQL 작성 주의**: `DO $$ ... format($$ ... $$) ... $$` 처럼 같은 `$$` 도크쿼트 태그를 중첩하면 "syntax error at or near SELECT"가 발생한다. 반드시 `cron.schedule(name, schedule, '명령문 평문')` 형태로 작성하고, 명령문 내부 작은따옴표는 `''`로 이스케이프한다. (`supabase/migrations/012`, `016` 참조)
+>
+> ⚠️ **도메인 일관성**: 모든 크론은 `https://www.gleaum.com`을 가리킨다. 과거엔 `gleaum-app.vercel.app`(automations·reminders), apex `gleaum.com`(cleanup)이 혼재했으나 2026-06-15에 www로 통일함. 구 도메인 제거 시 재확인 불필요.
 
 ---
 

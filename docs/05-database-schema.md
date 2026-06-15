@@ -151,21 +151,26 @@ CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pg_cron SCHEMA extensions;
 ```
 
-### 등록된 잡
-```sql
--- jobname: gleaum-reminders
--- schedule: */5 * * * *
--- target: https://gleaum-app.vercel.app/api/cron/reminders
-```
+### 등록된 잡 (2026-06-15 기준, 6종 — 전부 `https://www.gleaum.com`)
+| jobname | schedule | target |
+|---------|----------|--------|
+| `gleaum-recurring-expenses` | `10 15 * * *` | `/api/cron/recurring-expenses` |
+| `gleaum-overdue-expenses` | `0 0 * * *` | `/api/cron/overdue-expenses` |
+| `gleaum-weekly-digest` | `0 0 * * 1` | `/api/cron/weekly-digest` |
+| `gleaum-reminders` | `*/5 * * * *` | `/api/cron/reminders` |
+| `gleaum-automations` | `*/5 * * * *` | `/api/cron/automations` |
+| `cleanup-withdrawals-daily` | `0 18 * * *` | `/api/cron/cleanup-withdrawals` |
 
 요청 헤더에는 `Authorization: Bearer <CRON_SECRET>`이 포함되어야 하며,
-Vercel 환경변수 `CRON_SECRET`과 Supabase cron SQL의 Bearer 값이 반드시 같아야 합니다.
+Vercel 환경변수 `CRON_SECRET`(현재 `gleaum-cron-2026`)과 Supabase cron SQL의 Bearer 값이 반드시 같아야 합니다.
+
+> ⚠️ 등록 SQL은 `DO/format($$...$$)` 중첩 금지(syntax error). `cron.schedule(name, schedule, '명령문 평문')` 형태로 작성. 상세: `docs/09-deployment.md`.
 
 ### 확인 쿼리
 ```sql
-SELECT jobname, schedule, command, active
-FROM cron.job
-WHERE jobname = 'gleaum-reminders';
+SELECT jobname, schedule, active,
+       substring(command from 'url[^'']*''([^'']+)') AS target_url
+FROM cron.job ORDER BY jobname;
 ```
 
 ---

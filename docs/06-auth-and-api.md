@@ -1,5 +1,31 @@
 # 06. 인증 및 외부 API
 
+## 로그인 방식 현황 (2026-06-15)
+
+`/login` 화면은 **소셜 우선 + 이메일 보조** 구조입니다.
+
+| 방식 | 상태 | 비고 |
+|------|------|------|
+| 구글 로그인 (OAuth) | ✅ 사용 | 웹/네이티브 모두. `signInWithGoogle()` |
+| 이메일/비밀번호 회원가입·로그인 | ✅ 사용 | `signUpWithEmail()` / `signInWithEmail()`. 회원가입 시 이름·메일·비밀번호(6자+) + 약관 동의 체크박스 |
+| 애플 로그인 | ⏳ 준비 중 | 버튼만 노출, 클릭 시 "연동 준비 중" 토스트. 실연동은 유료 Apple Developer + Services ID/Key 필요 |
+| 카카오 로그인 | ⏳ 준비 중 | 버튼만 노출, 클릭 시 "연동 준비 중" 토스트. 실연동은 카카오 비즈 인증(이메일 동의항목) 필요 |
+
+### 이메일 회원가입 약관 동의 (법적 준수)
+정보통신망법·개인정보보호법 준수를 위해 회원가입 폼에 개별 체크박스 제공:
+- `[필수]` 만 14세 이상입니다
+- `[필수]` 이용약관 동의 (`/legal/terms`)
+- `[필수]` 개인정보 수집·이용 동의 (`/legal/privacy`)
+- "전체 동의" 토글 제공. 미동의 시 제출 차단.
+
+### 이메일 인증 메일
+`signUpWithEmail()`은 `emailRedirectTo`(웹: `/auth/callback`, 네이티브: `gleaum://auth/callback`)를 설정. 실제 발송은 **Supabase 대시보드 설정에 의존**:
+- Authentication → Providers → Email → **"Confirm email" 토글 ON**
+- Authentication → Emails → Templates → **"Confirm signup"** (한글 템플릿 적용 완료)
+- 운영 트래픽 증가 시 커스텀 SMTP(Resend/SendGrid) + 자체 도메인 발신 권장
+
+---
+
 ## Google OAuth 2.0
 
 ### 설정 현황
@@ -95,11 +121,14 @@ await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
 
 ---
 
-## 미들웨어 인증 (`src/middleware.ts`)
+## 미들웨어 인증 (`src/proxy.ts`)
 
-비로그인 사용자가 보호된 경로 접근 시 `/login`으로 리다이렉트.
+> 파일명은 `middleware.ts`가 아니라 **`src/proxy.ts`** (Next.js 미들웨어 `proxy` export). 비로그인 사용자가 보호된 경로 접근 시 `/login`으로 리다이렉트.
 
 ```typescript
-// 보호된 경로: /home, /schedules, /family, /budget, /mypage 등
-// 공개 경로: /login, /auth/callback, /invite/[code]
+// 공개 경로: /, /login, /auth/callback, /invite, /api, /legal, /download 등
+// 그 외 경로는 세션 없으면 /login?next=... 로 리다이렉트
 ```
+
+### ⚠️ matcher의 정적 자산 제외 (필수)
+matcher 제외 목록에는 정적 자산 확장자(`js/mjs/json/css/woff/woff2/webmanifest` 및 이미지/txt/xml)가 반드시 포함되어야 한다. 누락 시 `public/`의 `sw.js`·`firebase-messaging-sw.js`·`manifest.json`이 미들웨어를 통과하며 `NextResponse.next()` 처리로 **Content-Type이 `text/plain`으로 변질** → 전역 `nosniff`와 겹쳐 서비스워커 등록이 실패하고 **웹 푸시(FCM)가 전체 미작동**한다. (2026-06-15 수정)

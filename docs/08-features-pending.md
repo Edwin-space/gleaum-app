@@ -79,11 +79,26 @@
 | 🔴 | 초대 링크/코드 | 웹 링크, Android App Link, 커스텀 스킴에서 같은 초대 코드가 유효하게 처리되는지 검증 |
 | 🔴 | 개인/공간 데이터 경계 | `015_harden_private_schedule_rls.sql` Supabase 실행 후 회귀 테스트 |
 | 🟡 | 설정 항목 노출 | 테마, 생체인증, 알림, 캘린더, 홈 구성의 웹/앱 노출 정책 통일 |
-| 🟡 | 준비 중 기능 표시 | Apple 로그인, iOS 앱, 기기 캘린더, 지도 API, 이미지 첨부 문구/비활성 상태 통일 |
+| 🟡 | 준비 중 기능 표시 | Apple/카카오 로그인, iOS 앱, 기기 캘린더, 지도 API, 이미지 첨부 문구/비활성 상태 통일 (현재 `/login`의 애플·카카오는 "연동 준비 중" 토스트만) |
 | 🟡 | 운영/관리 경계 | 사용자 앱 `/admin/*`와 별도 백오피스 기능 역할 분리 |
 
 ## 웹 서비스 잔여 과제
 
+### 🟡 소셜 로그인 확장 (애플 / 카카오)
+- 현재 `/login`에 버튼은 있으나 클릭 시 "연동 준비 중" 토스트만 표시 (실연동 X)
+- **애플**: 유료 Apple Developer Program + Services ID/Key(.p8)로 Client Secret(JWT) 생성 → Supabase Apple provider 설정. iOS 앱에 구글 로그인이 있으면 App Store 심사상 사실상 필수
+- **카카오**: 카카오 개발자센터 앱 등록 + **비즈 인증(이메일 동의항목)** + Redirect URI(`<supabase>/auth/v1/callback`) → Supabase Kakao provider 설정. `handle_new_user` 트리거의 메타데이터 매핑(닉네임/이메일) 점검 필요
+- 연동 시 개인정보처리방침 제1조(수집 항목)·제5조(위탁) 표에 해당 업체 추가
+
+### 🟡 Supabase 이메일 인증 발송 설정 (이메일 회원가입 운영화)
+- 코드는 완료(`signUpWithEmail` + `emailRedirectTo`). 실제 메일 발송은 대시보드 설정에 의존
+- Authentication → Providers → Email → **"Confirm email" ON** 확인
+- Authentication → URL Configuration → Redirect URLs에 `https://www.gleaum.com/auth/callback`, `gleaum://auth/callback` 등록
+- 운영 트래픽 증가 시 **커스텀 SMTP(Resend/SendGrid) + 자체 도메인 발신**(`helper@gleaum.com`) 연결 권장 (기본 SMTP는 시간당 발송 한도 있음)
+
+### 🟢 가계부 Phase 2 — 수입/반복 규칙 정식 모델
+- 현재 정기지출은 **달마다 별도 schedule row로 이월**(임시 방식, `materializeRecurringExpenses` + `/api/cron/recurring-expenses`)
+- 장기적으로 `recurring_budget_rules`/`budget_occurrences` 전용 테이블 + 수입(income) 도입 권장 (상세: `docs/10-ai-handoff-guide.md` "가계부 Phase 2")
 
 ### 🟡 기기 캘린더 연동 2차
 - Android 1차 완료: 권한 요청, 캘린더 선택, 앞으로 30일 일정 수동 내보내기
@@ -185,4 +200,4 @@
 - [ ] 광고 전략 설정 DB 저장 (`app_settings` 테이블 생성)
 - [ ] 배너 CRUD API 및 Supabase Storage 이미지 업로드
 
-마지막 업데이트: 2026-06-02
+마지막 업데이트: 2026-06-15
