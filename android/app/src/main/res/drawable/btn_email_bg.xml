@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 이메일로 계속하기 버튼 — 어두운 푸터 위 보조(아웃라인) 스타일 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="#1F1F24" />
+            <corners android:radius="14dp" />
+            <stroke android:width="1.5dp" android:color="#3A3A3C" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="#00000000" />
+            <corners android:radius="14dp" />
+            <stroke android:width="1.5dp" android:color="#3A3A3C" />
+        </shape>
+    </item>
+</selector>

@@ -42,6 +42,15 @@ class MainActivity : BridgeActivity() {
             }
         }
 
+        // ── 시작 경로 오버라이드 ──────────────────────────────────────────────
+        // LoginActivity의 "이메일로 계속하기"에서 start_path(/login?view=email)를 전달하면
+        // WebView를 루트 대신 해당 경로로 이동시켜 웹 이메일 로그인/회원가입 폼을 띄운다.
+        intent?.getStringExtra("start_path")?.takeIf { it.isNotBlank() }?.let { path ->
+            bridge?.webView?.post {
+                bridge?.webView?.loadUrl("https://www.gleaum.com$path")
+            }
+        }
+
         createNotificationChannels()
         setupEdgeToEdge()
         handleIntent(intent)

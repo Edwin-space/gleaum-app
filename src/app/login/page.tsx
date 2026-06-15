@@ -2,7 +2,6 @@
 
 import { useState, Suspense, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useAuth } from '@/hooks/useAuth';
@@ -52,25 +51,6 @@ function GoogleIcon() {
   );
 }
 
-// ─── Apple 아이콘 ─────────────────────────────────────────────────────────────
-function AppleIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="black" aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
-      <path d="M16.365 1.43c0 1.14-.46 2.13-1.32 2.95-.94.88-2.07 1.36-3.27 1.27-.07-1.16.47-2.27 1.31-3.06.92-.88 2.21-1.43 3.27-1.16.01.01.01 0 .01 0zM20.21 17.51c-.53 1.17-.78 1.69-1.46 2.72-.95 1.45-2.29 3.26-3.95 3.27-1.48.02-1.86-.97-3.86-.96-2 .01-2.42.98-3.9.96-1.66-.02-2.93-1.65-3.88-3.1-2.66-4.04-2.94-8.78-1.3-11.31 1.16-1.79 3-2.85 4.74-2.85 1.77 0 2.88.97 4.34.97 1.42 0 2.27-.97 4.32-.97 1.55 0 3.2.85 4.37 2.31-3.84 2.1-3.22 7.55.58 9.96z"/>
-    </svg>
-  );
-}
-
-// ─── 카카오 아이콘 ─────────────────────────────────────────────────────────────
-function KakaoIcon() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
-      <rect width="36" height="36" rx="8" fill="#FEE500"/>
-      <path fill="#3C1E1E" d="M18 8.5c-6.35 0-11.5 4.06-11.5 9.07 0 3.18 2.08 5.97 5.22 7.58-.23.86-.83 3.08-.95 3.56-.15.59.22.59.46.43.19-.13 3-2.04 4.22-2.86.83.12 1.69.18 2.55.18 6.35 0 11.5-4.06 11.5-9.07S24.35 8.5 18 8.5z"/>
-    </svg>
-  );
-}
-
 // ─── 디버그 패널 (로고 5번 탭 → 활성화) ──────────────────────────────────────
 function DebugPanel({ logs }: { logs: string[] }) {
   return (
@@ -98,15 +78,19 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? undefined;
+  // ?view=email → 이메일 폼으로 바로 진입 (네이티브 앱 "이메일로 계속하기"에서 사용).
+  // ?mode=signup → 회원가입 탭으로 시작.
+  const initialView = searchParams.get('view') === 'email' ? 'email' : 'social';
+  const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
 
   // ── 소셜 / 이메일 화면 전환 ──────────────────────────────────────────
-  const [view, setView] = useState<'social' | 'email'>('social');
+  const [view, setView] = useState<'social' | 'email'>(initialView);
 
   // ── 이메일 로그인/회원가입 ──────────────────────────────────────────
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>(initialMode);
   const [emailLoading, setEmailLoading] = useState(false);
   const [signupDone, setSignupDone] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -495,27 +479,7 @@ function LoginForm() {
                 )}
               </button>
 
-              {/* 애플 로그인 — 연동 준비 중 */}
-              <button
-                onClick={() => toast.info('애플 로그인은 연동 준비 중입니다.')}
-                style={socialButtonStyle}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-              >
-                <div style={socialIconBoxStyle}><AppleIcon /></div>
-                애플로 계속하기
-              </button>
-
-              {/* 카카오 로그인 — 연동 준비 중 */}
-              <button
-                onClick={() => toast.info('카카오 로그인은 연동 준비 중입니다.')}
-                style={socialButtonStyle}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-              >
-                <KakaoIcon />
-                카카오로 계속하기
-              </button>
+              {/* 애플·카카오 로그인은 심사 절차 부담으로 보류 (추후 재도입) */}
 
               {/* 구분선 */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
@@ -524,7 +488,7 @@ function LoginForm() {
                 <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
               </div>
 
-              {/* 메일로 로그인 / 회원가입 */}
+              {/* 이메일로 로그인 / 회원가입 */}
               <button
                 type="button"
                 onClick={() => { setAuthMode('login'); setError(''); setView('email'); }}
@@ -535,7 +499,7 @@ function LoginForm() {
                   fontFamily: 'var(--font-body)', marginBottom: '8px',
                 }}
               >
-                메일로 로그인
+                이메일로 로그인
               </button>
               <button
                 type="button"
@@ -547,7 +511,7 @@ function LoginForm() {
                   fontFamily: 'var(--font-body)', textDecoration: 'underline',
                 }}
               >
-                메일주소로 회원가입
+                이메일로 회원가입
               </button>
 
               {/* 약관 동의 문구 */}

@@ -92,6 +92,21 @@
 
         </RelativeLayout>
 
+        <!-- 이메일로 계속하기 버튼 (WebView 웹 이메일 로그인/회원가입으로 진입) -->
+        <TextView
+            android:id="@+id/btnEmail"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_email_bg"
+            android:gravity="center"
+            android:text="이메일로 계속하기"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+
         <!-- 약관 -->
         <TextView
             android:layout_width="wrap_content"

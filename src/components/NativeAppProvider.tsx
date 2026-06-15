@@ -333,7 +333,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     // SIGNED_OUT → NativeSession.logout() 시도
     // 실패(플러그인 미등록) 시 → gleaum://logout 딥링크로 iOS AppDelegate 직접 호출
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         import('@/lib/native-session')
           .then(({ NativeSession }) => NativeSession.logout())
@@ -341,6 +341,11 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
             // iOS 폴백: AppDelegate가 gleaum://logout 을 처리
             try { window.location.href = 'gleaum://logout'; } catch {}
           });
+      } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+        // WebView 내 이메일 로그인 등 OAuth 콜백 외 경로로 로그인한 경우에도
+        // 네이티브 SessionManager에 세션을 저장해 콜드 재실행 시 로그인 유지.
+        // (토큰 갱신 시에도 최신 토큰을 반영)
+        void saveNativeSession(session);
       }
     });
 

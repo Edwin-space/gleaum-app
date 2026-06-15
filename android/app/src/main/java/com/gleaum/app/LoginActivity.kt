@@ -44,6 +44,10 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.btnGoogle.setOnClickListener { handleGoogleSignIn() }
+        // 이메일 로그인/회원가입은 WebView(MainActivity)에서 웹 /login 이메일 폼으로 처리.
+        // 로그인 성공 시 NativeAppProvider의 onAuthStateChange(SIGNED_IN)가
+        // saveNativeSession()을 호출해 네이티브 세션이 저장됨 → 콜드 재실행에도 유지.
+        binding.btnEmail.setOnClickListener { goToMain("/login?view=email") }
     }
 
     /**
@@ -102,9 +106,11 @@ class LoginActivity : AppCompatActivity() {
     private fun showToast(msg: String) =
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
-    private fun goToMain() {
+    /** startPath가 주어지면 MainActivity의 WebView가 해당 경로(예: /login?view=email)로 시작한다. */
+    private fun goToMain(startPath: String? = null) {
         startActivity(Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            if (!startPath.isNullOrBlank()) putExtra("start_path", startPath)
         })
         finish()
     }
