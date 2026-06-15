@@ -10,6 +10,7 @@ import { InlineFeedAd } from '@/components/InlineFeedAd';
 import { ScheduleCard } from '@/components/ui/Card';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { formatDateShort, isSameDay } from '@/lib/utils';
+import { useTimeGreeting } from '@/hooks/useTimeGreeting';
 import type { Schedule } from '@/types';
 import type { ProfileRow } from '@/lib/db';
 import type { HomeLayoutPreference, OnboardingPreferences, User } from '@/types';
@@ -88,10 +89,9 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
     };
   }, [personalExpenses, today]);
 
-  // 개인화 인사
+  // 개인화 인사 (hydration 안전: 마운트 후 로컬 시각으로 채움)
   const displayName = user?.displayName ?? user?.name ?? '사용자';
-  const hour = today.getHours();
-  const greeting = hour < 12 ? '좋은 아침이에요' : hour < 18 ? '좋은 오후예요' : '좋은 저녁이에요';
+  const greeting = useTimeGreeting();
 
   const budgetSummaryCard = (
     <Link
@@ -334,7 +334,7 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
               <line x1="8" x2="8" y1="2" y2="6"/>
               <line x1="3" x2="21" y1="10" y2="10"/>
             </svg>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--theme-text)' }}>
+            <span suppressHydrationWarning style={{ fontSize: '15px', fontWeight: 700, color: 'var(--theme-text)' }}>
               {formatDateShort(selectedDate)}
             </span>
             {isToday && (
@@ -420,7 +420,7 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
             justifyContent: 'space-between',
             marginBottom: '12px',
           }}>
-            <h2 style={{
+            <h2 suppressHydrationWarning style={{
               fontSize: '18px',
               fontWeight: 800,
               color: 'var(--theme-text)',

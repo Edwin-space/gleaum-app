@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ScheduleCard } from '@/components/ui/Card';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { formatDateShort, isSameDay } from '@/lib/utils';
+import { useTimeGreeting } from '@/hooks/useTimeGreeting';
 import type { Schedule, HomeLayoutPreference, OnboardingPreferences } from '@/types';
 import type { ProfileRow } from '@/lib/db';
 import type { User } from '@/types';
@@ -39,8 +40,7 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
   const primaryGoal = preferences.primaryGoal;
 
   const now = new Date();
-  const hour = now.getHours();
-  const greeting = hour < 12 ? '좋은 아침이에요' : hour < 18 ? '좋은 오후예요' : '좋은 저녁이에요';
+  const greeting = useTimeGreeting();
   const displayName = user?.displayName ?? user?.name ?? '사용자';
 
   const homeCopy: Record<HomeLayoutPreference, { title: string; body: string }> = {
@@ -139,7 +139,8 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
             <h1 style={{ fontSize: '30px', fontWeight: 900, letterSpacing: '-0.5px', margin: '0 0 8px' }}>
               {displayName}님, 오늘도 함께해요.
             </h1>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, margin: 0 }}>
+            {/* suppressHydrationWarning: 서버(UTC)/클라이언트(로컬) 날짜가 자정 전후로 갈릴 수 있음 — React가 허용하는 시간 표시 예외 */}
+            <p suppressHydrationWarning style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, margin: 0 }}>
               {now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
             </p>
           </div>
