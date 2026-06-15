@@ -57,6 +57,11 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|ads\\.txt|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml)$).*)',
+    // 정적 자산은 미들웨어를 통과시키지 않는다.
+    // ★ js/json/css/woff(2)/webmanifest를 제외하지 않으면 public/ 파일(sw.js,
+    //   firebase-messaging-sw.js, manifest.json)이 NextResponse.next()를 거치며
+    //   Content-Type이 text/plain으로 바뀌어, nosniff와 겹쳐 서비스워커 등록이
+    //   "ServiceWorker script evaluation failed"로 실패한다(웹 푸시 전체 차단).
+    '/((?!_next/static|_next/image|favicon.ico|ads\\.txt|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|js|mjs|json|css|woff|woff2|webmanifest)$).*)',
   ],
 };
