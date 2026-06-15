@@ -27,6 +27,12 @@ import type {
   SpacePostType,
   SpaceDues,
   SpaceVote,
+  LedgerEntry,
+  LedgerKind,
+  LedgerScope,
+  LedgerStatus,
+  LedgerCategory,
+  RecurFreq,
 } from '@/types';
 
 // [전역 상태] 세션 내 무한 루프 방지용
@@ -1338,6 +1344,262 @@ export async function deleteSchedule(id: string): Promise<boolean> {
   const supabase = createClient();
   const { error } = await supabase.from('schedules').delete().eq('id', id);
   return !error;
+}
+
+// ── 가계부 원장 (Ledger: 수입·지출 통합) ─────────────────────
+//   migration 017_ledger_entries.sql 필요. scope='personal'은 개인 가계부,
+//   scope='space'는 공간 공동 수입/지출. RLS가 본인/공간 멤버 범위를 강제.
+
+export interface LedgerRow {
+  id: string;
+  kind: LedgerKind;
+  scope: LedgerScope;
+  space_id: string;
+  owner_id: string;
+  title: string;
+  amount: number;
+  category: string;
+  method: string | null;
+  occurred_at: string;
+  status: LedgerStatus;
+  recur_freq: RecurFreq;
+  recur_until: string | null;
+  recur_rule_id: string | null;
+  source_entry_id: string | null;
+  memo: string | null;
+}
+
+export function rowToLedger(row: LedgerRow): LedgerEntry {
+  return {
+    id:            row.id,
+    kind:          row.kind,
+    scope:         row.scope,
+    spaceId:       row.space_id,
+    ownerId:       row.owner_id,
+    title:         row.title,
+    amount:        row.amount ?? 0,
+    category:      row.category as LedgerCategory,
+    method:        row.method ?? undefined,
+    occurredAt:    new Date(row.occurred_at),
+    status:        row.status,
+    recurFreq:     row.recur_freq,
+    recurUntil:    row.recur_until ? new Date(row.recur_until) : undefined,
+    recurRuleId:   row.recur_rule_id ?? undefined,
+    sourceEntryId: row.source_entry_id ?? undefined,
+    memo:          row.memo ?? undefined,
+  };
+}
+
+export interface CreateLedgerInput {
+  kind:         LedgerKind;
+  scope:        LedgerScope;
+  spaceId:      string;
+  title:        string;
+  amount:       number;
+  category:     LedgerCategory;
+  method?:      string;
+  occurredAt:   Date;
+  status?:      LedgerStatus;
+  recurFreq?:   RecurFreq;
+  recurUntil?:  Date;
+  recurRuleId?: string;
+  sourceEntryId?: string;
+  memo?:        string;
+}
+
+/** 공간(개인 공간 포함)의 원장 항목 조회. kind 미지정 시 수입+지출 모두. */
+export async function getLedgerEntries(
+  spaceId: string,
+  opts: { kind?: LedgerKind } = {},
+): Promise<LedgerEntry[]> {
+  const supabase = createClient();
+  let query = supabase
+    .from('ledger_entries')
+    .select('*')
+    .eq('space_id', spaceId)
+    .order('occurred_at', { ascending: true });
+  if (opts.kind) query = query.eq('kind', opts.kind);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('[getLedgerEntries] 조회 오류:', error.message);
+    return [];
+  }
+  return (data as LedgerRow[]).map(rowToLedger);
+}
+
+export async function createLedgerEntry(input: CreateLedgerInput): Promise<LedgerEntry | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('로그인이 필요합니다');
+
+  const { data, error } = await supabase
+    .from('ledger_entries')
+    .insert({
+      kind:            input.kind,
+      scope:           input.scope,
+      space_id:        input.spaceId,
+      owner_id:        user.id,
+      title:           input.title,
+      amount:          Math.max(0, Math.round(input.amount)),
+      category:        input.category,
+      method:          input.method ?? null,
+      occurred_at:     input.occurredAt.toISOString(),
+      status:          input.status ?? 'completed',
+      recur_freq:      input.recurFreq ?? 'none',
+      recur_until:     input.recurUntil ? input.recurUntil.toISOString().slice(0, 10) : null,
+      recur_rule_id:   input.recurRuleId ?? null,
+      source_entry_id: input.sourceEntryId ?? null,
+      memo:            input.memo ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[createLedgerEntry] DB 오류:', error.message, '| code:', error.code);
+    throw new Error(`DB 오류 [${error.code}]: ${error.message}`);
+  }
+  return rowToLedger(data as LedgerRow);
+}
+
+export async function updateLedgerEntry(
+  id: string,
+  updates: Partial<CreateLedgerInput>,
+): Promise<boolean> {
+  const supabase = createClient();
+  const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (updates.title       !== undefined) dbUpdates.title       = updates.title;
+  if (updates.amount      !== undefined) dbUpdates.amount      = Math.max(0, Math.round(updates.amount));
+  if (updates.category    !== undefined) dbUpdates.category    = updates.category;
+  if (updates.method      !== undefined) dbUpdates.method      = updates.method ?? null;
+  if (updates.occurredAt  !== undefined) dbUpdates.occurred_at = updates.occurredAt.toISOString();
+  if (updates.status      !== undefined) dbUpdates.status      = updates.status;
+  if (updates.recurFreq   !== undefined) dbUpdates.recur_freq  = updates.recurFreq;
+  if (updates.recurUntil  !== undefined) dbUpdates.recur_until = updates.recurUntil ? updates.recurUntil.toISOString().slice(0, 10) : null;
+  if (updates.memo        !== undefined) dbUpdates.memo        = updates.memo ?? null;
+
+  const { error } = await supabase.from('ledger_entries').update(dbUpdates).eq('id', id);
+  if (error) { console.error('[updateLedgerEntry]', error.message); return false; }
+  return true;
+}
+
+export async function updateLedgerStatus(id: string, status: LedgerStatus): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('ledger_entries')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  return !error;
+}
+
+export async function deleteLedgerEntry(id: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.from('ledger_entries').delete().eq('id', id);
+  return !error;
+}
+
+/**
+ * 정기(매월/매주/매년) 수입·지출 이월 — 이번 달에 누락된 반복 인스턴스를 생성.
+ * `materializeRecurringExpenses`의 원장 버전(수입·지출 공용, scope 지정).
+ * 시리즈 식별: kind + category + title + recur_freq 의 최신 인스턴스.
+ */
+export async function materializeRecurringLedger(
+  spaceId: string,
+  scope: LedgerScope,
+): Promise<number> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const lastDayOfMonth = monthEnd.getDate();
+
+  let query = supabase
+    .from('ledger_entries')
+    .select('*')
+    .eq('space_id', spaceId)
+    .eq('scope', scope)
+    .neq('recur_freq', 'none')
+    .order('occurred_at', { ascending: true });
+  // 개인 항목은 본인 것만 이월 (공간 항목은 작성자 본인 것만 — RLS와 일관)
+  query = query.eq('owner_id', user.id);
+
+  const { data, error } = await query;
+  if (error || !data?.length) return 0;
+  const rows = data as LedgerRow[];
+
+  const series = new Map<string, LedgerRow[]>();
+  for (const row of rows) {
+    const key = `${row.kind}__${row.category}__${row.title}__${row.recur_freq}`;
+    const list = series.get(key) ?? [];
+    list.push(row);
+    series.set(key, list);
+  }
+
+  let created = 0;
+
+  for (const instances of series.values()) {
+    const latest = instances[instances.length - 1];
+    const latestDate = new Date(latest.occurred_at);
+    const recurUntil = latest.recur_until ? new Date(latest.recur_until) : null;
+    const targets: Date[] = [];
+
+    if (latest.recur_freq === 'monthly') {
+      if (latestDate >= monthStart) continue;
+      const day = Math.min(latestDate.getDate(), lastDayOfMonth);
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day)));
+    } else if (latest.recur_freq === 'yearly') {
+      if (latestDate >= monthStart) continue;
+      if (latestDate.getMonth() !== now.getMonth()) continue;
+      const day = Math.min(latestDate.getDate(), lastDayOfMonth);
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day)));
+    } else if (latest.recur_freq === 'weekly') {
+      const cursor = new Date(latestDate);
+      for (let i = 0; i < 60; i++) {
+        cursor.setDate(cursor.getDate() + 7);
+        if (cursor > monthEnd) break;
+        if (cursor >= monthStart) {
+          targets.push(new Date(Date.UTC(cursor.getFullYear(), cursor.getMonth(), cursor.getDate())));
+        }
+      }
+    } else {
+      continue;
+    }
+
+    for (const target of targets) {
+      if (recurUntil && target > recurUntil) continue;
+      const dup = instances.some((inst) => {
+        const d = new Date(inst.occurred_at);
+        const sameMonth = d.getFullYear() === target.getFullYear() && d.getMonth() === target.getMonth();
+        return latest.recur_freq === 'weekly' ? sameMonth && d.getDate() === target.getDate() : sameMonth;
+      });
+      if (dup) continue;
+
+      const { error: insertError } = await supabase.from('ledger_entries').insert({
+        kind:          latest.kind,
+        scope:         latest.scope,
+        space_id:      spaceId,
+        owner_id:      user.id,
+        title:         latest.title,
+        amount:        latest.amount,
+        category:      latest.category,
+        method:        latest.method,
+        occurred_at:   target.toISOString(),
+        // 정기 지출은 pending(결제예정), 정기 수입은 pending(수령예정)으로 시작
+        status:        'pending',
+        recur_freq:    latest.recur_freq,
+        recur_until:   latest.recur_until,
+        recur_rule_id: latest.recur_rule_id,
+        memo:          latest.memo,
+      });
+      if (insertError) console.error('[materializeRecurringLedger]', insertError.message);
+      else created++;
+    }
+  }
+
+  return created;
 }
 
 // ── 알림 ─────────────────────────────────────────────────

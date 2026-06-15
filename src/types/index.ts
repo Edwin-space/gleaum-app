@@ -407,3 +407,100 @@ export const FIXED_EXPENSE_CATEGORIES: ExpenseCategory[] = [
 export const VARIABLE_EXPENSE_CATEGORIES: ExpenseCategory[] = [
   'food', 'daily', 'fashion', 'transport', 'culture', 'medical', 'social',
 ];
+
+// ─── 통합 원장(Ledger): 수입·지출 공용 ─────────────────────────────────────────
+export type LedgerKind   = 'income' | 'expense';
+export type LedgerScope  = 'personal' | 'space';
+export type LedgerStatus = 'pending' | 'completed' | 'skipped';
+/** 정기(반복) 주기 — 가계부 원장 전용 (daily 미지원) */
+export type RecurFreq    = 'none' | 'weekly' | 'monthly' | 'yearly';
+
+export type IncomeCategory =
+  // 개인 수입
+  | 'salary'         // 급여
+  | 'business'       // 사업 / 부업
+  | 'investment'     // 금융 / 투자 (이자·배당·매매차익)
+  | 'rental'         // 임대 수입
+  | 'bonus'          // 상여 / 보너스
+  | 'refund'         // 환급 (세금·리워드)
+  | 'pension'        // 연금 / 지원금
+  | 'gift'           // 용돈 / 선물
+  // 공간 수입
+  | 'dues'           // 회비 수납
+  | 'shared_deposit' // 공동통장 입금
+  | 'event_revenue'  // 이벤트 / 사업 수익
+  | 'donation'       // 후원 / 기부
+  | 'carryover'      // 이월금
+  // 공통
+  | 'other_income';  // 기타 수입
+
+/** 원장 카테고리 = 지출 카테고리 ∪ 수입 카테고리 */
+export type LedgerCategory = ExpenseCategory | IncomeCategory;
+
+export const INCOME_CATEGORY_LABELS: Record<IncomeCategory, string> = {
+  salary:         '급여',
+  business:       '사업/부업',
+  investment:     '금융/투자',
+  rental:         '임대',
+  bonus:          '상여/보너스',
+  refund:         '환급',
+  pension:        '연금/지원금',
+  gift:           '용돈/선물',
+  dues:           '회비 수납',
+  shared_deposit: '공동통장 입금',
+  event_revenue:  '이벤트/사업 수익',
+  donation:       '후원/기부',
+  carryover:      '이월금',
+  other_income:   '기타',
+};
+
+export const INCOME_CATEGORY_ICONS: Record<IncomeCategory, string> = {
+  salary:         '💼',
+  business:       '🏪',
+  investment:     '📈',
+  rental:         '🏘️',
+  bonus:          '🎉',
+  refund:         '↩️',
+  pension:        '🏦',
+  gift:           '🎁',
+  dues:           '🧾',
+  shared_deposit: '🏦',
+  event_revenue:  '🎪',
+  donation:       '💝',
+  carryover:      '🔄',
+  other_income:   '💰',
+};
+
+/** 개인 가계부 수입 카테고리 */
+export const PERSONAL_INCOME_CATEGORIES: IncomeCategory[] = [
+  'salary', 'business', 'investment', 'rental', 'bonus', 'refund', 'pension', 'gift', 'other_income',
+];
+
+/** 공간 수입 카테고리 */
+export const SPACE_INCOME_CATEGORIES: IncomeCategory[] = [
+  'dues', 'shared_deposit', 'event_revenue', 'donation', 'carryover', 'other_income',
+];
+
+/** 정기 수입에 주로 쓰이는 카테고리 (급여·임대·정기 배당 등) */
+export const RECURRING_INCOME_CATEGORIES: IncomeCategory[] = [
+  'salary', 'rental', 'investment', 'pension',
+];
+
+export interface LedgerEntry {
+  id:           string;
+  kind:         LedgerKind;
+  scope:        LedgerScope;
+  spaceId:      string;
+  ownerId:      string;
+  title:        string;
+  amount:       number;
+  category:     LedgerCategory;
+  method?:      string;         // 지출: 결제수단(PaymentMethod) / 수입: 입금수단(선택)
+  occurredAt:   Date;
+  status:       LedgerStatus;
+  recurFreq:    RecurFreq;
+  recurUntil?:  Date;
+  recurRuleId?: string;
+  sourceEntryId?: string;       // 공간 항목을 개인 가계부에 반영한 경우 원본 id
+  memo?:        string;
+}

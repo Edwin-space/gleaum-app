@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, isToday, isTomorrow, isYesterday, differenceInMinutes } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import type { ScheduleType, ScheduleStatus, ExpenseCategory } from '@/types';
+import type { ScheduleType, ScheduleStatus, ExpenseCategory, IncomeCategory, LedgerCategory } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -107,6 +107,34 @@ export function getCategoryColor(category: ExpenseCategory): string {
     other:        '#AEAEA8',
   };
   return colors[category] ?? '#AEAEA8';
+}
+
+// ── 수입 카테고리 컬러 (가계부 원장) ──
+export function getIncomeCategoryColor(category: IncomeCategory): string {
+  const colors: Record<IncomeCategory, string> = {
+    salary:         '#0CC9B5',
+    business:       '#0084CC',
+    investment:     '#10B981',
+    rental:         '#8B5CF6',
+    bonus:          '#F59E0B',
+    refund:         '#14B8A6',
+    pension:        '#6366F1',
+    gift:           '#EC4899',
+    dues:           '#0CC9B5',
+    shared_deposit: '#0084CC',
+    event_revenue:  '#F97316',
+    donation:       '#A855F7',
+    carryover:      '#64748B',
+    other_income:   '#AEAEA8',
+  };
+  return colors[category] ?? '#AEAEA8';
+}
+
+/** 원장(수입/지출) 공용 카테고리 컬러 */
+export function getLedgerCategoryColor(kind: 'income' | 'expense', category: LedgerCategory): string {
+  return kind === 'income'
+    ? getIncomeCategoryColor(category as IncomeCategory)
+    : getCategoryColor(category as ExpenseCategory);
 }
 
 // ── 타임존 안전 포맷 (서버/크론잡 사용) ──
