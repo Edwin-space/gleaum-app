@@ -7,9 +7,11 @@ import { ExpenseCategory } from '@/types';
 interface ExpenseDoughnutProps {
   categories: [string, number][];
   total: number;
+  /** 카테고리 컬러 함수 (수입 차트는 수입 색상을 넘김). 미지정 시 지출 색상. */
+  colorOf?: (cat: string) => string;
 }
 
-export function ExpenseDoughnut({ categories, total }: ExpenseDoughnutProps) {
+export function ExpenseDoughnut({ categories, total, colorOf }: ExpenseDoughnutProps) {
   const size = 200;
   const strokeWidth = 24;
   const center = size / 2;
@@ -17,23 +19,24 @@ export function ExpenseDoughnut({ categories, total }: ExpenseDoughnutProps) {
   const circumference = 2 * Math.PI * radius;
 
   const chartData = useMemo(() => {
+    const resolveColor = colorOf ?? ((c: string) => getCategoryColor(c as ExpenseCategory));
     let currentOffset = 0;
     return categories.map(([cat, amt]) => {
       const percentage = (amt / total) * 100;
       const strokeDasharray = `${(percentage * circumference) / 100} ${circumference}`;
       const strokeDashoffset = -currentOffset;
       currentOffset += (percentage * circumference) / 100;
-      
+
       return {
         category: cat as ExpenseCategory,
         amount: amt,
         percentage,
         strokeDasharray,
         strokeDashoffset,
-        color: getCategoryColor(cat as ExpenseCategory),
+        color: resolveColor(cat),
       };
     });
-  }, [categories, total, circumference]);
+  }, [categories, total, circumference, colorOf]);
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
