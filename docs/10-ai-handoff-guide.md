@@ -1486,3 +1486,11 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 수정: `AppBridgeViewController`에 `gleaumRoute` WKScriptMessageHandler와 document-start route observer script 추가. WebView 내부의 `pushState`/`replaceState`/`popstate`/click 후 현재 `location.pathname`을 네이티브로 전달한다. `/` 또는 `/home`이면 `NativeRouteCoordinator.presentNativeHome()`을 호출한다.
 - 시작 플래시 보정: 세션 보유 + 네이티브 홈 활성 상태에서는 `AppBridgeViewController.viewDidAppear`와 `NativeRouteCoordinator.presentNativeHome()`에서 WebView를 숨긴 뒤 네이티브 홈을 즉시 표시한다. WebView 기능으로 이동할 때는 `openWebPath()`에서 WebView를 다시 표시한다.
 - 검증: XcodeBuildMCP `build_run_sim` 통과. 앱 시작 3초 후 네이티브 홈 직접 표시 확인.
+
+
+### 2026-06-18 추가 보정 — iOS 네이티브 홈 하단 네비게이션 추가
+- 문제: 네이티브 홈이 full-screen으로 WebView 위에 표시되면서 기존 웹 하단 메뉴가 가려짐. 네이티브 홈에는 하단 네비게이션이 별도로 구현되어 있지 않아 메뉴가 사라진 것처럼 보임.
+- 수정: `NativeHomeViewController`에 고정 하단 네비게이션 추가. 항목은 `홈 / 일정 / 공간 / 가계부 / 전체`.
+- 동작: 홈은 네이티브 홈 새로고침, 일정/공간/가계부/전체는 각각 `/schedules`, `/space`, `/budget`, `/mypage` WebView 경로로 이동.
+- 레이아웃: ScrollView bottom을 하단 네비게이션 top에 고정해 콘텐츠와 메뉴가 겹치지 않게 조정.
+- 검증: XcodeBuildMCP `build_run_sim` 통과. Simulator 화면과 `snapshot_ui`에서 하단 메뉴 버튼 5개가 정상 표시/타깃으로 잡힘.

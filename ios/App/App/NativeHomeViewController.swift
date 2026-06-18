@@ -4,6 +4,7 @@ import UserNotifications
 final class NativeHomeViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
+    private let bottomNav = UIStackView()
     private let refreshControl = UIRefreshControl()
     private var summary: NativeHomeSummary?
 
@@ -40,14 +41,22 @@ final class NativeHomeViewController: UIViewController {
         stack.layoutMargins = UIEdgeInsets(top: 18, left: 20, bottom: 36, right: 20)
         stack.isLayoutMarginsRelativeArrangement = true
 
+        setupBottomNav()
+
         view.addSubview(scrollView)
+        view.addSubview(bottomNav)
         scrollView.addSubview(stack)
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomNav.topAnchor),
+
+            bottomNav.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            bottomNav.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            bottomNav.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            bottomNav.heightAnchor.constraint(equalToConstant: 64),
 
             stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             stack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
@@ -55,6 +64,57 @@ final class NativeHomeViewController: UIViewController {
             stack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             stack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
         ])
+    }
+
+    private func setupBottomNav() {
+        bottomNav.translatesAutoresizingMaskIntoConstraints = false
+        bottomNav.axis = .horizontal
+        bottomNav.alignment = .center
+        bottomNav.distribution = .fillEqually
+        bottomNav.spacing = 4
+        bottomNav.layoutMargins = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
+        bottomNav.isLayoutMarginsRelativeArrangement = true
+        bottomNav.backgroundColor = UIColor(red: 0.082, green: 0.118, blue: 0.200, alpha: 0.94)
+        bottomNav.layer.cornerRadius = 28
+        bottomNav.layer.borderWidth = 1
+        bottomNav.layer.borderColor = UIColor(white: 1, alpha: 0.08).cgColor
+        bottomNav.layer.shadowColor = UIColor.black.cgColor
+        bottomNav.layer.shadowOpacity = 0.18
+        bottomNav.layer.shadowOffset = CGSize(width: 0, height: 8)
+        bottomNav.layer.shadowRadius = 18
+
+        bottomNav.addArrangedSubview(navButton(icon: "⌂", title: "홈", active: true) { [weak self] in
+            self?.loadSummary()
+        })
+        bottomNav.addArrangedSubview(navButton(icon: "◴", title: "일정", active: false) {
+            NativeRouteCoordinator.shared.openWebPath("/schedules")
+        })
+        bottomNav.addArrangedSubview(navButton(icon: "♧", title: "공간", active: false) {
+            NativeRouteCoordinator.shared.openWebPath("/space")
+        })
+        bottomNav.addArrangedSubview(navButton(icon: "▭", title: "가계부", active: false) {
+            NativeRouteCoordinator.shared.openWebPath("/budget")
+        })
+        bottomNav.addArrangedSubview(navButton(icon: "☰", title: "전체", active: false) {
+            NativeRouteCoordinator.shared.openWebPath("/mypage")
+        })
+    }
+
+    private func navButton(icon: String, title: String, active: Bool, handler: @escaping () -> Void) -> UIButton {
+        var config = UIButton.Configuration.plain()
+        config.title = "\(icon)\n\(title)"
+        config.titleAlignment = .center
+        config.baseForegroundColor = active ? teal : muted
+        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 2, bottom: 6, trailing: 2)
+
+        let button = UIButton(configuration: config)
+        button.titleLabel?.font = .systemFont(ofSize: 11, weight: .bold)
+        button.titleLabel?.numberOfLines = 2
+        button.titleLabel?.textAlignment = .center
+        button.backgroundColor = active ? UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.22) : .clear
+        button.layer.cornerRadius = 18
+        button.addAction(UIAction { _ in handler() }, for: .touchUpInside)
+        return button
     }
 
     @objc private func refreshPulled() {
