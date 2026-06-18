@@ -1478,3 +1478,11 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - iOS Simulator에서 네이티브 홈이 실제 운영 API 데이터를 받아 `글리움 관리자님`, 공간 `데디스컴퍼니`, 종합 일정/오늘/가계부 카드 표시 확인.
 - 8초 후 재캡처에서도 네이티브 홈 유지 확인.
 - `+ 새 일정` Sheet 오픈/닫기 확인. 실제 데이터 오염 방지를 위해 저장 테스트는 수행하지 않음.
+
+
+### 2026-06-18 추가 보정 — WebView `/home` 복귀를 네이티브 홈으로 승격
+- 문제: 네이티브 홈에서 가계부/공간/설정 등 WebView 기능으로 이동한 뒤 웹 하단 홈 탭 또는 `/home` 라우팅을 타면 WebView 홈이 유지됨. 앱 셸 관점에서는 `/home`이 항상 네이티브 홈이어야 한다.
+- 원인: 기존 보정은 `WKNavigationAction`만 감시했지만, Next.js App Router의 클라이언트 라우팅(`history.pushState`, `replaceState`, `popstate`)은 WK 네비게이션 delegate에 항상 잡히지 않는다.
+- 수정: `AppBridgeViewController`에 `gleaumRoute` WKScriptMessageHandler와 document-start route observer script 추가. WebView 내부의 `pushState`/`replaceState`/`popstate`/click 후 현재 `location.pathname`을 네이티브로 전달한다. `/` 또는 `/home`이면 `NativeRouteCoordinator.presentNativeHome()`을 호출한다.
+- 시작 플래시 보정: 세션 보유 + 네이티브 홈 활성 상태에서는 `AppBridgeViewController.viewDidAppear`와 `NativeRouteCoordinator.presentNativeHome()`에서 WebView를 숨긴 뒤 네이티브 홈을 즉시 표시한다. WebView 기능으로 이동할 때는 `openWebPath()`에서 WebView를 다시 표시한다.
+- 검증: XcodeBuildMCP `build_run_sim` 통과. 앱 시작 3초 후 네이티브 홈 직접 표시 확인.

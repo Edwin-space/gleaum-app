@@ -897,3 +897,13 @@ npm run cap:open:android # Android Studio 열기
 - [x] `nativeHomeEnabled=true` 전환
 - [x] iOS Simulator에서 운영 API 기반 네이티브 홈 데이터 표시 확인
 - [x] 네이티브 `+ 새 일정` Sheet 열림/닫힘 확인
+
+
+## iOS WebView 홈 복귀 네이티브 승격 + 시작 플래시 보정 (완료 — 2026-06-18)
+
+- [x] WebView 내부 `/home` SPA 라우팅을 감지하는 `gleaumRoute` WKScriptMessageHandler 추가
+- [x] `history.pushState` / `replaceState` / `popstate` / click 후 현재 경로를 네이티브로 전달
+- [x] `/` 또는 `/home` 감지 시 WebView 홈 대신 네이티브 홈 표시
+- [x] 앱 시작 시 세션 보유 상태에서는 WebView를 숨기고 네이티브 홈을 즉시 표시해 `홈화면으로 이동 중` 노출을 줄임
+- [x] WebView 기능 이동 시에는 WebView를 다시 표시하도록 `openWebPath()` 보정
+- [x] XcodeBuildMCP `build_run_sim` 통과

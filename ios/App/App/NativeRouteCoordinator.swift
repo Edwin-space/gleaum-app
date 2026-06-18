@@ -13,6 +13,10 @@ final class NativeRouteCoordinator {
 
     private init() {}
 
+    var isNativeHomeEnabled: Bool {
+        nativeHomeEnabled
+    }
+
     func consumePendingPath() -> String? {
         let path = pendingPath
         pendingPath = nil
@@ -67,6 +71,7 @@ final class NativeRouteCoordinator {
 
         DispatchQueue.main.async {
             root.dismiss(animated: false) {
+                root.webView?.isHidden = false
                 root.webView?.load(URLRequest(url: url))
             }
         }
@@ -85,11 +90,19 @@ final class NativeRouteCoordinator {
         if top is NativeHomeViewController { return }
 
         DispatchQueue.main.async {
+            root.webView?.isHidden = true
             let home = NativeHomeViewController()
             home.modalPresentationStyle = .fullScreen
             home.modalTransitionStyle = .crossDissolve
             top.present(home, animated: true)
         }
+    }
+
+    func shouldPresentNativeHome(for url: URL) -> Bool {
+        guard nativeHomeEnabled, SessionManager.shared.hasValidSession() else { return false }
+        guard url.host == "gleaum.com" || url.host == "www.gleaum.com" else { return false }
+        let path = url.path.isEmpty ? "/home" : url.path
+        return path == "/" || path == "/home"
     }
 
     private func nativePath(from url: URL) -> String {

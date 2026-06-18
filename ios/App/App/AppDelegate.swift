@@ -52,7 +52,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     }
 
     private func presentNativeHomeAfterLaunch() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             NativeRouteCoordinator.shared.presentNativeHome()
         }
     }
