@@ -1468,3 +1468,13 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 수정 1: `NativeRouteCoordinator.openWebPath()` 진입 시 `prefersNativeHome = false`로 설정.
 - 수정 2: `AppDelegate.onNativeSessionSaved()`는 `prefersNativeHome == true`일 때만 네이티브 홈을 표시. WebView 홈의 세션 동기화가 네이티브 홈 재표시를 유발하지 않도록 차단.
 - 검증: XcodeBuildMCP `build_run_sim` 통과. Simulator에서 3초/9초/17초 캡처 모두 모바일 웹 홈에 안정적으로 머무는 것 확인.
+
+
+### 2026-06-18 운영 배포 후 iOS 네이티브 홈 활성화 검증
+- GitHub `main` push로 Vercel 운영 배포가 반영됨.
+- `curl https://www.gleaum.com/api/native/home-summary` 결과가 404에서 인증 없는 요청 기준 정상인 `401 {"error":"Unauthorized"}`로 변경됨. `x-matched-path: /api/native/home-summary` 확인.
+- `NativeRouteCoordinator.nativeHomeEnabled = true`, `prefersNativeHome = true`로 전환.
+- XcodeBuildMCP `build_run_sim` 통과.
+- iOS Simulator에서 네이티브 홈이 실제 운영 API 데이터를 받아 `글리움 관리자님`, 공간 `데디스컴퍼니`, 종합 일정/오늘/가계부 카드 표시 확인.
+- 8초 후 재캡처에서도 네이티브 홈 유지 확인.
+- `+ 새 일정` Sheet 오픈/닫기 확인. 실제 데이터 오염 방지를 위해 저장 테스트는 수행하지 않음.

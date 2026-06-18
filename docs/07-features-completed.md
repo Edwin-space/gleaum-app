@@ -888,3 +888,12 @@ npm run cap:open:android # Android Studio 열기
 - [x] WebView 세션 저장 알림이 네이티브 홈을 다시 띄우지 않도록 AppDelegate 조건 보강
 - [x] XcodeBuildMCP `build_run_sim` 통과
 - [x] Simulator에서 17초 이상 웹 홈에 안정적으로 머무는 것 확인
+
+
+## iOS 네이티브 홈 운영 API 활성화 검증 (완료 — 2026-06-18)
+
+- [x] GitHub push → Vercel 운영 배포 반영
+- [x] `/api/native/home-summary` 운영 경로가 404가 아닌 401 Unauthorized로 응답하는 것 확인
+- [x] `nativeHomeEnabled=true` 전환
+- [x] iOS Simulator에서 운영 API 기반 네이티브 홈 데이터 표시 확인
+- [x] 네이티브 `+ 새 일정` Sheet 열림/닫힘 확인

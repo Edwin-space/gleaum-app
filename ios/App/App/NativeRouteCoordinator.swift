@@ -7,8 +7,8 @@ final class NativeRouteCoordinator {
 
     // 운영 API(`/api/native/home-summary`)가 배포되기 전까지는 네이티브 홈을 시도하지 않는다.
     // true로 전환하면 /home 진입 시 NativeHomeViewController를 먼저 표시한다.
-    private let nativeHomeEnabled = false
-    var prefersNativeHome = false
+    private let nativeHomeEnabled = true
+    var prefersNativeHome = true
     private var pendingPath: String?
 
     private init() {}
