@@ -599,7 +599,6 @@ export function MobileSpace() {
               adUnit="DAN-9QO2xcl8YeUyiixc"
               width={320}
               height={100}
-              style={{ borderRadius: '12px', overflow: 'hidden' }}
             />
           </div>
           <SpaceFeed

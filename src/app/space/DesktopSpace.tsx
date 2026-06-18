@@ -585,7 +585,7 @@ export function DesktopSpace() {
             adUnit="DAN-UmNjtEgKug6zpii0"
             width={728}
             height={90}
-            style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden' }}
+            style={{ marginBottom: '20px' }}
           />
 
           <SpaceFeed

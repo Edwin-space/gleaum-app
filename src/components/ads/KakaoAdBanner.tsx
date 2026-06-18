@@ -25,6 +25,22 @@ interface KakaoAdBannerProps {
  */
 export function KakaoAdBanner({ adUnit, width, height, className, style }: KakaoAdBannerProps) {
   const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const safeStyle = style ? { ...style } : undefined;
+
+  if (safeStyle) {
+    // AdFit 심사 정책: 광고 스크립트/노출 영역은 라운딩, 클리핑, 강조 효과로
+    // 임의 변형하면 안 된다. margin 같은 배치 속성만 허용하고 광고 외형은 원본 유지.
+    delete safeStyle.borderRadius;
+    delete safeStyle.borderTopLeftRadius;
+    delete safeStyle.borderTopRightRadius;
+    delete safeStyle.borderBottomLeftRadius;
+    delete safeStyle.borderBottomRightRadius;
+    delete safeStyle.overflow;
+    delete safeStyle.clipPath;
+    delete safeStyle.boxShadow;
+    delete safeStyle.filter;
+    delete safeStyle.transform;
+  }
 
   useEffect(() => {
     // 이전에 삽입된 동일 스크립트 제거 (SPA 재진입 시 재실행 보장)
@@ -53,7 +69,7 @@ export function KakaoAdBanner({ adUnit, width, height, className, style }: Kakao
         width: `${width}px`,
         maxWidth: '100%',
         minHeight: `${height}px`,
-        ...style,
+        ...safeStyle,
       }}
     >
       {/*

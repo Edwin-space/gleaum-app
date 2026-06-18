@@ -268,7 +268,7 @@ export function DesktopBudget(props: BudgetViewProps) {
             )}
 
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <KakaoAdBanner adUnit="DAN-xQORr9CDyPI97gRM" width={728} height={90} style={{ borderRadius: '12px', overflow: 'hidden' }} />
+              <KakaoAdBanner adUnit="DAN-xQORr9CDyPI97gRM" width={728} height={90} />
             </div>
 
             {/* 목록 */}
