@@ -1494,3 +1494,11 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 동작: 홈은 네이티브 홈 새로고침, 일정/공간/가계부/전체는 각각 `/schedules`, `/space`, `/budget`, `/mypage` WebView 경로로 이동.
 - 레이아웃: ScrollView bottom을 하단 네비게이션 top에 고정해 콘텐츠와 메뉴가 겹치지 않게 조정.
 - 검증: XcodeBuildMCP `build_run_sim` 통과. Simulator 화면과 `snapshot_ui`에서 하단 메뉴 버튼 5개가 정상 표시/타깃으로 잡힘.
+
+
+### 2026-06-18 추가 보정 — iOS 네이티브 하단 네비게이션 UI 고도화
+- 문제: 1차 하단 네비게이션은 텍스트 기호 아이콘(`⌂`, `◴` 등) 기반이라 조잡하고 iOS 네이티브 앱 품질 기준에 맞지 않음.
+- 수정: SF Symbols 기반 `UIButton.Configuration` 탭으로 교체. `house.fill`, `calendar`, `person.2`, `creditcard`, `line.3.horizontal` 사용.
+- 디자인: 어두운 블러 글래스 컨테이너 + 활성 탭 pill 배경 + Teal 활성 색상 + muted 비활성 색상으로 네이티브 홈 톤에 맞춤.
+- 접근성/자동화: 각 탭을 실제 `UIButton`으로 구현하고 `accessibilityLabel`/selected trait 지정. XcodeBuildMCP `snapshot_ui`에서 홈/일정/공간/가계부/전체 버튼 타깃 확인.
+- 검증: XcodeBuildMCP `build_run_sim` 통과 및 Simulator 화면 확인.

@@ -4,6 +4,7 @@ import UserNotifications
 final class NativeHomeViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
+    private let bottomNavContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let bottomNav = UIStackView()
     private let refreshControl = UIRefreshControl()
     private var summary: NativeHomeSummary?
@@ -44,19 +45,24 @@ final class NativeHomeViewController: UIViewController {
         setupBottomNav()
 
         view.addSubview(scrollView)
-        view.addSubview(bottomNav)
+        view.addSubview(bottomNavContainer)
         scrollView.addSubview(stack)
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomNav.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomNavContainer.topAnchor),
 
-            bottomNav.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            bottomNav.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            bottomNav.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            bottomNav.heightAnchor.constraint(equalToConstant: 64),
+            bottomNavContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            bottomNavContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            bottomNavContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
+            bottomNavContainer.heightAnchor.constraint(equalToConstant: 66),
+
+            bottomNav.topAnchor.constraint(equalTo: bottomNavContainer.contentView.topAnchor, constant: 6),
+            bottomNav.leadingAnchor.constraint(equalTo: bottomNavContainer.contentView.leadingAnchor, constant: 6),
+            bottomNav.trailingAnchor.constraint(equalTo: bottomNavContainer.contentView.trailingAnchor, constant: -6),
+            bottomNav.bottomAnchor.constraint(equalTo: bottomNavContainer.contentView.bottomAnchor, constant: -6),
 
             stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             stack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
@@ -67,52 +73,64 @@ final class NativeHomeViewController: UIViewController {
     }
 
     private func setupBottomNav() {
+        bottomNavContainer.translatesAutoresizingMaskIntoConstraints = false
+        bottomNavContainer.clipsToBounds = false
+        bottomNavContainer.layer.cornerRadius = 30
+        bottomNavContainer.layer.masksToBounds = true
+        bottomNavContainer.layer.borderWidth = 1
+        bottomNavContainer.layer.borderColor = UIColor(white: 1, alpha: 0.10).cgColor
+        bottomNavContainer.layer.shadowColor = UIColor.black.cgColor
+        bottomNavContainer.layer.shadowOpacity = 0.22
+        bottomNavContainer.layer.shadowOffset = CGSize(width: 0, height: 10)
+        bottomNavContainer.layer.shadowRadius = 24
+
         bottomNav.translatesAutoresizingMaskIntoConstraints = false
         bottomNav.axis = .horizontal
         bottomNav.alignment = .center
         bottomNav.distribution = .fillEqually
-        bottomNav.spacing = 4
-        bottomNav.layoutMargins = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
-        bottomNav.isLayoutMarginsRelativeArrangement = true
-        bottomNav.backgroundColor = UIColor(red: 0.082, green: 0.118, blue: 0.200, alpha: 0.94)
-        bottomNav.layer.cornerRadius = 28
-        bottomNav.layer.borderWidth = 1
-        bottomNav.layer.borderColor = UIColor(white: 1, alpha: 0.08).cgColor
-        bottomNav.layer.shadowColor = UIColor.black.cgColor
-        bottomNav.layer.shadowOpacity = 0.18
-        bottomNav.layer.shadowOffset = CGSize(width: 0, height: 8)
-        bottomNav.layer.shadowRadius = 18
+        bottomNav.spacing = 3
+        bottomNavContainer.contentView.addSubview(bottomNav)
 
-        bottomNav.addArrangedSubview(navButton(icon: "⌂", title: "홈", active: true) { [weak self] in
+        bottomNav.addArrangedSubview(navButton(symbol: "house.fill", title: "홈", active: true) { [weak self] in
             self?.loadSummary()
         })
-        bottomNav.addArrangedSubview(navButton(icon: "◴", title: "일정", active: false) {
+        bottomNav.addArrangedSubview(navButton(symbol: "calendar", title: "일정", active: false) {
             NativeRouteCoordinator.shared.openWebPath("/schedules")
         })
-        bottomNav.addArrangedSubview(navButton(icon: "♧", title: "공간", active: false) {
+        bottomNav.addArrangedSubview(navButton(symbol: "person.2", title: "공간", active: false) {
             NativeRouteCoordinator.shared.openWebPath("/space")
         })
-        bottomNav.addArrangedSubview(navButton(icon: "▭", title: "가계부", active: false) {
+        bottomNav.addArrangedSubview(navButton(symbol: "creditcard", title: "가계부", active: false) {
             NativeRouteCoordinator.shared.openWebPath("/budget")
         })
-        bottomNav.addArrangedSubview(navButton(icon: "☰", title: "전체", active: false) {
+        bottomNav.addArrangedSubview(navButton(symbol: "line.3.horizontal", title: "전체", active: false) {
             NativeRouteCoordinator.shared.openWebPath("/mypage")
         })
     }
 
-    private func navButton(icon: String, title: String, active: Bool, handler: @escaping () -> Void) -> UIButton {
+    private func navButton(symbol: String, title: String, active: Bool, handler: @escaping () -> Void) -> UIButton {
         var config = UIButton.Configuration.plain()
-        config.title = "\(icon)\n\(title)"
-        config.titleAlignment = .center
+        config.image = UIImage(systemName: symbol)
+        config.imagePlacement = .top
+        config.imagePadding = 4
+        config.title = title
         config.baseForegroundColor = active ? teal : muted
-        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 2, bottom: 6, trailing: 2)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 2, bottom: 5, trailing: 2)
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(
+            pointSize: active ? 16 : 15,
+            weight: active ? .semibold : .regular
+        )
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 10.5, weight: active ? .bold : .semibold)
+            return outgoing
+        }
 
         let button = UIButton(configuration: config)
-        button.titleLabel?.font = .systemFont(ofSize: 11, weight: .bold)
-        button.titleLabel?.numberOfLines = 2
-        button.titleLabel?.textAlignment = .center
+        button.layer.cornerRadius = 22
         button.backgroundColor = active ? UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.22) : .clear
-        button.layer.cornerRadius = 18
+        button.accessibilityLabel = title
+        button.accessibilityTraits = active ? [.button, .selected] : [.button]
         button.addAction(UIAction { _ in handler() }, for: .touchUpInside)
         return button
     }

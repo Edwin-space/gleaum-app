@@ -916,3 +916,13 @@ npm run cap:open:android # Android Studio 열기
 - [x] 홈/일정/공간/가계부/전체 5개 메뉴 제공
 - [x] 홈은 네이티브 새로고침, 나머지는 WebView 기능 경로로 이동
 - [x] XcodeBuildMCP `build_run_sim` 통과 및 Simulator 표시 확인
+
+
+## iOS 네이티브 하단 네비게이션 UI 고도화 (완료 — 2026-06-18)
+
+- [x] 조잡한 텍스트 기호 아이콘 제거
+- [x] SF Symbols 기반 네이티브 탭 아이콘 적용
+- [x] 어두운 블러 글래스 컨테이너와 활성 탭 pill 스타일 적용
+- [x] `UIButton.Configuration` 기반으로 접근성/자동화 타깃 보강
+- [x] XcodeBuildMCP `build_run_sim` 통과
+- [x] `snapshot_ui`에서 홈/일정/공간/가계부/전체 버튼 타깃 확인
