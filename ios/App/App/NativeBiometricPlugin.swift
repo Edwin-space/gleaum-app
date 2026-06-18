@@ -6,8 +6,9 @@ import LocalAuthentication
  * NativeBiometricPlugin — iOS 앱 잠금용 Face ID / Touch ID / 기기 암호 브리지.
  *
  * isAvailable():
- *   1. .deviceOwnerAuthenticationWithBiometrics 로 먼저 체크 (biometryType 확인용)
- *   2. 생체인식 불가 → .deviceOwnerAuthentication(기기 암호) 로 폴백 체크
+ *   - 설정 화면에서 "생체인증 사용 가능"으로 볼지는 Face ID / Touch ID 등록 여부만 기준으로 판단한다.
+ *   - iOS Simulator의 .deviceOwnerAuthentication 결과는 실제 기기 잠금 상태와 다를 수 있어,
+ *     availability 단계에서는 기기 암호만으로 available 처리하지 않는다.
  *
  * authenticate():
  *   - .deviceOwnerAuthentication 사용 → Face ID/Touch ID + 기기 암호 자동 폴백
@@ -38,19 +39,9 @@ public class NativeBiometricPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
-        // 생체인식 불가 → 기기 암호(PIN/패스코드) 폴백
-        var pinError: NSError?
-        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &pinError) {
-            call.resolve([
-                "available": true,
-                "biometryType": "deviceCredential",
-                "reason": "device_credential_available",
-            ])
-            return
-        }
-
-        // 완전히 사용 불가 (기기 잠금 미설정)
-        let reason = availabilityReason(bioError ?? pinError)
+        // 기기 암호는 authenticate()의 시스템 폴백으로만 허용한다.
+        // 여기서 available=true로 반환하면 Face ID 설정 화면에 기기 비밀번호 설정 흐름이 노출된다.
+        let reason = availabilityReason(bioError)
         call.resolve([
             "available": false,
             "biometryType": "none",

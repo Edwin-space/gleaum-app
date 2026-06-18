@@ -21,6 +21,12 @@
 		E822C30B2FCD79040032518A /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3062FCD79040032518A /* LoginViewController.swift */; };
 		E822C30C2FCD79040032518A /* NativeBiometricPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */; };
 		E822C30E2FCD79040032518A /* NativeCalendarPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C30F2FCD79040032518A /* NativeCalendarPlugin.swift */; };
+		E822C3102FCD79040032518A /* AppBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3112FCD79040032518A /* AppBridgeViewController.swift */; };
+		E822C3122FCD79040032518A /* NativeHomeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3132FCD79040032518A /* NativeHomeModels.swift */; };
+		E822C3142FCD79040032518A /* NativeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3152FCD79040032518A /* NativeAPIClient.swift */; };
+		E822C3162FCD79040032518A /* NativeRouteCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3172FCD79040032518A /* NativeRouteCoordinator.swift */; };
+		E822C3182FCD79040032518A /* NativeHomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3192FCD79040032518A /* NativeHomeViewController.swift */; };
+		E822C31A2FCD79040032518A /* NativeScheduleCreateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C31B2FCD79040032518A /* NativeScheduleCreateViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +46,12 @@
 		E822C3082FCD79040032518A /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeBiometricPlugin.swift; sourceTree = "<group>"; };
 		E822C30F2FCD79040032518A /* NativeCalendarPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCalendarPlugin.swift; sourceTree = "<group>"; };
+		E822C3112FCD79040032518A /* AppBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBridgeViewController.swift; sourceTree = "<group>"; };
+		E822C3132FCD79040032518A /* NativeHomeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeHomeModels.swift; sourceTree = "<group>"; };
+		E822C3152FCD79040032518A /* NativeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAPIClient.swift; sourceTree = "<group>"; };
+		E822C3172FCD79040032518A /* NativeRouteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRouteCoordinator.swift; sourceTree = "<group>"; };
+		E822C3192FCD79040032518A /* NativeHomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeHomeViewController.swift; sourceTree = "<group>"; };
+		E822C31B2FCD79040032518A /* NativeScheduleCreateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeScheduleCreateViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +90,12 @@
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
 				E822C30F2FCD79040032518A /* NativeCalendarPlugin.swift */,
+				E822C3112FCD79040032518A /* AppBridgeViewController.swift */,
+				E822C3132FCD79040032518A /* NativeHomeModels.swift */,
+				E822C3152FCD79040032518A /* NativeAPIClient.swift */,
+				E822C3172FCD79040032518A /* NativeRouteCoordinator.swift */,
+				E822C3192FCD79040032518A /* NativeHomeViewController.swift */,
+				E822C31B2FCD79040032518A /* NativeScheduleCreateViewController.swift */,
 				E822C3082FCD79040032518A /* SessionManager.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -178,7 +196,13 @@
 				E822C30A2FCD79040032518A /* NativeSessionPlugin.swift in Sources */,
 				E822C30C2FCD79040032518A /* NativeBiometricPlugin.swift in Sources */,
 				E822C30E2FCD79040032518A /* NativeCalendarPlugin.swift in Sources */,
+				E822C3102FCD79040032518A /* AppBridgeViewController.swift in Sources */,
 				E822C30B2FCD79040032518A /* LoginViewController.swift in Sources */,
+				E822C3122FCD79040032518A /* NativeHomeModels.swift in Sources */,
+				E822C3142FCD79040032518A /* NativeAPIClient.swift in Sources */,
+				E822C3162FCD79040032518A /* NativeRouteCoordinator.swift in Sources */,
+				E822C3182FCD79040032518A /* NativeHomeViewController.swift in Sources */,
+				E822C31A2FCD79040032518A /* NativeScheduleCreateViewController.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

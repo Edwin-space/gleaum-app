@@ -45,6 +45,17 @@ class SessionManager {
         return getSession() != nil
     }
 
+    // MARK: - Access Token
+
+    func accessToken() -> String? {
+        guard let raw = getSession(),
+              let data = raw.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return json["access_token"] as? String
+    }
+
     // MARK: - Clear
 
     func clearSession() {

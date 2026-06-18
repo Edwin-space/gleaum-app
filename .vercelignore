@@ -1,0 +1,21 @@
+# Native app projects are not needed for the Vercel web build.
+android/
+ios/
+
+# Project documentation and handoff notes are not served by Next.js.
+docs/
+backoffice/docs/
+AGENTS.md
+DESIGN.md
+design-system-ui.html
+
+# Local planning/export artifacts.
+*.docx
+*.pptx
+*.pdf
+gleaum.com.cleaned.txt
+gleaum-mail-auth-only.txt
+img/
+
+# Local/editor metadata.
+.DS_Store

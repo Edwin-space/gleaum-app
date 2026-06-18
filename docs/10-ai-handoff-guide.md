@@ -1324,3 +1324,147 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - Vercel 로그 접근 권한을 재인증해 production runtime log 확인 필요.
 - 클라이언트 오류를 서버로 수집하는 `/api/client-errors` 또는 Firebase Crashlytics/Sentry 연동 권장.
 - `profiles.family_group_id`가 실제 멤버십 없는 공간을 가리키는 레거시 데이터를 보정하는 SQL 검토 필요.
+
+---
+
+## 2026-06-18 — iOS 네이티브 홈/일정 전환 1차 기반
+
+### 배경
+- 회원가입/로그인 외 iOS 네이티브 전환 대상 점검 결과, 전체 SwiftUI 재작성보다 홈 요약과 일정 빠른 등록부터 단계적으로 전환하는 것이 안전하다고 판단.
+- Swift 화면에서 Supabase 쿼리를 직접 흩뿌리면 Web/Android/iOS 데이터 계약이 분리되므로, Next.js Route Handler를 BFF처럼 쓰는 기반을 먼저 추가.
+
+### 반영 내용
+- `docs/16-ios-native-roadmap.md`
+  - iOS 네이티브 전환 우선순위, 유지 대상/전환 대상, API 계약, 다음 구현 순서 정리.
+- `src/lib/supabase/native-route.ts`
+  - WebView cookie 세션과 Swift 네이티브 `Authorization: Bearer <access_token>` 호출을 모두 지원하는 인증 헬퍼 추가.
+- `src/lib/db.ts`
+  - `getNativeHomeSummary()` 추가: iOS 네이티브 홈 요약용 사용자/공간/오늘 일정/향후 일정/가계부 원장 요약 제공.
+  - `createNativeSchedule()` 추가: iOS 네이티브 일정 등록 Sheet용 일정 생성 함수 제공.
+  - 공유 공간 일정은 `space_members.role`이 `admin` 또는 `editor`인 경우만 생성 가능.
+  - 개인 일정은 개인 공간(`preferences.personalSpaceId`)에 private visibility로 저장되도록 경계 유지.
+- `src/app/api/native/home-summary/route.ts`
+  - `GET /api/native/home-summary` 추가.
+- `src/app/api/native/schedules/route.ts`
+  - `POST /api/native/schedules` 추가.
+
+### 다음 작업
+- iOS SwiftUI Shell을 추가하고 `GET /api/native/home-summary`를 호출해 네이티브 홈 요약 화면을 구성한다.
+- 홈의 `+ 새 일정`은 SwiftUI Sheet로 띄우고 저장 시 `POST /api/native/schedules`를 호출한다.
+- 성공 시 홈 요약을 재조회하거나 WebView 일정 목록을 갱신한다.
+
+### 주의
+- 새 네이티브 화면은 Supabase 테이블을 직접 조회하지 말고 위 API 계약을 우선 사용한다.
+- 날짜 범위는 현재 서버 기준이다. 사용자 타임존별 day/month 경계가 필요하면 API에 `timezone` 입력을 추가해 보강한다.
+- 가계부는 `ledger_entries` 원장 기준이며, 일회성 지출을 다시 일정처럼 확장하지 않는다.
+
+---
+
+## 2026-06-18 — iOS 커스텀 Capacitor 플러그인 등록 보강
+
+### 문제
+- iOS Simulator 실행 로그에서 `NativeSession.getSession()` 호출이 `UNIMPLEMENTED`로 실패.
+- 이 상태에서는 네이티브 로그인 세션을 WebView Supabase 세션으로 복구하지 못해 로그인 후 `/login` 재노출, 세션 유지 실패, 생체인증 게이트 오작동으로 이어질 수 있다.
+
+### 원인
+- `NativeSessionPlugin.swift`, `NativeBiometricPlugin.swift`, `NativeCalendarPlugin.swift`는 Xcode Sources에는 포함되어 있었지만 Capacitor bridge 등록 경로가 불안정했다.
+- `ios/App/App/capacitor.config.json`의 `packageClassList`는 Capacitor CLI가 npm 플러그인 위주로 생성하므로 앱 타깃 내부 커스텀 Swift 플러그인이 `cap sync` 이후 누락될 수 있다.
+
+### 수정
+- `ios/App/App/AppBridgeViewController.swift` 추가.
+  - `CAPBridgeViewController.capacitorDidLoad()`를 override.
+  - `NativeSessionPlugin`, `NativeBiometricPlugin`, `NativeCalendarPlugin`을 `bridge.registerPluginInstance()`로 명시 등록.
+- `ios/App/App/Base.lproj/Main.storyboard`
+  - 루트 ViewController를 `CAPBridgeViewController`에서 `AppBridgeViewController`로 변경.
+- `ios/App/Gleaum.xcodeproj/project.pbxproj`
+  - `AppBridgeViewController.swift`를 target Sources에 추가.
+- `ios/App/App/capacitor.config.json`
+  - 현재 산출물 기준 `packageClassList`에도 커스텀 플러그인 3개를 추가.
+
+### 검증
+- XcodeBuildMCP `build_run_sim` 통과.
+- iOS Simulator 로그에서 다음 호출이 정상 확인됨.
+  - `To Native -> NativeSession getSession`
+  - `TO JS {"session":null}`
+  - `To Native -> NativeBiometric isAvailable`
+- `UNIMPLEMENTED`는 더 이상 `NativeSession`/`NativeBiometric`/`NativeCalendar`에서 발생하지 않음.
+
+### 남은 보안 이슈
+- `FirebaseAppCheckPlugin`, `FirebaseRemoteConfigPlugin`은 여전히 `UNIMPLEMENTED`.
+- 현재 `ios/App/CapApp-SPM/Package.swift`에 `@capacitor-firebase/messaging`만 연결되어 있고 App Check/Remote Config SPM 제품이 빠진 상태가 원인 후보.
+- 다음 작업자는 `npx cap sync ios` 또는 SPM 의존성 수동 정리를 통해 AppCheck/RemoteConfig/Crashlytics/Performance/Analytics iOS 플러그인 연결 상태를 별도 점검해야 한다.
+
+---
+
+## 2026-06-18 — iOS Face ID 설정 가능 여부 판정 보정
+
+### 문제
+- iOS Simulator에서 Face ID/Touch ID가 등록되어 있지 않은데도 보안 설정 구간에 기기 비밀번호/PIN 설정 성격의 안내가 노출됨.
+- 원인은 `NativeBiometricPlugin.isAvailable()`이 `.deviceOwnerAuthentication` 성공만으로 `available=true`, `biometryType=deviceCredential`를 반환하던 구조.
+- Simulator의 `.deviceOwnerAuthentication` 결과는 실제 기기 패스코드/생체 등록 상태와 다르게 잡힐 수 있어 Face ID 설정 UX에 부정확한 상태가 표시될 수 있다.
+
+### 수정
+- `ios/App/App/NativeBiometricPlugin.swift`
+  - `isAvailable()`은 Face ID/Touch ID 등록 여부(`.deviceOwnerAuthenticationWithBiometrics`)만 기준으로 `available=true`를 반환하도록 변경.
+  - 기기 암호는 `authenticate()` 단계의 iOS 시스템 폴백으로만 허용.
+- `src/app/settings/security/SecuritySettingsContent.tsx`
+  - 생체인증 불가 상태에서 비상용 PIN 카드가 먼저 노출되지 않도록 조건 보정.
+  - "기기 잠금" 중심 문구를 Face ID/Touch ID/지문 등록 기준으로 정리.
+- `src/app/onboarding/page.tsx`, `src/app/mypage/page.tsx`
+  - 생체인증 불가 안내 문구에서 "기기 잠금"을 제거하고 실제 생체 등록 상태 확인으로 정리.
+
+### 검증
+- `npm run build` 통과.
+- XcodeBuildMCP `build_run_sim` 통과.
+- iOS Simulator 로그 확인:
+  - `NativeBiometric isAvailable`
+  - `TO JS {"reason":"biometry_not_enrolled","available":false,"biometryType":"none"}`
+- 더 이상 `deviceCredential`만으로 Face ID 사용 가능 상태가 되지 않는다.
+
+
+---
+
+## 2026-06-18 — iOS P0 네이티브 앱 셸/홈/일정 빠른 등록 1차
+
+### 목적
+- 회원가입/로그인 이후 앱 사용자가 가장 먼저 만나는 홈, 일정 빠른 등록, 앱 라우팅, 알림 권한, 초대 링크 진입점을 네이티브 앱 기준으로 안정화.
+- 전체 앱을 즉시 SwiftUI로 재작성하지 않고, 기존 Capacitor WebView 위에 P0 네이티브 화면을 full-screen으로 얹는 하이브리드 전환 방식 채택.
+
+### 반영 파일
+- `ios/App/App/NativeHomeModels.swift` — 네이티브 홈/일정 API Codable 모델.
+- `ios/App/App/NativeAPIClient.swift` — `https://www.gleaum.com/api/native/*` 호출 클라이언트. `SessionManager.accessToken()`으로 Bearer 인증.
+- `ios/App/App/NativeRouteCoordinator.swift` — `/home`은 네이티브 홈, 그 외 경로는 WebView로 로드. `gleaum://invite/{code}` 및 Universal Link 초대 URL을 `/invite/{code}`로 라우팅.
+- `ios/App/App/NativeHomeViewController.swift` — 네이티브 홈. 레이아웃 순서: 종합 일정 → 오늘 달력 → 오늘 일정 → 광고 → 가계부 → 앱 설정.
+- `ios/App/App/NativeScheduleCreateViewController.swift` — 네이티브 일정 등록 Sheet. 저장 성공 시 홈 요약 재조회.
+- `ios/App/App/SessionManager.swift` — `accessToken()` 추가.
+- `ios/App/App/AppDelegate.swift` — 세션 보유 시 네이티브 홈 표시, 로그인 세션 저장 후 네이티브 홈 표시, 딥링크 라우팅 연결.
+- `ios/App/Gleaum.xcodeproj/project.pbxproj` — 신규 Swift 파일 5개 target Sources 등록.
+
+### 검증
+- `npm run build` 통과. 빌드 결과에 `/api/native/home-summary`, `/api/native/schedules` 라우트가 포함됨.
+- XcodeBuildMCP `build_run_sim` 통과.
+- iOS Simulator에서 네이티브 홈 화면 표시 확인. 현재 운영 배포본에는 `/api/native/home-summary`가 아직 없으므로 Simulator에서는 `서버 요청에 실패했습니다. (404)`가 정상적으로 표시되고 `웹 홈으로 이동` fallback이 노출됨.
+
+### 배포 순서 주의
+1. 먼저 웹/Vercel 배포로 `/api/native/home-summary`, `/api/native/schedules`가 운영에 반영되어야 한다.
+2. 그 다음 iOS 빌드를 배포해야 네이티브 홈이 실제 데이터를 불러온다.
+3. iOS만 먼저 배포하면 네이티브 홈은 404 fallback을 표시한다. 앱이 막히지는 않지만 네이티브 홈 데이터는 보이지 않는다.
+
+### 남은 P0 보강
+- 네이티브 홈에서 웹 구간으로 이동한 뒤 다시 네이티브 홈으로 돌아오는 명시적 홈 버튼/하단 탭 UX 필요.
+- 일정 등록 Sheet는 1차 기본형이다. 반복, 장소, 참여자 선택, 공유 공간 권한 안내는 추가 보강 필요.
+- 보안 설정은 Face ID 판정/웹 설정 UI 보정까지 완료됐지만, 완전 네이티브 보안 설정 화면은 후속 작업으로 남아 있다.
+
+
+### 2026-06-18 추가 보정 — 네이티브 홈 API 미배포 시 자동 WebView fallback
+- 문제: iOS 앱 실행 직후 네이티브 홈이 `GET /api/native/home-summary`를 운영(`https://www.gleaum.com`)으로 호출하지만, 운영 배포 전에는 404가 발생해 `홈을 불러오지 못했어요` 에러 화면이 첫 화면으로 노출됨.
+- 수정: `NativeAPIError.shouldFallbackToWebHome` 추가. 404 또는 5xx는 앱 진입을 막지 않고 `NativeRouteCoordinator.openWebPath("/home")`으로 자동 전환.
+- 검증: XcodeBuildMCP `build_run_sim` 통과. Simulator에서 더 이상 네이티브 홈 에러 화면이 뜨지 않고 기존 모바일 웹 홈으로 진입 확인.
+- 주의: 운영/Vercel에 `/api/native/home-summary`가 배포되기 전까지는 네이티브 홈 대신 WebView 홈이 보이는 것이 의도된 안전 동작이다.
+
+
+### 2026-06-18 추가 보정 — 네이티브 홈/WebView 홈 무한 반복 차단
+- 문제: 네이티브 홈 API 404 fallback 이후 WebView `/home`으로 이동했지만, `prefersNativeHome`이 계속 true로 남아 앱 활성화/세션 저장 알림 때 네이티브 홈이 다시 표시됨. 이로 인해 `불러오는 중` 네이티브 화면과 모바일 웹 홈이 반복 전환됨.
+- 수정 1: `NativeRouteCoordinator.openWebPath()` 진입 시 `prefersNativeHome = false`로 설정.
+- 수정 2: `AppDelegate.onNativeSessionSaved()`는 `prefersNativeHome == true`일 때만 네이티브 홈을 표시. WebView 홈의 세션 동기화가 네이티브 홈 재표시를 유발하지 않도록 차단.
+- 검증: XcodeBuildMCP `build_run_sim` 통과. Simulator에서 3초/9초/17초 캡처 모두 모바일 웹 홈에 안정적으로 머무는 것 확인.

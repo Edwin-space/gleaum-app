@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Schedule,
   ScheduleType,
@@ -34,6 +35,8 @@ import type {
   LedgerCategory,
   RecurFreq,
 } from '@/types';
+
+type RouteSupabaseClient = SupabaseClient<any, any, any>;
 
 // [전역 상태] 세션 내 무한 루프 방지용
 let hasTriedAutoCreateGroup = false;
@@ -1496,6 +1499,359 @@ export async function deleteLedgerEntry(id: string): Promise<boolean> {
   const supabase = createClient();
   const { error } = await supabase.from('ledger_entries').delete().eq('id', id);
   return !error;
+}
+
+// ── Native API contracts (iOS/Android 네이티브 화면용 BFF) ────────────────
+// Route Handler가 인증/HTTP만 담당하고, 실제 Supabase 쿼리는 이 파일에 모은다.
+
+export interface NativeScheduleItem {
+  id: string;
+  title: string;
+  type: ScheduleType;
+  category?: ScheduleCategory;
+  visibility?: ScheduleVisibility;
+  automationPolicy?: AutomationPolicy;
+  startTime: string;
+  endTime?: string;
+  allDay: boolean;
+  status: ScheduleStatus;
+  repeat: RepeatType;
+  reminder: number;
+  memo?: string;
+  spaceId: string;
+  createdBy: string;
+  participantIds: string[];
+}
+
+export interface NativeLedgerItem {
+  id: string;
+  kind: LedgerKind;
+  title: string;
+  amount: number;
+  category: LedgerCategory;
+  occurredAt: string;
+  status: LedgerStatus;
+  recurFreq: RecurFreq;
+}
+
+export interface NativeHomeSummary {
+  serverTime: string;
+  user: {
+    id: string;
+    displayName: string;
+    email: string;
+    avatar?: string;
+    onboardingCompleted: boolean;
+    timezone: string;
+  };
+  spaces: {
+    activeSpaceId: string | null;
+    activeSpaceName: string | null;
+    personalSpaceId: string | null;
+    sharedSpaceId: string | null;
+    hasSharedSpace: boolean;
+    activeRole: SpaceRole | null;
+    memberCount: number;
+  };
+  schedules: {
+    today: NativeScheduleItem[];
+    upcoming: NativeScheduleItem[];
+    todayCount: number;
+    upcomingCount: number;
+  };
+  ledger: {
+    month: string;
+    incomeTotal: number;
+    expenseTotal: number;
+    net: number;
+    recentEntries: NativeLedgerItem[];
+  };
+}
+
+export interface NativeCreateScheduleInput {
+  title: string;
+  type?: ScheduleType;
+  spaceId?: string;
+  startTime: string;
+  endTime?: string;
+  allDay?: boolean;
+  reminder?: number;
+  repeat?: RepeatType;
+  memo?: string;
+  participantIds?: string[];
+  visibility?: ScheduleVisibility;
+}
+
+function nativeScheduleItemFromRow(row: ScheduleRow): NativeScheduleItem {
+  return {
+    id: row.id,
+    title: row.title,
+    type: row.type,
+    category: row.category ?? undefined,
+    visibility: row.visibility ?? undefined,
+    automationPolicy: row.automation_policy ?? undefined,
+    startTime: row.start_time,
+    endTime: row.end_time ?? undefined,
+    allDay: row.all_day,
+    status: row.status,
+    repeat: row.repeat,
+    reminder: row.reminder,
+    memo: row.memo ?? undefined,
+    spaceId: row.family_group_id,
+    createdBy: row.created_by,
+    participantIds: row.schedule_participants?.map((p) => p.user_id) ?? [],
+  };
+}
+
+function nativeLedgerItemFromRow(row: LedgerRow): NativeLedgerItem {
+  return {
+    id: row.id,
+    kind: row.kind,
+    title: row.title,
+    amount: row.amount ?? 0,
+    category: row.category as LedgerCategory,
+    occurredAt: row.occurred_at,
+    status: row.status,
+    recurFreq: row.recur_freq,
+  };
+}
+
+function monthRange(date = new Date()) {
+  return {
+    start: new Date(date.getFullYear(), date.getMonth(), 1).toISOString(),
+    end: new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999).toISOString(),
+    label: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+  };
+}
+
+function dayRange(date = new Date()) {
+  return {
+    start: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
+    end: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).toISOString(),
+  };
+}
+
+function futureRange(days: number, date = new Date()) {
+  return {
+    start: date.toISOString(),
+    end: new Date(date.getFullYear(), date.getMonth(), date.getDate() + days, 23, 59, 59, 999).toISOString(),
+  };
+}
+
+export async function getNativeHomeSummary(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<NativeHomeSummary> {
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,name,display_name,email,avatar,family_group_id,onboarding_completed_at,timezone,preferences')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !profileData) {
+    throw new Error(profileError?.message ?? 'profile_not_found');
+  }
+
+  const profile = profileData as Pick<ProfileRow,
+    'id' | 'name' | 'display_name' | 'email' | 'avatar' | 'family_group_id' |
+    'onboarding_completed_at' | 'timezone' | 'preferences'
+  >;
+  const preferences = (profile.preferences ?? {}) as Partial<OnboardingPreferences>;
+  const personalSpaceId = preferences.personalSpaceId ?? null;
+  const activeSpaceId = profile.family_group_id ?? personalSpaceId ?? null;
+  const sharedSpaceId = activeSpaceId && activeSpaceId !== personalSpaceId ? activeSpaceId : null;
+  const hasSharedSpace = !!sharedSpaceId;
+
+  let activeSpaceName: string | null = null;
+  let memberCount = 0;
+  let activeRole: SpaceRole | null = null;
+
+  if (activeSpaceId) {
+    const [{ data: space }, { count }, { data: member }] = await Promise.all([
+      supabase.from('family_groups').select('name').eq('id', activeSpaceId).maybeSingle(),
+      supabase.from('space_members').select('*', { count: 'exact', head: true }).eq('space_id', activeSpaceId),
+      supabase.from('space_members').select('role').eq('space_id', activeSpaceId).eq('user_id', userId).maybeSingle(),
+    ]);
+    activeSpaceName = (space as { name?: string } | null)?.name ?? null;
+    memberCount = count ?? 0;
+    activeRole = ((member as { role?: SpaceRole } | null)?.role ?? null);
+  }
+
+  const today = dayRange();
+  const nextTwoWeeks = futureRange(14);
+  let todaySchedules: NativeScheduleItem[] = [];
+  let upcomingSchedules: NativeScheduleItem[] = [];
+
+  if (activeSpaceId) {
+    const { data: scheduleRows, error: schedulesError } = await supabase
+      .from('schedules')
+      .select('*, schedule_participants (user_id)')
+      .eq('family_group_id', activeSpaceId)
+      .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+      .gte('start_time', today.start)
+      .lte('start_time', nextTwoWeeks.end)
+      .order('start_time', { ascending: true });
+
+    if (schedulesError) throw new Error(schedulesError.message);
+
+    const scheduleItems = ((scheduleRows ?? []) as ScheduleRow[])
+      .filter((row) => !(row.type === 'expense' && row.repeat === 'none'))
+      .map(nativeScheduleItemFromRow);
+
+    todaySchedules = scheduleItems.filter((item) => item.startTime >= today.start && item.startTime <= today.end);
+    upcomingSchedules = scheduleItems.filter((item) => item.startTime > today.end);
+  }
+
+  const personalBudgetSpaceId = personalSpaceId ?? (hasSharedSpace ? null : activeSpaceId);
+  const month = monthRange();
+  let ledgerRows: LedgerRow[] = [];
+
+  if (personalBudgetSpaceId) {
+    const { data, error } = await supabase
+      .from('ledger_entries')
+      .select('*')
+      .eq('space_id', personalBudgetSpaceId)
+      .eq('scope', 'personal')
+      .gte('occurred_at', month.start)
+      .lte('occurred_at', month.end)
+      .order('occurred_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    ledgerRows = (data ?? []) as LedgerRow[];
+  }
+
+  const incomeTotal = ledgerRows
+    .filter((row) => row.kind === 'income')
+    .reduce((sum, row) => sum + (row.amount ?? 0), 0);
+  const expenseTotal = ledgerRows
+    .filter((row) => row.kind === 'expense')
+    .reduce((sum, row) => sum + (row.amount ?? 0), 0);
+
+  return {
+    serverTime: new Date().toISOString(),
+    user: {
+      id: profile.id,
+      displayName: profile.display_name ?? profile.name ?? '사용자',
+      email: profile.email ?? '',
+      avatar: profile.avatar ?? undefined,
+      onboardingCompleted: !!profile.onboarding_completed_at,
+      timezone: profile.timezone ?? 'Asia/Seoul',
+    },
+    spaces: {
+      activeSpaceId,
+      activeSpaceName,
+      personalSpaceId,
+      sharedSpaceId,
+      hasSharedSpace,
+      activeRole,
+      memberCount,
+    },
+    schedules: {
+      today: todaySchedules,
+      upcoming: upcomingSchedules.slice(0, 10),
+      todayCount: todaySchedules.length,
+      upcomingCount: upcomingSchedules.length,
+    },
+    ledger: {
+      month: month.label,
+      incomeTotal,
+      expenseTotal,
+      net: incomeTotal - expenseTotal,
+      recentEntries: ledgerRows.slice(0, 8).map(nativeLedgerItemFromRow),
+    },
+  };
+}
+
+export async function createNativeSchedule(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  input: NativeCreateScheduleInput,
+): Promise<NativeScheduleItem> {
+  const title = input.title?.trim();
+  if (!title) throw new Error('title_required');
+
+  const type = input.type ?? 'personal';
+  const startTime = new Date(input.startTime);
+  if (Number.isNaN(startTime.getTime())) throw new Error('invalid_start_time');
+  const endTime = input.endTime ? new Date(input.endTime) : undefined;
+  if (endTime && Number.isNaN(endTime.getTime())) throw new Error('invalid_end_time');
+
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('family_group_id,preferences')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !profileData) throw new Error(profileError?.message ?? 'profile_not_found');
+
+  const profile = profileData as Pick<ProfileRow, 'family_group_id' | 'preferences'>;
+  const preferences = (profile.preferences ?? {}) as Partial<OnboardingPreferences>;
+  const personalSpaceId = preferences.personalSpaceId ?? null;
+  const activeSpaceId = profile.family_group_id ?? null;
+  const sharedSpaceId = activeSpaceId && activeSpaceId !== personalSpaceId ? activeSpaceId : null;
+  const visibility = input.visibility ?? inferVisibility(type);
+  const isPrivateTarget = type === 'personal' || visibility === 'private';
+  const targetSpaceId = isPrivateTarget
+    ? (personalSpaceId ?? (sharedSpaceId ? null : activeSpaceId))
+    : (input.spaceId ?? sharedSpaceId);
+
+  if (!targetSpaceId) throw new Error('space_required');
+
+  if (targetSpaceId !== personalSpaceId && visibility !== 'private') {
+    const { data: member } = await supabase
+      .from('space_members')
+      .select('role')
+      .eq('space_id', targetSpaceId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    const role = (member as { role?: SpaceRole } | null)?.role;
+    if (role !== 'admin' && role !== 'editor') throw new Error('space_editor_required');
+  }
+
+  const repeat = input.repeat ?? 'none';
+  const category = inferCategory(type);
+  const automationPolicy = type === 'expense' && repeat === 'none'
+    ? 'reminder_only'
+    : inferAutomationPolicy(type);
+  const status: ScheduleStatus = type === 'expense' && repeat === 'none' ? 'completed' : 'pending';
+  const participantIds = targetSpaceId === personalSpaceId
+    ? [userId]
+    : (input.participantIds?.length ? input.participantIds : [userId]);
+
+  const { data: schedule, error } = await supabase
+    .from('schedules')
+    .insert({
+      title,
+      type,
+      category,
+      visibility,
+      automation_policy: automationPolicy,
+      start_time: startTime.toISOString(),
+      end_time: endTime?.toISOString() ?? null,
+      all_day: input.allDay ?? false,
+      status,
+      reminder: input.reminder ?? 15,
+      repeat,
+      memo: input.memo?.trim() || null,
+      family_group_id: targetSpaceId,
+      created_by: userId,
+    })
+    .select()
+    .single();
+
+  if (error || !schedule) throw new Error(error?.message ?? 'schedule_create_failed');
+
+  if (participantIds.length > 0) {
+    const { error: participantError } = await supabase.from('schedule_participants').insert(
+      participantIds.map((participantId) => ({ schedule_id: schedule.id, user_id: participantId })),
+    );
+    if (participantError) throw new Error(participantError.message);
+  }
+
+  return nativeScheduleItemFromRow({
+    ...(schedule as ScheduleRow),
+    schedule_participants: participantIds.map((participantId) => ({ user_id: participantId })),
+  });
 }
 
 /**

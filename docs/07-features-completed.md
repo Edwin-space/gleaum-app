@@ -825,3 +825,66 @@ npm run cap:open:android # Android Studio 열기
 - [x] 크론 6종 타깃을 `https://www.gleaum.com`으로 통일 (automations·reminders의 구 `gleaum-app.vercel.app`, cleanup의 apex `gleaum.com` 정리)
 - [x] `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성
 - [x] CRON_SECRET=`gleaum-cron-2026` — Vercel·로컬·크론 6종 일치 확인 (overdue-expenses 200 응답 검증)
+
+## iOS 네이티브 홈/일정 전환 API 기반 (완료 — 2026-06-18)
+
+- [x] iOS 네이티브 전환 로드맵 문서 추가 (`docs/16-ios-native-roadmap.md`)
+- [x] 네이티브 API 인증 헬퍼 추가: WebView cookie 세션 + Swift `Authorization: Bearer <access_token>` 동시 지원 (`src/lib/supabase/native-route.ts`)
+- [x] 네이티브 홈 요약 API 추가: `GET /api/native/home-summary`
+- [x] 네이티브 일정 생성 API 추가: `POST /api/native/schedules`
+- [x] 홈 요약 계약에 사용자/공간/오늘 일정/향후 일정/가계부 원장 요약 포함
+- [x] 일정 생성 계약에서 개인 공간/공유 공간 경계를 서버에서 보장
+- [x] 공유 공간 일정 생성은 `space_members.role` 기준 `admin/editor`만 허용
+
+## iOS 커스텀 Capacitor 플러그인 등록 보강 (완료 — 2026-06-18)
+
+- [x] iOS Simulator에서 `NativeSession.getSession()`이 `UNIMPLEMENTED`로 실패하던 원인 확인
+- [x] `AppBridgeViewController`를 추가해 앱 내부 커스텀 플러그인을 bridge 로드 시 명시 등록
+- [x] 등록 대상: `NativeSessionPlugin`, `NativeBiometricPlugin`, `NativeCalendarPlugin`
+- [x] `Main.storyboard` 루트 ViewController를 `AppBridgeViewController`로 변경
+- [x] Xcode project Sources에 `AppBridgeViewController.swift` 추가
+- [x] iOS Simulator 재실행 로그에서 `NativeSession getSession` → `{"session":null}` 정상 응답 확인
+- [x] XcodeBuildMCP `build_run_sim` 통과
+
+## iOS Face ID 설정 가능 여부 판정 보정 (완료 — 2026-06-18)
+
+- [x] `NativeBiometricPlugin.isAvailable()`이 기기 암호(`deviceCredential`)만으로 `available=true`를 반환하던 문제 수정
+- [x] iOS에서는 Face ID/Touch ID 등록 여부만 생체인증 잠금 활성 가능 상태로 판단
+- [x] 기기 암호는 인증 실행 단계의 iOS 시스템 폴백으로만 유지
+- [x] 생체인증 불가 상태에서 비상용 PIN 카드가 먼저 노출되지 않도록 보안 설정 UI 조건 보정
+- [x] 온보딩/마이페이지/보안 설정의 "기기 잠금" 중심 문구를 Face ID/Touch ID/지문 등록 기준으로 정리
+- [x] iOS Simulator 로그에서 `biometry_not_enrolled`, `available=false`, `biometryType=none` 반환 확인
+
+
+## iOS P0 네이티브 앱 셸/홈/일정 빠른 등록 1차 (완료 — 2026-06-18)
+
+- [x] `SessionManager.accessToken()` 추가 — Swift 네이티브 API 호출용 Bearer 토큰 추출
+- [x] `NativeAPIClient` 추가 — `GET /api/native/home-summary`, `POST /api/native/schedules` 호출
+- [x] `NativeRouteCoordinator` 추가 — 네이티브 홈/웹 경로/초대 딥링크 라우팅
+- [x] 세션 보유 앱 실행 시 `NativeHomeViewController`를 full-screen으로 표시
+- [x] 로그인 세션 저장 알림(`gleaumSessionSaved`) 후 네이티브 홈 자동 표시
+- [x] 네이티브 홈 1차 구성: 종합 일정, 오늘 달력, 오늘 일정, 광고, 가계부, 앱 설정
+- [x] 홈 `+` 및 오늘 일정 `+ 새 일정`에서 `NativeScheduleCreateViewController` Sheet 표시
+- [x] 일정 저장 성공 시 홈 요약 재조회
+- [x] iOS 알림 권한 요청 진입점 추가 — 홈 앱 설정의 알림 버튼
+- [x] `gleaum://invite/{code}` / `https://www.gleaum.com/invite/{code}` 라우팅을 WebView 초대 경로로 연결
+- [x] 네이티브 홈 API가 운영에 아직 배포되지 않은 상태를 대비해 `웹 홈으로 이동` fallback 추가
+- [x] `npm run build` 통과 — `/api/native/home-summary`, `/api/native/schedules` 라우트 생성 확인
+- [x] XcodeBuildMCP `build_run_sim` 통과 및 Simulator에서 네이티브 홈 화면 표시 확인
+
+
+## iOS 네이티브 홈 API 미배포 fallback 보정 (완료 — 2026-06-18)
+
+- [x] 운영에 `/api/native/home-summary`가 아직 배포되지 않은 상태에서 앱 첫 화면이 에러 화면으로 고정되던 문제 수정
+- [x] 404/5xx 응답은 네이티브 홈 에러 화면 대신 기존 WebView `/home`으로 자동 fallback
+- [x] XcodeBuildMCP `build_run_sim` 통과
+- [x] Simulator에서 에러 화면 대신 모바일 웹 홈 진입 확인
+
+
+## iOS 네이티브 홈/WebView 홈 반복 전환 차단 (완료 — 2026-06-18)
+
+- [x] 네이티브 홈 API fallback 후 `불러오는 중` 화면과 모바일 웹 홈이 무한 반복되던 문제 수정
+- [x] WebView 경로 이동 시 `prefersNativeHome=false` 처리
+- [x] WebView 세션 저장 알림이 네이티브 홈을 다시 띄우지 않도록 AppDelegate 조건 보강
+- [x] XcodeBuildMCP `build_run_sim` 통과
+- [x] Simulator에서 17초 이상 웹 홈에 안정적으로 머무는 것 확인

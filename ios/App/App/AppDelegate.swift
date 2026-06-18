@@ -4,6 +4,7 @@ import Capacitor
 import FirebaseCore
 import FirebaseMessaging
 import SafariServices
+import UserNotifications
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
@@ -28,7 +29,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // ── 4. 세션 없으면 LoginViewController 표시 ──────────────────────────
         if !SessionManager.shared.hasValidSession() {
             showLoginScreenAfterLaunch()
+        } else {
+            presentNativeHomeAfterLaunch()
         }
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onNativeSessionSaved),
+            name: .gleaumSessionSaved,
+            object: nil
+        )
 
         return true
     }
@@ -38,6 +48,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // 스플래시가 사라질 때 WebView /login이 아니라 네이티브 로그인 화면이 바로 보이게 한다.
         DispatchQueue.main.asyncAfter(deadline: .now() + loginPresentationDelay) { [weak self] in
             self?.presentLoginScreenWhenReady()
+        }
+    }
+
+    private func presentNativeHomeAfterLaunch() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            NativeRouteCoordinator.shared.presentNativeHome()
+        }
+    }
+
+    @objc private func onNativeSessionSaved() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            if let pendingPath = NativeRouteCoordinator.shared.consumePendingPath() {
+                NativeRouteCoordinator.shared.openWebPath(pendingPath)
+            } else if NativeRouteCoordinator.shared.prefersNativeHome {
+                NativeRouteCoordinator.shared.presentNativeHome()
+            }
         }
     }
 
@@ -132,6 +158,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             showLoginScreenAfterLaunch()
         }
 
+        if NativeRouteCoordinator.shared.handle(url: url) {
+            return true
+        }
+
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
@@ -175,6 +205,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
     func application(_ application: UIApplication,
                      continue userActivity: NSUserActivity,
                      restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        if let url = userActivity.webpageURL,
+           NativeRouteCoordinator.shared.handle(url: url) {
+            return true
+        }
+
         return ApplicationDelegateProxy.shared.application(application,
                                                            continue: userActivity,
                                                            restorationHandler: restorationHandler)
@@ -213,6 +248,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         // 네이티브 로그인 화면 표시가 누락될 수 있어 앱 활성화 시 한 번 더 보장한다.
         if !SessionManager.shared.hasValidSession() {
             presentLoginScreenWhenReady()
+        } else if NativeRouteCoordinator.shared.prefersNativeHome {
+            NativeRouteCoordinator.shared.presentNativeHome()
         }
 
         #if targetEnvironment(macCatalyst)
