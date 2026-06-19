@@ -17,7 +17,10 @@ export function RootPageRouter() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isDesktop) return;
+    // useIsDesktop()은 hydration 안전을 위해 초기값이 false다.
+    // 따라서 루트 리다이렉트 판단은 effect 안에서 실제 브라우저 뷰포트를 다시 확인한다.
+    const desktopNow = window.matchMedia('(min-width: 1024px)').matches;
+    if (desktopNow) return;
 
     // 네이티브 앱은 NativeAppProvider가 네이티브 세션 적용 후 /home 또는 /onboarding으로 이동시킨다.
     // 여기서 먼저 /home으로 이동하면 서버 proxy가 쿠키 없는 요청을 /login으로 돌려보내는 레이스가 생긴다.
@@ -29,7 +32,7 @@ export function RootPageRouter() {
     }
 
     router.replace('/login');
-  }, [isDesktop, router]);
+  }, [router]);
 
   // 데스크탑이면 랜딩 페이지, 모바일이면 빈 화면(리다이렉트 중)
   if (!isDesktop) {
