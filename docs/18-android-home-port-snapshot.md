@@ -308,10 +308,15 @@ Required fields for first Android Native Home pass:
 - `spaces.memberCount`
 - `schedules.today`
 - `schedules.upcoming`
+- `schedules.range`
 - `schedules.todayCount`
 - `schedules.completedCount`
 - `schedules.pendingCount`
 - `schedules.upcomingCount`
+- `calendar.selectedDate`
+- `calendar.month`
+- `calendar.week`
+- `calendar.days`
 - `ledger.incomeTotal`
 - `ledger.expenseTotal`
 - `ledger.net`
@@ -321,7 +326,13 @@ Status count contract:
 - `completedCount`: 오늘 일정 중 `status === 'completed'`
 - `pendingCount`: 오늘 일정 중 `status !== 'completed'`
 
-Remaining gap: Web `MobileHome` can derive selected-date schedules from full web-side schedule props. Android Native Home preview currently uses `/api/native/home-summary` today/upcoming data only. Full activation 전에 선택일 기반 일정 API가 필요한지 별도 결정한다.
+Calendar contract:
+
+- `schedules.range`: Native Preview가 선택일 일정 목록을 로컬 필터링할 수 있는 현재 월/주/향후 일정 범위
+- `calendar.week`: 현재 주 7일 날짜 스트립용 메타데이터
+- `calendar.days`: 현재 월 날짜별 카운트/타입 점 메타데이터
+
+Remaining gap: Android Native Preview currently renders a compact weekly date strip, not the full Web month/week/day calendar panel. Full activation 전에 월간/주간/일간 전환 UI를 네이티브로 어디까지 이식할지 별도 결정한다.
 
 ---
 
@@ -362,6 +373,7 @@ Remaining gap: Web `MobileHome` can derive selected-date schedules from full web
 - 로딩/세션 없음/오류 상태 표시
 - `user.displayName`, `spaces.activeSpaceName`, `schedules.today/upcoming`, `ledger` 요약을 UI에 바인딩
 - `/api/native/home-summary`에서 `schedules.completedCount`/`pendingCount`를 제공하고, Native Preview 요약 카드가 해당 서버 값을 우선 사용
+- `/api/native/home-summary`에서 `schedules.range`, `calendar.week`, `calendar.days`를 제공하고, Native Preview가 주간 날짜 스트립과 선택일 일정 필터링에 사용
 - Preview 액션은 WebView fallback으로 연결: 알림, 새 일정, 일정 상세, 가계부 카드, 하단 네비
 - Android `:app:assembleDebug` 통과
-- 다음 작업은 Mobile Web 캡처와 Native Preview를 비교하고, 선택일 일정/월간 캘린더 데이터 확장이 필요한지 결정하는 것
+- 다음 작업은 Mobile Web 캡처와 Native Preview를 비교하고, 월간/주간/일간 캘린더 패널을 전체 이식할지 결정하는 것

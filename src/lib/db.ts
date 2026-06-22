@@ -1534,6 +1534,16 @@ export interface NativeLedgerItem {
   recurFreq: RecurFreq;
 }
 
+export interface NativeCalendarDay {
+  date: string;
+  day: number;
+  count: number;
+  types: ScheduleType[];
+  completedCount: number;
+  pendingCount: number;
+  isToday: boolean;
+}
+
 export interface NativeHomeSummary {
   serverTime: string;
   user: {
@@ -1556,10 +1566,17 @@ export interface NativeHomeSummary {
   schedules: {
     today: NativeScheduleItem[];
     upcoming: NativeScheduleItem[];
+    range: NativeScheduleItem[];
     todayCount: number;
     completedCount: number;
     pendingCount: number;
     upcomingCount: number;
+  };
+  calendar: {
+    selectedDate: string;
+    month: string;
+    week: NativeCalendarDay[];
+    days: NativeCalendarDay[];
   };
   ledger: {
     month: string;
@@ -1626,11 +1643,60 @@ function monthRange(date = new Date()) {
   };
 }
 
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(date.getDate() + days);
+  return next;
+}
+
+function startOfWeek(date = new Date()): Date {
+  const day = (date.getDay() + 6) % 7; // Monday = 0
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - day);
+}
+
+function endOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+}
+
 function dayRange(date = new Date()) {
   return {
     start: new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString(),
     end: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).toISOString(),
   };
+}
+
+function nativeCalendarDayFromDate(date: Date, schedules: NativeScheduleItem[], todayKey: string): NativeCalendarDay {
+  const key = dateKey(date);
+  const daySchedules = schedules.filter((item) => dateKey(new Date(item.startTime)) === key);
+  const types = Array.from(new Set(daySchedules.map((item) => item.type))).slice(0, 3);
+
+  return {
+    date: key,
+    day: date.getDate(),
+    count: daySchedules.length,
+    types,
+    completedCount: daySchedules.filter((item) => item.status === 'completed').length,
+    pendingCount: daySchedules.filter((item) => item.status !== 'completed').length,
+    isToday: key === todayKey,
+  };
+}
+
+function nativeCalendarMonthDays(baseDate: Date, schedules: NativeScheduleItem[], todayKey: string): NativeCalendarDay[] {
+  const lastDay = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
+  return Array.from({ length: lastDay }, (_, index) =>
+    nativeCalendarDayFromDate(new Date(baseDate.getFullYear(), baseDate.getMonth(), index + 1), schedules, todayKey)
+  );
+}
+
+function nativeCalendarWeekDays(baseDate: Date, schedules: NativeScheduleItem[], todayKey: string): NativeCalendarDay[] {
+  const start = startOfWeek(baseDate);
+  return Array.from({ length: 7 }, (_, index) =>
+    nativeCalendarDayFromDate(addDays(start, index), schedules, todayKey)
+  );
 }
 
 function futureRange(days: number, date = new Date()) {
@@ -1679,10 +1745,21 @@ export async function getNativeHomeSummary(
     activeRole = ((member as { role?: SpaceRole } | null)?.role ?? null);
   }
 
-  const today = dayRange();
-  const nextTwoWeeks = futureRange(14);
+  const now = new Date();
+  const today = dayRange(now);
+  const todayKey = dateKey(now);
+  const month = monthRange(now);
+  const nextTwoWeeks = futureRange(14, now);
+  const weekStart = startOfWeek(now);
+  const scheduleWindowStart = new Date(Math.min(new Date(month.start).getTime(), weekStart.getTime()));
+  const scheduleWindowEnd = new Date(Math.max(
+    new Date(month.end).getTime(),
+    new Date(nextTwoWeeks.end).getTime(),
+    endOfDay(addDays(weekStart, 6)).getTime(),
+  ));
   let todaySchedules: NativeScheduleItem[] = [];
   let upcomingSchedules: NativeScheduleItem[] = [];
+  let calendarSchedules: NativeScheduleItem[] = [];
 
   if (activeSpaceId) {
     const { data: scheduleRows, error: schedulesError } = await supabase
@@ -1690,8 +1767,8 @@ export async function getNativeHomeSummary(
       .select('*, schedule_participants (user_id)')
       .eq('family_group_id', activeSpaceId)
       .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
-      .gte('start_time', today.start)
-      .lte('start_time', nextTwoWeeks.end)
+      .gte('start_time', scheduleWindowStart.toISOString())
+      .lte('start_time', scheduleWindowEnd.toISOString())
       .order('start_time', { ascending: true });
 
     if (schedulesError) throw new Error(schedulesError.message);
@@ -1700,12 +1777,12 @@ export async function getNativeHomeSummary(
       .filter((row) => !(row.type === 'expense' && row.repeat === 'none'))
       .map(nativeScheduleItemFromRow);
 
+    calendarSchedules = scheduleItems;
     todaySchedules = scheduleItems.filter((item) => item.startTime >= today.start && item.startTime <= today.end);
-    upcomingSchedules = scheduleItems.filter((item) => item.startTime > today.end);
+    upcomingSchedules = scheduleItems.filter((item) => item.startTime > today.end && item.startTime <= nextTwoWeeks.end);
   }
 
   const personalBudgetSpaceId = personalSpaceId ?? (hasSharedSpace ? null : activeSpaceId);
-  const month = monthRange();
   let ledgerRows: LedgerRow[] = [];
 
   if (personalBudgetSpaceId) {
@@ -1753,10 +1830,17 @@ export async function getNativeHomeSummary(
     schedules: {
       today: todaySchedules,
       upcoming: upcomingSchedules.slice(0, 10),
+      range: calendarSchedules,
       todayCount: todaySchedules.length,
       completedCount,
       pendingCount,
       upcomingCount: upcomingSchedules.length,
+    },
+    calendar: {
+      selectedDate: todayKey,
+      month: month.label,
+      week: nativeCalendarWeekDays(now, calendarSchedules, todayKey),
+      days: nativeCalendarMonthDays(now, calendarSchedules, todayKey),
     },
     ledger: {
       month: month.label,

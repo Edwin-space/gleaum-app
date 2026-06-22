@@ -185,6 +185,8 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - 로딩/세션 없음/오류 상태를 Preview 내부 카드로 표시
 - 오늘 일정/완료/남은 일정/다가오는 일정/가계부 요약은 API 응답 기반으로 바인딩
 - `/api/native/home-summary` schedules 응답은 `todayCount`, `completedCount`, `pendingCount`, `upcomingCount`를 제공
+- `/api/native/home-summary` calendar 응답은 `selectedDate`, `month`, `week`, `days`를 제공
+- Native Preview는 `calendar.week`으로 주간 날짜 스트립을 렌더링하고, `schedules.range`에서 선택일 일정을 필터링
 - Preview 내부 액션은 아직 네이티브 화면으로 처리하지 않고 WebView fallback으로 이동:
   - 알림 → `/notifications`
   - `+ 새 일정` → `/schedules/new`
@@ -197,7 +199,7 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 다음 단계:
 
 - Mobile Web 홈 실제 캡처와 Native Preview 시각 비교
-- 선택일 일정/월간 캘린더 데이터 확장 필요 여부 확인
+- 월간/주간/일간 캘린더 패널 전체 이식 필요 여부 확인
 - 내부 테스트 플래그 활성화 전 WebView fallback/뒤로가기/푸시 라우팅 검증
 
 ### Debug Preview 실행 방법

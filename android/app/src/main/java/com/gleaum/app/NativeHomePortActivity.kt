@@ -34,6 +34,7 @@ class NativeHomePortActivity : AppCompatActivity() {
     private var summary: NativeHomePortSummary? = null
     private var loading = true
     private var errorMessage: String? = null
+    private var selectedDateKey: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +73,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 val loaded = requestHomeSummary(token)
                 runOnUiThread {
                     summary = loaded
+                    selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
                     loading = false
                     errorMessage = null
                     render()
@@ -132,6 +134,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     }
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildTodayToggle(), matchWrap().apply { topMargin = dp(14) })
+                    addView(buildWeekCalendarStrip(), matchWrap().apply { topMargin = dp(10) })
                     addView(buildSelectedDateSection(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
@@ -250,6 +253,7 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun buildTodayToggle(): LinearLayout {
+        val selectedDate = selectedDateKey ?: summary?.selectedDate
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -257,33 +261,117 @@ class NativeHomePortActivity : AppCompatActivity() {
             background = cardDrawable()
 
             addView(TextView(context).apply {
-                text = "▣  오늘"
+                text = "▣  ${formatDateTitle(selectedDate)}"
                 textSize = 15f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(color("#1A1B2E"))
             }, LinearLayout.LayoutParams(0, wrap(), 1f))
 
-            addView(TextView(context).apply {
-                text = "TODAY"
-                textSize = 10f
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                background = gradientDrawable("#0CC9B5", "#0084CC", 999)
-            }, LinearLayout.LayoutParams(dp(58), dp(24)))
+            if (selectedDate == summary?.selectedDate) {
+                addView(TextView(context).apply {
+                    text = "TODAY"
+                    textSize = 10f
+                    typeface = Typeface.DEFAULT_BOLD
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    background = gradientDrawable("#0CC9B5", "#0084CC", 999)
+                }, LinearLayout.LayoutParams(dp(58), dp(24)))
+            }
+        }
+    }
+
+    private fun buildWeekCalendarStrip(): LinearLayout {
+        val days = summary?.calendarWeek.orEmpty()
+        val selected = selectedDateKey ?: summary?.selectedDate
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), dp(10), dp(8), dp(10))
+            background = cardDrawable(20)
+
+            if (days.isEmpty()) {
+                addView(TextView(context).apply {
+                    text = "캘린더 데이터를 준비하는 중이에요"
+                    textSize = 12f
+                    gravity = Gravity.CENTER
+                    setTextColor(color("#8E8E93"))
+                }, LinearLayout.LayoutParams(match(), dp(56)))
+                return@apply
+            }
+
+            days.forEachIndexed { index, day ->
+                val isSelected = day.date == selected
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(dp(4), dp(6), dp(4), dp(6))
+                    background = when {
+                        isSelected -> gradientDrawable("#0CC9B5", "#0084CC", 16)
+                        day.isToday -> roundDrawable("#F0FAFF", 16, "#D8F0FF")
+                        else -> roundDrawable("#FFFFFF", 16)
+                    }
+                    setOnClickListener {
+                        selectedDateKey = day.date
+                        render()
+                    }
+
+                    addView(TextView(context).apply {
+                        text = listOf("월", "화", "수", "목", "금", "토", "일")[index]
+                        textSize = 10f
+                        typeface = Typeface.DEFAULT_BOLD
+                        gravity = Gravity.CENTER
+                        setTextColor(if (isSelected) Color.WHITE else color("#8E8E93"))
+                    })
+                    addView(TextView(context).apply {
+                        text = day.day.toString()
+                        textSize = 16f
+                        typeface = Typeface.DEFAULT_BOLD
+                        gravity = Gravity.CENTER
+                        setTextColor(if (isSelected) Color.WHITE else color("#1A1B2E"))
+                    }, matchWrap().apply { topMargin = dp(2) })
+
+                    addView(buildTypeDots(day, isSelected), matchWrap().apply { topMargin = dp(5) })
+                }, LinearLayout.LayoutParams(0, dp(72), 1f).apply {
+                    if (index > 0) leftMargin = dp(4)
+                })
+            }
+        }
+    }
+
+    private fun buildTypeDots(day: NativeHomePortCalendarDay, selected: Boolean): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            val types = day.types.take(3)
+            if (types.isEmpty()) {
+                addView(View(context), LinearLayout.LayoutParams(dp(5), dp(5)))
+                return@apply
+            }
+
+            types.forEachIndexed { index, type ->
+                addView(View(context).apply {
+                    background = roundDrawable(if (selected) "#FFFFFF" else scheduleTypeColor(type), 999)
+                }, LinearLayout.LayoutParams(dp(5), dp(5)).apply {
+                    if (index > 0) leftMargin = dp(3)
+                })
+            }
         }
     }
 
     private fun buildSelectedDateSection(): LinearLayout {
-        val today = summary?.today.orEmpty()
+        val selected = selectedDateKey ?: summary?.selectedDate
+        val selectedSchedules = summary?.range.orEmpty()
+            .filter { scheduleDateKey(it.startTime) == selected }
+            .sortedBy { it.startTime }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
 
-            addView(sectionHeader("오늘 일정", "${summary?.todayCount ?: 0}개", "+ 새 일정", "/schedules/new"))
-            if (today.isEmpty()) {
+            addView(sectionHeader("${formatDateTitle(selected)} 일정", "${selectedSchedules.size}개", "+ 새 일정", "/schedules/new"))
+            if (selectedSchedules.isEmpty()) {
                 addView(buildEmptyScheduleCard(), matchWrap().apply { topMargin = dp(12) })
             } else {
-                today.take(3).forEach { schedule ->
+                selectedSchedules.take(3).forEach { schedule ->
                     addView(buildScheduleCard(schedule), matchWrap().apply { topMargin = dp(10) })
                 }
             }
@@ -504,6 +592,22 @@ class NativeHomePortActivity : AppCompatActivity() {
             else -> "개인일정"
         }
         return "$typeLabel · ${timeText(schedule.startTime)}"
+    }
+
+    private fun scheduleDateKey(raw: String): String = raw.take(10)
+
+    private fun formatDateTitle(dateKey: String?): String {
+        if (dateKey.isNullOrBlank() || dateKey.length < 10) return "오늘"
+        val parts = dateKey.split("-")
+        if (parts.size != 3) return "오늘"
+        return "${parts[1].toIntOrNull() ?: parts[1]}월 ${parts[2].toIntOrNull() ?: parts[2]}일"
+    }
+
+    private fun scheduleTypeColor(type: String): String = when (type) {
+        "shared" -> "#0084CC"
+        "child" -> "#2EE895"
+        "expense" -> "#F59E0B"
+        else -> "#0CC9B5"
     }
 
     private fun timeText(raw: String): String {
