@@ -184,6 +184,12 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - `SessionManager`의 Supabase access token으로 `https://www.gleaum.com/api/native/home-summary` 호출
 - 로딩/세션 없음/오류 상태를 Preview 내부 카드로 표시
 - 오늘 일정/다가오는 일정/가계부 요약은 API 응답 기반으로 바인딩
+- Preview 내부 액션은 아직 네이티브 화면으로 처리하지 않고 WebView fallback으로 이동:
+  - 알림 → `/notifications`
+  - `+ 새 일정` → `/schedules/new`
+  - 일정 카드 → `/schedules/[id]`
+  - 가계부 카드 → `/budget`
+  - 하단 네비 → `/home`, `/schedules`, `/space`, `/budget`, `/mypage`
 - MainActivity 기본 진입 연결은 아직 하지 않음
 - Android `:app:assembleDebug` 통과
 

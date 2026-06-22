@@ -1,5 +1,6 @@
 package com.gleaum.app
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -162,6 +163,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 setTextColor(color("#0084CC"))
                 background = roundDrawable("#FFFFFF", 20, "#E8E8E4")
+                setOnClickListener { openWebPath("/notifications") }
             }, LinearLayout.LayoutParams(dp(48), dp(40)))
         }
     }
@@ -277,7 +279,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
 
-            addView(sectionHeader("오늘 일정", "${summary?.todayCount ?: 0}개", "+ 새 일정"))
+            addView(sectionHeader("오늘 일정", "${summary?.todayCount ?: 0}개", "+ 새 일정", "/schedules/new"))
             if (today.isEmpty()) {
                 addView(buildEmptyScheduleCard(), matchWrap().apply { topMargin = dp(12) })
             } else {
@@ -326,6 +328,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16), dp(14), dp(16), dp(14))
             background = cardDrawable(20)
+            setOnClickListener {
+                if (schedule.id.isNotBlank()) openWebPath("/schedules/${schedule.id}")
+            }
 
             addView(TextView(context).apply {
                 text = timeText(schedule.startTime)
@@ -372,6 +377,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(20), dp(20), dp(18))
             background = cardDrawable(24)
+            setOnClickListener { openWebPath("/budget") }
 
             addView(TextView(context).apply {
                 text = "MONEY FLOW"
@@ -423,7 +429,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
-    private fun sectionHeader(title: String, count: String, action: String?): LinearLayout {
+    private fun sectionHeader(title: String, count: String, action: String?, actionPath: String? = null): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -451,6 +457,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
                     background = gradientDrawable("#0CC9B5", "#0084CC", 999)
+                    if (actionPath != null) setOnClickListener { openWebPath(actionPath) }
                 }, LinearLayout.LayoutParams(dp(84), dp(32)))
             }
         }
@@ -463,16 +470,30 @@ class NativeHomePortActivity : AppCompatActivity() {
             setPadding(dp(16), dp(8), dp(16), dp(10))
             background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
 
-            listOf("홈", "일정", "공간", "가계부", "마이").forEachIndexed { index, label ->
+            listOf(
+                "홈" to "/home",
+                "일정" to "/schedules",
+                "공간" to "/space",
+                "가계부" to "/budget",
+                "마이" to "/mypage",
+            ).forEachIndexed { index, (label, path) ->
                 addView(TextView(context).apply {
                     text = label
                     textSize = 11f
                     typeface = Typeface.DEFAULT_BOLD
                     gravity = Gravity.CENTER
                     setTextColor(if (index == 0) color("#0084CC") else color("#8E8E93"))
+                    setOnClickListener { openWebPath(path) }
                 }, LinearLayout.LayoutParams(0, match(), 1f))
             }
         }
+    }
+
+    private fun openWebPath(path: String) {
+        startActivity(Intent(this, MainActivity::class.java).apply {
+            putExtra("start_path", path)
+        })
+        finish()
     }
 
     private fun scheduleSubtitle(schedule: NativeHomePortSchedule): String {
