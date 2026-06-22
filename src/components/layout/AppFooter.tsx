@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
@@ -12,19 +11,9 @@ import { usePathname } from 'next/navigation';
  */
 export function AppFooter() {
   const pathname = usePathname();
-  const [isAndroidAppLegalView, setIsAndroidAppLegalView] = useState(false);
 
-  useEffect(() => {
-    if (!pathname?.startsWith('/legal')) {
-      setIsAndroidAppLegalView(false);
-      return;
-    }
-
-    setIsAndroidAppLegalView(new URLSearchParams(window.location.search).get('view') === 'android-app');
-  }, [pathname]);
-
-  // 랜딩/법적 문서 앱 WebView에서는 자체 레이아웃을 사용하므로 전역 푸터 숨김
-  if (pathname === '/' || isAndroidAppLegalView) {
+  // 랜딩/법적 문서는 자체 푸터 또는 전용 뷰를 사용하므로 전역 푸터 숨김
+  if (pathname === '/' || pathname?.startsWith('/legal')) {
     return null;
   }
 
