@@ -27,7 +27,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!NativePortFlags.ENABLE_NATIVE_HOME) {
+        val previewAllowed = BuildConfig.DEBUG && NativePortFlags.ENABLE_NATIVE_HOME_PREVIEW
+        if (!NativePortFlags.ENABLE_NATIVE_HOME && !previewAllowed) {
             finish()
             return
         }

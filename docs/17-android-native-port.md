@@ -190,6 +190,27 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - `/api/native/home-summary` status/date count 확장 필요 여부 확인
 - 내부 테스트 플래그 활성화 전 WebView fallback/뒤로가기/푸시 라우팅 검증
 
+### Debug Preview 실행 방법
+
+2026-06-22에 Native Home Preview 진입 경로를 debug build 전용으로 추가했다.
+
+- 등록 위치: `android/app/src/debug/AndroidManifest.xml`
+- Activity: `com.gleaum.app.NativeHomePortActivity`
+- Gate: `BuildConfig.DEBUG && NativePortFlags.ENABLE_NATIVE_HOME_PREVIEW`
+- 운영 홈 대체 플래그 `NativePortFlags.ENABLE_NATIVE_HOME`은 계속 `false`
+
+Android Studio에서 debug variant로 설치한 뒤 아래 명령으로 Preview만 직접 실행할 수 있다.
+
+```bash
+adb shell am start -n com.gleaum.app/.NativeHomePortActivity
+```
+
+주의:
+
+- 이 Preview는 WebView 홈을 대체하지 않는다.
+- release build에는 debug manifest가 병합되지 않는다.
+- Preview 확인 후에도 운영 활성화는 `ENABLE_NATIVE_HOME=true`로 바로 바꾸지 말고, Mobile Web 캡처 비교와 회귀 테스트를 먼저 완료해야 한다.
+
 2026-06-18에 `MainActivity` 위에 별도 Native Home layer를 즉시 표시하는 방식이 시도되었으나 보류했다.
 
 보류 이유:
