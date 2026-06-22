@@ -12,10 +12,33 @@ const SERVICE_NAME = '글리움';
 const OPERATOR = '유태성';
 const EMAIL = 'helper@gleaum.com';
 
-export default function TermsPage() {
+type LegalPageProps = {
+  searchParams?: Promise<{ view?: string | string[] }>;
+};
+
+function isAndroidAppView(view: string | string[] | undefined) {
+  return Array.isArray(view) ? view.includes('android-app') : view === 'android-app';
+}
+
+function getDocumentStyle(appView: boolean): React.CSSProperties {
+  return appView
+    ? {
+        width: '100%',
+        maxWidth: '1120px',
+        margin: '0 auto',
+        padding: 'clamp(32px, 5vw, 56px) clamp(24px, 7vw, 72px) 96px',
+        boxSizing: 'border-box',
+      }
+    : { maxWidth: '760px', margin: '0 auto', padding: '40px 24px 80px' };
+}
+
+export default async function TermsPage({ searchParams }: LegalPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const appView = isAndroidAppView(params.view);
+
   return (
-    <LegalLayout title="이용약관">
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px 80px' }}>
+    <LegalLayout title="이용약관" variant={appView ? 'app' : 'web'}>
+      <div style={getDocumentStyle(appView)}>
 
         {/* 시행일 */}
         <div style={{ background: 'rgba(0,132,204,0.1)', borderRadius: '14px', padding: '16px 20px', marginBottom: '36px', border: '1px solid rgba(0,132,204,0.25)' }}>
