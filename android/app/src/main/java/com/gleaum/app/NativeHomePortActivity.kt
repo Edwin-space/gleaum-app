@@ -183,8 +183,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun buildGreetingCard(): LinearLayout {
         val data = summary
         val todayCount = data?.todayCount ?: 0
-        val pendingCount = data?.today?.count { it.status != "completed" } ?: todayCount
-        val completedCount = data?.today?.count { it.status == "completed" } ?: 0
+        val pendingCount = data?.pendingCount ?: todayCount
+        val completedCount = data?.completedCount ?: 0
 
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL

@@ -1557,6 +1557,8 @@ export interface NativeHomeSummary {
     today: NativeScheduleItem[];
     upcoming: NativeScheduleItem[];
     todayCount: number;
+    completedCount: number;
+    pendingCount: number;
     upcomingCount: number;
   };
   ledger: {
@@ -1726,6 +1728,8 @@ export async function getNativeHomeSummary(
   const expenseTotal = ledgerRows
     .filter((row) => row.kind === 'expense')
     .reduce((sum, row) => sum + (row.amount ?? 0), 0);
+  const completedCount = todaySchedules.filter((item) => item.status === 'completed').length;
+  const pendingCount = todaySchedules.filter((item) => item.status !== 'completed').length;
 
   return {
     serverTime: new Date().toISOString(),
@@ -1750,6 +1754,8 @@ export async function getNativeHomeSummary(
       today: todaySchedules,
       upcoming: upcomingSchedules.slice(0, 10),
       todayCount: todaySchedules.length,
+      completedCount,
+      pendingCount,
       upcomingCount: upcomingSchedules.length,
     },
     ledger: {

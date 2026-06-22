@@ -16,6 +16,8 @@ data class NativeHomePortSummary(
     val activeSpaceName: String?,
     val memberCount: Int,
     val todayCount: Int,
+    val completedCount: Int,
+    val pendingCount: Int,
     val upcomingCount: Int,
     val today: List<NativeHomePortSchedule>,
     val upcoming: List<NativeHomePortSchedule>,
@@ -29,16 +31,20 @@ data class NativeHomePortSummary(
             val spaces = json.optJSONObject("spaces") ?: JSONObject()
             val schedules = json.optJSONObject("schedules") ?: JSONObject()
             val ledger = json.optJSONObject("ledger") ?: JSONObject()
+            val today = NativeHomePortSchedule.listFrom(schedules.optJSONArray("today") ?: JSONArray())
+            val upcoming = NativeHomePortSchedule.listFrom(schedules.optJSONArray("upcoming") ?: JSONArray())
 
             return NativeHomePortSummary(
                 displayName = user.optString("displayName", "사용자"),
                 timezone = user.optString("timezone", "Asia/Seoul"),
                 activeSpaceName = spaces.optNullableString("activeSpaceName"),
                 memberCount = spaces.optInt("memberCount", 0),
-                todayCount = schedules.optInt("todayCount", 0),
+                todayCount = schedules.optInt("todayCount", today.size),
+                completedCount = schedules.optInt("completedCount", today.count { it.status == "completed" }),
+                pendingCount = schedules.optInt("pendingCount", today.count { it.status != "completed" }),
                 upcomingCount = schedules.optInt("upcomingCount", 0),
-                today = NativeHomePortSchedule.listFrom(schedules.optJSONArray("today") ?: JSONArray()),
-                upcoming = NativeHomePortSchedule.listFrom(schedules.optJSONArray("upcoming") ?: JSONArray()),
+                today = today,
+                upcoming = upcoming,
                 incomeTotal = ledger.optLong("incomeTotal", 0L),
                 expenseTotal = ledger.optLong("expenseTotal", 0L),
                 net = ledger.optLong("net", 0L),

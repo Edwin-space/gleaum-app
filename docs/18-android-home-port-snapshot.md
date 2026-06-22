@@ -309,12 +309,19 @@ Required fields for first Android Native Home pass:
 - `schedules.today`
 - `schedules.upcoming`
 - `schedules.todayCount`
+- `schedules.completedCount`
+- `schedules.pendingCount`
 - `schedules.upcomingCount`
 - `ledger.incomeTotal`
 - `ledger.expenseTotal`
 - `ledger.net`
 
-Gap: Web `MobileHome` currently calculates `completedCount`, `pendingCount`, and selected-date schedules from full `schedules` props. `/api/native/home-summary` may need to expose status counts by date before full native activation.
+Status count contract:
+
+- `completedCount`: 오늘 일정 중 `status === 'completed'`
+- `pendingCount`: 오늘 일정 중 `status !== 'completed'`
+
+Remaining gap: Web `MobileHome` can derive selected-date schedules from full web-side schedule props. Android Native Home preview currently uses `/api/native/home-summary` today/upcoming data only. Full activation 전에 선택일 기반 일정 API가 필요한지 별도 결정한다.
 
 ---
 
@@ -354,6 +361,7 @@ Gap: Web `MobileHome` currently calculates `completedCount`, `pendingCount`, and
 - debug preview에서 `SessionManager` access token으로 `/api/native/home-summary` 호출
 - 로딩/세션 없음/오류 상태 표시
 - `user.displayName`, `spaces.activeSpaceName`, `schedules.today/upcoming`, `ledger` 요약을 UI에 바인딩
+- `/api/native/home-summary`에서 `schedules.completedCount`/`pendingCount`를 제공하고, Native Preview 요약 카드가 해당 서버 값을 우선 사용
 - Preview 액션은 WebView fallback으로 연결: 알림, 새 일정, 일정 상세, 가계부 카드, 하단 네비
 - Android `:app:assembleDebug` 통과
-- 다음 작업은 Mobile Web 캡처와 Native Preview를 비교하고, `/api/native/home-summary`에 `completedCount`/`pendingCount` 등 Web 홈과 동일한 상태 카운트가 필요한지 결정하는 것
+- 다음 작업은 Mobile Web 캡처와 Native Preview를 비교하고, 선택일 일정/월간 캘린더 데이터 확장이 필요한지 결정하는 것
