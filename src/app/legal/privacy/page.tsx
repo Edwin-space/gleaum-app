@@ -12,32 +12,47 @@ const OPERATOR = '유태성';
 const EMAIL = 'helper@gleaum.com';
 
 type LegalPageProps = {
-  searchParams?: Promise<{ view?: string | string[] }>;
+  searchParams?: Promise<{ view?: string | string[]; device?: string | string[] }>;
 };
 
 function isAndroidAppView(view: string | string[] | undefined) {
   return Array.isArray(view) ? view.includes('android-app') : view === 'android-app';
 }
 
-function getDocumentStyle(appView: boolean): React.CSSProperties {
-  return appView
+function isTabletDevice(device: string | string[] | undefined) {
+  return Array.isArray(device) ? device.includes('tablet') : device === 'tablet';
+}
+
+function getDocumentStyle(appView: boolean, tablet: boolean): React.CSSProperties {
+  if (!appView) {
+    return { maxWidth: '760px', margin: '0 auto', padding: '48px 24px 80px' };
+  }
+
+  return tablet
     ? {
         width: '100%',
         maxWidth: '1120px',
         margin: '0 auto',
-        padding: 'clamp(32px, 5vw, 56px) clamp(24px, 7vw, 72px) 96px',
+        padding: '48px 72px 112px',
         boxSizing: 'border-box',
       }
-    : { maxWidth: '760px', margin: '0 auto', padding: '48px 24px 80px' };
+    : {
+        width: '100%',
+        maxWidth: 'none',
+        margin: 0,
+        padding: '28px 22px 88px',
+        boxSizing: 'border-box',
+      };
 }
 
 export default async function PrivacyPage({ searchParams }: LegalPageProps) {
   const params = searchParams ? await searchParams : {};
   const appView = isAndroidAppView(params.view);
+  const tablet = isTabletDevice(params.device);
 
   return (
     <LegalLayout title="개인정보처리방침" variant={appView ? 'app' : 'web'}>
-      <div style={getDocumentStyle(appView)}>
+      <div style={getDocumentStyle(appView, tablet)}>
 
         {/* 시행일 */}
         <div style={{ background: 'rgba(0,132,204,0.1)', borderRadius: '14px', padding: '16px 20px', marginBottom: '36px', border: '1px solid rgba(0,132,204,0.25)' }}>
