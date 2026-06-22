@@ -365,6 +365,14 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 
 ## 16. Current Native Skeleton Status
 
+2026-06-23 1차 시각 점검:
+
+- `Pixel_9` 에뮬레이터 debug build에서 Preview Activity 실행 확인
+- 세션 없는 환경에서는 세션 없음 상태 카드와 skeleton UI가 표시됨
+- 상단 safe-area 보정 완료: 상태바와 `gleaum` 로고가 겹치지 않음
+- BottomNav 1차 보정 완료: text-only에서 active indicator + icon + label 구조로 변경
+- 아직 전용 vector icon이 아닌 임시 문자 아이콘 기반이므로, 최종 UI 확인 시 아이콘 품질 검토 필요
+
 2026-06-22 기준 `android/app/src/main/java/com/gleaum/app/NativeHomePortActivity.kt`는 비활성 상태에서 Mobile Web 홈 섹션 순서의 Preview를 렌더링한다.
 
 - `NativePortFlags.ENABLE_NATIVE_HOME=false` 유지

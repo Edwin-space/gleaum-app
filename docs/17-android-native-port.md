@@ -175,6 +175,24 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 
 ## 9. 최근 판단
 
+2026-06-23에 Native Home Preview 1차 시각 점검을 진행했다.
+
+확인/보정 사항:
+
+- Android `:app:assembleDebug` 통과
+- 연결된 실기기 `HA1R8ST7`에는 운영 설치본(`versionName=1.0.20`)이 있어 debug Preview 확인 대상으로 사용하지 않음
+- `Pixel_9` 에뮬레이터에 debug APK 설치 후 `NativeHomePortActivity` 실행 확인
+- 로그인 세션이 없는 에뮬레이터에서는 세션 없음 안내가 표시됨
+- 상단 상태바와 로고가 겹치는 safe-area 문제를 `statusBarHeight()` 기반 상단 padding으로 보정
+- 하단 네비게이션을 text-only 구조에서 icon + label + active top indicator 구조로 보정
+- release/운영 빌드에서 Preview Activity가 열리는 경우 검은 화면으로 종료하지 않고 debug build 전용 안내를 표시하도록 보정
+
+남은 확인:
+
+- 실제 로그인 세션이 있는 debug 환경에서 데이터 바인딩 화면 확인
+- Mobile Web 홈 실제 캡처와 Native Preview 세부 UI 비교
+- 하단 네비 아이콘을 임시 문자 기반에서 전용 vector drawable 또는 custom View stroke 아이콘으로 고도화할지 판단
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:

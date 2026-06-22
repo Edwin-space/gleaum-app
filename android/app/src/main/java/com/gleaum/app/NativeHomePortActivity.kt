@@ -35,13 +35,19 @@ class NativeHomePortActivity : AppCompatActivity() {
     private var loading = true
     private var errorMessage: String? = null
     private var selectedDateKey: String? = null
+    private var previewDisabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val previewAllowed = BuildConfig.DEBUG && NativePortFlags.ENABLE_NATIVE_HOME_PREVIEW
         if (!NativePortFlags.ENABLE_NATIVE_HOME && !previewAllowed) {
-            finish()
+            previewDisabled = true
+            loading = false
+            errorMessage = "Native Home Preview는 debug build에서만 열 수 있어요."
+            window.statusBarColor = color("#FAFAFD")
+            window.navigationBarColor = color("#FAFAFD")
+            render()
             return
         }
 
@@ -126,12 +132,13 @@ class NativeHomePortActivity : AppCompatActivity() {
 
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(20), dp(16), dp(20), dp(104))
+                    setPadding(dp(20), statusBarHeight() + dp(12), dp(20), dp(104))
 
                     addView(buildHeader())
                     if (loading || errorMessage != null) {
                         addView(buildStateCard(), matchWrap().apply { topMargin = dp(14) })
                     }
+                    if (previewDisabled) return@apply
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildTodayToggle(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildWeekCalendarStrip(), matchWrap().apply { topMargin = dp(10) })
@@ -555,25 +562,52 @@ class NativeHomePortActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(dp(16), dp(8), dp(16), dp(10))
+            setPadding(dp(16), dp(6), dp(16), dp(8))
             background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
 
             listOf(
-                "홈" to "/home",
-                "일정" to "/schedules",
-                "공간" to "/space",
-                "가계부" to "/budget",
-                "마이" to "/mypage",
-            ).forEachIndexed { index, (label, path) ->
-                addView(TextView(context).apply {
-                    text = label
-                    textSize = 11f
-                    typeface = Typeface.DEFAULT_BOLD
-                    gravity = Gravity.CENTER
-                    setTextColor(if (index == 0) color("#0084CC") else color("#8E8E93"))
-                    setOnClickListener { openWebPath(path) }
-                }, LinearLayout.LayoutParams(0, match(), 1f))
+                NativeNavItem("홈", "⌂", "/home"),
+                NativeNavItem("일정", "□", "/schedules"),
+                NativeNavItem("공간", "◇", "/space"),
+                NativeNavItem("가계부", "▭", "/budget"),
+                NativeNavItem("마이", "○", "/mypage"),
+            ).forEachIndexed { index, item ->
+                addView(buildBottomNavItem(item, active = index == 0), LinearLayout.LayoutParams(0, match(), 1f))
             }
+        }
+    }
+
+    private fun buildBottomNavItem(item: NativeNavItem, active: Boolean): LinearLayout {
+        val activeColor = color("#0084CC")
+        val inactiveColor = color("#8E8E93")
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(4), dp(0), dp(4), dp(0))
+            setOnClickListener { openWebPath(item.path) }
+
+            addView(View(context).apply {
+                background = if (active) roundDrawable("#0084CC", 999) else null
+            }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(5) })
+
+            addView(TextView(context).apply {
+                text = item.icon
+                textSize = 20f
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                setTextColor(if (active) activeColor else inactiveColor)
+            }, LinearLayout.LayoutParams(dp(28), dp(24)))
+
+            addView(TextView(context).apply {
+                text = item.label
+                textSize = 10f
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                setTextColor(if (active) activeColor else inactiveColor)
+            }, matchWrap().apply { topMargin = dp(3) })
         }
     }
 
@@ -657,6 +691,10 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+    private fun statusBarHeight(): Int {
+        val id = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (id > 0) resources.getDimensionPixelSize(id) else 0
+    }
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT
     private fun wrap(): Int = ViewGroup.LayoutParams.WRAP_CONTENT
     private fun matchWrap(): LinearLayout.LayoutParams = LinearLayout.LayoutParams(match(), wrap())
@@ -665,3 +703,9 @@ class NativeHomePortActivity : AppCompatActivity() {
         private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
     }
 }
+
+private data class NativeNavItem(
+    val label: String,
+    val icon: String,
+    val path: String,
+)
