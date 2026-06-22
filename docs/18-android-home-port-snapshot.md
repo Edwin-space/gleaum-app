@@ -321,7 +321,7 @@ Gap: Web `MobileHome` currently calculates `completedCount`, `pendingCount`, and
 ## 14. Android Implementation Checklist
 
 - [x] Create disabled native home screen skeleton.
-- [ ] Parse `/api/native/home-summary` into Android data model.
+- [x] Parse `/api/native/home-summary` into Android data model.
 - [x] Render header only in disabled/internal mode.
 - [x] Render summary card to match section 5.
 - [x] Render today/calendar toggle row.
@@ -347,10 +347,12 @@ Gap: Web `MobileHome` currently calculates `completedCount`, `pendingCount`, and
 
 ## 16. Current Native Skeleton Status
 
-2026-06-22 기준 `android/app/src/main/java/com/gleaum/app/NativeHomePortActivity.kt`는 비활성 상태에서 Mobile Web 홈 섹션 순서의 정적 skeleton을 렌더링한다.
+2026-06-22 기준 `android/app/src/main/java/com/gleaum/app/NativeHomePortActivity.kt`는 비활성 상태에서 Mobile Web 홈 섹션 순서의 Preview를 렌더링한다.
 
 - `NativePortFlags.ENABLE_NATIVE_HOME=false` 유지
 - 운영 진입 흐름에 연결하지 않음
-- API 데이터 바인딩 없음
+- debug preview에서 `SessionManager` access token으로 `/api/native/home-summary` 호출
+- 로딩/세션 없음/오류 상태 표시
+- `user.displayName`, `spaces.activeSpaceName`, `schedules.today/upcoming`, `ledger` 요약을 UI에 바인딩
 - Android `:app:assembleDebug` 통과
-- 다음 작업은 `/api/native/home-summary`와 `NativeHomePortSummary`를 실제 UI에 연결하기 전에 Mobile Web 캡처와 시각 비교하는 것
+- 다음 작업은 Mobile Web 캡처와 Native Preview를 비교하고, `/api/native/home-summary`에 `completedCount`/`pendingCount` 등 Web 홈과 동일한 상태 카운트가 필요한지 결정하는 것

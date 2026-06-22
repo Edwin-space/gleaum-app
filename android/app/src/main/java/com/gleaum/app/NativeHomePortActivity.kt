@@ -12,17 +12,27 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.NumberFormat
+import java.util.Locale
 
 /**
- * Disabled Android Native Home Port skeleton.
+ * Android Native Home Port preview.
  *
- * This Activity intentionally remains gated by NativePortFlags.ENABLE_NATIVE_HOME.
- * It is a visual parity scaffold for porting Mobile Web Home UI into Android
- * native views without affecting the default WebView runtime.
+ * This Activity remains gated by NativePortFlags and the debug manifest. It is
+ * used to compare Mobile Web Home UI with a native implementation before the
+ * default WebView home is replaced.
  *
  * Source UI snapshot: docs/18-android-home-port-snapshot.md
  */
 class NativeHomePortActivity : AppCompatActivity() {
+
+    private var summary: NativeHomePortSummary? = null
+    private var loading = true
+    private var errorMessage: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +45,71 @@ class NativeHomePortActivity : AppCompatActivity() {
 
         window.statusBarColor = color("#FAFAFD")
         window.navigationBarColor = color("#FAFAFD")
+        render()
+        loadHomeSummary()
+    }
+
+    private fun loadHomeSummary() {
+        val session = SessionManager.get(this)
+        if (session.isNullOrBlank()) {
+            loading = false
+            errorMessage = "로그인 세션을 찾을 수 없어요. 앱에서 로그인한 뒤 Preview를 다시 열어 주세요."
+            render()
+            return
+        }
+
+        val token = runCatching { JSONObject(session).optString("access_token") }.getOrNull()
+        if (token.isNullOrBlank()) {
+            loading = false
+            errorMessage = "세션 토큰을 읽을 수 없어요. 다시 로그인한 뒤 확인해 주세요."
+            render()
+            return
+        }
+
+        Thread {
+            try {
+                val loaded = requestHomeSummary(token)
+                runOnUiThread {
+                    summary = loaded
+                    loading = false
+                    errorMessage = null
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    loading = false
+                    errorMessage = e.message ?: "홈 데이터를 불러오지 못했어요."
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun requestHomeSummary(token: String): NativeHomePortSummary {
+        val connection = (URL(HOME_SUMMARY_URL).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15000
+            readTimeout = 20000
+            setRequestProperty("Authorization", "Bearer $token")
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Gleaum-Native-Preview", "android-home")
+        }
+
+        val responseText = readResponse(connection)
+        val json = if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
+        if (connection.responseCode !in 200..299) {
+            val message = json.optString("error").ifBlank { "홈 데이터 요청 실패 (${connection.responseCode})" }
+            throw IllegalStateException(message)
+        }
+        return NativeHomePortSummary.fromJson(json)
+    }
+
+    private fun readResponse(connection: HttpURLConnection): String {
+        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+        return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
+    }
+
+    private fun render() {
         setContentView(buildHomeSkeleton())
     }
 
@@ -51,6 +126,9 @@ class NativeHomePortActivity : AppCompatActivity() {
                     setPadding(dp(20), dp(16), dp(20), dp(104))
 
                     addView(buildHeader())
+                    if (loading || errorMessage != null) {
+                        addView(buildStateCard(), matchWrap().apply { topMargin = dp(14) })
+                    }
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildTodayToggle(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildSelectedDateSection(), matchWrap().apply { topMargin = dp(14) })
@@ -88,21 +166,38 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildStateCard(): TextView {
+        return TextView(this).apply {
+            text = if (loading) "홈 데이터를 불러오는 중이에요." else errorMessage.orEmpty()
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(if (loading) color("#0084CC") else color("#EF4444"))
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            background = roundDrawable(if (loading) "#F0FAFF" else "#FFF1F2", 18, if (loading) "#D8F0FF" else "#FECACA")
+        }
+    }
+
     private fun buildGreetingCard(): LinearLayout {
+        val data = summary
+        val todayCount = data?.todayCount ?: 0
+        val pendingCount = data?.today?.count { it.status != "completed" } ?: todayCount
+        val completedCount = data?.today?.count { it.status == "completed" } ?: 0
+
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(24), dp(28), dp(24), dp(24))
             background = gradientDrawable("#1A1B2E", "#2D2E4A", 28)
 
             addView(TextView(context).apply {
-                text = "좋은 오후예요"
+                text = greetingText()
                 textSize = 13f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(color("#0CC9B5"))
             })
 
             addView(TextView(context).apply {
-                text = "글리움 사용자님"
+                text = "${data?.displayName?.takeIf { it.isNotBlank() } ?: "글리움 사용자"}님"
                 textSize = 26f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(Color.WHITE)
@@ -110,7 +205,8 @@ class NativeHomePortActivity : AppCompatActivity() {
             }, matchWrap().apply { topMargin = dp(10) })
 
             addView(TextView(context).apply {
-                text = "친구·연인과 연결된 공간의 일정과 소식을 확인합니다."
+                text = data?.activeSpaceName?.let { "${it} 공간의 일정과 소식을 확인합니다." }
+                    ?: "친구·연인과 연결된 공간의 일정과 소식을 확인합니다."
                 textSize = 12f
                 setTextColor(colorWithAlpha("#FFFFFF", 0.50f))
             }, matchWrap().apply { topMargin = dp(6) })
@@ -118,9 +214,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
 
-                addMetric("0", "오늘 전체", Color.WHITE)
-                addMetric("0", "완료", color("#2EE895"))
-                addMetric("0", "남은 일정", color("#0CC9B5"))
+                addMetric(todayCount.toString(), "오늘 전체", Color.WHITE)
+                addMetric(completedCount.toString(), "완료", color("#2EE895"))
+                addMetric(pendingCount.toString(), "남은 일정", color("#0CC9B5"))
             }, matchWrap().apply { topMargin = dp(18) })
         }
     }
@@ -177,39 +273,83 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun buildSelectedDateSection(): LinearLayout {
+        val today = summary?.today.orEmpty()
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
 
-            addView(sectionHeader("오늘 일정", "0개", "+ 새 일정"))
+            addView(sectionHeader("오늘 일정", "${summary?.todayCount ?: 0}개", "+ 새 일정"))
+            if (today.isEmpty()) {
+                addView(buildEmptyScheduleCard(), matchWrap().apply { topMargin = dp(12) })
+            } else {
+                today.take(3).forEach { schedule ->
+                    addView(buildScheduleCard(schedule), matchWrap().apply { topMargin = dp(10) })
+                }
+            }
+        }
+    }
+
+    private fun buildEmptyScheduleCard(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(20), dp(48), dp(20), dp(48))
+            background = cardDrawable(24)
+
+            addView(TextView(context).apply {
+                text = "▣"
+                textSize = 26f
+                gravity = Gravity.CENTER
+                setTextColor(color("#0084CC"))
+                background = roundDrawable("#F0FAFF", 28)
+            }, LinearLayout.LayoutParams(dp(56), dp(56)))
+
+            addView(TextView(context).apply {
+                text = "등록된 일정이 없어요"
+                textSize = 14f
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                setTextColor(color("#1A1B2E"))
+            }, matchWrap().apply { topMargin = dp(18) })
+
+            addView(TextView(context).apply {
+                text = "오른쪽 위 새 일정 버튼으로 바로 추가할 수 있어요"
+                textSize = 12f
+                gravity = Gravity.CENTER
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(6) })
+        }
+    }
+
+    private fun buildScheduleCard(schedule: NativeHomePortSchedule): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            background = cardDrawable(20)
+
+            addView(TextView(context).apply {
+                text = timeText(schedule.startTime)
+                textSize = 13f
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                setTextColor(color("#0084CC"))
+                background = roundDrawable("#F0FAFF", 14)
+            }, LinearLayout.LayoutParams(dp(68), dp(54)))
+
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                setPadding(dp(20), dp(48), dp(20), dp(48))
-                background = cardDrawable(24)
-
                 addView(TextView(context).apply {
-                    text = "▣"
-                    textSize = 26f
-                    gravity = Gravity.CENTER
-                    setTextColor(color("#0084CC"))
-                    background = roundDrawable("#F0FAFF", 28)
-                }, LinearLayout.LayoutParams(dp(56), dp(56)))
-
-                addView(TextView(context).apply {
-                    text = "등록된 일정이 없어요"
-                    textSize = 14f
+                    text = schedule.title
+                    textSize = 15f
                     typeface = Typeface.DEFAULT_BOLD
-                    gravity = Gravity.CENTER
                     setTextColor(color("#1A1B2E"))
-                }, matchWrap().apply { topMargin = dp(18) })
-
+                })
                 addView(TextView(context).apply {
-                    text = "오른쪽 위 새 일정 버튼으로 바로 추가할 수 있어요"
+                    text = scheduleSubtitle(schedule)
                     textSize = 12f
-                    gravity = Gravity.CENTER
                     setTextColor(color("#8E8E93"))
-                }, matchWrap().apply { topMargin = dp(6) })
-            }, matchWrap().apply { topMargin = dp(12) })
+                }, matchWrap().apply { topMargin = dp(4) })
+            }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
         }
     }
 
@@ -227,6 +367,7 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun buildBudgetSummary(): LinearLayout {
+        val data = summary
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(20), dp(20), dp(18))
@@ -248,7 +389,11 @@ class NativeHomePortActivity : AppCompatActivity() {
             }, matchWrap().apply { topMargin = dp(8) })
 
             addView(TextView(context).apply {
-                text = "지출 기록과 고정 지출 예정 흐름을 확인하세요."
+                text = if (data == null) {
+                    "지출 기록과 고정 지출 예정 흐름을 확인하세요."
+                } else {
+                    "수입 ${money(data.incomeTotal)} · 지출 ${money(data.expenseTotal)} · 순흐름 ${money(data.net)}"
+                }
                 textSize = 12f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(color("#8E8E93"))
@@ -257,17 +402,24 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun buildUpcomingSection(): LinearLayout {
+        val upcoming = summary?.upcoming.orEmpty()
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            addView(sectionHeader("다가오는 일정", "0개", null))
-            addView(TextView(context).apply {
-                text = "앞으로 예정된 일정이 없어요"
-                textSize = 13f
-                gravity = Gravity.CENTER
-                setTextColor(color("#8E8E93"))
-                background = cardDrawable(20)
-                setPadding(dp(20), dp(28), dp(20), dp(28))
-            }, matchWrap().apply { topMargin = dp(12) })
+            addView(sectionHeader("다가오는 일정", "${summary?.upcomingCount ?: 0}개", null))
+            if (upcoming.isEmpty()) {
+                addView(TextView(context).apply {
+                    text = "앞으로 예정된 일정이 없어요"
+                    textSize = 13f
+                    gravity = Gravity.CENTER
+                    setTextColor(color("#8E8E93"))
+                    background = cardDrawable(20)
+                    setPadding(dp(20), dp(28), dp(20), dp(28))
+                }, matchWrap().apply { topMargin = dp(12) })
+            } else {
+                upcoming.take(3).forEach { schedule ->
+                    addView(buildScheduleCard(schedule), matchWrap().apply { topMargin = dp(10) })
+                }
+            }
         }
     }
 
@@ -323,6 +475,32 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
+    private fun scheduleSubtitle(schedule: NativeHomePortSchedule): String {
+        val typeLabel = when (schedule.type) {
+            "shared" -> "공유일정"
+            "child" -> "자녀일정"
+            "expense" -> "지출"
+            else -> "개인일정"
+        }
+        return "$typeLabel · ${timeText(schedule.startTime)}"
+    }
+
+    private fun timeText(raw: String): String {
+        val tIndex = raw.indexOf('T')
+        return if (tIndex >= 0 && raw.length >= tIndex + 6) raw.substring(tIndex + 1, tIndex + 6) else raw.take(5)
+    }
+
+    private fun greetingText(): String {
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        return when (hour) {
+            in 5..10 -> "좋은 아침이에요"
+            in 11..16 -> "좋은 오후예요"
+            else -> "좋은 저녁이에요"
+        }
+    }
+
+    private fun money(value: Long): String = NumberFormat.getNumberInstance(Locale.KOREA).format(value) + "원"
+
     private fun cardDrawable(radius: Int = 20): GradientDrawable =
         roundDrawable("#FFFFFF", radius, "#EEF0F4")
 
@@ -357,4 +535,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT
     private fun wrap(): Int = ViewGroup.LayoutParams.WRAP_CONTENT
     private fun matchWrap(): LinearLayout.LayoutParams = LinearLayout.LayoutParams(match(), wrap())
+
+    companion object {
+        private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
+    }
 }
