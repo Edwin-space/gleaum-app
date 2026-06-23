@@ -1099,6 +1099,11 @@ class NativeHomePortActivity : AppCompatActivity() {
             finish()
             return
         }
+        if (path == "/space") {
+            startActivity(Intent(this, NativeSpaceActivity::class.java))
+            finish()
+            return
+        }
         if (path == "/notifications") {
             startActivity(Intent(this, NativeNotificationActivity::class.java))
             return

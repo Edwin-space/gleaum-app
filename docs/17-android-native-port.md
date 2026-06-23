@@ -481,3 +481,15 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - `AndroidManifest.xml`에 `NativeNotificationActivity`를 등록했다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 남은 검증: 실제 로그인 단말에서 알림 목록/개별 알림 터치/전체 읽음, 탈퇴 신청 상태 확인, 복구 가능 계정 복구, 탈퇴 신청 후 네이티브 로그아웃을 회귀 테스트한다.
+
+
+## 2026-06-23 Native 홈/가계부/약관 배치
+
+- 네이티브 화면에서 하단 `홈`을 누를 때 `MainActivity(/home)` WebView로 돌아가던 경로를 `NativeHomePortActivity` 직접 진입으로 통일했다.
+- `NativeHomePortActivity` 내부 `공간` 탭도 WebView fallback 없이 `NativeSpaceActivity`로 직접 이동한다.
+- Native Budget 요약 API가 현재 월 정기 수입/지출 누락분을 자동 생성한 뒤 요약을 반환하도록 보강했다.
+- `NativeBudgetSummary.recurringEntries`를 추가해 최근 항목 12개 범위 밖의 월세/구독료/급여 같은 반복 항목도 `반복 예정` 섹션에 안정적으로 노출한다.
+- Android 이메일 회원가입 화면의 필수 동의 UI와 약관/개인정보 `보기`를 인앱 브라우저(`LegalWebViewActivity`)로 마감했다.
+- 약관 인앱 브라우저는 태블릿에서 문서 폭/여백/닫기 버튼을 별도로 조정해 모바일 폭 문서가 좌우 배경을 과하게 노출하지 않도록 정리했다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 이번 배치 제외: 다크모드/광고/전체 태블릿 최적화/실제 단말 회귀 테스트.

@@ -1554,6 +1554,7 @@ export interface NativeBudgetSummary {
   completedExpenseCount: number;
   completedIncomeCount: number;
   recentEntries: NativeLedgerItem[];
+  recurringEntries: NativeLedgerItem[];
   categoryTotals: Array<{ category: LedgerCategory; kind: LedgerKind; amount: number }>;
 }
 
@@ -1871,6 +1872,98 @@ function futureRange(days: number, date = new Date()) {
   };
 }
 
+async function materializeNativeRecurringLedger(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+  scope: LedgerScope,
+): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const lastDayOfMonth = monthEnd.getDate();
+
+  const { data, error } = await supabase
+    .from('ledger_entries')
+    .select('*')
+    .eq('space_id', spaceId)
+    .eq('scope', scope)
+    .eq('owner_id', userId)
+    .neq('recur_freq', 'none')
+    .order('occurred_at', { ascending: true });
+
+  if (error || !data?.length) return 0;
+  const rows = data as LedgerRow[];
+  const series = new Map<string, LedgerRow[]>();
+
+  for (const row of rows) {
+    const key = `${row.kind}__${row.category}__${row.title}__${row.recur_freq}`;
+    const list = series.get(key) ?? [];
+    list.push(row);
+    series.set(key, list);
+  }
+
+  let created = 0;
+
+  for (const instances of series.values()) {
+    const latest = instances[instances.length - 1];
+    const latestDate = new Date(latest.occurred_at);
+    const recurUntil = latest.recur_until ? new Date(latest.recur_until) : null;
+    const targets: Date[] = [];
+
+    if (latest.recur_freq === 'monthly') {
+      if (latestDate >= monthStart) continue;
+      const day = Math.min(latestDate.getDate(), lastDayOfMonth);
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day)));
+    } else if (latest.recur_freq === 'yearly') {
+      if (latestDate >= monthStart) continue;
+      if (latestDate.getMonth() !== now.getMonth()) continue;
+      const day = Math.min(latestDate.getDate(), lastDayOfMonth);
+      targets.push(new Date(Date.UTC(now.getFullYear(), now.getMonth(), day)));
+    } else if (latest.recur_freq === 'weekly') {
+      const cursor = new Date(latestDate);
+      for (let index = 0; index < 60; index += 1) {
+        cursor.setDate(cursor.getDate() + 7);
+        if (cursor > monthEnd) break;
+        if (cursor >= monthStart) {
+          targets.push(new Date(Date.UTC(cursor.getFullYear(), cursor.getMonth(), cursor.getDate())));
+        }
+      }
+    }
+
+    for (const target of targets) {
+      if (recurUntil && target > recurUntil) continue;
+      const duplicated = instances.some((instance) => {
+        const date = new Date(instance.occurred_at);
+        const sameMonth = date.getFullYear() === target.getFullYear() && date.getMonth() === target.getMonth();
+        return latest.recur_freq === 'weekly' ? sameMonth && date.getDate() === target.getDate() : sameMonth;
+      });
+      if (duplicated) continue;
+
+      const { error: insertError } = await supabase.from('ledger_entries').insert({
+        kind: latest.kind,
+        scope: latest.scope,
+        space_id: spaceId,
+        owner_id: userId,
+        title: latest.title,
+        amount: latest.amount,
+        category: latest.category,
+        method: latest.method,
+        occurred_at: target.toISOString(),
+        status: 'pending',
+        recur_freq: latest.recur_freq,
+        recur_until: latest.recur_until,
+        recur_rule_id: latest.recur_rule_id,
+        memo: latest.memo,
+      });
+
+      if (!insertError) created += 1;
+    }
+  }
+
+  return created;
+}
+
 async function getNativePersonalLedgerRow(
   supabase: RouteSupabaseClient,
   userId: string,
@@ -2034,9 +2127,12 @@ export async function getNativeBudgetSummary(
       completedExpenseCount: 0,
       completedIncomeCount: 0,
       recentEntries: [],
+      recurringEntries: [],
       categoryTotals: [],
     };
   }
+
+  await materializeNativeRecurringLedger(supabase, userId, personalBudgetSpaceId, 'personal');
 
   const { data, error } = await supabase
     .from('ledger_entries')
@@ -2083,6 +2179,11 @@ export async function getNativeBudgetSummary(
     completedExpenseCount: expenseRows.filter((row) => row.status === 'completed').length,
     completedIncomeCount: incomeRows.filter((row) => row.status === 'completed').length,
     recentEntries: rows.slice(0, 12).map(nativeLedgerItemFromRow),
+    recurringEntries: rows
+      .filter((row) => row.recur_freq !== 'none')
+      .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime())
+      .slice(0, 12)
+      .map(nativeLedgerItemFromRow),
     categoryTotals: Array.from(categoryMap.values()).sort((a, b) => b.amount - a.amount),
   };
 }

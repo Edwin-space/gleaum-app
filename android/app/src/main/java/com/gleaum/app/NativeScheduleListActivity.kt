@@ -312,6 +312,11 @@ class NativeScheduleListActivity : AppCompatActivity() {
     }
 
     private fun openWebPath(path: String) {
+        if (path == "/home") {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
         startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", path))
         finish()
     }

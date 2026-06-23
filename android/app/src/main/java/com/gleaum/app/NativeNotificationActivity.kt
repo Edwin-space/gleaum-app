@@ -266,7 +266,7 @@ class NativeNotificationActivity : AppCompatActivity() {
     }
 
     private fun openHome() {
-        startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", "/home"))
+        startActivity(Intent(this, NativeHomePortActivity::class.java))
         finish()
     }
 

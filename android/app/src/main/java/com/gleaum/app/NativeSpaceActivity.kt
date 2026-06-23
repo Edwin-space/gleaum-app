@@ -517,7 +517,15 @@ class NativeSpaceActivity : AppCompatActivity() {
     private fun roleLabel(role: String?): String = when (role) { "admin" -> "공간 지기"; "editor" -> "공간 운영자"; "viewer" -> "공간 멤버"; else -> "공간 멤버" }
     private fun friendlyError(code: String?): String = if (code == "session_required") "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요." else "공간 정보를 불러오지 못했어요."
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    private fun openWebPath(path: String) { startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", path)); finish() }
+    private fun openWebPath(path: String) {
+        if (path == "/home") {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
+        startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", path))
+        finish()
+    }
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun medium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private fun color(hex: String): Int = Color.parseColor(hex)

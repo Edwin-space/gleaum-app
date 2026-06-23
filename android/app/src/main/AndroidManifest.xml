@@ -126,6 +126,13 @@
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
 
+
+        <!-- ── 회원가입 약관/개인정보 인앱 브라우저 ─────────────────────── -->
+        <activity
+            android:name=".LegalWebViewActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
         <!-- ── Google AdMob ────────────────────────────────────────────────
              App ID: ca-app-pub-7426507548879721~6623452973
              Banner Unit: ca-app-pub-7426507548879721/6211229285

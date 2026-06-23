@@ -200,12 +200,12 @@ class NativeBudgetActivity : AppCompatActivity() {
     private fun buildRecurringPlan(data: NativeBudgetSummary): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         addView(sectionTitle("반복 예정"))
-        val recurring = data.recentEntries.filter { it.recurFreq != "none" }
+        val recurring = data.recurringEntries
         if (recurring.isEmpty()) {
             addView(messageCard("등록된 정기 수입/지출이 없어요."), matchWrap().apply { topMargin = dp(10) })
         } else {
             addView(TextView(context).apply {
-                text = "매월 월세, 구독료, 급여처럼 반복되는 돈의 흐름을 따로 확인합니다."
+                text = "월세, 구독료, 급여처럼 반복되는 돈의 흐름은 이번 달 항목으로 자동 준비됩니다."
                 textSize = 12f
                 typeface = medium()
                 setTextColor(color("#8E8E93"))
@@ -371,7 +371,15 @@ class NativeBudgetActivity : AppCompatActivity() {
         else -> NativeTabIcon.MENU
     }
 
-    private fun openWebPath(path: String) { startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", path)); finish() }
+    private fun openWebPath(path: String) {
+        if (path == "/home") {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
+        startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", path))
+        finish()
+    }
     private fun friendlyError(code: String?): String = if (code == "session_required") "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요." else "가계부를 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
     private fun money(value: Long): String = NumberFormat.getNumberInstance(Locale.KOREA).format(value) + "원"
     private fun dayText(iso: String): String = parseIso(iso)?.let { SimpleDateFormat("M월 d일", Locale.KOREA).format(it) } ?: iso.take(10)

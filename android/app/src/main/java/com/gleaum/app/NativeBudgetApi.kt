@@ -72,6 +72,7 @@ data class NativeBudgetSummary(
     val completedExpenseCount: Int,
     val completedIncomeCount: Int,
     val recentEntries: List<NativeBudgetEntry>,
+    val recurringEntries: List<NativeBudgetEntry>,
     val categoryTotals: List<NativeBudgetCategoryTotal>,
 ) {
     companion object {
@@ -90,6 +91,7 @@ data class NativeBudgetSummary(
             completedExpenseCount = json.optInt("completedExpenseCount", 0),
             completedIncomeCount = json.optInt("completedIncomeCount", 0),
             recentEntries = NativeBudgetEntry.listFrom(json.optJSONArray("recentEntries") ?: JSONArray()),
+            recurringEntries = NativeBudgetEntry.listFrom(json.optJSONArray("recurringEntries") ?: JSONArray()),
             categoryTotals = NativeBudgetCategoryTotal.listFrom(json.optJSONArray("categoryTotals") ?: JSONArray()),
         )
     }

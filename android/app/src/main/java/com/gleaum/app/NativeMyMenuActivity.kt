@@ -1003,6 +1003,11 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun openWebPath(path: String) {
+        if (path == "/home") {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
         startActivity(Intent(this, MainActivity::class.java).apply { putExtra("start_path", path) })
         finish()
     }

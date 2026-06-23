@@ -560,3 +560,12 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 계정 API 3종(`/api/account/status`, `/api/account/withdraw`, `/api/account/restore`)은 Android bearer token 인증을 지원한다.
 - 전체 메뉴에 `계정 탈퇴/복구` 네이티브 다이얼로그를 추가했다.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+
+
+## 2026-06-23 Native Home/Budget/Legal Snapshot
+
+- 네이티브 하위 화면의 홈 복귀 경로를 `NativeHomePortActivity`로 통일해 WebView 홈으로 섞이는 흐름을 줄였다.
+- Native Home의 공간 탭은 `NativeSpaceActivity`로 직접 진입한다.
+- Native Budget은 요약 API 호출 시 현재 월 반복 수입/지출을 자동 materialize하고, `recurringEntries`를 별도 표시한다.
+- Android 이메일 회원가입 약관/개인정보 보기 흐름은 `LegalWebViewActivity` 인앱 문서 뷰어로 정리했다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
