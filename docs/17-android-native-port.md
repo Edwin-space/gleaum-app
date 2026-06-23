@@ -219,6 +219,14 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - Light status/navigation bar flag를 적용해 밝은 배경에서 Android 시스템 아이콘 대비가 깨지지 않도록 수정
 - Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 캡처 확인: `/tmp/gleaum-native-home-nav-polish-2.png`
 
+2026-06-23 Header/Hero/Card Chrome 보정:
+
+- Header를 ScrollView 내부에서 분리해 fixed/sticky chrome처럼 상단에 고정
+- Scroll content top padding을 fixed header 높이에 맞춰 조정해 스크롤 시 헤더가 사라지지 않도록 수정
+- Hero summary card에 Web MobileHome의 radial glow 느낌을 Native custom `NativeGlowView`로 추가
+- Hero/card/toggle/empty/ad/budget surface에 elevation을 부여해 Web의 shadow/card depth와 더 가깝게 보정
+- Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 로딩 후 캡처 확인: `/tmp/gleaum-native-home-chrome-polish-loaded.png`
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:

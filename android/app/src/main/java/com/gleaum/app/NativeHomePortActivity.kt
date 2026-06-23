@@ -6,7 +6,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -149,11 +151,10 @@ class NativeHomePortActivity : AppCompatActivity() {
 
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(20), statusBarHeight() + dp(12), dp(20), dp(84))
+                    setPadding(dp(20), statusBarHeight() + dp(74), dp(20), dp(84))
 
-                    addView(buildHeader())
                     if (loading || errorMessage != null) {
-                        addView(buildStateCard(), matchWrap().apply { topMargin = dp(14) })
+                        addView(buildStateCard(), matchWrap())
                     }
                     if (previewDisabled) return@apply
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
@@ -166,7 +167,25 @@ class NativeHomePortActivity : AppCompatActivity() {
                 }, ViewGroup.LayoutParams(match(), wrap()))
             }, FrameLayout.LayoutParams(match(), match()))
 
+            addView(buildHeaderBar(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
             addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
+        }
+    }
+
+    private fun buildHeaderBar(): FrameLayout {
+        return FrameLayout(this).apply {
+            setBackgroundColor(color("#FAFAFD"))
+            elevation = dp(2).toFloat()
+
+            addView(buildHeader(), FrameLayout.LayoutParams(match(), dp(44), Gravity.BOTTOM).apply {
+                leftMargin = dp(20)
+                rightMargin = dp(20)
+                bottomMargin = dp(10)
+            })
+
+            addView(View(context).apply {
+                setBackgroundColor(color("#EEF0F4"))
+            }, FrameLayout.LayoutParams(match(), dp(1), Gravity.BOTTOM))
         }
     }
 
@@ -213,46 +232,61 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
-    private fun buildGreetingCard(): LinearLayout {
+    private fun buildGreetingCard(): FrameLayout {
         val data = summary
         val todayCount = data?.todayCount ?: 0
         val pendingCount = data?.pendingCount ?: todayCount
         val completedCount = data?.completedCount ?: 0
 
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(28), dp(24), dp(24))
+        return FrameLayout(this).apply {
             background = gradientDrawable("#1A1B2E", "#2D2E4A", 28)
+            elevation = dp(8).toFloat()
+            clipToOutline = true
 
-            addView(TextView(context).apply {
-                text = greetingText()
-                textSize = 13f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#0CC9B5"))
+            addView(NativeGlowView(context, color("#0084CC"), 0.35f), FrameLayout.LayoutParams(dp(140), dp(140), Gravity.TOP or Gravity.RIGHT).apply {
+                topMargin = -dp(30)
+                rightMargin = -dp(30)
+            })
+            addView(NativeGlowView(context, color("#0CC9B5"), 0.25f), FrameLayout.LayoutParams(dp(100), dp(100), Gravity.BOTTOM or Gravity.LEFT).apply {
+                leftMargin = -dp(20)
+                bottomMargin = -dp(20)
             })
 
-            addView(TextView(context).apply {
-                text = "${data?.displayName?.takeIf { it.isNotBlank() } ?: "글리움 사용자"}님"
-                textSize = 26f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(Color.WHITE)
-                letterSpacing = -0.02f
-            }, matchWrap().apply { topMargin = dp(10) })
-
-            addView(TextView(context).apply {
-                text = data?.activeSpaceName?.let { "${it} 공간의 일정과 소식을 확인합니다." }
-                    ?: "친구·연인과 연결된 공간의 일정과 소식을 확인합니다."
-                textSize = 12f
-                setTextColor(colorWithAlpha("#FFFFFF", 0.50f))
-            }, matchWrap().apply { topMargin = dp(6) })
-
             addView(LinearLayout(context).apply {
-                orientation = LinearLayout.HORIZONTAL
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(24), dp(28), dp(24), dp(24))
 
-                addMetric(todayCount.toString(), "오늘 전체", Color.WHITE)
-                addMetric(completedCount.toString(), "완료", color("#2EE895"))
-                addMetric(pendingCount.toString(), "남은 일정", color("#0CC9B5"))
-            }, matchWrap().apply { topMargin = dp(18) })
+                addView(TextView(context).apply {
+                    text = greetingText()
+                    textSize = 13f
+                    typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                    setTextColor(colorWithAlpha("#0CC9B5", 0.90f))
+                })
+
+                addView(TextView(context).apply {
+                    text = "${data?.displayName?.takeIf { it.isNotBlank() } ?: "글리움 사용자"}님"
+                    textSize = 26f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(Color.WHITE)
+                    letterSpacing = -0.02f
+                }, matchWrap().apply { topMargin = dp(10) })
+
+                addView(TextView(context).apply {
+                    text = data?.activeSpaceName?.let { "${it} 공간의 일정과 소식을 확인합니다." }
+                        ?: "친구·연인과 연결된 공간의 일정과 소식을 확인합니다."
+                    textSize = 12f
+                    typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                    setTextColor(colorWithAlpha("#FFFFFF", 0.50f))
+                }, matchWrap().apply { topMargin = dp(6) })
+
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+
+                    addMetric(todayCount.toString(), "오늘 전체", Color.WHITE)
+                    addMetric(completedCount.toString(), "완료", color("#2EE895"))
+                    addMetric(pendingCount.toString(), "남은 일정", color("#0CC9B5"))
+                }, matchWrap().apply { topMargin = dp(18) })
+            }, FrameLayout.LayoutParams(match(), wrap()))
         }
     }
 
@@ -289,6 +323,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(20), dp(14), dp(20), dp(14))
             background = cardDrawable()
+            elevation = dp(2).toFloat()
 
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -325,6 +360,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
             setPadding(dp(8), dp(10), dp(8), dp(10))
             background = cardDrawable(20)
+            elevation = dp(2).toFloat()
 
             if (days.isEmpty()) {
                 addView(TextView(context).apply {
@@ -420,6 +456,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
             setPadding(dp(20), dp(48), dp(20), dp(48))
             background = cardDrawable(24)
+            elevation = dp(2).toFloat()
 
             addView(FrameLayout(context).apply {
                 background = roundDrawable("#F0FAFF", 28)
@@ -449,6 +486,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16), dp(14), dp(16), dp(14))
             background = cardDrawable(20)
+            elevation = dp(2).toFloat()
             setOnClickListener {
                 if (schedule.id.isNotBlank()) openWebPath("/schedules/${schedule.id}")
             }
@@ -487,6 +525,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
             setTextColor(color("#8E8E93"))
             background = roundDrawable("#F2F4F7", 12)
+            elevation = dp(1).toFloat()
         }.also {
             it.minHeight = dp(60)
         }
@@ -498,6 +537,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(20), dp(20), dp(18))
             background = cardDrawable(24)
+            elevation = dp(2).toFloat()
             setOnClickListener { openWebPath("/budget") }
 
             addView(TextView(context).apply {
@@ -720,6 +760,31 @@ class NativeHomePortActivity : AppCompatActivity() {
 
     companion object {
         private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
+    }
+}
+
+private class NativeGlowView(
+    context: Context,
+    private val glowColor: Int,
+    private val glowAlpha: Float,
+) : View(context) {
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val radius = width.coerceAtLeast(height) / 2f
+        paint.shader = RadialGradient(
+            width / 2f,
+            height / 2f,
+            radius,
+            intArrayOf(
+                Color.argb((255 * glowAlpha).toInt(), Color.red(glowColor), Color.green(glowColor), Color.blue(glowColor)),
+                Color.TRANSPARENT,
+            ),
+            floatArrayOf(0f, 1f),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawCircle(width / 2f, height / 2f, radius, paint)
     }
 }
 

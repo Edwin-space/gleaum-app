@@ -398,3 +398,11 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Android 시스템 status/navigation bar를 light icon mode로 지정해 밝은 배경에서 상태바 아이콘 대비가 깨지지 않도록 했다.
 - 검증 캡처: `/tmp/gleaum-native-home-nav-polish-2.png`
 
+## 2026-06-23 Header/Hero/Card Chrome 보정
+
+- Native Home Header를 ScrollView 밖 fixed chrome으로 분리해 Web MobileHome의 sticky header 동작에 맞췄다.
+- Header 하단 hairline/elevation을 적용해 스크롤 컨텐츠와 분리감을 만들었다.
+- Hero summary card에 native radial glow view를 추가해 Web의 blue/teal glow 장식을 재현했다.
+- 주요 카드 surface에 Android elevation을 적용해 flat하게 보이던 Native preview 질감을 보정했다.
+- 검증 캡처: `/tmp/gleaum-native-home-chrome-polish-loaded.png`
+
