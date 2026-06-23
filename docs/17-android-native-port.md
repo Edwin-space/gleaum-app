@@ -235,6 +235,17 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - API 변경 없이 기존 `ledger.incomeTotal`, `ledger.expenseTotal`, `ledger.net` 응답만 사용
 - Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 스크롤 캡처 확인: `/tmp/gleaum-native-home-budget-card-scrolled.png`
 
+2026-06-23 Home 5-step follow-up:
+
+- Calendar 영역을 `월간 / 주간 / 일간` segmented control 구조로 확장
+- Today toggle에서 캘린더 접기/펼치기 상태를 Native state로 관리
+- 월간 grid, 주간 strip, 일간 preview를 동일 API의 `calendar.days/week`와 `schedules.range`로 렌더링
+- 일정 카드에 타입 배지, 상태 배지, 타입별 컬러 block, chevron affordance 추가
+- 다가오는 일정 리스트를 Web MobileHome과 유사한 date tile + title + date row 구조로 보정
+- 로딩 상태를 단순 문구 카드에서 skeleton-like summary card로 변경
+- 레포 내 `Pretendard/Outfit` font asset 부재 확인. 실제 폰트 번들 도입 대신 `brandRegular/brandMedium/brandBold()` helper로 typography 사용점을 통일
+- Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 캡처 확인: `/tmp/gleaum-native-home-five-step-top.png`, `/tmp/gleaum-native-home-five-step-day-2.png`
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:

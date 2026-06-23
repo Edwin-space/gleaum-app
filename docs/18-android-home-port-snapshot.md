@@ -413,3 +413,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 하단에 `개인 공간 기준`과 `가계부 보기 →` CTA를 배치해 공간/개인 가계부 경계를 명확히 했다.
 - 검증 캡처: `/tmp/gleaum-native-home-budget-card-scrolled.png`
 
+## 2026-06-23 Home 5-step follow-up
+
+- Calendar 영역은 `월간 / 주간 / 일간` segmented control을 가진 Native panel로 확장했다.
+- Today toggle은 캘린더 접기/펼치기 상태를 직접 관리한다.
+- 선택일 일정 카드는 타입 배지, 상태 배지, 타입별 컬러 block, chevron affordance를 포함한다.
+- 다가오는 일정은 `전체보기` CTA와 date tile 구조로 Web MobileHome에 맞췄다.
+- 로딩 상태는 단순 문구 대신 skeleton-like summary card로 변경했다.
+- `Pretendard/Outfit` 실제 font asset은 현재 레포에 없어 번들 추가는 보류했다. 대신 Native typography helper를 도입해 추후 `res/font` 교체 지점을 단일화했다.
+- 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshots `/tmp/gleaum-native-home-five-step-top.png`, `/tmp/gleaum-native-home-five-step-day-2.png`
+

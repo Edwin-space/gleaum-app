@@ -45,6 +45,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     private var errorMessage: String? = null
     private var selectedDateKey: String? = null
     private var previewDisabled = false
+    private var calendarExpanded = true
+    private var calendarMode = CalendarMode.WEEK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -153,13 +155,17 @@ class NativeHomePortActivity : AppCompatActivity() {
                     orientation = LinearLayout.VERTICAL
                     setPadding(dp(20), statusBarHeight() + dp(74), dp(20), dp(84))
 
-                    if (loading || errorMessage != null) {
+                    if (errorMessage != null) {
                         addView(buildStateCard(), matchWrap())
+                    } else if (loading) {
+                        addView(buildLoadingSkeleton(), matchWrap())
                     }
                     if (previewDisabled) return@apply
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildTodayToggle(), matchWrap().apply { topMargin = dp(14) })
-                    addView(buildWeekCalendarStrip(), matchWrap().apply { topMargin = dp(10) })
+                    if (calendarExpanded) {
+                        addView(buildCalendarPanel(), matchWrap().apply { topMargin = dp(10) })
+                    }
                     addView(buildSelectedDateSection(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
@@ -229,6 +235,40 @@ class NativeHomePortActivity : AppCompatActivity() {
             setTextColor(if (loading) color("#0084CC") else color("#EF4444"))
             setPadding(dp(16), dp(14), dp(16), dp(14))
             background = roundDrawable(if (loading) "#F0FAFF" else "#FFF1F2", 18, if (loading) "#D8F0FF" else "#FECACA")
+        }
+    }
+
+    private fun buildLoadingSkeleton(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(18), dp(20), dp(18))
+            background = cardDrawable(22)
+            elevation = dp(2).toFloat()
+
+            addView(TextView(context).apply {
+                text = "홈을 준비하고 있어요"
+                textSize = 14f
+                typeface = brandBold()
+                setTextColor(color("#0084CC"))
+            })
+
+            addView(TextView(context).apply {
+                text = "일정, 캘린더, 가계부 흐름을 불러오는 중입니다."
+                textSize = 12f
+                typeface = brandMedium()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(6) })
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                repeat(3) { index ->
+                    addView(View(context).apply {
+                        background = shimmerDrawable(index)
+                    }, LinearLayout.LayoutParams(0, dp(42), 1f).apply {
+                        if (index > 0) leftMargin = dp(8)
+                    })
+                }
+            }, matchWrap().apply { topMargin = dp(16) })
         }
     }
 
@@ -324,6 +364,10 @@ class NativeHomePortActivity : AppCompatActivity() {
             setPadding(dp(20), dp(14), dp(20), dp(14))
             background = cardDrawable()
             elevation = dp(2).toFloat()
+            setOnClickListener {
+                calendarExpanded = !calendarExpanded
+                render()
+            }
 
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -348,7 +392,59 @@ class NativeHomePortActivity : AppCompatActivity() {
                     background = gradientDrawable("#0CC9B5", "#0084CC", 999)
                 }, LinearLayout.LayoutParams(dp(58), dp(24)))
             }
+
+            addView(TextView(context).apply {
+                text = if (calendarExpanded) "⌃" else "⌄"
+                textSize = 18f
+                typeface = brandBold()
+                gravity = Gravity.CENTER
+                setTextColor(color("#8E8E93"))
+            }, LinearLayout.LayoutParams(dp(28), dp(24)).apply { leftMargin = dp(8) })
         }
+    }
+
+    private fun buildCalendarPanel(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+            background = cardDrawable(24)
+            elevation = dp(2).toFloat()
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(dp(3), dp(3), dp(3), dp(3))
+                background = roundDrawable("#F7F8FB", 12)
+
+                addCalendarModeTab("월간", CalendarMode.MONTH)
+                addCalendarModeTab("주간", CalendarMode.WEEK)
+                addCalendarModeTab("일간", CalendarMode.DAY)
+            }, matchWrap())
+
+            when (calendarMode) {
+                CalendarMode.MONTH -> addView(buildMonthCalendarGrid(), matchWrap().apply { topMargin = dp(14) })
+                CalendarMode.WEEK -> addView(buildWeekCalendarStrip(), matchWrap().apply { topMargin = dp(14) })
+                CalendarMode.DAY -> addView(buildDayCalendarPreview(), matchWrap().apply { topMargin = dp(14) })
+            }
+        }
+    }
+
+    private fun LinearLayout.addCalendarModeTab(label: String, mode: CalendarMode) {
+        val active = calendarMode == mode
+        addView(TextView(context).apply {
+            text = label
+            textSize = 13f
+            typeface = if (active) brandBold() else brandMedium()
+            gravity = Gravity.CENTER
+            setTextColor(if (active) color("#1A1B2E") else color("#8E8E93"))
+            background = if (active) roundDrawable("#FFFFFF", 10) else roundDrawable("#00FFFFFF", 10)
+            elevation = if (active) dp(1).toFloat() else 0f
+            setOnClickListener {
+                calendarMode = mode
+                render()
+            }
+        }, LinearLayout.LayoutParams(0, dp(32), 1f).apply {
+            if (childCount > 0) leftMargin = dp(2)
+        })
     }
 
     private fun buildWeekCalendarStrip(): LinearLayout {
@@ -359,8 +455,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(dp(8), dp(10), dp(8), dp(10))
-            background = cardDrawable(20)
-            elevation = dp(2).toFloat()
+            background = roundDrawable("#FFFFFF", 18, "#EEF0F4")
 
             if (days.isEmpty()) {
                 addView(TextView(context).apply {
@@ -411,6 +506,116 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildMonthCalendarGrid(): LinearLayout {
+        val days = summary?.calendarDays.orEmpty()
+        val selected = selectedDateKey ?: summary?.selectedDate
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundDrawable("#FFFFFF", 18, "#EEF0F4")
+            setPadding(dp(10), dp(10), dp(10), dp(10))
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                listOf("월", "화", "수", "목", "금", "토", "일").forEach {
+                    addView(TextView(context).apply {
+                        text = it
+                        textSize = 10f
+                        typeface = brandBold()
+                        gravity = Gravity.CENTER
+                        setTextColor(color("#8E8E93"))
+                    }, LinearLayout.LayoutParams(0, dp(22), 1f))
+                }
+            })
+
+            if (days.isEmpty()) {
+                addView(TextView(context).apply {
+                    text = "월간 캘린더 데이터를 준비하는 중이에요"
+                    textSize = 12f
+                    gravity = Gravity.CENTER
+                    setTextColor(color("#8E8E93"))
+                }, LinearLayout.LayoutParams(match(), dp(88)))
+                return@apply
+            }
+
+            val leadingBlanks = runCatching {
+                val parts = days.first().date.split("-").map { it.toInt() }
+                val cal = java.util.Calendar.getInstance().apply {
+                    set(parts[0], parts[1] - 1, parts[2])
+                }
+                (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+            }.getOrDefault(0)
+            val cells = MutableList<NativeHomePortCalendarDay?>(leadingBlanks) { null }.apply { addAll(days) }
+            while (cells.size % 7 != 0) cells.add(null)
+
+            cells.chunked(7).take(6).forEach { week ->
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    week.forEachIndexed { index, day ->
+                        if (day == null) {
+                            addView(View(context), LinearLayout.LayoutParams(0, dp(48), 1f).apply {
+                                if (index > 0) leftMargin = dp(2)
+                            })
+                        } else {
+                            val isSelected = day.date == selected
+                            addView(LinearLayout(context).apply {
+                                orientation = LinearLayout.VERTICAL
+                                gravity = Gravity.CENTER
+                                background = when {
+                                    isSelected -> gradientDrawable("#0CC9B5", "#0084CC", 14)
+                                    day.isToday -> roundDrawable("#F0FAFF", 14, "#D8F0FF")
+                                    else -> roundDrawable("#FFFFFF", 14)
+                                }
+                                setOnClickListener {
+                                    selectedDateKey = day.date
+                                    render()
+                                }
+
+                                addView(TextView(context).apply {
+                                    text = day.day.toString()
+                                    textSize = 14f
+                                    typeface = brandBold()
+                                    gravity = Gravity.CENTER
+                                    setTextColor(if (isSelected) Color.WHITE else color("#1A1B2E"))
+                                })
+                                addView(buildTypeDots(day, isSelected), matchWrap().apply { topMargin = dp(3) })
+                            }, LinearLayout.LayoutParams(0, dp(48), 1f).apply {
+                                if (index > 0) leftMargin = dp(2)
+                            })
+                        }
+                    }
+                }, matchWrap().apply { topMargin = dp(4) })
+            }
+        }
+    }
+
+    private fun buildDayCalendarPreview(): LinearLayout {
+        val selected = selectedDateKey ?: summary?.selectedDate
+        val selectedSchedules = schedulesForDate(selected)
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundDrawable("#FFFFFF", 18, "#EEF0F4")
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+
+            addView(TextView(context).apply {
+                text = "${formatDateTitle(selected)} 상세"
+                textSize = 15f
+                typeface = brandBold()
+                setTextColor(color("#1A1B2E"))
+            })
+
+            addView(TextView(context).apply {
+                text = if (selectedSchedules.isEmpty()) "선택한 날짜에 등록된 일정이 없어요" else "${selectedSchedules.size}개의 일정이 있어요"
+                textSize = 12f
+                typeface = brandMedium()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(4) })
+
+            selectedSchedules.take(2).forEach {
+                addView(buildMiniScheduleRow(it), matchWrap().apply { topMargin = dp(10) })
+            }
+        }
+    }
+
     private fun buildTypeDots(day: NativeHomePortCalendarDay, selected: Boolean): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -433,9 +638,7 @@ class NativeHomePortActivity : AppCompatActivity() {
 
     private fun buildSelectedDateSection(): LinearLayout {
         val selected = selectedDateKey ?: summary?.selectedDate
-        val selectedSchedules = summary?.range.orEmpty()
-            .filter { scheduleDateKey(it.startTime) == selected }
-            .sortedBy { it.startTime }
+        val selectedSchedules = schedulesForDate(selected)
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
 
@@ -485,35 +688,77 @@ class NativeHomePortActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16), dp(14), dp(16), dp(14))
-            background = cardDrawable(20)
+            background = roundDrawable("#FFFFFF", 20, "#EEF0F4")
             elevation = dp(2).toFloat()
             setOnClickListener {
                 if (schedule.id.isNotBlank()) openWebPath("/schedules/${schedule.id}")
             }
 
-            addView(TextView(context).apply {
-                text = timeText(schedule.startTime)
-                textSize = 13f
-                typeface = Typeface.DEFAULT_BOLD
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setTextColor(color("#0084CC"))
-                background = roundDrawable("#F0FAFF", 14)
-            }, LinearLayout.LayoutParams(dp(68), dp(54)))
+                background = roundDrawable(scheduleTypeBg(schedule.type), 14)
+                addView(TextView(context).apply {
+                    text = timeText(schedule.startTime)
+                    textSize = 14f
+                    typeface = brandBold()
+                    gravity = Gravity.CENTER
+                    setTextColor(color(scheduleTypeColor(schedule.type)))
+                })
+                addView(TextView(context).apply {
+                    text = scheduleTypeLabel(schedule.type)
+                    textSize = 9f
+                    typeface = brandBold()
+                    gravity = Gravity.CENTER
+                    setTextColor(color(scheduleTypeColor(schedule.type)))
+                }, matchWrap().apply { topMargin = dp(2) })
+            }, LinearLayout.LayoutParams(dp(68), dp(58)))
 
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    addView(TextView(context).apply {
+                        text = scheduleTypeLabel(schedule.type)
+                        textSize = 10f
+                        typeface = brandBold()
+                        gravity = Gravity.CENTER
+                        setTextColor(color(scheduleTypeColor(schedule.type)))
+                        background = roundDrawable(scheduleTypeBg(schedule.type), 999)
+                        setPadding(dp(8), dp(3), dp(8), dp(3))
+                    })
+                    addView(TextView(context).apply {
+                        text = statusLabel(schedule.status)
+                        textSize = 10f
+                        typeface = brandBold()
+                        gravity = Gravity.CENTER
+                        setTextColor(Color.WHITE)
+                        background = roundDrawable(statusColor(schedule.status), 999)
+                        setPadding(dp(8), dp(3), dp(8), dp(3))
+                    }, LinearLayout.LayoutParams(wrap(), wrap()).apply { leftMargin = dp(6) })
+                })
                 addView(TextView(context).apply {
                     text = schedule.title
                     textSize = 15f
-                    typeface = Typeface.DEFAULT_BOLD
+                    typeface = brandBold()
                     setTextColor(color("#1A1B2E"))
-                })
+                    maxLines = 1
+                }, matchWrap().apply { topMargin = dp(6) })
                 addView(TextView(context).apply {
                     text = scheduleSubtitle(schedule)
                     textSize = 12f
+                    typeface = brandMedium()
                     setTextColor(color("#8E8E93"))
                 }, matchWrap().apply { topMargin = dp(4) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
+
+            addView(TextView(context).apply {
+                text = "›"
+                textSize = 24f
+                gravity = Gravity.CENTER
+                setTextColor(color("#AEAEA8"))
+            }, LinearLayout.LayoutParams(dp(18), match()))
         }
     }
 
@@ -635,21 +880,111 @@ class NativeHomePortActivity : AppCompatActivity() {
         val upcoming = summary?.upcoming.orEmpty()
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            addView(sectionHeader("다가오는 일정", "${summary?.upcomingCount ?: 0}개", null))
+            addView(sectionHeader("다가오는 일정", "${summary?.upcomingCount ?: 0}개", "전체보기", "/schedules"))
             if (upcoming.isEmpty()) {
                 addView(TextView(context).apply {
                     text = "앞으로 예정된 일정이 없어요"
                     textSize = 13f
                     gravity = Gravity.CENTER
                     setTextColor(color("#8E8E93"))
-                    background = cardDrawable(20)
+                    background = roundDrawable("#FFFFFF", 20, "#EEF0F4")
                     setPadding(dp(20), dp(28), dp(20), dp(28))
                 }, matchWrap().apply { topMargin = dp(12) })
             } else {
                 upcoming.take(3).forEach { schedule ->
-                    addView(buildScheduleCard(schedule), matchWrap().apply { topMargin = dp(10) })
+                    addView(buildUpcomingScheduleRow(schedule), matchWrap().apply { topMargin = dp(8) })
                 }
             }
+        }
+    }
+
+    private fun buildMiniScheduleRow(schedule: NativeHomePortSchedule): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            background = roundDrawable("#F8FAFC", 14)
+            setOnClickListener {
+                if (schedule.id.isNotBlank()) openWebPath("/schedules/${schedule.id}")
+            }
+
+            addView(View(context).apply {
+                background = roundDrawable(scheduleTypeColor(schedule.type), 999)
+            }, LinearLayout.LayoutParams(dp(4), dp(34)))
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(TextView(context).apply {
+                    text = schedule.title
+                    textSize = 13f
+                    typeface = brandBold()
+                    maxLines = 1
+                    setTextColor(color("#1A1B2E"))
+                })
+                addView(TextView(context).apply {
+                    text = scheduleSubtitle(schedule)
+                    textSize = 11f
+                    typeface = brandMedium()
+                    setTextColor(color("#8E8E93"))
+                }, matchWrap().apply { topMargin = dp(2) })
+            }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(10) })
+        }
+    }
+
+    private fun buildUpcomingScheduleRow(schedule: NativeHomePortSchedule): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            background = roundDrawable("#FFFFFF", 16, "#EEF0F4")
+            elevation = dp(1).toFloat()
+            setOnClickListener {
+                if (schedule.id.isNotBlank()) openWebPath("/schedules/${schedule.id}")
+            }
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = roundDrawable(scheduleTypeBg(schedule.type), 12)
+                addView(TextView(context).apply {
+                    text = monthText(schedule.startTime)
+                    textSize = 10f
+                    typeface = brandBold()
+                    gravity = Gravity.CENTER
+                    setTextColor(color(scheduleTypeColor(schedule.type)))
+                })
+                addView(TextView(context).apply {
+                    text = dayText(schedule.startTime)
+                    textSize = 16f
+                    typeface = brandBold()
+                    gravity = Gravity.CENTER
+                    setTextColor(color("#1A1B2E"))
+                }, matchWrap().apply { topMargin = dp(1) })
+            }, LinearLayout.LayoutParams(dp(44), dp(44)))
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(TextView(context).apply {
+                    text = schedule.title
+                    textSize = 14f
+                    typeface = brandBold()
+                    maxLines = 1
+                    setTextColor(color("#1A1B2E"))
+                })
+                addView(TextView(context).apply {
+                    text = "${formatDateTitle(scheduleDateKey(schedule.startTime))} · ${timeText(schedule.startTime)}"
+                    textSize = 12f
+                    typeface = brandMedium()
+                    setTextColor(color("#8E8E93"))
+                }, matchWrap().apply { topMargin = dp(3) })
+            }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
+
+            addView(TextView(context).apply {
+                text = "›"
+                textSize = 22f
+                gravity = Gravity.CENTER
+                setTextColor(color("#AEAEA8"))
+            }, LinearLayout.LayoutParams(dp(16), match()))
         }
     }
 
@@ -741,14 +1076,13 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun scheduleSubtitle(schedule: NativeHomePortSchedule): String {
-        val typeLabel = when (schedule.type) {
-            "shared" -> "공유일정"
-            "child" -> "자녀일정"
-            "expense" -> "지출"
-            else -> "개인일정"
-        }
-        return "$typeLabel · ${timeText(schedule.startTime)}"
+        return "${scheduleTypeLabel(schedule.type)} · ${timeText(schedule.startTime)}"
     }
+
+    private fun schedulesForDate(dateKey: String?): List<NativeHomePortSchedule> =
+        summary?.range.orEmpty()
+            .filter { scheduleDateKey(it.startTime) == dateKey }
+            .sortedBy { it.startTime }
 
     private fun scheduleDateKey(raw: String): String = raw.take(10)
 
@@ -764,6 +1098,46 @@ class NativeHomePortActivity : AppCompatActivity() {
         "child" -> "#2EE895"
         "expense" -> "#F59E0B"
         else -> "#0CC9B5"
+    }
+
+    private fun scheduleTypeBg(type: String): String = when (type) {
+        "shared" -> "#EAF6FF"
+        "child" -> "#ECFDF5"
+        "expense" -> "#FFF7ED"
+        else -> "#E6FFFA"
+    }
+
+    private fun scheduleTypeLabel(type: String): String = when (type) {
+        "shared" -> "공유일정"
+        "child" -> "자녀일정"
+        "expense" -> "지출"
+        else -> "개인일정"
+    }
+
+    private fun statusLabel(status: String): String = when (status) {
+        "completed" -> "완료"
+        "missed" -> "미완료"
+        "in_progress" -> "진행중"
+        else -> "예정"
+    }
+
+    private fun statusColor(status: String): String = when (status) {
+        "completed" -> "#2EE895"
+        "missed" -> "#EF4444"
+        "in_progress" -> "#0084CC"
+        else -> "#AEAEA8"
+    }
+
+    private fun monthText(raw: String): String {
+        val key = scheduleDateKey(raw)
+        val parts = key.split("-")
+        return if (parts.size == 3) "${parts[1].toIntOrNull() ?: parts[1]}월" else ""
+    }
+
+    private fun dayText(raw: String): String {
+        val key = scheduleDateKey(raw)
+        val parts = key.split("-")
+        return if (parts.size == 3) "${parts[2].toIntOrNull() ?: parts[2]}" else ""
     }
 
     private fun timeText(raw: String): String {
@@ -782,8 +1156,21 @@ class NativeHomePortActivity : AppCompatActivity() {
 
     private fun money(value: Long): String = NumberFormat.getNumberInstance(Locale.KOREA).format(value) + "원"
 
+    private fun brandRegular(): Typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+    private fun brandMedium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+    private fun brandBold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
+
     private fun cardDrawable(radius: Int = 20): GradientDrawable =
         roundDrawable("#FFFFFF", radius, "#EEF0F4")
+
+    private fun shimmerDrawable(index: Int): GradientDrawable =
+        GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            if (index % 2 == 0) intArrayOf(color("#F0FAFF"), color("#FFFFFF")) else intArrayOf(color("#F7F8FB"), color("#FFFFFF"))
+        ).apply {
+            cornerRadius = dp(16).toFloat()
+            setStroke(dp(1), color("#EEF0F4"))
+        }
 
     private fun roundDrawable(fill: String, radius: Int, stroke: String? = null): GradientDrawable {
         val fillColor = if (fill == "rgba-white-08") Color.argb(20, 255, 255, 255) else color(fill)
@@ -856,6 +1243,12 @@ private data class NativeNavItem(
     val icon: NativeNavIcon,
     val path: String,
 )
+
+private enum class CalendarMode {
+    MONTH,
+    WEEK,
+    DAY,
+}
 
 private enum class NativeNavIcon {
     HOME,
