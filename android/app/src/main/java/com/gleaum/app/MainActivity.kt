@@ -146,6 +146,7 @@ class MainActivity : BridgeActivity() {
             return /^\/home\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/schedules(\/.*)?([?#].*)?${'$'}/.test(path) ||
                    /^\/budget\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/notifications\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/space(\/new)?\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/mypage\/?([?#].*)?${'$'}/.test(path);
           }
@@ -202,6 +203,7 @@ class MainActivity : BridgeActivity() {
     private fun nativeIntentFor(path: String): Intent? = when {
         path == "/home" -> Intent(this, NativeHomePortActivity::class.java)
         path == "/budget" -> Intent(this, NativeBudgetActivity::class.java)
+        path == "/notifications" -> Intent(this, NativeNotificationActivity::class.java)
         path == "/mypage" -> Intent(this, NativeMyMenuActivity::class.java)
         path == "/space" -> Intent(this, NativeSpaceActivity::class.java)
         path == "/space/new" -> Intent(this, NativeSpaceActivity::class.java)

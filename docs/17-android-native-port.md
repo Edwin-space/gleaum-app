@@ -469,3 +469,15 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 클라이언트와 서버 양쪽에서 최소 6자, 최대 72자 검증을 수행한다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 남은 검증: 운영 배포 후 실제 이메일 로그인 계정에서 비밀번호 변경 → 로그아웃 → 새 비밀번호 로그인 회귀 테스트가 필요하다.
+
+
+## 2026-06-23 Native 알림/계정 보안 배치
+
+- `GET/PATCH /api/native/notifications`와 `PATCH /api/native/notifications/[id]`를 추가해 Android 네이티브 알림 목록, 전체 읽음, 개별 읽음 처리를 지원한다.
+- 알림 DB 접근은 `src/lib/db.ts`의 `getNativeNotifications()`, `markNativeNotificationRead()`, `markAllNativeNotificationsRead()`로 모아 컴포넌트/API route 직접 쿼리 확산을 막았다.
+- Android `NativeNotificationActivity`와 `NativeNotificationApi`를 추가해 홈 알림 버튼, WebView `/notifications` 이동, 네이티브 홈 내부 알림 진입을 모두 네이티브 화면으로 승격한다.
+- 기존 `/api/account/status`, `/api/account/withdraw`, `/api/account/restore`는 cookie 세션뿐 아니라 Native bearer token도 받도록 `createNativeRouteAuth()` 기반으로 보강했다.
+- Android `NativeAccountApi`와 전체 메뉴 `계정 탈퇴/복구` 다이얼로그를 추가해 탈퇴 신청 상태 확인, 복구, 탈퇴 신청을 WebView 없이 처리한다.
+- `AndroidManifest.xml`에 `NativeNotificationActivity`를 등록했다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 남은 검증: 실제 로그인 단말에서 알림 목록/개별 알림 터치/전체 읽음, 탈퇴 신청 상태 확인, 복구 가능 계정 복구, 탈퇴 신청 후 네이티브 로그아웃을 회귀 테스트한다.

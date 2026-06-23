@@ -220,7 +220,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             addView(FrameLayout(context).apply {
                 gravity = Gravity.CENTER
                 background = roundDrawable("#FFFFFF", 20, "#E8E8E4")
-                setOnClickListener { openWebPath("/notifications") }
+                setOnClickListener {
+                    startActivity(Intent(this@NativeHomePortActivity, NativeNotificationActivity::class.java))
+                }
                 addView(NativeBottomNavIconView(context, NativeNavIcon.BELL, color("#1A1B2E")), FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER))
             }, LinearLayout.LayoutParams(dp(40), dp(40)))
         }
@@ -1095,6 +1097,10 @@ class NativeHomePortActivity : AppCompatActivity() {
         if (path == "/budget") {
             startActivity(Intent(this, NativeBudgetActivity::class.java))
             finish()
+            return
+        }
+        if (path == "/notifications") {
+            startActivity(Intent(this, NativeNotificationActivity::class.java))
             return
         }
         if (path == "/mypage") {

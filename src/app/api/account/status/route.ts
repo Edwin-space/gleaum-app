@@ -3,16 +3,15 @@
  * GET /api/account/status
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 const RECOVERY_DAYS = 30;
 
-export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(req: NextRequest) {
+  const auth = await createNativeRouteAuth(req);
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +21,7 @@ export async function GET() {
   const { data: profile } = await admin
     .from('profiles')
     .select('withdrawal_requested_at, is_withdrawn')
-    .eq('id', user.id)
+    .eq('id', auth.user.id)
     .single();
 
   if (!profile) return NextResponse.json({ withdrawalPending: false });

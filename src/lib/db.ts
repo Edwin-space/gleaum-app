@@ -2983,6 +2983,48 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .eq('read', false);
 }
 
+export async function getNativeNotifications(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<Notification[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw new Error(error.message || 'notifications_fetch_failed');
+  return (data as NotificationRow[]).map(rowToNotification);
+}
+
+export async function markNativeNotificationRead(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', id)
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message || 'notification_mark_failed');
+}
+
+export async function markAllNativeNotificationsRead(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', userId)
+    .eq('read', false);
+
+  if (error) throw new Error(error.message || 'notifications_mark_all_failed');
+}
+
 // ── FCM ─────────────────────────────────────────────────────
 
 /** FCM 토큰을 현재 사용자 프로필에 저장 */

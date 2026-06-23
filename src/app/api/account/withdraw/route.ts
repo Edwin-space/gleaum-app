@@ -10,12 +10,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await createNativeRouteAuth(req);
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let reason: string | undefined;
   try {
@@ -32,7 +31,7 @@ export async function POST(req: NextRequest) {
   const { data: profile } = await admin
     .from('profiles')
     .select('withdrawal_requested_at, is_withdrawn, created_at')
-    .eq('id', user.id)
+    .eq('id', auth.user.id)
     .single();
 
   if (!profile) return NextResponse.json({ error: '프로필을 찾을 수 없습니다.' }, { status: 404 });
@@ -50,7 +49,7 @@ export async function POST(req: NextRequest) {
       withdrawal_requested_at: now,
       fcm_token: null,           // 즉시 푸시 알림 중단
     })
-    .eq('id', user.id);
+    .eq('id', auth.user.id);
 
   // ── 3. withdrawal_archive에 익명 통계 사전 기록 ────────────
   const signupDate = new Date(profile.created_at ?? now);
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest) {
   });
 
   // ── 4. 세션 로그아웃 ─────────────────────────────────────
-  await supabase.auth.signOut();
+  await auth.supabase.auth.signOut();
 
   return NextResponse.json({
     success: true,

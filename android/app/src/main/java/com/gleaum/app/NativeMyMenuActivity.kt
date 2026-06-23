@@ -152,6 +152,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         MenuRow("생체인증 보안", biometricSubtitle(), MenuIcon.LOCK, biometricBadge()) { showBiometricSettings() },
                         MenuRow("비밀번호 설정", "이메일 로그인 보안 설정", MenuIcon.KEY, null) { showPasswordSettingsNotice() },
                         MenuRow("프로필 관리", "닉네임, 이름, 계정 정보", MenuIcon.USER, null) { loadProfileForEdit() },
+                        MenuRow("계정 탈퇴/복구", "탈퇴 신청 상태 확인과 복구", MenuIcon.INFO, null) { loadAccountStatus() },
                     )), matchWrap().apply { topMargin = dp(10) })
 
                     addView(buildSectionTitle("서비스"), matchWrap().apply { topMargin = dp(22) })
@@ -593,6 +594,115 @@ class NativeMyMenuActivity : AppCompatActivity() {
         "password_too_short" -> "비밀번호는 6자 이상 입력해 주세요."
         "password_too_long" -> "비밀번호는 72자 이내로 입력해 주세요."
         else -> "비밀번호를 변경하지 못했어요. 잠시 후 다시 시도해 주세요."
+    }
+
+    private fun loadAccountStatus() {
+        message = "계정 상태를 확인하는 중이에요."
+        render()
+        Thread {
+            try {
+                val status = NativeAccountApi.status(this)
+                runOnUiThread {
+                    message = null
+                    render()
+                    showAccountStatusDialog(status)
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyAccountError(e.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun showAccountStatusDialog(status: NativeAccountStatus) {
+        if (status.withdrawalPending) {
+            AlertDialog.Builder(this)
+                .setTitle("탈퇴 신청 중")
+                .setMessage("계정 삭제까지 ${status.daysLeft}일 남았어요. 복구하면 기존 계정을 계속 사용할 수 있습니다.")
+                .setNegativeButton("닫기", null)
+                .setPositiveButton("복구하기") { _, _ -> restoreAccount() }
+                .show()
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("계정 탈퇴")
+            .setMessage("탈퇴 신청 후 30일 동안 복구할 수 있고, 이후 개인정보가 삭제됩니다. 먼저 데이터를 확인한 뒤 진행해 주세요.")
+            .setNegativeButton("닫기", null)
+            .setPositiveButton("탈퇴 신청") { _, _ -> showWithdrawReasonDialog() }
+            .show()
+    }
+
+    private fun showWithdrawReasonDialog() {
+        val reasonInput = EditText(this).apply {
+            hint = "탈퇴 사유 (선택, 200자 이내)"
+            textSize = 15f
+            minLines = 3
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+            background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("정말 탈퇴를 신청할까요?")
+            .setMessage("신청 즉시 이 기기에서는 로그아웃되며, 30일 이내에 다시 로그인하면 복구할 수 있어요.")
+            .setView(LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(20), dp(8), dp(20), 0)
+                addView(reasonInput, matchWrap())
+            })
+            .setNegativeButton("취소", null)
+            .setPositiveButton("탈퇴 신청") { _, _ -> withdrawAccount(reasonInput.text?.toString().orEmpty()) }
+            .show()
+    }
+
+    private fun withdrawAccount(reason: String) {
+        message = "탈퇴 신청을 처리하는 중이에요."
+        render()
+        Thread {
+            try {
+                NativeAccountApi.withdraw(this, reason.take(200))
+                runOnUiThread {
+                    SessionManager.clear(this)
+                    Toast.makeText(this, "탈퇴 신청이 완료되었어요.", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, LoginActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    })
+                    finish()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyAccountError(e.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun restoreAccount() {
+        message = "계정을 복구하는 중이에요."
+        render()
+        Thread {
+            try {
+                NativeAccountApi.restore(this)
+                runOnUiThread {
+                    message = "탈퇴 신청을 취소했어요. 계정을 계속 사용할 수 있습니다."
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyAccountError(e.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun friendlyAccountError(code: String?): String = when {
+        code == "session_required" || code == "Unauthorized" -> "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요."
+        code?.contains("이미 탈퇴 신청") == true -> "이미 탈퇴 신청 중인 계정이에요."
+        code?.contains("탈퇴 신청 이력") == true -> "복구할 탈퇴 신청 이력이 없어요."
+        else -> "계정 상태를 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
     }
 
     private fun themeModeSubtitle(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {

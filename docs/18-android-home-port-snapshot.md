@@ -550,3 +550,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Android 경로: 전체 메뉴 → 계정 & 보안 → 비밀번호 설정 → 새 비밀번호/확인 입력 → 저장.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
 - 다음 검증: 실제 단말에서 변경 후 이메일 로그인 재시도.
+
+
+## 2026-06-23 Native Notifications & Account Snapshot
+
+- 홈 상단 알림 버튼과 `/notifications` route bridge를 `NativeNotificationActivity`로 연결했다.
+- 신규 API: `GET/PATCH /api/native/notifications`, `PATCH /api/native/notifications/[id]`.
+- 알림 화면 기능: unread hero, 최근 알림 목록, 전체 읽음, 개별 읽음, 일정 알림의 일정 상세 진입.
+- 계정 API 3종(`/api/account/status`, `/api/account/withdraw`, `/api/account/restore`)은 Android bearer token 인증을 지원한다.
+- 전체 메뉴에 `계정 탈퇴/복구` 네이티브 다이얼로그를 추가했다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.

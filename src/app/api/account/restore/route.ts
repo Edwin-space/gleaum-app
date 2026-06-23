@@ -6,16 +6,15 @@
  * - 복구 시 withdrawal_requested_at 초기화
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 const RECOVERY_DAYS = 30;
 
-export async function POST() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function POST(req: NextRequest) {
+  const auth = await createNativeRouteAuth(req);
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +25,7 @@ export async function POST() {
   const { data: profile } = await admin
     .from('profiles')
     .select('withdrawal_requested_at, is_withdrawn')
-    .eq('id', user.id)
+    .eq('id', auth.user.id)
     .single();
 
   if (!profile) return NextResponse.json({ error: '프로필을 찾을 수 없습니다.' }, { status: 404 });
@@ -44,7 +43,7 @@ export async function POST() {
   await admin
     .from('profiles')
     .update({ withdrawal_requested_at: null })
-    .eq('id', user.id);
+    .eq('id', auth.user.id);
 
   // withdrawal_archive에서 해당 신청 레코드 삭제 (통계 되돌리기)
   await admin
