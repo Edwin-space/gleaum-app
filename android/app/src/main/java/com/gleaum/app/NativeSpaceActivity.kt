@@ -111,7 +111,7 @@ class NativeSpaceActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
                 background = gradient("#0CC9B5", "#0084CC", 26)
-                setOnClickListener { openWebPath("/space/new") }
+                setOnClickListener { showCreateSpaceDialog() }
             }, LinearLayout.LayoutParams(dp(52), dp(52)))
         }, FrameLayout.LayoutParams(match(), match()))
     }
@@ -253,6 +253,10 @@ class NativeSpaceActivity : AppCompatActivity() {
     private fun manageGroup(): LinearLayout = cardGroup().apply {
         val active = summary?.activeSpace
         val canManage = active?.role == "admin"
+        addView(manageRow("공간 참여하기", "초대 코드로 다른 공간에 입장합니다") { showJoinSpaceDialog() }, matchWrap())
+        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
+        addView(manageRow("새 공간 만들기", "친구, 연인, 가족과 함께할 공간을 만듭니다") { showCreateSpaceDialog() }, matchWrap())
+        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
         addView(manageRow("공간 이름 변경", if (canManage) "현재 공간의 이름을 바로 수정합니다" else "공간 지기만 수정할 수 있어요") {
             if (canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
         }, matchWrap())
@@ -313,6 +317,59 @@ class NativeSpaceActivity : AppCompatActivity() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("글리움 초대 코드", code))
         Toast.makeText(this, "초대 코드가 복사됐어요.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showCreateSpaceDialog() {
+        val input = EditText(this).apply {
+            hint = "예: 우리집, 데이트 공간, 친구모임"
+            textSize = 16f
+            setSingleLine(true)
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = round("#F8FAFC", 16, "#EEF0F4")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("새 공간 만들기")
+            .setMessage("무료 플랜에서는 개인 공간 외 공유 공간을 최대 2개까지 사용할 수 있어요.")
+            .setView(FrameLayout(this).apply {
+                setPadding(dp(20), dp(8), dp(20), 0)
+                addView(input, FrameLayout.LayoutParams(match(), wrap()))
+            })
+            .setNegativeButton("취소", null)
+            .setPositiveButton("만들기") { _, _ -> createSpace(input.text?.toString().orEmpty()) }
+            .show()
+    }
+
+    private fun createSpace(name: String) {
+        runSpaceMutation("공간을 만들지 못했어요. 공유 공간 한도를 확인해 주세요.") {
+            NativeSpaceApi.create(this, name)
+        }
+    }
+
+    private fun showJoinSpaceDialog() {
+        val input = EditText(this).apply {
+            hint = "GLEAUM-XXXXXXX"
+            textSize = 16f
+            setSingleLine(true)
+            setAllCaps(false)
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = round("#F8FAFC", 16, "#EEF0F4")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("공간 참여하기")
+            .setMessage("초대받은 코드를 입력하면 공간 멤버로 참여합니다.")
+            .setView(FrameLayout(this).apply {
+                setPadding(dp(20), dp(8), dp(20), 0)
+                addView(input, FrameLayout.LayoutParams(match(), wrap()))
+            })
+            .setNegativeButton("취소", null)
+            .setPositiveButton("참여") { _, _ -> joinSpace(input.text?.toString().orEmpty()) }
+            .show()
+    }
+
+    private fun joinSpace(code: String) {
+        runSpaceMutation("공간에 참여하지 못했어요. 초대 코드를 확인해 주세요.") {
+            NativeSpaceApi.join(this, code.trim().uppercase())
+        }
     }
 
     private fun showRenameDialog() {

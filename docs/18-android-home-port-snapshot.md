@@ -503,3 +503,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 권한 경계는 서버 API에서 공간 지기(admin) 기준으로 다시 확인한다.
 - 개인 공간은 초대/멤버 관리 대상이 아니므로 서버와 앱 UI 양쪽에서 제한한다.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+
+
+## 2026-06-23 Native Space Create/Join Snapshot
+
+- Native Space에서 공유 공간 생성과 초대 코드 참여를 WebView 없이 처리한다.
+- 신규 API: `POST /api/native/spaces`, `POST /api/native/spaces/join`.
+- 서버 경계: 공유 공간 무료 한도 2개 강제, 개인 공간 제외, 초대 참여자 기본 역할 `viewer`.
+- Android 경로: `/space/new`와 공간 화면 `+`는 `NativeSpaceActivity`의 생성 다이얼로그로 연결된다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+- 다음 검증: 운영 배포 후 실제 초대 코드로 신규 계정 참여 테스트.

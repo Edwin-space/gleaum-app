@@ -2128,6 +2128,108 @@ export async function getNativeSpaceSummary(
   };
 }
 
+async function getNativeSharedSpaceCount(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<number> {
+  const { personalSpaceId } = await getNativeProfileContext(supabase, userId);
+  const { data, error } = await supabase
+    .from('space_members')
+    .select('space_id')
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
+  return [...new Set(((data ?? []) as Array<{ space_id: string }>).map((row) => row.space_id))]
+    .filter((spaceId) => spaceId !== personalSpaceId)
+    .length;
+}
+
+export async function createNativeSpace(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  name: string,
+): Promise<NativeSpaceSummary> {
+  const nextName = name.trim();
+  if (!nextName) throw new Error('space_name_required');
+  if (nextName.length > 40) throw new Error('space_name_too_long');
+
+  const sharedCount = await getNativeSharedSpaceCount(supabase, userId);
+  if (sharedCount >= 2) throw new Error('shared_space_limit_reached');
+
+  const inviteCode = generateInviteCode();
+  const { data: group, error: groupError } = await supabase
+    .from('family_groups')
+    .insert({ name: nextName, invite_code: inviteCode, created_by: userId })
+    .select('id')
+    .single();
+
+  if (groupError || !group) throw new Error(groupError?.message ?? 'space_create_failed');
+
+  const spaceId = (group as { id: string }).id;
+  const { error: memberError } = await supabase
+    .from('space_members')
+    .insert({ space_id: spaceId, user_id: userId, role: 'admin' });
+
+  if (memberError) throw new Error(memberError.message);
+
+  await supabase
+    .from('profiles')
+    .update({ family_group_id: spaceId })
+    .eq('id', userId);
+
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+export async function joinNativeSpaceByCode(
+  admin: RouteSupabaseClient,
+  userSupabase: RouteSupabaseClient,
+  userId: string,
+  code: string,
+): Promise<NativeSpaceSummary> {
+  const normalizedCode = code.trim().toUpperCase();
+  if (!normalizedCode) throw new Error('invite_code_required');
+
+  const sharedCount = await getNativeSharedSpaceCount(userSupabase, userId);
+  if (sharedCount >= 2) throw new Error('shared_space_limit_reached');
+
+  const { data: group, error: groupError } = await admin
+    .from('family_groups')
+    .select('id,name,invite_code_expires_at')
+    .eq('invite_code', normalizedCode)
+    .single();
+
+  if (groupError || !group) throw new Error('invalid_code');
+  if (
+    (group as { invite_code_expires_at?: string | null }).invite_code_expires_at &&
+    new Date((group as { invite_code_expires_at: string }).invite_code_expires_at) < new Date()
+  ) {
+    throw new Error('expired_code');
+  }
+
+  const spaceId = (group as { id: string }).id;
+  const { data: existing } = await admin
+    .from('space_members')
+    .select('id')
+    .eq('space_id', spaceId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!existing) {
+    const { error: memberError } = await admin
+      .from('space_members')
+      .insert({ space_id: spaceId, user_id: userId, role: 'viewer' });
+
+    if (memberError) throw new Error(memberError.message);
+  }
+
+  await admin
+    .from('profiles')
+    .update({ family_group_id: spaceId })
+    .eq('id', userId);
+
+  return getNativeSpaceSummary(userSupabase, userId);
+}
+
 async function requireNativeSpaceAdmin(
   supabase: RouteSupabaseClient,
   userId: string,

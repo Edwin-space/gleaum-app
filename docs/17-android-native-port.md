@@ -408,3 +408,17 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 멤버 row는 공간 지기이며 공유 공간일 때만 역할 변경/내보내기 액션을 제공한다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 남은 검증: 실제 로그인 단말에서 공간 지기 계정으로 이름 변경, 초대 코드 재생성, 역할 변경, 멤버 내보내기 회귀 테스트가 필요하다.
+
+
+## 2026-06-23 Native 공간 생성/참여 1차
+
+- `POST /api/native/spaces`를 추가해 Android 네이티브 공간 화면에서 공유 공간을 직접 생성한다.
+- 서버는 공유 공간 무료 한도 2개를 `space_members` 기준으로 재확인하고, 개인 공간은 한도 계산에서 제외한다.
+- 신규 공간 생성 시 `family_groups`와 생성자 `space_members(role='admin')`를 함께 만들고, 사용자의 활성 공간을 새 공간으로 전환한다.
+- `POST /api/native/spaces/join`을 추가해 초대 코드로 공유 공간에 참여할 수 있게 했다.
+- 초대 코드 조회는 서버 라우트 내부의 service-role 클라이언트로만 수행하고, 실제 응답/멤버 등록은 bearer token 사용자 기준 권한 경계를 유지한다.
+- 초대 코드 참여자의 기본 역할은 `viewer`이며, 공간 지기가 별도로 변경하기 전까지 조회 권한만 가진다.
+- Android `NativeSpaceActivity`의 상단 `+`와 공간 관리 메뉴에 `새 공간 만들기`, `공간 참여하기` 네이티브 다이얼로그를 연결했다.
+- `/space/new` 경로도 WebView 신규 공간 화면 대신 `NativeSpaceActivity`로 라우팅한다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 남은 검증: 배포 후 실제 로그인 단말에서 공간 생성, 초대 코드 참여, 공유 공간 2개 한도, 참여자 기본 역할 `viewer`를 회귀 테스트한다.

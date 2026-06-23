@@ -145,7 +145,7 @@ class MainActivity : BridgeActivity() {
             if (!path) return false;
             return /^\/schedules(\/.*)?([?#].*)?${'$'}/.test(path) ||
                    /^\/budget\/?([?#].*)?${'$'}/.test(path) ||
-                   /^\/space\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/space(\/new)?\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/mypage\/?([?#].*)?${'$'}/.test(path);
           }
 
@@ -202,6 +202,7 @@ class MainActivity : BridgeActivity() {
         path == "/budget" -> Intent(this, NativeBudgetActivity::class.java)
         path == "/mypage" -> Intent(this, NativeMyMenuActivity::class.java)
         path == "/space" -> Intent(this, NativeSpaceActivity::class.java)
+        path == "/space/new" -> Intent(this, NativeSpaceActivity::class.java)
         path == "/schedules" -> Intent(this, NativeScheduleListActivity::class.java)
         path == "/schedules/new" -> Intent(this, NativeScheduleCreateActivity::class.java)
         path.matches(Regex("^/schedules/[^/]+/edit$")) -> {

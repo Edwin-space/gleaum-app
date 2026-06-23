@@ -93,6 +93,14 @@ object NativeSpaceApi {
         return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId", JSONObject().put("name", name)))
     }
 
+    fun create(context: Context, name: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", SPACE_URL, JSONObject().put("name", name)))
+    }
+
+    fun join(context: Context, code: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/join", JSONObject().put("code", code)))
+    }
+
     fun regenerateInviteCode(context: Context, spaceId: String): NativeSpaceSummary {
         return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/invite-code"))
     }
