@@ -18,6 +18,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import android.app.AlertDialog
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 
 class NativeSpaceActivity : AppCompatActivity() {
@@ -228,6 +230,10 @@ class NativeSpaceActivity : AppCompatActivity() {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         setPadding(dp(16), dp(14), dp(16), dp(14))
+        val active = summary?.activeSpace
+        if (active?.role == "admin" && active.isPersonal.not() && !member.isMe) {
+            setOnClickListener { showMemberActions(member) }
+        }
         addView(TextView(context).apply {
             text = member.displayName.take(1).ifBlank { "?" }
             textSize = 18f
@@ -245,9 +251,19 @@ class NativeSpaceActivity : AppCompatActivity() {
     }
 
     private fun manageGroup(): LinearLayout = cardGroup().apply {
-        addView(manageRow("멤버 초대", "초대 링크와 권한 관리는 웹 설정에서 이어서 처리합니다") { openWebPath("/space/settings") }, matchWrap())
+        val active = summary?.activeSpace
+        val canManage = active?.role == "admin"
+        addView(manageRow("공간 이름 변경", if (canManage) "현재 공간의 이름을 바로 수정합니다" else "공간 지기만 수정할 수 있어요") {
+            if (canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
+        }, matchWrap())
         addView(divider(), matchWrap().apply { leftMargin = dp(16) })
-        addView(manageRow("공간 설정", "공간 이름, 멤버 역할, 초대 코드 관리") { openWebPath("/space/settings") }, matchWrap())
+        addView(manageRow("초대 코드 새로 만들기", if (active?.isPersonal == true) "개인 공간은 초대할 수 없어요" else "기존 코드는 새 코드로 교체됩니다") {
+            if (active?.isPersonal == true) toast("개인 공간은 초대할 수 없어요.")
+            else if (canManage) confirmRegenerateInviteCode()
+            else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
+        }, matchWrap())
+        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
+        addView(manageRow("고급 설정", "아직 네이티브로 옮기지 않은 설정은 웹에서 계속 처리합니다") { openWebPath("/space/settings") }, matchWrap())
     }
 
     private fun manageRow(title: String, subtitle: String, action: () -> Unit): LinearLayout = LinearLayout(this).apply {
@@ -299,6 +315,105 @@ class NativeSpaceActivity : AppCompatActivity() {
         Toast.makeText(this, "초대 코드가 복사됐어요.", Toast.LENGTH_SHORT).show()
     }
 
+    private fun showRenameDialog() {
+        val active = summary?.activeSpace ?: return
+        val input = EditText(this).apply {
+            setText(active.name)
+            selectAll()
+            textSize = 16f
+            setSingleLine(true)
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = round("#F8FAFC", 16, "#EEF0F4")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("공간 이름 변경")
+            .setView(FrameLayout(this).apply {
+                setPadding(dp(20), dp(8), dp(20), 0)
+                addView(input, FrameLayout.LayoutParams(match(), wrap()))
+            })
+            .setNegativeButton("취소", null)
+            .setPositiveButton("저장") { _, _ -> updateSpaceName(active.id, input.text?.toString().orEmpty()) }
+            .show()
+    }
+
+    private fun updateSpaceName(spaceId: String, name: String) {
+        runSpaceMutation("공간 이름을 변경하지 못했어요.") {
+            NativeSpaceApi.updateName(this, spaceId, name)
+        }
+    }
+
+    private fun confirmRegenerateInviteCode() {
+        val active = summary?.activeSpace ?: return
+        AlertDialog.Builder(this)
+            .setTitle("초대 코드를 새로 만들까요?")
+            .setMessage("기존 초대 코드는 더 이상 사용할 수 없어요.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("새로 만들기") { _, _ ->
+                runSpaceMutation("초대 코드를 새로 만들지 못했어요.") {
+                    NativeSpaceApi.regenerateInviteCode(this, active.id)
+                }
+            }
+            .show()
+    }
+
+    private fun showMemberActions(member: NativeSpaceMember) {
+        val labels = arrayOf("공간 운영자로 변경", "공간 멤버로 변경", "공간 지기로 변경", "멤버 내보내기")
+        AlertDialog.Builder(this)
+            .setTitle(member.displayName)
+            .setItems(labels) { _, which ->
+                when (which) {
+                    0 -> updateMemberRole(member, "editor")
+                    1 -> updateMemberRole(member, "viewer")
+                    2 -> updateMemberRole(member, "admin")
+                    3 -> confirmRemoveMember(member)
+                }
+            }
+            .show()
+    }
+
+    private fun updateMemberRole(member: NativeSpaceMember, role: String) {
+        val spaceId = summary?.activeSpace?.id ?: return
+        runSpaceMutation("멤버 역할을 변경하지 못했어요.") {
+            NativeSpaceApi.updateMemberRole(this, spaceId, member.userId, role)
+        }
+    }
+
+    private fun confirmRemoveMember(member: NativeSpaceMember) {
+        val spaceId = summary?.activeSpace?.id ?: return
+        AlertDialog.Builder(this)
+            .setTitle("멤버를 내보낼까요?")
+            .setMessage("${member.displayName}님을 이 공간에서 제거합니다.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("내보내기") { _, _ ->
+                runSpaceMutation("멤버를 내보내지 못했어요.") {
+                    NativeSpaceApi.removeMember(this, spaceId, member.userId)
+                }
+            }
+            .show()
+    }
+
+    private fun runSpaceMutation(errorText: String, action: () -> NativeSpaceSummary) {
+        loading = true
+        render()
+        Thread {
+            try {
+                val next = action()
+                runOnUiThread {
+                    summary = next
+                    loading = false
+                    errorMessage = null
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    loading = false
+                    errorMessage = errorText
+                    render()
+                }
+            }
+        }.start()
+    }
+
     private fun loadingCard(): TextView = messageCard("공간 정보를 불러오는 중...")
     private fun messageCard(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(color("#8E8E93")); setPadding(dp(20), dp(64), dp(20), dp(64)); background = round("#FFFFFF", 24, "#EEF0F4") }
     private fun sectionTitle(title: String): TextView = TextView(this).apply { text = title; textSize = 17f; typeface = bold(); setTextColor(color("#1A1B2E")) }
@@ -307,6 +422,7 @@ class NativeSpaceActivity : AppCompatActivity() {
     private fun divider(): View = View(this).apply { setBackgroundColor(color("#EEF0F4")); layoutParams = LinearLayout.LayoutParams(match(), 1) }
     private fun roleLabel(role: String?): String = when (role) { "admin" -> "공간 지기"; "editor" -> "공간 운영자"; "viewer" -> "공간 멤버"; else -> "공간 멤버" }
     private fun friendlyError(code: String?): String = if (code == "session_required") "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요." else "공간 정보를 불러오지 못했어요."
+    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     private fun openWebPath(path: String) { startActivity(Intent(this, MainActivity::class.java).putExtra("start_path", path)); finish() }
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun medium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)

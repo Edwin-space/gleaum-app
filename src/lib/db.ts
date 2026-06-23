@@ -2128,6 +2128,117 @@ export async function getNativeSpaceSummary(
   };
 }
 
+async function requireNativeSpaceAdmin(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+): Promise<void> {
+  const { data: member } = await supabase
+    .from('space_members')
+    .select('role')
+    .eq('space_id', spaceId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if ((member as { role?: SpaceRole } | null)?.role === 'admin') return;
+
+  const { data: group } = await supabase
+    .from('family_groups')
+    .select('created_by')
+    .eq('id', spaceId)
+    .maybeSingle();
+
+  if ((group as { created_by?: string } | null)?.created_by === userId) return;
+  throw new Error('space_admin_required');
+}
+
+async function assertNativeSpaceIsNotPersonal(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+): Promise<void> {
+  const { personalSpaceId } = await getNativeProfileContext(supabase, userId);
+  if (personalSpaceId === spaceId) throw new Error('personal_space_locked');
+}
+
+export async function updateNativeSpaceName(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+  name: string,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  const nextName = name.trim();
+  if (!nextName) throw new Error('space_name_required');
+  if (nextName.length > 40) throw new Error('space_name_too_long');
+
+  const { error } = await supabase
+    .from('family_groups')
+    .update({ name: nextName })
+    .eq('id', spaceId);
+
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+export async function regenerateNativeSpaceInviteCode(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  await assertNativeSpaceIsNotPersonal(supabase, userId, spaceId);
+
+  const { error } = await supabase
+    .from('family_groups')
+    .update({ invite_code: generateInviteCode(), invite_code_expires_at: null })
+    .eq('id', spaceId);
+
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+export async function updateNativeSpaceMemberRole(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+  memberUserId: string,
+  role: SpaceRole,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  await assertNativeSpaceIsNotPersonal(supabase, userId, spaceId);
+  if (!['admin', 'editor', 'viewer'].includes(role)) throw new Error('invalid_role');
+
+  const { error } = await supabase
+    .from('space_members')
+    .update({ role })
+    .eq('space_id', spaceId)
+    .eq('user_id', memberUserId);
+
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+export async function removeNativeSpaceMember(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+  memberUserId: string,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  await assertNativeSpaceIsNotPersonal(supabase, userId, spaceId);
+  if (memberUserId === userId) throw new Error('cannot_remove_self');
+
+  const { error } = await supabase
+    .from('space_members')
+    .delete()
+    .eq('space_id', spaceId)
+    .eq('user_id', memberUserId);
+
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
 export async function getNativeHomeSummary(
   supabase: RouteSupabaseClient,
   userId: string,

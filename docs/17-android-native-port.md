@@ -392,3 +392,19 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - `MainActivity` native route bridge와 기존 네이티브 하단 네비의 `공간` 탭을 `NativeSpaceActivity`로 연결했다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 주의: emulator 재설치 후 세션이 없어 `/space` 직접 진입은 `LoginActivity`로 라우팅됐다. 실제 로그인 단말에서 홈 하단 `공간` 탭 → NativeSpaceActivity 진입, 초대 코드 복사, 멤버 목록 표시를 확인해야 한다.
+
+
+## 2026-06-23 Native 공간 설정 1차
+
+- Native Space에서 공간 이름 변경, 초대 코드 재생성, 멤버 역할 변경, 멤버 내보내기를 1차 네이티브로 연결했다.
+- 신규 API:
+  - `PATCH /api/native/spaces/[id]` — 공간 이름 변경
+  - `POST /api/native/spaces/[id]/invite-code` — 초대 코드 재생성
+  - `PATCH /api/native/spaces/[id]/members/[userId]` — 멤버 역할 변경
+  - `DELETE /api/native/spaces/[id]/members/[userId]` — 멤버 내보내기
+- 모든 변경 API는 bearer token 사용자 기준으로 `space_members.role = admin` 또는 공간 생성자 권한을 확인한다.
+- 개인 공간은 초대 코드 재생성, 멤버 역할 변경, 멤버 내보내기를 막는다.
+- Android `NativeSpaceActivity`의 공간 관리 섹션이 WebView fallback 대신 네이티브 다이얼로그/액션을 사용한다.
+- 멤버 row는 공간 지기이며 공유 공간일 때만 역할 변경/내보내기 액션을 제공한다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 남은 검증: 실제 로그인 단말에서 공간 지기 계정으로 이름 변경, 초대 코드 재생성, 역할 변경, 멤버 내보내기 회귀 테스트가 필요하다.

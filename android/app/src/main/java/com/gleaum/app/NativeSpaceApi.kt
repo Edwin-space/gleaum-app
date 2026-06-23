@@ -83,25 +83,53 @@ data class NativeSpaceSummary(
 
 object NativeSpaceApi {
     private const val SUMMARY_URL = "https://www.gleaum.com/api/native/spaces/summary"
+    private const val SPACE_URL = "https://www.gleaum.com/api/native/spaces"
 
     fun summary(context: Context): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "GET", SUMMARY_URL))
+    }
+
+    fun updateName(context: Context, spaceId: String, name: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId", JSONObject().put("name", name)))
+    }
+
+    fun regenerateInviteCode(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/invite-code"))
+    }
+
+    fun updateMemberRole(context: Context, spaceId: String, userId: String, role: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId/members/$userId", JSONObject().put("role", role)))
+    }
+
+    fun removeMember(context: Context, spaceId: String, userId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "DELETE", "$SPACE_URL/$spaceId/members/$userId"))
+    }
+
+    private fun request(context: Context, method: String, url: String, body: JSONObject? = null): JSONObject {
         val session = SessionManager.get(context) ?: throw IllegalStateException("session_required")
         val token = JSONObject(session).optString("access_token").takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("session_required")
-        val connection = (URL(SUMMARY_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
+        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+            requestMethod = method
             connectTimeout = 15000
             readTimeout = 20000
             setRequestProperty("Authorization", "Bearer $token")
             setRequestProperty("Accept", "application/json")
             setRequestProperty("X-Gleaum-Native-Preview", "android-space")
+            if (body != null) {
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+        }
+        if (body != null) {
+            java.io.OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(body.toString()) }
         }
         val text = readResponse(connection)
         val json = if (text.isBlank()) JSONObject() else JSONObject(text)
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(json.optString("error").ifBlank { "space_summary_failed" })
         }
-        return NativeSpaceSummary.fromJson(json)
+        return json
     }
 
     private fun readResponse(connection: HttpURLConnection): String {

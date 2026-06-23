@@ -495,3 +495,11 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 신규 API: `GET /api/native/spaces/summary`.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
 - 다음 단계: 실제 로그인 단말 검증 후 공간 설정/초대/역할 변경까지 네이티브화한다.
+
+
+## 2026-06-23 Native Space Settings Snapshot
+
+- 공간 설정 WebView 의존을 줄이기 위해 Native Space 안에서 이름 변경, 초대 코드 재생성, 멤버 역할 변경/내보내기를 처리한다.
+- 권한 경계는 서버 API에서 공간 지기(admin) 기준으로 다시 확인한다.
+- 개인 공간은 초대/멤버 관리 대상이 아니므로 서버와 앱 UI 양쪽에서 제한한다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
