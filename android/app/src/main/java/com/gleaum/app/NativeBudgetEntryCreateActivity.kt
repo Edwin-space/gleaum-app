@@ -28,6 +28,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     private var editingEntry: NativeBudgetEntry? = null
     private var kind = "expense"
     private var entryMode = "onetime"
+    private var recurFreq = "monthly"
     private var category = "food"
     private var paymentMethod = "card"
     private val date = Calendar.getInstance()
@@ -68,6 +69,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                     editingEntry = loaded
                     kind = loaded.kind
                     entryMode = if (loaded.recurFreq == "none") "onetime" else "recurring"
+                    recurFreq = if (loaded.recurFreq == "none") "monthly" else loaded.recurFreq
                     category = loaded.category
                     paymentMethod = loaded.method ?: paymentMethod
                     applyIsoToDate(loaded.occurredAt)
@@ -174,6 +176,16 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
         addView(label("항목명")); addView(titleInput, matchWrap().apply { topMargin = dp(8) })
         addView(label("금액"), matchWrap().apply { topMargin = dp(18) }); addView(amountInput, matchWrap().apply { topMargin = dp(8) })
         addView(label("날짜"), matchWrap().apply { topMargin = dp(18) }); addView(pickerBox(dateText()) { pickDate() }, matchWrap().apply { topMargin = dp(8) })
+        if (entryMode == "recurring") {
+            addView(label("반복 주기"), matchWrap().apply { topMargin = dp(18) })
+            addView(recurChips(), matchWrap().apply { topMargin = dp(8) })
+            addView(TextView(context).apply {
+                text = "정기 항목은 중지하기 전까지 매월/매주/매년 해당 월의 예정 항목으로 자동 준비됩니다."
+                textSize = 12f
+                typeface = medium()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(8) })
+        }
         addView(label("카테고리"), matchWrap().apply { topMargin = dp(18) }); addView(categoryChips(), matchWrap().apply { topMargin = dp(8) })
         if (kind == "expense") { addView(label("결제 방법"), matchWrap().apply { topMargin = dp(18) }); addView(paymentChips(), matchWrap().apply { topMargin = dp(8) }) }
         addView(label("메모"), matchWrap().apply { topMargin = dp(18) }); addView(memoInput, matchWrap().apply { topMargin = dp(8) })
@@ -181,6 +193,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
 
     private fun categoryChips(): LinearLayout = chipWrap(if (kind == "income") incomeCategories() else expenseCategories(), category) { category = it; render() }
     private fun paymentChips(): LinearLayout = chipWrap(listOf("card" to "카드", "auto" to "자동이체", "cash" to "현금", "other" to "기타"), paymentMethod) { paymentMethod = it; render() }
+    private fun recurChips(): LinearLayout = chipWrap(listOf("weekly" to "매주", "monthly" to "매월", "yearly" to "매년"), recurFreq) { recurFreq = it; render() }
 
     private fun chipWrap(items: List<Pair<String, String>>, active: String, action: (String) -> Unit): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
@@ -229,7 +242,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                     put("amount", amount)
                     put("category", category)
                     put("occurredAt", toIsoUtc(date))
-                    put("recurFreq", if (entryMode == "recurring") "monthly" else "none")
+                    put("recurFreq", if (entryMode == "recurring") recurFreq else "none")
                     if (kind == "expense") put("method", paymentMethod)
                     val memo = memoInput.text?.toString()?.trim().orEmpty()
                     put("memo", memo)

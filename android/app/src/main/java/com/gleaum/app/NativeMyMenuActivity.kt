@@ -157,7 +157,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
                     addView(buildSectionTitle("서비스"), matchWrap().apply { topMargin = dp(22) })
                     addView(buildSettingsGroup(listOf(
-                        MenuRow("약관 및 개인정보", "서비스 이용약관과 개인정보 처리방침", MenuIcon.DOC, null) { openWebPath("/legal/terms") },
+                        MenuRow("약관 및 개인정보", "서비스 이용약관과 개인정보 처리방침", MenuIcon.DOC, null) { showLegalDocuments() },
                         MenuRow("앱 버전", "네이티브 전환 작업 진행 중", MenuIcon.INFO, BuildConfig.VERSION_NAME) {},
                         MenuRow("로그아웃", "현재 기기의 로그인 세션을 삭제합니다", MenuIcon.LOGOUT, null) { logout() },
                     )), matchWrap().apply { topMargin = dp(10) })
@@ -703,6 +703,24 @@ class NativeMyMenuActivity : AppCompatActivity() {
         code?.contains("이미 탈퇴 신청") == true -> "이미 탈퇴 신청 중인 계정이에요."
         code?.contains("탈퇴 신청 이력") == true -> "복구할 탈퇴 신청 이력이 없어요."
         else -> "계정 상태를 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
+    }
+
+    private fun showLegalDocuments() {
+        val labels = arrayOf("이용약관", "개인정보처리방침")
+        AlertDialog.Builder(this)
+            .setTitle("약관 및 개인정보")
+            .setItems(labels) { _, which ->
+                if (which == 0) openLegalDocument("이용약관", "/legal/terms")
+                else openLegalDocument("개인정보처리방침", "/legal/privacy")
+            }
+            .show()
+    }
+
+    private fun openLegalDocument(title: String, path: String) {
+        startActivity(Intent(this, LegalWebViewActivity::class.java).apply {
+            putExtra(LegalWebViewActivity.EXTRA_TITLE, title)
+            putExtra(LegalWebViewActivity.EXTRA_URL, "https://www.gleaum.com$path?view=android-app")
+        })
     }
 
     private fun themeModeSubtitle(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {

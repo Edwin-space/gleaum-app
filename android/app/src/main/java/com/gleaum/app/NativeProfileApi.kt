@@ -76,6 +76,9 @@ object NativeProfileApi {
         }
         val text = readResponse(connection)
         val json = if (text.isBlank()) JSONObject() else JSONObject(text)
+        if (connection.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            throw IllegalStateException("session_required")
+        }
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(json.optString("error").ifBlank { "profile_request_failed" })
         }

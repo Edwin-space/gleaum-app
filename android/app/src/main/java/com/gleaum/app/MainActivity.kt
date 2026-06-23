@@ -100,11 +100,8 @@ class MainActivity : BridgeActivity() {
     }
 
     /**
-     * 오늘 배포용 native bridge.
-     *
-     * 홈은 기존 WebView를 유지하고, 사용자가 WebView 내부에서 일정/가계부/전체 메뉴로
-     * 이동하는 순간만 네이티브 Activity로 넘긴다. Remote Config 도입 전까지는
-     * 운영 리스크가 큰 홈 전체 네이티브 전환을 피한다.
+     * WebView에 남아 있는 레거시 링크를 핵심 네이티브 화면으로 승격한다.
+     * 핵심 서비스 경로는 Native Activity가 우선이고, 아직 이식하지 않은 보조 경로만 WebView가 처리한다.
      */
     private fun installNativeRouteBridge() {
         val webView = bridge?.webView ?: return
@@ -148,6 +145,8 @@ class MainActivity : BridgeActivity() {
                    /^\/budget\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/notifications\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/space(\/new)?\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/settings\/(security|calendar|home-layout)\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/legal\/(terms|privacy)\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/mypage\/?([?#].*)?${'$'}/.test(path);
           }
 
@@ -205,6 +204,11 @@ class MainActivity : BridgeActivity() {
         path == "/budget" -> Intent(this, NativeBudgetActivity::class.java)
         path == "/notifications" -> Intent(this, NativeNotificationActivity::class.java)
         path == "/mypage" -> Intent(this, NativeMyMenuActivity::class.java)
+        path == "/settings/security" -> Intent(this, NativeMyMenuActivity::class.java)
+        path == "/settings/calendar" -> Intent(this, NativeMyMenuActivity::class.java)
+        path == "/settings/home-layout" -> Intent(this, NativeMyMenuActivity::class.java)
+        path == "/legal/terms" -> legalIntent("이용약관", "/legal/terms")
+        path == "/legal/privacy" -> legalIntent("개인정보처리방침", "/legal/privacy")
         path == "/space" -> Intent(this, NativeSpaceActivity::class.java)
         path == "/space/new" -> Intent(this, NativeSpaceActivity::class.java)
         path == "/schedules" -> Intent(this, NativeScheduleListActivity::class.java)
@@ -219,6 +223,12 @@ class MainActivity : BridgeActivity() {
         }
         else -> null
     }
+
+    private fun legalIntent(title: String, path: String): Intent =
+        Intent(this, LegalWebViewActivity::class.java).apply {
+            putExtra(LegalWebViewActivity.EXTRA_TITLE, title)
+            putExtra(LegalWebViewActivity.EXTRA_URL, "https://www.gleaum.com$path?view=android-app")
+        }
 
     private fun loadStartPath(intent: Intent?) {
         intent?.getStringExtra("start_path")?.takeIf { it.isNotBlank() }?.let { path ->

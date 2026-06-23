@@ -569,3 +569,14 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Native Budget은 요약 API 호출 시 현재 월 반복 수입/지출을 자동 materialize하고, `recurringEntries`를 별도 표시한다.
 - Android 이메일 회원가입 약관/개인정보 보기 흐름은 `LegalWebViewActivity` 인앱 문서 뷰어로 정리했다.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+
+
+## 2026-06-23 Native Core Completion Snapshot
+
+- Android 네이티브 핵심 화면 전환의 남은 WebView fallback을 추가로 줄였다.
+- `/settings/*` 주요 경로와 `/legal/*` 문서 경로는 네이티브 전체 메뉴 또는 인앱 문서 뷰어로 승격된다.
+- 전체 메뉴의 약관/개인정보 진입은 외부/일반 WebView 이동 없이 `LegalWebViewActivity`에서 닫기 가능한 인앱 흐름으로 처리한다.
+- Native Budget은 정기 수입/지출 반복 주기를 직접 선택한다.
+- API 401 응답은 `session_required`로 표준화했으며, Native Home은 세션 만료 시 네이티브 로그인으로 회수한다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+- 남은 큰 축: 실제 단말 회귀 테스트, 네이티브 상세 화면 확장, 태블릿/폴더블/다크모드/광고 품질 단계.

@@ -134,6 +134,9 @@ object NativeSpaceApi {
         }
         val text = readResponse(connection)
         val json = if (text.isBlank()) JSONObject() else JSONObject(text)
+        if (connection.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            throw IllegalStateException("session_required")
+        }
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(json.optString("error").ifBlank { "space_summary_failed" })
         }

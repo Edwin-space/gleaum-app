@@ -493,3 +493,15 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 약관 인앱 브라우저는 태블릿에서 문서 폭/여백/닫기 버튼을 별도로 조정해 모바일 폭 문서가 좌우 배경을 과하게 노출하지 않도록 정리했다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 이번 배치 제외: 다크모드/광고/전체 태블릿 최적화/실제 단말 회귀 테스트.
+
+
+## 2026-06-23 Native 핵심 전환 마감 배치
+
+- WebView route bridge가 `/settings/security`, `/settings/calendar`, `/settings/home-layout`, `/legal/terms`, `/legal/privacy`를 네이티브 전체 메뉴/인앱 문서 뷰어로 승격한다.
+- Native 전체 메뉴의 `약관 및 개인정보`는 WebView fallback 없이 이용약관/개인정보처리방침 선택 다이얼로그와 `LegalWebViewActivity`로 처리한다.
+- Native Budget 등록/수정에서 정기 항목 반복 주기(`매주`, `매월`, `매년`)를 선택할 수 있다.
+- 정기 항목을 일회성으로 바꾸면 반복 생성 대상에서 제외되어 사용자가 같은 고정 지출을 다시 입력해야 하는 흐름을 줄인다.
+- Native API bridge 6종(`budget`, `schedule`, `space`, `notification`, `profile`, `account`)은 HTTP 401을 `session_required`로 통일해 세션 만료 처리를 일관화한다.
+- Native Home은 세션 누락/만료 시 에러 카드에 머무르지 않고 세션을 정리한 뒤 네이티브 로그인으로 복귀한다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 이번 핵심 마감 제외: 태블릿/폴더블 전체 최적화, 다크모드 전체 QA, 광고 네이티브화, 실제 단말 회귀 테스트.

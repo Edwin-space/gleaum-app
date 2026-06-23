@@ -81,17 +81,13 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun loadHomeSummary() {
         val session = SessionManager.get(this)
         if (session.isNullOrBlank()) {
-            loading = false
-            errorMessage = "로그인 세션을 찾을 수 없어요. 앱에서 로그인한 뒤 Preview를 다시 열어 주세요."
-            render()
+            redirectToLogin()
             return
         }
 
         val token = runCatching { JSONObject(session).optString("access_token") }.getOrNull()
         if (token.isNullOrBlank()) {
-            loading = false
-            errorMessage = "세션 토큰을 읽을 수 없어요. 다시 로그인한 뒤 확인해 주세요."
-            render()
+            redirectToLogin()
             return
         }
 
@@ -107,9 +103,13 @@ class NativeHomePortActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    loading = false
-                    errorMessage = e.message ?: "홈 데이터를 불러오지 못했어요."
-                    render()
+                    if (e.message == "session_required") {
+                        redirectToLogin()
+                    } else {
+                        loading = false
+                        errorMessage = e.message ?: "홈 데이터를 불러오지 못했어요."
+                        render()
+                    }
                 }
             }
         }.start()
@@ -127,11 +127,23 @@ class NativeHomePortActivity : AppCompatActivity() {
 
         val responseText = readResponse(connection)
         val json = if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
+        if (connection.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            throw IllegalStateException("session_required")
+        }
         if (connection.responseCode !in 200..299) {
             val message = json.optString("error").ifBlank { "홈 데이터 요청 실패 (${connection.responseCode})" }
             throw IllegalStateException(message)
         }
         return NativeHomePortSummary.fromJson(json)
+    }
+
+
+    private fun redirectToLogin() {
+        SessionManager.clear(this)
+        startActivity(Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        })
+        finish()
     }
 
     private fun readResponse(connection: HttpURLConnection): String {
