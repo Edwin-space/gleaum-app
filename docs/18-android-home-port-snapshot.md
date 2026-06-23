@@ -580,3 +580,19 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - API 401 응답은 `session_required`로 표준화했으며, Native Home은 세션 만료 시 네이티브 로그인으로 회수한다.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
 - 남은 큰 축: 실제 단말 회귀 테스트, 네이티브 상세 화면 확장, 태블릿/폴더블/다크모드/광고 품질 단계.
+
+
+## 2026-06-23 Android Device Test Snapshot
+
+- 테스트 단말: Lenovo TB-9707F, Android 실제 USB 단말, 앱 버전 `1.0.21` debug APK 설치.
+- 설치: 기존 `1.0.20` 위에 `adb install -r android/app/build/outputs/apk/debug/app-debug.apk` 성공.
+- 앱 실행: `LoginActivity`에서 OAuth 콜백 후 `NativeHomePortActivity` 진입 확인.
+- Native Home: 로고/요약/캘린더/오늘 일정/가계부 요약/하단 네비게이션 표시 확인.
+- 하단 네비게이션: 일정 → `NativeScheduleListActivity`, 공간 → `NativeSpaceActivity`, 가계부 → `NativeBudgetActivity`, 전체 → `NativeMyMenuActivity` 정상 전환.
+- 전체 메뉴 빠른 액션: 일정 추가 → `NativeScheduleCreateActivity` 정상 진입, 가계부 → `NativeBudgetActivity` 정상 진입.
+- 약관/개인정보: 전체 메뉴 선택 다이얼로그 정상 표시, 이용약관 → `LegalWebViewActivity` 인앱 문서 뷰어 정상 진입.
+- Native Budget: 월 요약, 현금 흐름 구성, 반복 예정 항목 표시 확인.
+- Native Budget 등록: `NativeBudgetEntryCreateActivity` 정상 진입, 정기 모드 전환 시 `매주/매월/매년` 반복 주기 UI 표시 확인.
+- 로그: 테스트 구간에서 `AndroidRuntime`, `FATAL EXCEPTION` 계열 크래시 없음. Lenovo/ZUI 시스템 GPU permission warning은 앱 크래시와 무관한 시스템 로그로 확인.
+- 관찰된 후순위 이슈: 태블릿에서 `LegalWebViewActivity` 문서 좌우 여백/배경이 남아 있음. 기능 장애는 아니며 태블릿/폴더블 최적화 단계에서 정리한다.
+- 테스트에서 실제 DB 저장은 수행하지 않았다. 일정/가계부 저장 버튼은 운영 데이터 생성을 피하기 위해 누르지 않았다.
