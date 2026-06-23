@@ -422,3 +422,15 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - `/space/new` 경로도 WebView 신규 공간 화면 대신 `NativeSpaceActivity`로 라우팅한다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 남은 검증: 배포 후 실제 로그인 단말에서 공간 생성, 초대 코드 참여, 공유 공간 2개 한도, 참여자 기본 역할 `viewer`를 회귀 테스트한다.
+
+
+## 2026-06-23 Native 전체 메뉴 설정 보강
+
+- Android `NativeMyMenuActivity`의 캘린더 설정을 WebView fallback 없이 네이티브 다이얼로그로 확장했다.
+- 캘린더 권한이 없으면 Android 권한 요청을 실행하고, 권한이 있으면 쓰기 가능한 기기 캘린더 목록을 조회해 선택할 수 있다.
+- 선택한 캘린더 ID와 동기화 사용 여부는 Capacitor Preferences 기본 저장소(`CapacitorStorage`)에 저장해 WebView 설정 유틸과 같은 키를 공유한다.
+- Android `NativeMyMenuActivity`의 생체인증 보안을 네이티브 설정 다이얼로그로 확장했다.
+- 앱 잠금 켜기/끄기, 재잠금 간격(`always`, `5m`, `15m`, `30m`) 변경을 WebView 설정과 동일한 Capacitor Preferences 키에 저장한다.
+- 기기 잠금/지문이 준비되지 않은 경우 Android 보안 설정으로 연결한다.
+- 검증: Android `:app:assembleDebug` 통과.
+- 남은 검증: 실제 Android 단말에서 전체 메뉴 → 캘린더 선택, 앱 잠금 켜기/끄기, 앱 재실행 후 WebView `NativeBiometricGate`가 같은 설정을 인식하는지 확인한다.

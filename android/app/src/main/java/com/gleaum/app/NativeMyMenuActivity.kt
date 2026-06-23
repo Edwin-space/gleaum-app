@@ -1,9 +1,11 @@
 package com.gleaum.app
 
 import android.Manifest
+import android.app.AlertDialog
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
@@ -15,6 +17,7 @@ import android.graphics.drawable.GradientDrawable
 import android.hardware.biometrics.BiometricManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.CalendarContract
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
@@ -24,6 +27,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -137,13 +141,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     addView(buildSettingsGroup(listOf(
                         MenuRow("화면 모드", "다음 단계에서 네이티브화 예정", MenuIcon.SUN, "준비중") { openWebPath("/mypage") },
                         MenuRow("홈 레이아웃", "홈 화면 구성 변경", MenuIcon.GRID, null) { openWebPath("/settings/home-layout") },
-                        MenuRow("캘린더 설정", calendarPermissionSubtitle(), MenuIcon.CALENDAR, calendarPermissionBadge()) { requestCalendarPermission() },
+                        MenuRow("캘린더 설정", calendarSettingsSubtitle(), MenuIcon.CALENDAR, calendarSettingsBadge()) { showCalendarSettings() },
                         MenuRow("알림 설정", "푸시와 일정 알림 관리", MenuIcon.BELL, null) { openWebPath("/settings") },
                     )), matchWrap().apply { topMargin = dp(10) })
 
                     addView(buildSectionTitle("계정 & 보안"), matchWrap().apply { topMargin = dp(22) })
                     addView(buildSettingsGroup(listOf(
-                        MenuRow("생체인증 보안", biometricSubtitle(), MenuIcon.LOCK, biometricBadge()) { openBiometricSettings() },
+                        MenuRow("생체인증 보안", biometricSubtitle(), MenuIcon.LOCK, biometricBadge()) { showBiometricSettings() },
                         MenuRow("비밀번호 설정", "이메일 로그인 보안 설정", MenuIcon.KEY, null) { openWebPath("/settings/security") },
                         MenuRow("프로필 관리", "닉네임, 이름, 계정 정보", MenuIcon.USER, null) { openWebPath("/mypage") },
                     )), matchWrap().apply { topMargin = dp(10) })
@@ -385,6 +389,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun biometricSubtitle(): String {
+        if (isBiometricLockEnabled()) return "앱 잠금 사용 중 · ${relockIntervalLabel(getBiometricRelockInterval())}"
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return "이 기기는 생체인증을 지원하지 않아요"
         val keyguard = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val secure = keyguard.isDeviceSecure
@@ -396,17 +401,98 @@ class NativeMyMenuActivity : AppCompatActivity() {
         return if (packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) "지문 인증 사용 가능" else "기기 잠금 설정 확인 필요"
     }
 
-    private fun biometricBadge(): String = if (biometricSubtitle().contains("가능")) "가능" else "확인"
+    private fun biometricBadge(): String = if (isBiometricLockEnabled()) "켜짐" else if (biometricSubtitle().contains("가능")) "가능" else "확인"
 
-    private fun openBiometricSettings() {
-        startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+    private fun showBiometricSettings() {
+        val enabled = isBiometricLockEnabled()
+        val available = isBiometricAvailableForLock()
+        val title = if (enabled) "생체인증 보안" else "앱 잠금 설정"
+        val message = if (available) {
+            "앱을 다시 열거나 보호 구간에 접근할 때 지문 또는 기기 잠금으로 확인합니다."
+        } else {
+            "이 기능을 사용하려면 먼저 Android 기기 잠금 또는 지문을 설정해야 합니다."
+        }
+
+        val items = if (enabled) {
+            arrayOf("앱 잠금 끄기", "재잠금: 항상", "재잠금: 5분 후", "재잠금: 15분 후", "재잠금: 30분 후", "기기 보안 설정 열기")
+        } else {
+            arrayOf("앱 잠금 켜기", "기기 보안 설정 열기")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setItems(items) { _, which ->
+                if (enabled) {
+                    when (which) {
+                        0 -> setBiometricLock(false)
+                        1 -> setBiometricRelockInterval("always")
+                        2 -> setBiometricRelockInterval("5m")
+                        3 -> setBiometricRelockInterval("15m")
+                        4 -> setBiometricRelockInterval("30m")
+                        5 -> startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                    }
+                } else {
+                    when (which) {
+                        0 -> if (available) setBiometricLock(true) else startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                        1 -> startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                    }
+                }
+            }
+            .setNegativeButton("닫기", null)
+            .show()
     }
 
-    private fun calendarPermissionSubtitle(): String = if (hasCalendarPermission()) "기기 캘린더 접근 권한 허용됨" else "기기 캘린더 권한을 허용해 주세요"
-    private fun calendarPermissionBadge(): String = if (hasCalendarPermission()) "허용됨" else "설정"
+    private fun calendarSettingsSubtitle(): String {
+        if (!hasCalendarPermission()) return "기기 캘린더 권한을 허용해 주세요"
+        if (!isCalendarSyncEnabled()) return "권한 허용됨 · 동기화 꺼짐"
+        return selectedCalendarName()?.let { "선택됨 · $it" } ?: "캘린더를 선택해 주세요"
+    }
+
+    private fun calendarSettingsBadge(): String = when {
+        !hasCalendarPermission() -> "설정"
+        isCalendarSyncEnabled() -> "켜짐"
+        else -> "꺼짐"
+    }
+
     private fun hasCalendarPermission(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
+
+    private fun showCalendarSettings() {
+        if (!hasCalendarPermission()) {
+            requestCalendarPermission()
+            return
+        }
+
+        val calendars = queryWritableCalendars()
+        if (calendars.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("캘린더 설정")
+                .setMessage("쓰기 가능한 기기 캘린더를 찾지 못했어요. Google 캘린더 또는 기기 캘린더 계정을 먼저 확인해 주세요.")
+                .setPositiveButton("확인", null)
+                .show()
+            return
+        }
+
+        val selectedId = selectedCalendarId()
+        val checkedIndex = calendars.indexOfFirst { it.id == selectedId }.takeIf { it >= 0 } ?: 0
+        AlertDialog.Builder(this)
+            .setTitle("캘린더 선택")
+            .setSingleChoiceItems(calendars.map { "${it.name}\n${it.accountName}" }.toTypedArray(), checkedIndex) { dialog, which ->
+                setSelectedCalendar(calendars[which])
+                dialog.dismiss()
+            }
+            .setNeutralButton("동기화 끄기") { _, _ ->
+                nativePrefs().edit()
+                    .putString(CALENDAR_ENABLED_KEY, "false")
+                    .apply()
+                message = "기기 캘린더 동기화를 껐어요."
+                render()
+            }
+            .setNegativeButton("닫기", null)
+            .show()
+    }
 
     private fun requestCalendarPermission() {
         if (hasCalendarPermission()) {
@@ -423,6 +509,105 @@ class NativeMyMenuActivity : AppCompatActivity() {
             message = if (hasCalendarPermission()) "캘린더 권한이 허용되었어요." else "캘린더 권한이 필요해요."
             render()
         }
+    }
+
+    private fun isBiometricAvailableForLock(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
+        val keyguard = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (!keyguard.isDeviceSecure) return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val manager = getSystemService(BiometricManager::class.java)
+            return manager?.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS || keyguard.isDeviceSecure
+        }
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT) || keyguard.isDeviceSecure
+    }
+
+    private fun isBiometricLockEnabled(): Boolean = nativePrefs().getString(BIOMETRIC_LOCK_ENABLED_KEY, "false") == "true"
+
+    private fun setBiometricLock(enabled: Boolean) {
+        nativePrefs().edit()
+            .putString(BIOMETRIC_LOCK_ENABLED_KEY, if (enabled) "true" else "false")
+            .putString(BIOMETRIC_PROMPT_SEEN_KEY, "true")
+            .putString(BIOMETRIC_LOCK_SCOPES_KEY, "[\"app\"]")
+            .putString(BIOMETRIC_UNLOCKED_AT_KEY, System.currentTimeMillis().toString())
+            .apply()
+        message = if (enabled) "생체인증 앱 잠금을 켰어요." else "생체인증 앱 잠금을 껐어요."
+        render()
+    }
+
+    private fun getBiometricRelockInterval(): String =
+        nativePrefs().getString(BIOMETRIC_RELOCK_INTERVAL_KEY, "always") ?: "always"
+
+    private fun setBiometricRelockInterval(interval: String) {
+        nativePrefs().edit().putString(BIOMETRIC_RELOCK_INTERVAL_KEY, interval).apply()
+        message = "재잠금 기준을 ${relockIntervalLabel(interval)}로 변경했어요."
+        render()
+    }
+
+    private fun relockIntervalLabel(interval: String): String = when (interval) {
+        "5m" -> "5분 후"
+        "15m" -> "15분 후"
+        "30m" -> "30분 후"
+        else -> "항상"
+    }
+
+    private fun queryWritableCalendars(): List<DeviceCalendarRow> {
+        if (!hasCalendarPermission()) return emptyList()
+        val projection = arrayOf(
+            CalendarContract.Calendars._ID,
+            CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+            CalendarContract.Calendars.ACCOUNT_NAME,
+            CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL,
+            CalendarContract.Calendars.VISIBLE,
+        )
+        return runCatching {
+            contentResolver.query(
+                CalendarContract.Calendars.CONTENT_URI,
+                projection,
+                null,
+                null,
+                "${CalendarContract.Calendars.CALENDAR_DISPLAY_NAME} ASC",
+            )?.use { cursor ->
+                val idIndex = cursor.getColumnIndexOrThrow(CalendarContract.Calendars._ID)
+                val nameIndex = cursor.getColumnIndexOrThrow(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME)
+                val accountIndex = cursor.getColumnIndexOrThrow(CalendarContract.Calendars.ACCOUNT_NAME)
+                val accessIndex = cursor.getColumnIndexOrThrow(CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL)
+                val visibleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Calendars.VISIBLE)
+                buildList {
+                    while (cursor.moveToNext()) {
+                        val access = cursor.getInt(accessIndex)
+                        val visible = cursor.getInt(visibleIndex) == 1
+                        val canWrite = access >= CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR
+                        if (visible && canWrite) {
+                            add(DeviceCalendarRow(
+                                id = cursor.getLong(idIndex).toString(),
+                                name = cursor.getString(nameIndex).orEmpty().ifBlank { "기기 캘린더" },
+                                accountName = cursor.getString(accountIndex).orEmpty(),
+                            ))
+                        }
+                    }
+                }
+            }.orEmpty()
+        }.getOrElse { emptyList() }
+    }
+
+    private fun selectedCalendarId(): String? = nativePrefs().getString(SELECTED_CALENDAR_KEY, null)
+
+    private fun selectedCalendarName(): String? {
+        val id = selectedCalendarId() ?: return null
+        return queryWritableCalendars().firstOrNull { it.id == id }?.name
+    }
+
+    private fun isCalendarSyncEnabled(): Boolean = nativePrefs().getString(CALENDAR_ENABLED_KEY, "false") == "true"
+
+    private fun setSelectedCalendar(calendar: DeviceCalendarRow) {
+        nativePrefs().edit()
+            .putString(CALENDAR_ENABLED_KEY, "true")
+            .putString(SELECTED_CALENDAR_KEY, calendar.id)
+            .apply()
+        Toast.makeText(this, "${calendar.name} 캘린더를 선택했어요.", Toast.LENGTH_SHORT).show()
+        message = "기기 캘린더 동기화를 켰어요."
+        render()
     }
 
     private fun logout() {
@@ -484,8 +669,24 @@ class NativeMyMenuActivity : AppCompatActivity() {
     companion object {
         private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
         private const val CALENDAR_PERMISSION_REQUEST = 9001
+        private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
+        private const val CALENDAR_ENABLED_KEY = "gleaum:calendar-sync-enabled"
+        private const val SELECTED_CALENDAR_KEY = "gleaum:calendar-sync-calendar-id"
+        private const val BIOMETRIC_LOCK_ENABLED_KEY = "gleaum:biometric-lock-enabled"
+        private const val BIOMETRIC_PROMPT_SEEN_KEY = "gleaum:biometric-lock-prompt-seen"
+        private const val BIOMETRIC_UNLOCKED_AT_KEY = "gleaum:biometric-unlocked-at"
+        private const val BIOMETRIC_LOCK_SCOPES_KEY = "gleaum:biometric-lock-scopes"
+        private const val BIOMETRIC_RELOCK_INTERVAL_KEY = "gleaum:biometric-relock-interval"
     }
+
+    private fun nativePrefs(): SharedPreferences = getSharedPreferences(CAPACITOR_PREFS_NAME, Context.MODE_PRIVATE)
 }
+
+private data class DeviceCalendarRow(
+    val id: String,
+    val name: String,
+    val accountName: String,
+)
 
 private data class MenuRow(
     val title: String,

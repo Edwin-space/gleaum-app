@@ -513,3 +513,11 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Android 경로: `/space/new`와 공간 화면 `+`는 `NativeSpaceActivity`의 생성 다이얼로그로 연결된다.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
 - 다음 검증: 운영 배포 후 실제 초대 코드로 신규 계정 참여 테스트.
+
+
+## 2026-06-23 Native Menu Settings Snapshot
+
+- Native 전체 메뉴에서 캘린더 설정과 생체인증 보안 설정을 네이티브 다이얼로그로 처리한다.
+- 캘린더 선택/동기화 사용 여부와 생체인증 잠금/재잠금 간격은 Capacitor Preferences `CapacitorStorage`의 기존 WebView 키를 그대로 사용한다.
+- 검증 완료: Android `:app:assembleDebug`.
+- 다음 검증: 실제 단말에서 설정 변경 후 앱 재실행, 보호 경로 진입, 캘린더 선택 유지 여부 확인.
