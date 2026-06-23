@@ -390,3 +390,11 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Preview 액션은 WebView fallback으로 연결: 알림, 새 일정, 일정 상세, 가계부 카드, 하단 네비
 - Android `:app:assembleDebug` 통과
 - 다음 작업은 Mobile Web 캡처와 Native Preview를 비교하고, 월간/주간/일간 캘린더 패널을 전체 이식할지 결정하는 것
+## 2026-06-23 BottomNav/Chrome 추가 보정
+
+- Header 알림 버튼을 텍스트 CTA에서 bell outline icon button으로 교체했다.
+- BottomNav는 Mobile Web의 `48px` 슬림 네비 구조에 맞춰 Android preview 높이를 `56dp`로 낮췄다.
+- BottomNav 아이콘은 `20dp`, stroke `2.2dp` 기준으로 조정했고 라벨은 `홈/일정/공간/가계부/전체`로 Web과 일치시켰다.
+- Android 시스템 status/navigation bar를 light icon mode로 지정해 밝은 배경에서 상태바 아이콘 대비가 깨지지 않도록 했다.
+- 검증 캡처: `/tmp/gleaum-native-home-nav-polish-2.png`
+

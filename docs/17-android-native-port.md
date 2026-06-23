@@ -209,6 +209,16 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - Pretendard 폰트 파일은 현재 레포에 없어 Native Preview 라벨은 `sans-serif-medium`으로 우선 정돈
 - Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 캡처 확인
 
+2026-06-23 BottomNav/시스템바 추가 보정:
+
+- Native Home Header 알림 버튼을 텍스트에서 웹과 동일한 bell outline icon으로 교체
+- BottomNav 높이를 76dp에서 56dp로 낮춰 웹 BottomNav의 48px 슬림 구조에 가깝게 보정
+- BottomNav icon size를 20dp 기준으로 맞추고 stroke를 2.2dp로 조정
+- `마이` 라벨/사람 아이콘을 웹 기준 `전체`/menu icon으로 교체
+- `공간` 아이콘을 임시 다이아몬드에서 group/people 계열 outline으로 보정
+- Light status/navigation bar flag를 적용해 밝은 배경에서 Android 시스템 아이콘 대비가 깨지지 않도록 수정
+- Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 캡처 확인: `/tmp/gleaum-native-home-nav-polish-2.png`
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:

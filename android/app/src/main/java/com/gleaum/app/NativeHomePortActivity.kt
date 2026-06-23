@@ -9,6 +9,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -51,16 +52,26 @@ class NativeHomePortActivity : AppCompatActivity() {
             previewDisabled = true
             loading = false
             errorMessage = "Native Home Preview는 debug build에서만 열 수 있어요."
-            window.statusBarColor = color("#FAFAFD")
-            window.navigationBarColor = color("#FAFAFD")
+            applyLightSystemBars()
             render()
             return
         }
 
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
+        applyLightSystemBars()
         render()
         loadHomeSummary()
+    }
+
+    private fun applyLightSystemBars() {
+        window.statusBarColor = color("#FAFAFD")
+        window.navigationBarColor = color("#FAFAFD")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            }
+            window.decorView.systemUiVisibility = flags
+        }
     }
 
     private fun loadHomeSummary() {
@@ -138,7 +149,7 @@ class NativeHomePortActivity : AppCompatActivity() {
 
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(20), statusBarHeight() + dp(12), dp(20), dp(104))
+                    setPadding(dp(20), statusBarHeight() + dp(12), dp(20), dp(84))
 
                     addView(buildHeader())
                     if (loading || errorMessage != null) {
@@ -155,7 +166,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 }, ViewGroup.LayoutParams(match(), wrap()))
             }, FrameLayout.LayoutParams(match(), match()))
 
-            addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(76), Gravity.BOTTOM))
+            addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
         }
     }
 
@@ -181,15 +192,12 @@ class NativeHomePortActivity : AppCompatActivity() {
                 }, LinearLayout.LayoutParams(dp(88), dp(24)).apply { leftMargin = dp(8) })
             }, LinearLayout.LayoutParams(0, dp(44), 1f))
 
-            addView(TextView(context).apply {
-                text = "알림"
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
+            addView(FrameLayout(context).apply {
                 gravity = Gravity.CENTER
-                setTextColor(color("#0084CC"))
                 background = roundDrawable("#FFFFFF", 20, "#E8E8E4")
                 setOnClickListener { openWebPath("/notifications") }
-            }, LinearLayout.LayoutParams(dp(48), dp(40)))
+                addView(NativeBottomNavIconView(context, NativeNavIcon.BELL, color("#1A1B2E")), FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER))
+            }, LinearLayout.LayoutParams(dp(40), dp(40)))
         }
     }
 
@@ -580,7 +588,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(dp(18), dp(7), dp(18), dp(8))
+            setPadding(dp(0), dp(0), dp(0), dp(0))
             background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
 
             listOf(
@@ -588,7 +596,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 NativeNavItem("일정", NativeNavIcon.CALENDAR, "/schedules"),
                 NativeNavItem("공간", NativeNavIcon.SPACE, "/space"),
                 NativeNavItem("가계부", NativeNavIcon.BUDGET, "/budget"),
-                NativeNavItem("마이", NativeNavIcon.MY, "/mypage"),
+                NativeNavItem("전체", NativeNavIcon.MENU, "/mypage"),
             ).forEachIndexed { index, item ->
                 addView(buildBottomNavItem(item, active = index == 0), LinearLayout.LayoutParams(0, match(), 1f))
             }
@@ -607,18 +615,18 @@ class NativeHomePortActivity : AppCompatActivity() {
 
             addView(View(context).apply {
                 background = if (active) roundDrawable("#0084CC", 999) else null
-            }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(6) })
+            }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(5) })
 
-            addView(NativeBottomNavIconView(context, item.icon, if (active) activeColor else inactiveColor), LinearLayout.LayoutParams(dp(25), dp(23)))
+            addView(NativeBottomNavIconView(context, item.icon, if (active) activeColor else inactiveColor), LinearLayout.LayoutParams(dp(20), dp(20)))
 
             addView(TextView(context).apply {
                 text = item.label
-                textSize = 9.5f
-                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                textSize = 10f
+                typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL)
                 gravity = Gravity.CENTER
                 includeFontPadding = false
                 setTextColor(if (active) activeColor else inactiveColor)
-            }, matchWrap().apply { topMargin = dp(5) })
+            }, matchWrap().apply { topMargin = dp(3) })
         }
     }
 
@@ -726,7 +734,8 @@ private enum class NativeNavIcon {
     CALENDAR,
     SPACE,
     BUDGET,
-    MY,
+    MENU,
+    BELL,
 }
 
 private class NativeBottomNavIconView(
@@ -738,7 +747,7 @@ private class NativeBottomNavIconView(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = iconColor
         style = Paint.Style.STROKE
-        strokeWidth = 2.35f * resources.displayMetrics.density
+        strokeWidth = 2.2f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
@@ -759,7 +768,8 @@ private class NativeBottomNavIconView(
             NativeNavIcon.CALENDAR -> drawCalendar(canvas, left, right, top, bottom, w, h)
             NativeNavIcon.SPACE -> drawSpace(canvas, left, right, top, bottom, midX, midY)
             NativeNavIcon.BUDGET -> drawBudget(canvas, left, right, top, bottom)
-            NativeNavIcon.MY -> drawMy(canvas, w, h, midX)
+            NativeNavIcon.MENU -> drawMenu(canvas, w, h)
+            NativeNavIcon.BELL -> drawBell(canvas, w, h, midX)
         }
     }
 
@@ -786,14 +796,10 @@ private class NativeBottomNavIconView(
     }
 
     private fun drawSpace(canvas: Canvas, left: Float, right: Float, top: Float, bottom: Float, midX: Float, midY: Float) {
-        val path = Path().apply {
-            moveTo(midX, top)
-            lineTo(right, midY)
-            lineTo(midX, bottom)
-            lineTo(left, midY)
-            close()
-        }
-        canvas.drawPath(path, paint)
+        canvas.drawCircle(midX - width * 0.13f, top + height * 0.24f, width * 0.15f, paint)
+        canvas.drawArc(RectF(left, midY * 1.04f, midX + width * 0.13f, bottom), 202f, 136f, false, paint)
+        canvas.drawCircle(midX + width * 0.25f, top + height * 0.32f, width * 0.12f, paint)
+        canvas.drawArc(RectF(midX + width * 0.06f, midY * 1.08f, right + width * 0.08f, bottom), 214f, 96f, false, paint)
     }
 
     private fun drawBudget(canvas: Canvas, left: Float, right: Float, top: Float, bottom: Float) {
@@ -802,9 +808,21 @@ private class NativeBottomNavIconView(
         canvas.drawLine(left, top + height * 0.40f, right, top + height * 0.40f, paint)
     }
 
-    private fun drawMy(canvas: Canvas, w: Float, h: Float, midX: Float) {
-        canvas.drawCircle(midX, h * 0.30f, w * 0.14f, paint)
-        val body = RectF(w * 0.28f, h * 0.52f, w * 0.72f, h * 0.90f)
-        canvas.drawArc(body, 205f, 130f, false, paint)
+    private fun drawMenu(canvas: Canvas, w: Float, h: Float) {
+        canvas.drawLine(w * 0.18f, h * 0.30f, w * 0.82f, h * 0.30f, paint)
+        canvas.drawLine(w * 0.18f, h * 0.50f, w * 0.82f, h * 0.50f, paint)
+        canvas.drawLine(w * 0.18f, h * 0.70f, w * 0.82f, h * 0.70f, paint)
+    }
+
+    private fun drawBell(canvas: Canvas, w: Float, h: Float, midX: Float) {
+        val bell = Path().apply {
+            moveTo(w * 0.72f, h * 0.72f)
+            lineTo(w * 0.28f, h * 0.72f)
+            cubicTo(w * 0.34f, h * 0.62f, w * 0.36f, h * 0.50f, w * 0.36f, h * 0.38f)
+            cubicTo(w * 0.36f, h * 0.18f, w * 0.64f, h * 0.18f, w * 0.64f, h * 0.38f)
+            cubicTo(w * 0.64f, h * 0.50f, w * 0.66f, h * 0.62f, w * 0.72f, h * 0.72f)
+        }
+        canvas.drawPath(bell, paint)
+        canvas.drawArc(RectF(w * 0.42f, h * 0.72f, w * 0.58f, h * 0.88f), 18f, 144f, false, paint)
     }
 }
