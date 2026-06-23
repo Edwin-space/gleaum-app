@@ -288,7 +288,7 @@ class NativeBudgetActivity : AppCompatActivity() {
         listOf(
             "홈" to { openWebPath("/home") },
             "일정" to { startActivity(Intent(this@NativeBudgetActivity, NativeScheduleListActivity::class.java)); finish() },
-            "공간" to { openWebPath("/space") },
+            "공간" to { startActivity(Intent(this@NativeBudgetActivity, NativeSpaceActivity::class.java)); finish() },
             "가계부" to {},
             "전체" to { startActivity(Intent(this@NativeBudgetActivity, NativeMyMenuActivity::class.java)); finish() },
         ).forEachIndexed { index, item -> addView(bottomItem(item.first, index == 3, item.second), LinearLayout.LayoutParams(0, match(), 1f)) }

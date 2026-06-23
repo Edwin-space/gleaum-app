@@ -1557,6 +1557,35 @@ export interface NativeBudgetSummary {
   categoryTotals: Array<{ category: LedgerCategory; kind: LedgerKind; amount: number }>;
 }
 
+export interface NativeSpaceListItem {
+  id: string;
+  name: string;
+  role: SpaceRole;
+  memberCount: number;
+  inviteCode?: string;
+  isPersonal: boolean;
+  isActive: boolean;
+}
+
+export interface NativeSpaceMemberItem {
+  id: string;
+  userId: string;
+  displayName: string;
+  email: string;
+  avatar?: string;
+  role: SpaceRole;
+  isMe: boolean;
+}
+
+export interface NativeSpaceSummary {
+  serverTime: string;
+  personalSpaceId: string | null;
+  activeSpaceId: string | null;
+  activeSpace: NativeSpaceListItem | null;
+  spaces: NativeSpaceListItem[];
+  members: NativeSpaceMemberItem[];
+}
+
 
 export interface NativeCreateLedgerInput {
   kind: LedgerKind;
@@ -1971,6 +2000,131 @@ export async function getNativeBudgetSummary(
     completedIncomeCount: incomeRows.filter((row) => row.status === 'completed').length,
     recentEntries: rows.slice(0, 12).map(nativeLedgerItemFromRow),
     categoryTotals: Array.from(categoryMap.values()).sort((a, b) => b.amount - a.amount),
+  };
+}
+
+export async function getNativeSpaceSummary(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<NativeSpaceSummary> {
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('family_group_id,preferences')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !profileData) throw new Error(profileError?.message ?? 'profile_not_found');
+
+  const profile = profileData as Pick<ProfileRow, 'family_group_id' | 'preferences'>;
+  const preferences = (profile.preferences ?? {}) as Partial<OnboardingPreferences>;
+  const personalSpaceId = preferences.personalSpaceId ?? null;
+
+  const { data: membershipRows, error: membershipError } = await supabase
+    .from('space_members')
+    .select('space_id, role, joined_at')
+    .eq('user_id', userId)
+    .order('joined_at', { ascending: true });
+
+  if (membershipError) throw new Error(membershipError.message);
+
+  const memberships = (membershipRows ?? []) as Array<Pick<SpaceMemberRow, 'space_id' | 'role' | 'joined_at'>>;
+  const membershipSpaceIds = memberships.map((row) => row.space_id);
+  const activeSpaceId = profile.family_group_id ?? personalSpaceId ?? membershipSpaceIds[0] ?? null;
+  const requestedSpaceIds = [...new Set([
+    ...membershipSpaceIds,
+    ...(activeSpaceId ? [activeSpaceId] : []),
+    ...(personalSpaceId ? [personalSpaceId] : []),
+  ])];
+
+  if (requestedSpaceIds.length === 0) {
+    return {
+      serverTime: new Date().toISOString(),
+      personalSpaceId,
+      activeSpaceId,
+      activeSpace: null,
+      spaces: [],
+      members: [],
+    };
+  }
+
+  const [{ data: groupRows, error: groupsError }, { data: memberCountRows, error: countsError }] = await Promise.all([
+    supabase
+      .from('family_groups')
+      .select('id,name,invite_code,created_by,created_at')
+      .in('id', requestedSpaceIds),
+    supabase
+      .from('space_members')
+      .select('space_id')
+      .in('space_id', requestedSpaceIds),
+  ]);
+
+  if (groupsError) throw new Error(groupsError.message);
+  if (countsError) throw new Error(countsError.message);
+
+  const roleMap = new Map(memberships.map((row) => [row.space_id, row.role]));
+  const countMap = new Map<string, number>();
+  for (const row of (memberCountRows ?? []) as Array<{ space_id: string }>) {
+    countMap.set(row.space_id, (countMap.get(row.space_id) ?? 0) + 1);
+  }
+
+  const orderMap = new Map(requestedSpaceIds.map((id, index) => [id, index]));
+  const spaces = ((groupRows ?? []) as Array<FamilyGroupRow & { created_by: string }>)
+    .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+    .map((group): NativeSpaceListItem => {
+      const isPersonal = group.id === personalSpaceId;
+      const fallbackRole: SpaceRole = group.created_by === userId ? 'admin' : 'viewer';
+      return {
+        id: group.id,
+        name: group.name,
+        role: roleMap.get(group.id) ?? fallbackRole,
+        memberCount: countMap.get(group.id) ?? (isPersonal ? 1 : 0),
+        inviteCode: isPersonal ? undefined : group.invite_code ?? undefined,
+        isPersonal,
+        isActive: group.id === activeSpaceId,
+      };
+    });
+
+  const activeSpace = spaces.find((space) => space.id === activeSpaceId) ?? spaces[0] ?? null;
+  let members: NativeSpaceMemberItem[] = [];
+
+  if (activeSpace) {
+    const { data: activeMemberRows, error: activeMembersError } = await supabase
+      .from('space_members')
+      .select('*')
+      .eq('space_id', activeSpace.id)
+      .order('joined_at', { ascending: true });
+
+    if (activeMembersError) throw new Error(activeMembersError.message);
+
+    const rows = (activeMemberRows ?? []) as SpaceMemberRow[];
+    const userIds = [...new Set(rows.map((row) => row.user_id))];
+    const { data: profiles } = userIds.length > 0
+      ? await supabase.from('profiles').select('*').in('id', userIds)
+      : { data: [] as ProfileRow[] };
+    const rowsWithProfiles = mergeMemberProfiles(rows, profiles as ProfileRow[]);
+
+    members = rowsWithProfiles.map((row) => {
+      const profile = row.profiles;
+      const displayName = row.nickname ?? profile?.display_name ?? profile?.name ?? '사용자';
+      return {
+        id: row.id,
+        userId: row.user_id,
+        displayName,
+        email: profile?.email ?? '',
+        avatar: profile?.avatar ?? undefined,
+        role: row.role,
+        isMe: row.user_id === userId,
+      };
+    });
+  }
+
+  return {
+    serverTime: new Date().toISOString(),
+    personalSpaceId,
+    activeSpaceId: activeSpace?.id ?? activeSpaceId,
+    activeSpace,
+    spaces,
+    members,
   };
 }
 

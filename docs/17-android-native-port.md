@@ -380,3 +380,15 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 일정 저장 후 이동은 preview 홈이 아니라 `NativeScheduleListActivity`로 돌아가도록 변경했다.
 - 검증: Android `:app:assembleDebug` 통과. Emulator에서 `RouterActivity --es start_path /budget` 진입 시 `NativeBudgetActivity`가 top resumed activity로 확인됨. 캡처: `/tmp/gleaum-native-budget-router.png`.
 - 남은 검증: 실제 단말에서 WebView 홈 하단 탭/버튼 터치가 JavaScript bridge로 네이티브 화면을 여는지 확인한다. Remote Config 기반 kill switch는 다음 작업으로 분리한다.
+
+
+## 2026-06-23 Native 공간 1차
+
+- `GET /api/native/spaces/summary`를 추가해 Android 네이티브 공간 화면에 필요한 활성 공간, 공간 목록, 멤버 목록을 bearer token 기반으로 제공한다.
+- 서버는 `profiles.preferences.personalSpaceId`를 기준으로 개인 공간과 공유 공간을 구분하고, 개인 공간에는 초대 코드를 내려주지 않는다.
+- Android `NativeSpaceActivity`를 추가해 `/space`를 WebView fallback 대신 네이티브 공간 화면으로 표시한다.
+- 1차 화면은 활성 공간 hero, 초대 코드 복사, 내 공간 목록, 공간 멤버, 공간 관리 진입을 포함한다.
+- 공간 생성/공간 설정/멤버 역할 변경은 아직 WebView fallback(`/space/new`, `/space/settings`)을 유지한다.
+- `MainActivity` native route bridge와 기존 네이티브 하단 네비의 `공간` 탭을 `NativeSpaceActivity`로 연결했다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 주의: emulator 재설치 후 세션이 없어 `/space` 직접 진입은 `LoginActivity`로 라우팅됐다. 실제 로그인 단말에서 홈 하단 `공간` 탭 → NativeSpaceActivity 진입, 초대 코드 복사, 멤버 목록 표시를 확인해야 한다.

@@ -485,3 +485,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 네이티브 전환 대상: 일정 목록/등록/상세/수정, 가계부, 전체 메뉴.
 - 네이티브 화면의 `홈` 액션은 `MainActivity(start_path=/home)`으로 복귀한다.
 - 검증: Android `:app:assembleDebug`, emulator direct route `/budget` -> `NativeBudgetActivity`.
+
+
+## 2026-06-23 Native Space Snapshot
+
+- 하단 네비의 `공간` 탭을 Android `NativeSpaceActivity`로 연결했다.
+- Native Space는 활성 공간, 개인/공유 공간 구분, 공간 목록, 멤버 목록, 초대 코드 복사를 1차 지원한다.
+- 공간 설정/생성은 아직 WebView fallback으로 남겨두었다.
+- 신규 API: `GET /api/native/spaces/summary`.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+- 다음 단계: 실제 로그인 단말 검증 후 공간 설정/초대/역할 변경까지 네이티브화한다.

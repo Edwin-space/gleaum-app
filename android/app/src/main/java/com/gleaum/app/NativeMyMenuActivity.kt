@@ -253,7 +253,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleCreateActivity::class.java))
             }
             addQuickAction("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() }
-            addQuickAction("공간", MenuIcon.SPACE) { openWebPath("/space") }
+            addQuickAction("공간", MenuIcon.SPACE) { startActivity(Intent(this@NativeMyMenuActivity, NativeSpaceActivity::class.java)); finish() }
         }
     }
 
@@ -356,7 +356,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             listOf(
                 BottomItem("홈", MenuIcon.HOME) { openWebPath("/home") },
                 BottomItem("일정", MenuIcon.CALENDAR) { startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleListActivity::class.java)); finish() },
-                BottomItem("공간", MenuIcon.SPACE) { openWebPath("/space") },
+                BottomItem("공간", MenuIcon.SPACE) { startActivity(Intent(this@NativeMyMenuActivity, NativeSpaceActivity::class.java)); finish() },
                 BottomItem("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() },
                 BottomItem("전체", MenuIcon.MENU) {},
             ).forEachIndexed { index, item ->
