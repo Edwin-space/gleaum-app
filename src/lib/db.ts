@@ -1529,9 +1529,11 @@ export interface NativeLedgerItem {
   title: string;
   amount: number;
   category: LedgerCategory;
+  method?: string;
   occurredAt: string;
   status: LedgerStatus;
   recurFreq: RecurFreq;
+  memo?: string;
 }
 
 
@@ -1677,9 +1679,11 @@ function nativeLedgerItemFromRow(row: LedgerRow): NativeLedgerItem {
     title: row.title,
     amount: row.amount ?? 0,
     category: row.category as LedgerCategory,
+    method: row.method ?? undefined,
     occurredAt: row.occurred_at,
     status: row.status,
     recurFreq: row.recur_freq,
+    memo: row.memo ?? undefined,
   };
 }
 
@@ -1752,6 +1756,97 @@ function futureRange(days: number, date = new Date()) {
     start: date.toISOString(),
     end: new Date(date.getFullYear(), date.getMonth(), date.getDate() + days, 23, 59, 59, 999).toISOString(),
   };
+}
+
+async function getNativePersonalLedgerRow(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+): Promise<LedgerRow> {
+  const { data, error } = await supabase
+    .from('ledger_entries')
+    .select('*')
+    .eq('id', id)
+    .eq('owner_id', userId)
+    .eq('scope', 'personal')
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('ledger_entry_not_found');
+  return data as LedgerRow;
+}
+
+export async function getNativeLedgerEntryById(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+): Promise<NativeLedgerItem> {
+  return nativeLedgerItemFromRow(await getNativePersonalLedgerRow(supabase, userId, id));
+}
+
+export async function updateNativeLedgerEntry(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+  input: Partial<NativeCreateLedgerInput> & { status?: LedgerStatus },
+): Promise<NativeLedgerItem> {
+  const current = await getNativePersonalLedgerRow(supabase, userId, id);
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.kind !== undefined) updates.kind = input.kind;
+  if (input.title !== undefined) {
+    const title = input.title.trim();
+    if (!title) throw new Error('title_required');
+    updates.title = title;
+  }
+  if (input.amount !== undefined) {
+    const amount = Math.max(0, Math.round(Number(input.amount ?? 0)));
+    if (!amount) throw new Error('amount_required');
+    updates.amount = amount;
+  }
+  if (input.category !== undefined) updates.category = input.category;
+  const nextKind = input.kind ?? current.kind;
+  if (nextKind === 'income') {
+    updates.method = null;
+  } else if (input.method !== undefined) {
+    updates.method = input.method ?? null;
+  }
+  if (input.occurredAt !== undefined) {
+    const occurredAt = new Date(input.occurredAt);
+    if (Number.isNaN(occurredAt.getTime())) throw new Error('invalid_occurred_at');
+    updates.occurred_at = occurredAt.toISOString();
+  }
+  if (input.recurFreq !== undefined) updates.recur_freq = input.recurFreq;
+  if (input.status !== undefined) updates.status = input.status;
+  if (input.memo !== undefined) updates.memo = input.memo?.trim() || null;
+
+  const { data, error } = await supabase
+    .from('ledger_entries')
+    .update(updates)
+    .eq('id', id)
+    .eq('owner_id', userId)
+    .eq('scope', 'personal')
+    .select()
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'ledger_update_failed');
+  return nativeLedgerItemFromRow(data as LedgerRow);
+}
+
+export async function deleteNativeLedgerEntry(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+): Promise<boolean> {
+  await getNativePersonalLedgerRow(supabase, userId, id);
+  const { error } = await supabase
+    .from('ledger_entries')
+    .delete()
+    .eq('id', id)
+    .eq('owner_id', userId)
+    .eq('scope', 'personal');
+  if (error) throw new Error(error.message);
+  return true;
 }
 
 export async function createNativeLedgerEntry(

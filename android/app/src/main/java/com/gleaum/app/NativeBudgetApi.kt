@@ -14,9 +14,11 @@ data class NativeBudgetEntry(
     val title: String,
     val amount: Long,
     val category: String,
+    val method: String?,
     val occurredAt: String,
     val status: String,
     val recurFreq: String,
+    val memo: String?,
 ) {
     companion object {
         fun fromJson(json: JSONObject): NativeBudgetEntry = NativeBudgetEntry(
@@ -25,9 +27,11 @@ data class NativeBudgetEntry(
             title = json.optString("title", "항목"),
             amount = json.optLong("amount", 0L),
             category = json.optString("category", "other"),
+            method = json.optString("method").takeIf { it.isNotBlank() },
             occurredAt = json.optString("occurredAt"),
             status = json.optString("status", "completed"),
             recurFreq = json.optString("recurFreq", "none"),
+            memo = json.optString("memo").takeIf { it.isNotBlank() },
         )
 
         fun listFrom(array: JSONArray): List<NativeBudgetEntry> = buildList {
@@ -93,23 +97,50 @@ data class NativeBudgetSummary(
 
 object NativeBudgetApi {
     private const val SUMMARY_URL = "https://www.gleaum.com/api/native/budget/summary"
+    private const val ENTRY_URL = "https://www.gleaum.com/api/native/budget/entries"
 
     fun summary(context: Context, month: String? = null): NativeBudgetSummary {
         val url = if (month.isNullOrBlank()) SUMMARY_URL else "$SUMMARY_URL?month=${URLEncoder.encode(month, Charsets.UTF_8.name())}"
-        val json = request(context, url)
+        val json = request(context, "GET", url)
         return NativeBudgetSummary.fromJson(json)
     }
 
-    private fun request(context: Context, url: String): JSONObject {
+    fun detail(context: Context, id: String): NativeBudgetEntry {
+        val json = request(context, "GET", "$ENTRY_URL/$id")
+        return NativeBudgetEntry.fromJson(json.optJSONObject("entry") ?: JSONObject())
+    }
+
+    fun update(context: Context, id: String, payload: JSONObject): NativeBudgetEntry {
+        val json = request(context, "PATCH", "$ENTRY_URL/$id", payload)
+        return NativeBudgetEntry.fromJson(json.optJSONObject("entry") ?: JSONObject())
+    }
+
+    fun create(context: Context, payload: JSONObject): NativeBudgetEntry {
+        val json = request(context, "POST", ENTRY_URL, payload)
+        return NativeBudgetEntry.fromJson(json.optJSONObject("entry") ?: JSONObject())
+    }
+
+    fun delete(context: Context, id: String) {
+        request(context, "DELETE", "$ENTRY_URL/$id")
+    }
+
+    private fun request(context: Context, method: String, url: String, body: JSONObject? = null): JSONObject {
         val session = SessionManager.get(context) ?: throw IllegalStateException("session_required")
         val token = JSONObject(session).optString("access_token").takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("session_required")
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
+            requestMethod = method
             connectTimeout = 15000
             readTimeout = 20000
             setRequestProperty("Authorization", "Bearer $token")
             setRequestProperty("Accept", "application/json")
+            if (body != null) {
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+        }
+        if (body != null) {
+            java.io.OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(body.toString()) }
         }
         val text = readResponse(connection)
         val json = if (text.isBlank()) JSONObject() else JSONObject(text)

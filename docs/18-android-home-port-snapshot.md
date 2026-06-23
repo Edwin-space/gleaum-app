@@ -466,3 +466,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 등록 화면은 개인 가계부 원장 전용으로 동작하며, 공간 지출과 섞이지 않도록 서버 API가 `scope='personal'`을 강제한다.
 - 수입/지출, 일회/정기 구분을 지원한다. 일회 항목은 완료 상태, 정기 항목은 예정 상태로 생성된다.
 - 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-budget-entry-create.png`
+
+
+## 2026-06-23 Native Budget CRUD Snapshot
+
+- Native Budget은 조회/등록에 이어 항목 상세 조회, 수정, 삭제, 정기 항목 상태 변경까지 1차 연결됐다.
+- API 경로: `GET/PATCH/DELETE /api/native/budget/entries/[id]`.
+- 개인 가계부 경계: 서버에서 `owner_id = userId`, `scope = 'personal'` 필터를 강제한다.
+- UI 경로: 가계부 카드 터치 -> 수정 모드, 정기 항목 상태 텍스트 터치 -> 예정/완료 토글, `×` -> 삭제 확인.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+- 다음 검증: 배포 후 실제 로그인 단말에서 개인 가계부 항목 생성 -> 수정 -> 상태 변경 -> 삭제, 그리고 공간 지출이 개인 가계부 API에서 노출되지 않는지 확인.

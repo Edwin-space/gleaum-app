@@ -1,5 +1,6 @@
 package com.gleaum.app
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -198,9 +199,10 @@ class NativeBudgetActivity : AppCompatActivity() {
     private fun entryCard(entry: NativeBudgetEntry): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(16), dp(14), dp(16), dp(14))
+        setPadding(dp(16), dp(14), dp(12), dp(14))
         background = round("#FFFFFF", 20, "#EEF0F4")
         elevation = dp(2).toFloat()
+        setOnClickListener { openEdit(entry.id) }
         val income = entry.kind == "income"
         addView(TextView(context).apply {
             text = if (income) "수입" else "지출"
@@ -214,6 +216,15 @@ class NativeBudgetActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             addView(TextView(context).apply { text = entry.title; textSize = 15f; typeface = bold(); setTextColor(color("#1A1B2E")) })
             addView(TextView(context).apply { text = "${dayText(entry.occurredAt)} · ${recurLabel(entry.recurFreq)}"; textSize = 12f; setTextColor(color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+            if (entry.recurFreq != "none") {
+                addView(TextView(context).apply {
+                    text = if (entry.status == "completed") (if (income) "수령 완료" else "결제 완료") else (if (income) "수령 예정" else "결제 예정")
+                    textSize = 11f
+                    typeface = bold()
+                    setTextColor(color(if (entry.status == "completed") "#10B981" else "#0084CC"))
+                    setOnClickListener { toggleEntryStatus(entry) }
+                }, matchWrap().apply { topMargin = dp(5) })
+            }
         }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
         addView(TextView(context).apply {
             text = "${if (income) "+" else "-"}${money(entry.amount)}"
@@ -222,6 +233,49 @@ class NativeBudgetActivity : AppCompatActivity() {
             gravity = Gravity.RIGHT
             setTextColor(color(if (income) "#10B981" else "#1A1B2E"))
         })
+        addView(TextView(context).apply {
+            text = "×"
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTextColor(color("#EF4444"))
+            setOnClickListener { confirmDelete(entry) }
+        }, LinearLayout.LayoutParams(dp(34), dp(44)).apply { leftMargin = dp(6) })
+    }
+
+    private fun openEdit(id: String) {
+        startActivity(Intent(this, NativeBudgetEntryCreateActivity::class.java).putExtra("entry_id", id))
+    }
+
+    private fun toggleEntryStatus(entry: NativeBudgetEntry) {
+        val next = if (entry.status == "completed") "pending" else "completed"
+        Thread {
+            try {
+                NativeBudgetApi.update(this, entry.id, org.json.JSONObject().put("status", next))
+                runOnUiThread { loadSummary() }
+            } catch (e: Exception) {
+                runOnUiThread { errorMessage = friendlyError(e.message); render() }
+            }
+        }.start()
+    }
+
+    private fun confirmDelete(entry: NativeBudgetEntry) {
+        AlertDialog.Builder(this)
+            .setTitle("항목을 삭제할까요?")
+            .setMessage("삭제한 수입/지출 항목은 복구할 수 없어요.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("삭제") { _, _ -> deleteEntry(entry.id) }
+            .show()
+    }
+
+    private fun deleteEntry(id: String) {
+        Thread {
+            try {
+                NativeBudgetApi.delete(this, id)
+                runOnUiThread { loadSummary() }
+            } catch (e: Exception) {
+                runOnUiThread { errorMessage = friendlyError(e.message); render() }
+            }
+        }.start()
     }
 
     private fun sectionTitle(title: String): TextView = TextView(this).apply { text = title; textSize = 17f; typeface = bold(); setTextColor(color("#1A1B2E")) }

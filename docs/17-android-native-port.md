@@ -357,3 +357,15 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 일회 항목은 `completed`, 정기 항목은 `pending`으로 저장한다.
 - Native Budget 메인의 `+` 버튼은 WebView `/budget` fallback 대신 네이티브 등록 화면으로 진입한다.
 - 검증: `npm run build`, Android `:app:assembleDebug`, Pixel_9 emulator 가계부 `+` → 등록 화면 캡처 `/tmp/gleaum-native-budget-entry-create.png`
+
+
+## 2026-06-23 Native 가계부 관리 1차
+
+- `GET/PATCH/DELETE /api/native/budget/entries/[id]`를 추가해 Android 네이티브 가계부 항목 상세 조회, 수정, 삭제를 지원한다.
+- 서버는 수정/삭제 대상 조회 시 `owner_id = userId`와 `scope = 'personal'`을 강제해 개인 가계부 항목만 처리한다. 공간 지출은 이 경로에서 수정/삭제되지 않는다.
+- Android `NativeBudgetActivity`의 최근 항목 카드를 터치하면 `NativeBudgetEntryCreateActivity(entry_id)` 수정 모드로 진입한다.
+- 정기 수입/지출 항목은 카드 내부 상태 텍스트에서 `pending/completed`를 토글할 수 있다.
+- 항목 삭제는 네이티브 확인 다이얼로그를 거친 뒤 API 삭제를 호출한다.
+- 수정 모드는 제목, 금액, 구분, 카테고리, 날짜, 결제수단, 메모를 기존 값으로 채운다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과. Pixel_9 emulator 가계부 등록/수정 화면 진입 캡처: `/tmp/gleaum-native-budget-entry-edit-flow.png`.
+- 주의: 운영 URL 기반 앱은 신규 API가 배포되기 전까지 실제 항목 상세/수정/삭제 호출이 실패할 수 있다. GitHub/Vercel 배포 후 실제 로그인 계정으로 생성-수정-상태변경-삭제 회귀 테스트가 필요하다.

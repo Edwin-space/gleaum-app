@@ -18,16 +18,14 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 
 class NativeBudgetEntryCreateActivity : AppCompatActivity() {
+    private var entryId: String? = null
+    private var editingEntry: NativeBudgetEntry? = null
     private var kind = "expense"
     private var entryMode = "onetime"
     private var category = "food"
@@ -41,10 +39,11 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        entryId = intent.getStringExtra("entry_id")
         kind = intent.getStringExtra("kind") ?: "expense"
         category = if (kind == "income") "salary" else "food"
         applyLightSystemBars()
-        render()
+        if (entryId != null) loadEntryForEdit() else render()
     }
 
     private fun applyLightSystemBars() {
@@ -58,6 +57,28 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     }
 
     private fun render() = setContentView(buildScreen())
+
+    private fun loadEntryForEdit() {
+        saving = true
+        render()
+        Thread {
+            try {
+                val loaded = NativeBudgetApi.detail(this, entryId ?: return@Thread)
+                runOnUiThread {
+                    editingEntry = loaded
+                    kind = loaded.kind
+                    entryMode = if (loaded.recurFreq == "none") "onetime" else "recurring"
+                    category = loaded.category
+                    paymentMethod = loaded.method ?: paymentMethod
+                    applyIsoToDate(loaded.occurredAt)
+                    saving = false
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread { saving = false; message = friendlyError(e.message); render() }
+            }
+        }.start()
+    }
 
     private fun buildScreen(): FrameLayout = FrameLayout(this).apply {
         setBackgroundColor(color("#FAFAFD"))
@@ -92,7 +113,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 setOnClickListener { finish() }
             }, LinearLayout.LayoutParams(dp(40), dp(40)))
             addView(TextView(context).apply {
-                text = if (kind == "income") "수입 추가" else "지출 추가"
+                text = if (entryId == null) { if (kind == "income") "수입 추가" else "지출 추가" } else "항목 수정"
                 textSize = 18f
                 typeface = bold()
                 setTextColor(color("#1A1B2E"))
@@ -109,7 +130,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
         background = gradient("#1A1B2E", "#2D2E4A", 28)
         elevation = dp(8).toFloat()
         addView(TextView(context).apply { text = "MONEY FLOW"; textSize = 12f; typeface = bold(); letterSpacing = 0.08f; setTextColor(color("#0CC9B5")) })
-        addView(TextView(context).apply { text = if (kind == "income") "수입을 기록해요" else "지출을 기록해요"; textSize = 25f; typeface = bold(); setTextColor(Color.WHITE) }, matchWrap().apply { topMargin = dp(8) })
+        addView(TextView(context).apply { text = if (entryId == null) { if (kind == "income") "수입을 기록해요" else "지출을 기록해요" } else "항목을 수정해요"; textSize = 25f; typeface = bold(); setTextColor(Color.WHITE) }, matchWrap().apply { topMargin = dp(8) })
         addView(TextView(context).apply { text = "개인 가계부에만 저장되며, 공간 지출과 섞이지 않습니다."; textSize = 12f; typeface = medium(); setTextColor(colorWithAlpha("#FFFFFF", 0.56f)) }, matchWrap().apply { topMargin = dp(6) })
     }
 
@@ -147,9 +168,9 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
         setPadding(dp(20), dp(20), dp(20), dp(20))
         background = round("#FFFFFF", 24, "#EEF0F4")
         elevation = dp(2).toFloat()
-        titleInput = input(if (kind == "income") "예: 급여, 환급" else "예: 외식, 마트, 주유", false)
-        amountInput = input("금액", false).apply { inputType = android.text.InputType.TYPE_CLASS_NUMBER }
-        memoInput = input("메모를 입력해 주세요", true)
+        titleInput = input(if (kind == "income") "예: 급여, 환급" else "예: 외식, 마트, 주유", false).apply { editingEntry?.title?.let { setText(it) } }
+        amountInput = input("금액", false).apply { inputType = android.text.InputType.TYPE_CLASS_NUMBER; editingEntry?.amount?.takeIf { it > 0 }?.let { setText(it.toString()) } }
+        memoInput = input("메모를 입력해 주세요", true).apply { editingEntry?.memo?.let { setText(it) } }
         addView(label("항목명")); addView(titleInput, matchWrap().apply { topMargin = dp(8) })
         addView(label("금액"), matchWrap().apply { topMargin = dp(18) }); addView(amountInput, matchWrap().apply { topMargin = dp(8) })
         addView(label("날짜"), matchWrap().apply { topMargin = dp(18) }); addView(pickerBox(dateText()) { pickDate() }, matchWrap().apply { topMargin = dp(8) })
@@ -183,7 +204,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     }
 
     private fun saveButton(): TextView = TextView(this).apply {
-        text = if (saving) "저장 중..." else if (kind == "income") "수입 등록" else "지출 등록"
+        text = if (saving) "저장 중..." else if (entryId == null) { if (kind == "income") "수입 등록" else "지출 등록" } else "수정 완료"
         textSize = 16f
         typeface = bold()
         gravity = Gravity.CENTER
@@ -202,7 +223,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
         saving = true; message = null; render()
         Thread {
             try {
-                postEntry(JSONObject().apply {
+                val payload = JSONObject().apply {
                     put("kind", kind)
                     put("title", title)
                     put("amount", amount)
@@ -211,8 +232,10 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                     put("recurFreq", if (entryMode == "recurring") "monthly" else "none")
                     if (kind == "expense") put("method", paymentMethod)
                     val memo = memoInput.text?.toString()?.trim().orEmpty()
-                    if (memo.isNotBlank()) put("memo", memo)
-                })
+                    put("memo", memo)
+                }
+                val id = entryId
+                if (id == null) NativeBudgetApi.create(this, payload) else NativeBudgetApi.update(this, id, payload)
                 runOnUiThread { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
             } catch (e: Exception) {
                 runOnUiThread { saving = false; message = friendlyError(e.message); render() }
@@ -220,19 +243,6 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun postEntry(payload: JSONObject) {
-        val session = SessionManager.get(this) ?: throw IllegalStateException("session_required")
-        val token = JSONObject(session).optString("access_token").takeIf { it.isNotBlank() } ?: throw IllegalStateException("session_required")
-        val connection = (URL(ENTRY_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"; connectTimeout = 15000; readTimeout = 20000; doOutput = true
-            setRequestProperty("Authorization", "Bearer $token"); setRequestProperty("Content-Type", "application/json"); setRequestProperty("Accept", "application/json")
-        }
-        OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(payload.toString()) }
-        val text = readResponse(connection)
-        if (connection.responseCode !in 200..299) throw IllegalStateException(runCatching { JSONObject(text).optString("error") }.getOrNull().orEmpty().ifBlank { "ledger_create_failed" })
-    }
-
-    private fun readResponse(connection: HttpURLConnection): String { val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream; return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty() }
     private fun pickDate() { DatePickerDialog(this, { _, y, m, d -> date.set(y, m, d); render() }, date.get(Calendar.YEAR), date.get(Calendar.MONTH), date.get(Calendar.DAY_OF_MONTH)).show() }
     private fun label(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 13f; typeface = bold(); setTextColor(color("#1A1B2E")) }
     private fun input(hintValue: String, multiline: Boolean): EditText = EditText(this).apply { hint = hintValue; textSize = 15f; typeface = medium(); setTextColor(color("#1A1B2E")); setHintTextColor(color("#AEAEA8")); setPadding(dp(16), dp(12), dp(16), dp(12)); background = round("#F8FAFC", 16, "#EEF0F4"); minHeight = if (multiline) dp(104) else dp(52); if (multiline) { gravity = Gravity.TOP; minLines = 3 } else setSingleLine(true) }
@@ -241,6 +251,11 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     private fun expenseCategories() = listOf("food" to "식비", "daily" to "생활", "transport" to "교통", "culture" to "문화", "medical" to "의료", "social" to "경조사", "housing" to "주거", "subscription" to "구독", "other" to "기타")
     private fun incomeCategories() = listOf("salary" to "급여", "business" to "사업", "investment" to "투자", "bonus" to "상여", "refund" to "환급", "gift" to "용돈", "other_income" to "기타")
     private fun friendlyError(code: String?): String = when (code) { "session_required" -> "로그인 세션을 찾을 수 없어요."; "personal_space_required" -> "개인 공간을 찾을 수 없어요."; else -> "저장에 실패했어요. 잠시 후 다시 시도해 주세요." }
+    private fun applyIsoToDate(iso: String) {
+        val parsed = runCatching { java.time.Instant.parse(iso) }.getOrNull()
+        if (parsed != null) date.timeInMillis = parsed.toEpochMilli()
+    }
+
     private fun dateText(): String = "${date.get(Calendar.YEAR)}. ${date.get(Calendar.MONTH) + 1}. ${date.get(Calendar.DAY_OF_MONTH)}."
     private fun toIsoUtc(calendar: Calendar): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(calendar.time)
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
