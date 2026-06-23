@@ -1555,6 +1555,18 @@ export interface NativeBudgetSummary {
   categoryTotals: Array<{ category: LedgerCategory; kind: LedgerKind; amount: number }>;
 }
 
+
+export interface NativeCreateLedgerInput {
+  kind: LedgerKind;
+  title: string;
+  amount: number;
+  category: LedgerCategory;
+  method?: string;
+  occurredAt: string;
+  recurFreq?: RecurFreq;
+  memo?: string;
+}
+
 export interface NativeCalendarDay {
   date: string;
   day: number;
@@ -1740,6 +1752,48 @@ function futureRange(days: number, date = new Date()) {
     start: date.toISOString(),
     end: new Date(date.getFullYear(), date.getMonth(), date.getDate() + days, 23, 59, 59, 999).toISOString(),
   };
+}
+
+export async function createNativeLedgerEntry(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  input: NativeCreateLedgerInput,
+): Promise<NativeLedgerItem> {
+  const { personalSpaceId, activeSpaceId, sharedSpaceId } = await getNativeProfileContext(supabase, userId);
+  const personalBudgetSpaceId = personalSpaceId ?? (sharedSpaceId ? null : activeSpaceId);
+  if (!personalBudgetSpaceId) throw new Error('personal_space_required');
+
+  const title = input.title?.trim();
+  if (!title) throw new Error('title_required');
+  const amount = Math.max(0, Math.round(Number(input.amount ?? 0)));
+  if (!amount) throw new Error('amount_required');
+  const occurredAt = new Date(input.occurredAt);
+  if (Number.isNaN(occurredAt.getTime())) throw new Error('invalid_occurred_at');
+
+  const recurFreq = input.recurFreq ?? 'none';
+  const status: LedgerStatus = recurFreq === 'none' ? 'completed' : 'pending';
+
+  const { data, error } = await supabase
+    .from('ledger_entries')
+    .insert({
+      kind: input.kind,
+      scope: 'personal',
+      space_id: personalBudgetSpaceId,
+      owner_id: userId,
+      title,
+      amount,
+      category: input.category,
+      method: input.kind === 'expense' ? input.method ?? null : null,
+      occurred_at: occurredAt.toISOString(),
+      status,
+      recur_freq: recurFreq,
+      memo: input.memo?.trim() || null,
+    })
+    .select()
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'ledger_create_failed');
+  return nativeLedgerItemFromRow(data as LedgerRow);
 }
 
 export async function getNativeBudgetSummary(

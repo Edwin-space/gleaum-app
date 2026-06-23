@@ -105,6 +105,11 @@
             android:name=".NativeBudgetActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".NativeBudgetEntryCreateActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- ── Google AdMob ────────────────────────────────────────────────
              App ID: ca-app-pub-7426507548879721~6623452973

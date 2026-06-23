@@ -118,7 +118,7 @@ class NativeBudgetActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
                 background = gradient("#0CC9B5", "#0084CC", 16)
-                setOnClickListener { openWebPath("/budget") }
+                setOnClickListener { startActivity(Intent(this@NativeBudgetActivity, NativeBudgetEntryCreateActivity::class.java)) }
             }, LinearLayout.LayoutParams(dp(48), dp(48)))
         }, FrameLayout.LayoutParams(match(), dp(54), Gravity.BOTTOM).apply { leftMargin = dp(20); rightMargin = dp(20); bottomMargin = dp(8) })
         addView(View(context).apply { setBackgroundColor(color("#EEF0F4")) }, FrameLayout.LayoutParams(match(), dp(1), Gravity.BOTTOM))

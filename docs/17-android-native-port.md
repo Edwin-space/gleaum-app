@@ -347,3 +347,13 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - `NativeTabIconView`를 추가해 일정 목록/가계부 하단 네비가 문자 아이콘이 아닌 stroke 기반 네이티브 아이콘을 사용한다.
 - 이번 단계는 조회 메인만 포함한다. 수입/지출 등록·수정·삭제는 다음 Native Budget Port 단계에서 처리한다.
 - 검증: `npm run build`, Android `:app:assembleDebug`, Pixel_9 emulator 가계부 탭 진입 캡처 `/tmp/gleaum-native-budget-main.png`
+
+
+2026-06-23 Native 가계부 등록 1차:
+
+- `POST /api/native/budget/entries`를 추가해 Android 네이티브에서 수입/지출을 개인 가계부 원장에 직접 등록한다.
+- 서버는 `scope='personal'`, `owner_id=userId`, `space_id=personalSpaceId`를 강제해 공간 지출과 개인 가계부가 섞이지 않도록 했다.
+- Android `NativeBudgetEntryCreateActivity`를 추가해 지출/수입, 일회/정기, 제목, 금액, 날짜, 카테고리, 결제수단, 메모를 입력할 수 있게 했다.
+- 일회 항목은 `completed`, 정기 항목은 `pending`으로 저장한다.
+- Native Budget 메인의 `+` 버튼은 WebView `/budget` fallback 대신 네이티브 등록 화면으로 진입한다.
+- 검증: `npm run build`, Android `:app:assembleDebug`, Pixel_9 emulator 가계부 `+` → 등록 화면 캡처 `/tmp/gleaum-native-budget-entry-create.png`

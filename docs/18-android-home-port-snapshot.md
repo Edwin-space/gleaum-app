@@ -458,3 +458,11 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 현재 범위는 메인 조회 화면이다. 등록/수정/삭제는 다음 단계에서 별도 네이티브화한다.
 - 하단 네비 아이콘은 `NativeTabIconView` stroke icon으로 보정했다.
 - 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-budget-main.png`
+
+
+## 2026-06-23 Native 가계부 등록 1차
+
+- Native Budget의 `+` 버튼을 Android `NativeBudgetEntryCreateActivity`로 연결했다.
+- 등록 화면은 개인 가계부 원장 전용으로 동작하며, 공간 지출과 섞이지 않도록 서버 API가 `scope='personal'`을 강제한다.
+- 수입/지출, 일회/정기 구분을 지원한다. 일회 항목은 완료 상태, 정기 항목은 예정 상태로 생성된다.
+- 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-budget-entry-create.png`
