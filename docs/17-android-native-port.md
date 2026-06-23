@@ -447,3 +447,14 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - Debug manifest의 Native Home preview 등록은 main manifest의 운영 등록과 충돌하지 않도록 `tools:replace`로 정리했다.
 - 검증: Android `:app:assembleDebug` 통과.
 - 남은 검증: 실제 로그인 단말에서 앱 시작 → Native Home 진입, 홈 하단 탭 이동, WebView 기능에서 `/home` 복귀 시 Native Home 승격, 전체 메뉴 설정 저장, 반복 예정 표시를 확인한다.
+
+
+## 2026-06-23 Native 프로필 관리 1차
+
+- `GET/PATCH /api/native/profile`을 추가해 Android 네이티브 전체 메뉴에서 프로필 기본 정보를 WebView 없이 조회/수정한다.
+- 서버 쿼리/업데이트는 `src/lib/db.ts`의 `getNativeProfileSummary()`, `updateNativeProfile()`에 모아 DB 접근 규칙을 유지했다.
+- Android `NativeProfileApi`를 추가해 bearer token 기반으로 네이티브 프로필 API를 호출한다.
+- `NativeMyMenuActivity`의 `프로필 관리`는 WebView `/mypage` fallback 대신 네이티브 다이얼로그로 닉네임, 실명, 표시 방식(닉네임/실명)을 수정한다.
+- `비밀번호 설정`은 아직 재인증이 필요한 보안 흐름이므로 WebView fallback 대신 네이티브 안내 다이얼로그로 전환했다. 실제 비밀번호 변경은 다음 보안 단계에서 구현한다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 남은 검증: 실제 로그인 단말에서 전체 메뉴 → 프로필 관리 → 저장 후 프로필 카드/홈 표시명이 갱신되는지 확인한다.

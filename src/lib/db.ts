@@ -1586,6 +1586,23 @@ export interface NativeSpaceSummary {
   members: NativeSpaceMemberItem[];
 }
 
+export interface NativeProfileSummary {
+  id: string;
+  email: string;
+  name: string;
+  displayName: string;
+  realName: string | null;
+  nameDisplayMode: NameDisplayMode;
+  avatar: string | null;
+  timezone: string;
+  locale: string;
+}
+
+export interface NativeProfileUpdateInput {
+  displayName?: string;
+  realName?: string | null;
+  nameDisplayMode?: NameDisplayMode;
+}
 
 export interface NativeCreateLedgerInput {
   kind: LedgerKind;
@@ -1714,6 +1731,73 @@ function nativeLedgerItemFromRow(row: LedgerRow): NativeLedgerItem {
     recurFreq: row.recur_freq,
     memo: row.memo ?? undefined,
   };
+}
+
+function nativeProfileSummaryFromRow(row: ProfileRow): NativeProfileSummary {
+  const displayName = row.display_name ?? row.name ?? '사용자';
+  return {
+    id: row.id,
+    email: row.email ?? '',
+    name: row.name ?? displayName,
+    displayName,
+    realName: row.real_name ?? null,
+    nameDisplayMode: row.name_display_mode ?? 'nickname',
+    avatar: row.avatar,
+    timezone: row.timezone ?? 'Asia/Seoul',
+    locale: row.locale ?? 'ko-KR',
+  };
+}
+
+export async function getNativeProfileSummary(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<NativeProfileSummary> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'profile_not_found');
+  return nativeProfileSummaryFromRow(data as ProfileRow);
+}
+
+export async function updateNativeProfile(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  input: NativeProfileUpdateInput,
+): Promise<NativeProfileSummary> {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  if (input.displayName !== undefined) {
+    const displayName = input.displayName.trim();
+    if (!displayName) throw new Error('display_name_required');
+    if (displayName.length > 24) throw new Error('display_name_too_long');
+    updates.display_name = displayName;
+    updates.name = displayName;
+  }
+
+  if (input.realName !== undefined) {
+    const realName = input.realName?.trim() ?? '';
+    updates.real_name = realName || null;
+  }
+
+  if (input.nameDisplayMode !== undefined) {
+    if (input.nameDisplayMode !== 'nickname' && input.nameDisplayMode !== 'real_name') {
+      throw new Error('invalid_name_display_mode');
+    }
+    updates.name_display_mode = input.nameDisplayMode;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId)
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale')
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'profile_update_failed');
+  return nativeProfileSummaryFromRow(data as ProfileRow);
 }
 
 function monthRange(date = new Date()) {

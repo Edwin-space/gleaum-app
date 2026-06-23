@@ -531,3 +531,12 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 공간 고급 설정은 WebView fallback 대신 네이티브 액션 안내/연결로 정리됐다.
 - 가계부는 반복 수입/지출을 `반복 예정` 섹션으로 노출한다.
 - 검증 완료: Android `:app:assembleDebug`.
+
+
+## 2026-06-23 Native Profile Snapshot
+
+- Native 전체 메뉴의 프로필 관리를 WebView fallback에서 네이티브 다이얼로그로 전환했다.
+- 신규 API: `GET/PATCH /api/native/profile`.
+- 수정 가능 항목: 닉네임, 실명, 표시 방식.
+- 비밀번호 변경은 재인증 보안 플로우가 필요해 다음 단계로 분리하고, 현재는 네이티브 안내 다이얼로그로 처리한다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.

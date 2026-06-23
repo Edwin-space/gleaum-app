@@ -26,6 +26,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -148,8 +149,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     addView(buildSectionTitle("계정 & 보안"), matchWrap().apply { topMargin = dp(22) })
                     addView(buildSettingsGroup(listOf(
                         MenuRow("생체인증 보안", biometricSubtitle(), MenuIcon.LOCK, biometricBadge()) { showBiometricSettings() },
-                        MenuRow("비밀번호 설정", "이메일 로그인 보안 설정", MenuIcon.KEY, null) { openWebPath("/settings/security") },
-                        MenuRow("프로필 관리", "닉네임, 이름, 계정 정보", MenuIcon.USER, null) { openWebPath("/mypage") },
+                        MenuRow("비밀번호 설정", "이메일 로그인 보안 설정", MenuIcon.KEY, null) { showPasswordSettingsNotice() },
+                        MenuRow("프로필 관리", "닉네임, 이름, 계정 정보", MenuIcon.USER, null) { loadProfileForEdit() },
                     )), matchWrap().apply { topMargin = dp(10) })
 
                     addView(buildSectionTitle("서비스"), matchWrap().apply { topMargin = dp(22) })
@@ -402,6 +403,122 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun biometricBadge(): String = if (isBiometricLockEnabled()) "켜짐" else if (biometricSubtitle().contains("가능")) "가능" else "확인"
+
+    private fun showPasswordSettingsNotice() {
+        AlertDialog.Builder(this)
+            .setTitle("비밀번호 설정")
+            .setMessage("비밀번호 변경은 인증 재확인이 필요한 보안 작업입니다. 다음 단계에서 네이티브 재인증 흐름과 함께 연결합니다.\n\n현재 이메일 로그인은 기존 로그인 화면에서 계속 사용할 수 있어요.")
+            .setPositiveButton("확인", null)
+            .show()
+    }
+
+    private fun loadProfileForEdit() {
+        message = "프로필 정보를 불러오는 중이에요."
+        render()
+        Thread {
+            try {
+                val profile = NativeProfileApi.fetch(this)
+                runOnUiThread {
+                    message = null
+                    showProfileEditDialog(profile)
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyProfileError(e.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun showProfileEditDialog(profile: NativeProfile) {
+        val displayInput = EditText(this).apply {
+            hint = "닉네임"
+            textSize = 16f
+            setSingleLine(true)
+            setText(profile.displayName)
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
+        }
+        val realNameInput = EditText(this).apply {
+            hint = "실명 (선택)"
+            textSize = 16f
+            setSingleLine(true)
+            setText(profile.realName.orEmpty())
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
+        }
+        val modeValues = arrayOf("nickname", "real_name")
+        var selectedMode = profile.nameDisplayMode.takeIf { it == "real_name" } ?: "nickname"
+        lateinit var modeButton: TextView
+        fun modeLabel(): String = if (selectedMode == "real_name") "실명으로 표시" else "닉네임으로 표시"
+
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(TextView(context).apply {
+                text = profile.email.ifBlank { "계정 이메일 없음" }
+                textSize = 12f
+                typeface = brandBold()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap())
+            addView(displayInput, matchWrap().apply { topMargin = dp(12) })
+            addView(realNameInput, matchWrap().apply { topMargin = dp(10) })
+            addView(TextView(context).apply {
+                text = "앱에서 나를 어떻게 부를지 선택해 주세요."
+                textSize = 12f
+                typeface = brandMedium()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(12) })
+            modeButton = TextView(context).apply {
+                text = modeLabel()
+                textSize = 15f
+                typeface = brandBold()
+                gravity = Gravity.CENTER
+                setTextColor(color("#0084CC"))
+                setPadding(dp(16), dp(12), dp(16), dp(12))
+                background = roundDrawable("#F0FAFF", 16, "#BDEBFF")
+                setOnClickListener {
+                    selectedMode = if (selectedMode == modeValues[0]) modeValues[1] else modeValues[0]
+                    text = modeLabel()
+                }
+            }
+            addView(modeButton, matchWrap().apply { topMargin = dp(8) })
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("프로필 관리")
+            .setView(form)
+            .setNegativeButton("취소", null)
+            .setPositiveButton("저장") { _, _ ->
+                updateProfile(displayInput.text?.toString().orEmpty(), realNameInput.text?.toString().orEmpty(), selectedMode)
+            }
+            .show()
+    }
+
+    private fun updateProfile(displayName: String, realName: String, nameDisplayMode: String) {
+        Thread {
+            try {
+                NativeProfileApi.update(this, displayName.trim(), realName.trim().ifBlank { null }, nameDisplayMode)
+                runOnUiThread {
+                    message = "프로필을 저장했어요."
+                    loadSummary()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyProfileError(e.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun friendlyProfileError(code: String?): String = when (code) {
+        "session_required" -> "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요."
+        "display_name_required" -> "닉네임을 입력해 주세요."
+        "display_name_too_long" -> "닉네임은 24자 이내로 입력해 주세요."
+        else -> "프로필을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
+    }
 
     private fun themeModeSubtitle(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {
         "light" -> "라이트 모드 고정"
