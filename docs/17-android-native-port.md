@@ -306,3 +306,13 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 검증 전 운영 진입 흐름에 직접 연결한 구조적 위험
 
 향후 Android Native Port는 **비활성 구현 → 비교 검증 → 내부 테스트 활성화 → 운영 활성화** 순서로 진행한다.
+## 2026-06-23 Native 전체 메뉴 Shell
+
+- Android `NativeMyMenuActivity`를 추가해 하단 네비 `전체` 탭의 WebView 의존을 줄이는 Native Shell을 구성했다.
+- 프로필 요약, 앱 설정, 계정 & 보안, 서비스 섹션을 Native View로 렌더링한다.
+- 캘린더 권한 요청, 생체인증 보안 설정 진입, 로그아웃은 네이티브에서 직접 처리한다.
+- 아직 Native Port가 끝나지 않은 상세 화면은 WebView fallback으로 연결한다.
+- 홈 `NativeHomePortActivity`의 `/mypage` 이동은 `NativeMyMenuActivity`로 우선 라우팅한다.
+- 광고/태블릿/다크모드는 후순위로 유지한다.
+- Android `:app:assembleDebug` 통과 및 Pixel_9 emulator에서 홈 → 전체 진입 확인: `/tmp/gleaum-native-menu-shell-retest.png`
+

@@ -423,3 +423,9 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - `Pretendard/Outfit` 실제 font asset은 현재 레포에 없어 번들 추가는 보류했다. 대신 Native typography helper를 도입해 추후 `res/font` 교체 지점을 단일화했다.
 - 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshots `/tmp/gleaum-native-home-five-step-top.png`, `/tmp/gleaum-native-home-five-step-day-2.png`
 
+## 2026-06-23 Native 전체 메뉴 Shell 연결
+
+- Home BottomNav의 `전체` 탭을 WebView `/mypage` fallback 대신 Android `NativeMyMenuActivity`로 연결했다.
+- Native 전체 메뉴는 기기 기능 설정과 로그아웃을 우선 네이티브 처리하고, 상세 설정은 단계적으로 WebView fallback을 유지한다.
+- 검증 캡처: `/tmp/gleaum-native-menu-shell-retest.png`
+
