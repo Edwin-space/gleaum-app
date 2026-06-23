@@ -92,6 +92,16 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ── 네이티브 일정 목록/상세 ───────────────────────────────────── -->
+        <activity
+            android:name=".NativeScheduleListActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".NativeScheduleDetailActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
         <!-- ── Google AdMob ────────────────────────────────────────────────
              App ID: ca-app-pub-7426507548879721~6623452973
              Banner Unit: ca-app-pub-7426507548879721/6211229285

@@ -19,18 +19,14 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.TimeZone
 
 /** Native schedule creation form for Android Home Port. */
 class NativeScheduleCreateActivity : AppCompatActivity() {
 
+    private var scheduleId: String? = null
+    private var editingSchedule: NativeAppSchedule? = null
     private var type = "personal"
     private val startCalendar = Calendar.getInstance()
     private val endCalendar = Calendar.getInstance()
@@ -41,10 +37,11 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        scheduleId = intent.getStringExtra("schedule_id")
         intent.getStringExtra("selected_date")?.takeIf { it.length >= 10 }?.let(::applySelectedDate)
         endCalendar.timeInMillis = startCalendar.timeInMillis + 60L * 60L * 1000L
         applyLightSystemBars()
-        render()
+        if (scheduleId != null) loadScheduleForEdit() else render()
     }
 
     private fun applySelectedDate(dateKey: String) {
@@ -69,6 +66,31 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
 
     private fun render() {
         setContentView(buildScreen())
+    }
+
+    private fun loadScheduleForEdit() {
+        saving = true
+        render()
+        Thread {
+            try {
+                val loaded = NativeScheduleApi.detail(this, scheduleId ?: return@Thread)
+                runOnUiThread {
+                    editingSchedule = loaded
+                    type = loaded.type
+                    applyIsoToCalendar(startCalendar, loaded.startTime)
+                    loaded.endTime?.let { applyIsoToCalendar(endCalendar, it) }
+                        ?: run { endCalendar.timeInMillis = startCalendar.timeInMillis + 60L * 60L * 1000L }
+                    saving = false
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    saving = false
+                    message = friendlyError(e.message)
+                    render()
+                }
+            }
+        }.start()
     }
 
     private fun buildScreen(): FrameLayout {
@@ -107,7 +129,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                     setOnClickListener { finish() }
                 }, LinearLayout.LayoutParams(dp(40), dp(40)))
                 addView(TextView(context).apply {
-                    text = "새 일정"
+                    text = if (scheduleId == null) "새 일정" else "일정 수정"
                     textSize = 18f
                     typeface = brandBold()
                     setTextColor(color("#1A1B2E"))
@@ -139,7 +161,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
             setTextColor(color("#0CC9B5"))
         })
         addView(TextView(context).apply {
-            text = "새 일정을 등록해요"
+            text = if (scheduleId == null) "새 일정을 등록해요" else "일정을 수정해요"
             textSize = 25f
             typeface = brandBold()
             letterSpacing = -0.02f
@@ -194,7 +216,9 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
         background = roundDrawable("#FFFFFF", 24, "#EEF0F4")
         elevation = dp(2).toFloat()
 
-        titleInput = input("일정 제목", "예: 병원, 회의, 가족 식사", false)
+        titleInput = input("일정 제목", "예: 병원, 회의, 가족 식사", false).apply {
+            editingSchedule?.title?.let { setText(it) }
+        }
         addView(label("일정 제목"))
         addView(titleInput, matchWrap().apply { topMargin = dp(8) })
 
@@ -206,7 +230,9 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
             addView(pickerBox("종료", timeText(endCalendar)) { pickTime(endCalendar) }, LinearLayout.LayoutParams(0, dp(64), 1f).apply { leftMargin = dp(8) })
         }, matchWrap().apply { topMargin = dp(8) })
 
-        memoInput = input("메모", "필요한 내용을 적어주세요", true)
+        memoInput = input("메모", "필요한 내용을 적어주세요", true).apply {
+            editingSchedule?.memo?.let { setText(it) }
+        }
         addView(label("메모"), matchWrap().apply { topMargin = dp(18) })
         addView(memoInput, matchWrap().apply { topMargin = dp(8) })
     }
@@ -258,7 +284,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     }
 
     private fun buildSaveButton(): TextView = TextView(this).apply {
-        text = if (saving) "등록 중..." else "일정 등록"
+        text = if (saving) { if (scheduleId == null) "등록 중..." else "저장 중..." } else { if (scheduleId == null) "일정 등록" else "수정 완료" }
         textSize = 16f
         typeface = brandBold()
         gravity = Gravity.CENTER
@@ -297,20 +323,15 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
             render()
             return
         }
-        val token = SessionManager.get(this)?.let { runCatching { JSONObject(it).optString("access_token") }.getOrNull() }
-        if (token.isNullOrBlank()) {
-            message = "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요."
-            render()
-            return
-        }
         saving = true
         message = null
         render()
         Thread {
             try {
-                postSchedule(token, title, memoInput.text?.toString()?.trim().orEmpty())
+                val payload = buildPayload(title, memoInput.text?.toString()?.trim().orEmpty())
+                val id = scheduleId
+                if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
                 runOnUiThread {
-                    message = "일정 등록이 완료되었어요."
                     saving = false
                     startActivity(Intent(this, NativeHomePortActivity::class.java))
                     finish()
@@ -325,32 +346,15 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun postSchedule(token: String, title: String, memo: String) {
-        val payload = JSONObject().apply {
-            put("title", title)
-            put("type", type)
-            put("startTime", toIsoUtc(startCalendar))
-            put("endTime", toIsoUtc(endCalendar))
-            put("reminder", 15)
-            put("repeat", "none")
-            if (memo.isNotBlank()) put("memo", memo)
-            if (type == "personal") put("visibility", "private")
-        }
-        val connection = (URL(CREATE_SCHEDULE_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            connectTimeout = 15000
-            readTimeout = 20000
-            doOutput = true
-            setRequestProperty("Authorization", "Bearer $token")
-            setRequestProperty("Content-Type", "application/json")
-            setRequestProperty("Accept", "application/json")
-        }
-        OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(payload.toString()) }
-        val response = readResponse(connection)
-        if (connection.responseCode !in 200..299) {
-            val error = runCatching { JSONObject(response).optString("error") }.getOrNull().orEmpty()
-            throw IllegalStateException(error.ifBlank { "schedule_create_failed" })
-        }
+    private fun buildPayload(title: String, memo: String): JSONObject = JSONObject().apply {
+        put("title", title)
+        put("type", type)
+        put("startTime", NativeScheduleApi.toIsoUtc(startCalendar))
+        put("endTime", NativeScheduleApi.toIsoUtc(endCalendar))
+        put("reminder", editingSchedule?.reminder ?: 15)
+        put("repeat", editingSchedule?.repeat ?: "none")
+        put("memo", memo)
+        if (type == "personal") put("visibility", "private")
     }
 
     private fun friendlyError(code: String?): String = when (code) {
@@ -362,17 +366,13 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
         else -> "일정 저장에 실패했어요. 잠시 후 다시 시도해 주세요."
     }
 
-    private fun readResponse(connection: HttpURLConnection): String {
-        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
-        return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
+    private fun applyIsoToCalendar(calendar: Calendar, iso: String) {
+        val parsed = runCatching { java.time.Instant.parse(iso) }.getOrNull()
+        if (parsed != null) calendar.timeInMillis = parsed.toEpochMilli()
     }
 
     private fun dateText(): String = "${startCalendar.get(Calendar.MONTH) + 1}월 ${startCalendar.get(Calendar.DAY_OF_MONTH)}일"
     private fun timeText(calendar: Calendar): String = String.format(Locale.KOREA, "%02d:%02d", calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))
-    private fun toIsoUtc(calendar: Calendar): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }.format(calendar.time)
-
     private fun brandMedium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private fun brandBold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun color(hex: String): Int = Color.parseColor(hex)
@@ -396,8 +396,4 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     }
     private fun gradientDrawable(start: String, end: String, radius: Int): GradientDrawable =
         GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(color(start), color(end))).apply { cornerRadius = dp(radius).toFloat() }
-
-    companion object {
-        private const val CREATE_SCHEDULE_URL = "https://www.gleaum.com/api/native/schedules"
-    }
 }

@@ -326,3 +326,14 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 1차 범위는 `개인 / 공유 / 자녀` 일정 등록이다. 가계부 지출/수입 등록은 일정 등록 화면에 섞지 않고 이후 Native Budget Port에서 별도 처리한다.
 - 공유 일정은 서버에서 기존 `space_editor_required` 권한 검사를 그대로 받으므로 네이티브 화면이 임의로 공간 권한을 우회하지 않는다.
 - Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터에서 홈 `+ 새 일정` -> 네이티브 등록 화면 진입 확인: `/tmp/gleaum-native-schedule-create.png`
+
+
+2026-06-23 Native 일정 P0 흐름 연결:
+
+- `GET /api/native/schedules`, `GET/PATCH/DELETE /api/native/schedules/[id]`를 추가해 네이티브 일정 목록/상세/수정/삭제가 bearer token 인증으로 동작한다.
+- Android `NativeScheduleListActivity`를 추가해 하단 `일정` 탭을 WebView `/schedules` 대신 네이티브 목록으로 연결했다.
+- Android `NativeScheduleDetailActivity`를 추가해 홈/목록의 일정 카드 터치 시 네이티브 상세 화면으로 진입한다.
+- `NativeScheduleCreateActivity`는 `schedule_id`가 전달되면 수정 모드로 재사용하며 `PATCH /api/native/schedules/[id]`를 호출한다.
+- 상태 변경(완료/예정 복귀)과 삭제는 상세 화면에서 네이티브 API로 처리한다.
+- 운영 URL 기반 네이티브 앱은 신규 API 배포 전까지 목록 호출이 실패할 수 있다. GitHub/Vercel 배포 후 실제 저장/목록/상세 회귀 테스트가 필요하다.
+- 검증: `npm run build`, Android `:app:assembleDebug`, Pixel_9 emulator 일정 탭 진입 캡처 `/tmp/gleaum-native-schedule-list-p0.png`

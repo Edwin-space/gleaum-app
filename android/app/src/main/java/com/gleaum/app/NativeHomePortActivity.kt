@@ -1069,10 +1069,20 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun openWebPath(path: String) {
+        if (path == "/schedules") {
+            startActivity(Intent(this, NativeScheduleListActivity::class.java))
+            finish()
+            return
+        }
         if (path == "/schedules/new") {
             startActivity(Intent(this, NativeScheduleCreateActivity::class.java).apply {
                 putExtra("selected_date", selectedDateKey ?: summary?.selectedDate)
             })
+            return
+        }
+        if (path.startsWith("/schedules/")) {
+            val id = path.removePrefix("/schedules/").substringBefore("/")
+            startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id))
             return
         }
         if (path == "/mypage") {

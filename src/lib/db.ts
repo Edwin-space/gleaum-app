@@ -1601,6 +1601,21 @@ export interface NativeCreateScheduleInput {
   visibility?: ScheduleVisibility;
 }
 
+
+export interface NativeUpdateScheduleInput {
+  title?: string;
+  type?: ScheduleType;
+  startTime?: string;
+  endTime?: string | null;
+  allDay?: boolean;
+  reminder?: number;
+  repeat?: RepeatType;
+  memo?: string | null;
+  status?: ScheduleStatus;
+  participantIds?: string[];
+  visibility?: ScheduleVisibility;
+}
+
 function nativeScheduleItemFromRow(row: ScheduleRow): NativeScheduleItem {
   return {
     id: row.id,
@@ -1852,6 +1867,41 @@ export async function getNativeHomeSummary(
   };
 }
 
+
+async function getNativeProfileContext(supabase: RouteSupabaseClient, userId: string) {
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('family_group_id,preferences')
+    .eq('id', userId)
+    .single();
+
+  if (profileError || !profileData) throw new Error(profileError?.message ?? 'profile_not_found');
+
+  const profile = profileData as Pick<ProfileRow, 'family_group_id' | 'preferences'>;
+  const preferences = (profile.preferences ?? {}) as Partial<OnboardingPreferences>;
+  const personalSpaceId = preferences.personalSpaceId ?? null;
+  const activeSpaceId = profile.family_group_id ?? personalSpaceId ?? null;
+  const sharedSpaceId = activeSpaceId && activeSpaceId !== personalSpaceId ? activeSpaceId : null;
+
+  return { personalSpaceId, activeSpaceId, sharedSpaceId };
+}
+
+async function assertNativeScheduleWritable(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  schedule: Pick<ScheduleRow, 'created_by' | 'family_group_id' | 'visibility'>,
+) {
+  if (schedule.created_by === userId && schedule.visibility === 'private') return;
+  const { data: member } = await supabase
+    .from('space_members')
+    .select('role')
+    .eq('space_id', schedule.family_group_id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  const role = (member as { role?: SpaceRole } | null)?.role;
+  if (role !== 'admin' && role !== 'editor') throw new Error('space_editor_required');
+}
+
 export async function createNativeSchedule(
   supabase: RouteSupabaseClient,
   userId: string,
@@ -1942,6 +1992,152 @@ export async function createNativeSchedule(
     ...(schedule as ScheduleRow),
     schedule_participants: participantIds.map((participantId) => ({ user_id: participantId })),
   });
+}
+
+
+export async function getNativeSchedules(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  options: { from?: string; to?: string; filter?: ScheduleType | 'all'; search?: string } = {},
+): Promise<NativeScheduleItem[]> {
+  const { activeSpaceId } = await getNativeProfileContext(supabase, userId);
+  if (!activeSpaceId) return [];
+
+  const now = new Date();
+  const from = options.from ? new Date(options.from) : addDays(now, -30);
+  const to = options.to ? new Date(options.to) : addDays(now, 365);
+  if (Number.isNaN(from.getTime())) throw new Error('invalid_from');
+  if (Number.isNaN(to.getTime())) throw new Error('invalid_to');
+
+  let query = supabase
+    .from('schedules')
+    .select('*, schedule_participants (user_id)')
+    .eq('family_group_id', activeSpaceId)
+    .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+    .gte('start_time', from.toISOString())
+    .lte('start_time', to.toISOString())
+    .order('start_time', { ascending: true });
+
+  if (options.filter && options.filter !== 'all') query = query.eq('type', options.filter);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const search = options.search?.trim().toLowerCase();
+  return ((data ?? []) as ScheduleRow[])
+    .filter((row) => !(row.type === 'expense' && row.repeat === 'none'))
+    .filter((row) => !search || row.title.toLowerCase().includes(search) || (row.memo ?? '').toLowerCase().includes(search))
+    .map(nativeScheduleItemFromRow);
+}
+
+export async function getNativeScheduleById(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+): Promise<NativeScheduleItem | null> {
+  const { data, error } = await supabase
+    .from('schedules')
+    .select('*, schedule_participants (user_id)')
+    .eq('id', id)
+    .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return nativeScheduleItemFromRow(data as ScheduleRow);
+}
+
+export async function updateNativeSchedule(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+  input: NativeUpdateScheduleInput,
+): Promise<NativeScheduleItem> {
+  const { data: existing, error: findError } = await supabase
+    .from('schedules')
+    .select('*, schedule_participants (user_id)')
+    .eq('id', id)
+    .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+    .maybeSingle();
+
+  if (findError) throw new Error(findError.message);
+  if (!existing) throw new Error('schedule_not_found');
+
+  const current = existing as ScheduleRow;
+  await assertNativeScheduleWritable(supabase, userId, current);
+
+  const updates: Record<string, unknown> = {};
+  if (input.title !== undefined) {
+    const title = input.title.trim();
+    if (!title) throw new Error('title_required');
+    updates.title = title;
+  }
+  if (input.type !== undefined) {
+    updates.type = input.type;
+    updates.category = inferCategory(input.type);
+    updates.automation_policy = inferAutomationPolicy(input.type);
+    updates.visibility = input.visibility ?? inferVisibility(input.type);
+  } else if (input.visibility !== undefined) {
+    updates.visibility = input.visibility;
+  }
+  if (input.startTime !== undefined) {
+    const startTime = new Date(input.startTime);
+    if (Number.isNaN(startTime.getTime())) throw new Error('invalid_start_time');
+    updates.start_time = startTime.toISOString();
+  }
+  if (input.endTime !== undefined) {
+    if (input.endTime === null || input.endTime === '') {
+      updates.end_time = null;
+    } else {
+      const endTime = new Date(input.endTime);
+      if (Number.isNaN(endTime.getTime())) throw new Error('invalid_end_time');
+      updates.end_time = endTime.toISOString();
+    }
+  }
+  if (input.allDay !== undefined) updates.all_day = input.allDay;
+  if (input.status !== undefined) updates.status = input.status;
+  if (input.reminder !== undefined) updates.reminder = input.reminder;
+  if (input.repeat !== undefined) updates.repeat = input.repeat;
+  if (input.memo !== undefined) updates.memo = input.memo?.trim() || null;
+
+  if (Object.keys(updates).length > 0) {
+    const { error } = await supabase.from('schedules').update(updates).eq('id', id);
+    if (error) throw new Error(error.message);
+  }
+
+  if (input.participantIds !== undefined) {
+    await supabase.from('schedule_participants').delete().eq('schedule_id', id);
+    const participantIds = input.participantIds.length ? input.participantIds : [userId];
+    const { error } = await supabase.from('schedule_participants').insert(
+      participantIds.map((participantId) => ({ schedule_id: id, user_id: participantId })),
+    );
+    if (error) throw new Error(error.message);
+  }
+
+  const updated = await getNativeScheduleById(supabase, userId, id);
+  if (!updated) throw new Error('schedule_not_found');
+  return updated;
+}
+
+export async function deleteNativeSchedule(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  id: string,
+): Promise<boolean> {
+  const { data: existing, error: findError } = await supabase
+    .from('schedules')
+    .select('id,created_by,family_group_id,visibility')
+    .eq('id', id)
+    .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
+    .maybeSingle();
+
+  if (findError) throw new Error(findError.message);
+  if (!existing) throw new Error('schedule_not_found');
+  await assertNativeScheduleWritable(supabase, userId, existing as Pick<ScheduleRow, 'created_by' | 'family_group_id' | 'visibility'>);
+
+  const { error } = await supabase.from('schedules').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  return true;
 }
 
 /**

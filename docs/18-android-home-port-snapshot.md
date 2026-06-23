@@ -439,3 +439,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 지출/수입 등록은 일정 등록에 섞지 않는다. 돈 흐름은 Native Budget Port에서 별도 화면/모델로 처리한다.
 - Native 전체 메뉴 빠른 액션의 `일정 추가`도 동일 Activity를 사용한다.
 - 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-schedule-create.png`
+
+
+## 2026-06-23 Native 일정 P0 흐름 연결
+
+- Home BottomNav의 `일정` 탭을 Android `NativeScheduleListActivity`로 연결했다.
+- Home의 일정 카드 터치 경로 `/schedules/{id}`는 Android `NativeScheduleDetailActivity`로 연결된다.
+- 일정 상세의 `수정` 버튼은 `NativeScheduleCreateActivity(schedule_id)`를 열고, 기존 생성 UI를 수정 모드로 재사용한다.
+- Native 일정 API는 목록/상세/수정/삭제를 모두 지원한다.
+- 배포 전 앱은 운영 URL에서 신규 API를 찾지 못할 수 있으므로, 배포 이후 실제 데이터 저장-목록-상세-수정 흐름을 재검증한다.
+- 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-schedule-list-p0.png`
