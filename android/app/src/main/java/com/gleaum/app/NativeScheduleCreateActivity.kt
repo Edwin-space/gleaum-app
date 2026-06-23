@@ -333,7 +333,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                 if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
                 runOnUiThread {
                     saving = false
-                    startActivity(Intent(this, NativeHomePortActivity::class.java))
+                    startActivity(Intent(this, NativeScheduleListActivity::class.java))
                     finish()
                 }
             } catch (e: Exception) {

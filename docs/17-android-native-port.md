@@ -369,3 +369,14 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 수정 모드는 제목, 금액, 구분, 카테고리, 날짜, 결제수단, 메모를 기존 값으로 채운다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과. Pixel_9 emulator 가계부 등록/수정 화면 진입 캡처: `/tmp/gleaum-native-budget-entry-edit-flow.png`.
 - 주의: 운영 URL 기반 앱은 신규 API가 배포되기 전까지 실제 항목 상세/수정/삭제 호출이 실패할 수 있다. GitHub/Vercel 배포 후 실제 로그인 계정으로 생성-수정-상태변경-삭제 회귀 테스트가 필요하다.
+
+
+## 2026-06-23 Today Release Native Routing
+
+- 오늘 업데이트 범위에서는 `NativeHomePortActivity`를 운영 진입점으로 사용하지 않는다. 홈 전체 네이티브 전환은 Remote Config 도입 이후 단계로 보류한다.
+- `MainActivity`에 `GleaumNativeRoute` JavaScript bridge를 추가해 WebView 홈 내부에서 `/schedules`, `/schedules/new`, `/schedules/{id}`, `/schedules/{id}/edit`, `/budget`, `/mypage`로 이동할 때 Android 네이티브 Activity로 전환한다.
+- `start_path`가 네이티브 대상 경로인 경우에도 WebView 로드 대신 네이티브 Activity를 직접 연다. App Link/RouterActivity 경유 진입과 네이티브 화면의 WebView fallback 복귀에 사용된다.
+- 네이티브 일정/가계부/전체 메뉴의 하단 `홈` 액션은 release manifest에 없는 `NativeHomePortActivity` 대신 `MainActivity(start_path=/home)`로 복귀한다.
+- 일정 저장 후 이동은 preview 홈이 아니라 `NativeScheduleListActivity`로 돌아가도록 변경했다.
+- 검증: Android `:app:assembleDebug` 통과. Emulator에서 `RouterActivity --es start_path /budget` 진입 시 `NativeBudgetActivity`가 top resumed activity로 확인됨. 캡처: `/tmp/gleaum-native-budget-router.png`.
+- 남은 검증: 실제 단말에서 WebView 홈 하단 탭/버튼 터치가 JavaScript bridge로 네이티브 화면을 여는지 확인한다. Remote Config 기반 kill switch는 다음 작업으로 분리한다.

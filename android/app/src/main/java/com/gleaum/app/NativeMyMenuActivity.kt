@@ -354,7 +354,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
             background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
             listOf(
-                BottomItem("홈", MenuIcon.HOME) { startActivity(Intent(this@NativeMyMenuActivity, NativeHomePortActivity::class.java)); finish() },
+                BottomItem("홈", MenuIcon.HOME) { openWebPath("/home") },
                 BottomItem("일정", MenuIcon.CALENDAR) { startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleListActivity::class.java)); finish() },
                 BottomItem("공간", MenuIcon.SPACE) { openWebPath("/space") },
                 BottomItem("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() },

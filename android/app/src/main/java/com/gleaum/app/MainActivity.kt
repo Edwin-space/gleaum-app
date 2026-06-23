@@ -9,10 +9,13 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsetsController
+import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
+import android.webkit.WebView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.getcapacitor.BridgeActivity
+import com.getcapacitor.WebViewListener
 import org.json.JSONObject
 import java.net.URLDecoder
 
@@ -32,6 +35,7 @@ class MainActivity : BridgeActivity() {
         // addDocumentStartJavaScript 로 페이지 스크립트 실행 전에 주입하면
         // 서버 미들웨어 리다이렉트 없이 바로 인증 상태로 시작됨.
         injectSessionIntoWebView()
+        installNativeRouteBridge()
 
         // ── WebView 최적화 ────────────────────────────────────────────────────
         bridge?.webView?.settings?.apply {
@@ -43,13 +47,9 @@ class MainActivity : BridgeActivity() {
         }
 
         // ── 시작 경로 오버라이드 ──────────────────────────────────────────────
-        // LoginActivity의 "이메일로 계속하기"에서 start_path(/login?view=email)를 전달하면
-        // WebView를 루트 대신 해당 경로로 이동시켜 웹 이메일 로그인/회원가입 폼을 띄운다.
-        intent?.getStringExtra("start_path")?.takeIf { it.isNotBlank() }?.let { path ->
-            bridge?.webView?.post {
-                bridge?.webView?.loadUrl("https://www.gleaum.com$path")
-            }
-        }
+        // 외부 딥링크/레거시 진입에서 start_path가 넘어오면 WebView 시작 경로를 조정한다.
+        // Android 이메일 로그인/회원가입은 LoginActivity 네이티브 폼에서 직접 처리한다.
+        loadStartPath(intent)
 
         createNotificationChannels()
         setupEdgeToEdge()
@@ -60,6 +60,7 @@ class MainActivity : BridgeActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
+        loadStartPath(intent)
     }
 
     /**
@@ -96,6 +97,132 @@ class MainActivity : BridgeActivity() {
             setOf("https://www.gleaum.com")
         )
         android.util.Log.d("GleaumMain", "세션 localStorage 주입 완료")
+    }
+
+    /**
+     * 오늘 배포용 native bridge.
+     *
+     * 홈은 기존 WebView를 유지하고, 사용자가 WebView 내부에서 일정/가계부/전체 메뉴로
+     * 이동하는 순간만 네이티브 Activity로 넘긴다. Remote Config 도입 전까지는
+     * 운영 리스크가 큰 홈 전체 네이티브 전환을 피한다.
+     */
+    private fun installNativeRouteBridge() {
+        val webView = bridge?.webView ?: return
+        webView.addJavascriptInterface(NativeRouteBridge(), "GleaumNativeRoute")
+
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(
+                webView,
+                nativeRouteScript(),
+                setOf("https://www.gleaum.com")
+            )
+            webView.post { webView.evaluateJavascript(nativeRouteScript(), null) }
+        } else {
+            bridge?.addWebViewListener(object : WebViewListener() {
+                override fun onPageLoaded(webView: WebView) {
+                    webView.evaluateJavascript(nativeRouteScript(), null)
+                }
+            })
+        }
+    }
+
+    private fun nativeRouteScript(): String = """
+        (function(){
+          if (window.__gleaumNativeRouteBridge) return;
+          window.__gleaumNativeRouteBridge = true;
+
+          function normalize(input) {
+            try {
+              var url = new URL(input, location.origin);
+              if (url.origin !== location.origin) return null;
+              return url.pathname + url.search + url.hash;
+            } catch (e) {
+              return null;
+            }
+          }
+
+          function canTryNative(path) {
+            if (!path) return false;
+            return /^\/schedules(\/.*)?([?#].*)?${'$'}/.test(path) ||
+                   /^\/budget\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/mypage\/?([?#].*)?${'$'}/.test(path);
+          }
+
+          function openNative(path) {
+            if (!canTryNative(path)) return false;
+            try {
+              return !!(window.GleaumNativeRoute && window.GleaumNativeRoute.open(path));
+            } catch (e) {
+              return false;
+            }
+          }
+
+          document.addEventListener('click', function(event) {
+            var target = event.target;
+            while (target && target.tagName !== 'A') target = target.parentElement;
+            if (!target) return;
+            var path = normalize(target.getAttribute('href') || target.href);
+            if (openNative(path)) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          }, true);
+
+          ['pushState', 'replaceState'].forEach(function(name) {
+            var original = history[name];
+            history[name] = function(state, title, url) {
+              if (url) {
+                var path = normalize(url);
+                if (openNative(path)) return;
+              }
+              return original.apply(this, arguments);
+            };
+          });
+        })();
+    """.trimIndent()
+
+    private inner class NativeRouteBridge {
+        @JavascriptInterface
+        fun open(pathWithQuery: String?): Boolean {
+            val path = routePath(pathWithQuery) ?: return false
+            val intent = nativeIntentFor(path) ?: return false
+            runOnUiThread { startActivity(intent) }
+            return true
+        }
+    }
+
+    private fun routePath(pathWithQuery: String?): String? {
+        if (pathWithQuery.isNullOrBlank()) return null
+        val uri = Uri.parse(pathWithQuery)
+        return uri.path?.takeIf { it.isNotBlank() }
+    }
+
+    private fun nativeIntentFor(path: String): Intent? = when {
+        path == "/budget" -> Intent(this, NativeBudgetActivity::class.java)
+        path == "/mypage" -> Intent(this, NativeMyMenuActivity::class.java)
+        path == "/schedules" -> Intent(this, NativeScheduleListActivity::class.java)
+        path == "/schedules/new" -> Intent(this, NativeScheduleCreateActivity::class.java)
+        path.matches(Regex("^/schedules/[^/]+/edit$")) -> {
+            val id = path.removePrefix("/schedules/").removeSuffix("/edit")
+            Intent(this, NativeScheduleCreateActivity::class.java).putExtra("schedule_id", id)
+        }
+        path.matches(Regex("^/schedules/[^/]+$")) && path != "/schedules/children" -> {
+            val id = path.removePrefix("/schedules/")
+            Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id)
+        }
+        else -> null
+    }
+
+    private fun loadStartPath(intent: Intent?) {
+        intent?.getStringExtra("start_path")?.takeIf { it.isNotBlank() }?.let { path ->
+            nativeIntentFor(routePath(path) ?: path)?.let { nativeIntent ->
+                startActivity(nativeIntent)
+                return
+            }
+            bridge?.webView?.post {
+                bridge?.webView?.loadUrl("https://www.gleaum.com$path")
+            }
+        }
     }
 
     private fun handleIntent(intent: Intent?) {

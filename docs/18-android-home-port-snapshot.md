@@ -476,3 +476,12 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - UI 경로: 가계부 카드 터치 -> 수정 모드, 정기 항목 상태 텍스트 터치 -> 예정/완료 토글, `×` -> 삭제 확인.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
 - 다음 검증: 배포 후 실제 로그인 단말에서 개인 가계부 항목 생성 -> 수정 -> 상태 변경 -> 삭제, 그리고 공간 지출이 개인 가계부 API에서 노출되지 않는지 확인.
+
+
+## 2026-06-23 Release-safe Native Routing Snapshot
+
+- 홈은 여전히 WebView를 기준으로 유지한다. 네이티브 홈 전체 대체는 보류 상태다.
+- 오늘 배포용으로 WebView 내부 네비게이션을 감지하는 Android bridge를 추가했다.
+- 네이티브 전환 대상: 일정 목록/등록/상세/수정, 가계부, 전체 메뉴.
+- 네이티브 화면의 `홈` 액션은 `MainActivity(start_path=/home)`으로 복귀한다.
+- 검증: Android `:app:assembleDebug`, emulator direct route `/budget` -> `NativeBudgetActivity`.

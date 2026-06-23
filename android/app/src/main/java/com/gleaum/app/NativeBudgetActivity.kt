@@ -286,7 +286,7 @@ class NativeBudgetActivity : AppCompatActivity() {
         gravity = Gravity.CENTER
         background = round("#FFFFFF", 0, "#E8E8E4")
         listOf(
-            "홈" to { startActivity(Intent(this@NativeBudgetActivity, NativeHomePortActivity::class.java)); finish() },
+            "홈" to { openWebPath("/home") },
             "일정" to { startActivity(Intent(this@NativeBudgetActivity, NativeScheduleListActivity::class.java)); finish() },
             "공간" to { openWebPath("/space") },
             "가계부" to {},
