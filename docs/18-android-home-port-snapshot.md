@@ -374,6 +374,9 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - BottomNav/날짜 토글/빈 상태 임시 문자 아이콘 제거 완료
 - `NativeBottomNavIconView` custom Canvas stroke icon으로 home/calendar/space/budget/my 렌더링
 - 로그인 세션이 있는 에뮬레이터에서 `displayName`, `activeSpaceName`, calendar week, 선택일 일정 empty state가 표시되는 데이터 바인딩 화면 확인
+- 상단 Header는 공식 앱 아이콘 + BI 워드마크 리소스로 교체 완료
+- BottomNav 라벨 weight/아이콘 stroke를 재조정해 text-only/문자 아이콘 기반의 조잡함 제거
+- Native typography 완전 일치는 Pretendard font asset 도입 후 별도 진행 필요
 
 2026-06-22 기준 `android/app/src/main/java/com/gleaum/app/NativeHomePortActivity.kt`는 비활성 상태에서 Mobile Web 홈 섹션 순서의 Preview를 렌더링한다.
 

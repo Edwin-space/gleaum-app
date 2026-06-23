@@ -14,6 +14,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -163,12 +164,21 @@ class NativeHomePortActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
 
-            addView(TextView(context).apply {
-                text = "gleaum"
-                textSize = 23f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#1A1B2E"))
-                letterSpacing = -0.03f
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+
+                addView(ImageView(context).apply {
+                    setImageResource(R.drawable.gleaum_logo_native)
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    clipToOutline = true
+                }, LinearLayout.LayoutParams(dp(32), dp(32)))
+
+                addView(ImageView(context).apply {
+                    setImageResource(R.drawable.gleaum_bi_native)
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    adjustViewBounds = true
+                }, LinearLayout.LayoutParams(dp(88), dp(24)).apply { leftMargin = dp(8) })
             }, LinearLayout.LayoutParams(0, dp(44), 1f))
 
             addView(TextView(context).apply {
@@ -570,7 +580,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(dp(16), dp(6), dp(16), dp(8))
+            setPadding(dp(18), dp(7), dp(18), dp(8))
             background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
 
             listOf(
@@ -597,18 +607,18 @@ class NativeHomePortActivity : AppCompatActivity() {
 
             addView(View(context).apply {
                 background = if (active) roundDrawable("#0084CC", 999) else null
-            }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(5) })
+            }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(6) })
 
-            addView(NativeBottomNavIconView(context, item.icon, if (active) activeColor else inactiveColor), LinearLayout.LayoutParams(dp(28), dp(24)))
+            addView(NativeBottomNavIconView(context, item.icon, if (active) activeColor else inactiveColor), LinearLayout.LayoutParams(dp(25), dp(23)))
 
             addView(TextView(context).apply {
                 text = item.label
-                textSize = 10f
-                typeface = Typeface.DEFAULT_BOLD
+                textSize = 9.5f
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
                 gravity = Gravity.CENTER
                 includeFontPadding = false
                 setTextColor(if (active) activeColor else inactiveColor)
-            }, matchWrap().apply { topMargin = dp(3) })
+            }, matchWrap().apply { topMargin = dp(5) })
         }
     }
 
@@ -728,7 +738,7 @@ private class NativeBottomNavIconView(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = iconColor
         style = Paint.Style.STROKE
-        strokeWidth = 2.7f * resources.displayMetrics.density
+        strokeWidth = 2.35f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }

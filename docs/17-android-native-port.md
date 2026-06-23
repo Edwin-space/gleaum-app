@@ -201,6 +201,14 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - `Pixel_9` 에뮬레이터에서 로그인 세션이 있는 Preview 데이터 바인딩 화면 확인
 - Android `:app:assembleDebug` 통과
 
+2026-06-23 CI/네비 재보정:
+
+- 상단 Header를 텍스트 `gleaum`에서 공식 `logo.png` + `gleaum_bi.svg` 기반 Android 리소스 조합으로 교체
+- Android용 자산 추가: `drawable-nodpi/gleaum_logo_native.png`, `drawable-nodpi/gleaum_bi_native.png`
+- BottomNav stroke icon 크기/두께/라벨 weight 조정
+- Pretendard 폰트 파일은 현재 레포에 없어 Native Preview 라벨은 `sans-serif-medium`으로 우선 정돈
+- Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 캡처 확인
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:
