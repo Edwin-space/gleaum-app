@@ -66,7 +66,7 @@ class NativeSpaceActivity : AppCompatActivity() {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(20), statusBarHeight() + dp(76), dp(20), dp(88))
+                setPadding(dp(NativeAdaptive.pagePaddingDp(this@NativeSpaceActivity)), statusBarHeight() + dp(76), dp(NativeAdaptive.pagePaddingDp(this@NativeSpaceActivity)), dp(if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 104 else 88))
                 if (loading) {
                     addView(loadingCard(), matchWrap())
                 } else if (errorMessage != null) {
@@ -80,10 +80,10 @@ class NativeSpaceActivity : AppCompatActivity() {
                     addView(sectionTitle("공간 관리"), matchWrap().apply { topMargin = dp(22) })
                     addView(manageGroup(), matchWrap().apply { topMargin = dp(10) })
                 }
-            }, ViewGroup.LayoutParams(match(), wrap()))
+            }, NativeAdaptive.scrollChildParams(this@NativeSpaceActivity))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(header(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
-        addView(bottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
+        addView(bottomNav(), NativeAdaptive.bottomNavParams(this@NativeSpaceActivity, dp(if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 64 else 56)))
     }
 
     private fun header(): FrameLayout = FrameLayout(this).apply {
@@ -92,7 +92,7 @@ class NativeSpaceActivity : AppCompatActivity() {
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(20), statusBarHeight(), dp(20), 0)
+            setPadding(if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 0 else dp(20), 0, if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 0 else dp(20), 0)
             addView(ImageView(context).apply {
                 setImageResource(R.drawable.gleaum_logo_native)
                 scaleType = ImageView.ScaleType.FIT_CENTER
@@ -113,7 +113,7 @@ class NativeSpaceActivity : AppCompatActivity() {
                 background = gradient("#0CC9B5", "#0084CC", 26)
                 setOnClickListener { showCreateSpaceDialog() }
             }, LinearLayout.LayoutParams(dp(52), dp(52)))
-        }, FrameLayout.LayoutParams(match(), match()))
+        }, NativeAdaptive.headerContentParams(this@NativeSpaceActivity, dp(54), dp(20), dp(0)).apply { gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL })
     }
 
     private fun heroCard(): LinearLayout = LinearLayout(this).apply {
@@ -286,7 +286,7 @@ class NativeSpaceActivity : AppCompatActivity() {
     private fun bottomNav(): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
-        background = round("#FFFFFF", 0, "#E8E8E4")
+        background = round("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 28 else 0, "#E8E8E4")
         listOf(
             "홈" to { openWebPath("/home") },
             "일정" to { startActivity(Intent(this@NativeSpaceActivity, NativeScheduleListActivity::class.java)); finish() },

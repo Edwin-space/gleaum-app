@@ -121,9 +121,23 @@ class LegalWebViewActivity : AppCompatActivity() {
         val js = """
             (function () {
               try {
+                var style = document.getElementById('gleaum-native-legal-style');
+                if (!style) {
+                  style = document.createElement('style');
+                  style.id = 'gleaum-native-legal-style';
+                  style.textContent = `
+                    html, body, main, #__next { background: #08080E !important; background-image: none !important; }
+                    body::before, body::after, main::before, main::after { display: none !important; }
+                    nav, footer { display: none !important; }
+                    main > * { background: #08080E !important; background-image: none !important; }
+                    [class*="gradient"], [style*="gradient"] { background-image: none !important; }
+                  `;
+                  document.head.appendChild(style);
+                }
                 document.documentElement.style.background = '#08080E';
                 document.body.style.margin = '0';
                 document.body.style.background = '#08080E';
+                document.body.style.backgroundImage = 'none';
                 document.body.style.overflowX = 'hidden';
 
                 var nav = document.querySelector('nav');
@@ -135,9 +149,19 @@ class LegalWebViewActivity : AppCompatActivity() {
                   el.style.display = 'none';
                 });
 
+                document.querySelectorAll('*').forEach(function (el) {
+                  var tag = (el.tagName || '').toUpperCase();
+                  var rect = el.getBoundingClientRect ? el.getBoundingClientRect() : { width: 0, height: 0 };
+                  if (tag === 'HTML' || tag === 'BODY' || tag === 'MAIN' || tag === 'SECTION' || rect.width >= window.innerWidth * 0.72) {
+                    el.style.setProperty('background-color', '#08080E', 'important');
+                    el.style.setProperty('background-image', 'none', 'important');
+                  }
+                });
+
                 var main = document.querySelector('main');
                 if (main) {
-                  main.style.background = '#08080E';
+                  main.style.setProperty('background', '#08080E', 'important');
+                  main.style.setProperty('background-image', 'none', 'important');
                   main.style.minHeight = '100vh';
                   main.style.width = '100%';
                 }
@@ -145,15 +169,17 @@ class LegalWebViewActivity : AppCompatActivity() {
                 var doc = main && main.firstElementChild;
                 if (doc) {
                   var tablet = ${isTablet()};
+                  doc.style.setProperty('background', '#08080E', 'important');
+                  doc.style.setProperty('background-image', 'none', 'important');
                   doc.style.width = '100%';
-                  doc.style.maxWidth = tablet ? '1120px' : 'none';
+                  doc.style.maxWidth = tablet ? '960px' : 'none';
                   doc.style.margin = tablet ? '0 auto' : '0';
                   doc.style.boxSizing = 'border-box';
-                  doc.style.padding = tablet ? '48px 72px 112px' : '28px 22px 88px';
+                  doc.style.padding = tablet ? '48px 64px 112px' : '28px 22px 88px';
                 }
 
                 document.querySelectorAll('section').forEach(function (section) {
-                  section.style.maxWidth = ${if (isTablet()) "'1040px'" else "'none'"};
+                  section.style.maxWidth = ${if (isTablet()) "'900px'" else "'none'"};
                   section.style.marginLeft = 'auto';
                   section.style.marginRight = 'auto';
                   section.style.marginBottom = ${if (isTablet()) "'36px'" else "'32px'"};

@@ -88,14 +88,14 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(20), statusBarHeight() + dp(76), dp(20), dp(36))
+                setPadding(dp(NativeAdaptive.pagePaddingDp(this@NativeBudgetEntryCreateActivity)), statusBarHeight() + dp(76), dp(NativeAdaptive.pagePaddingDp(this@NativeBudgetEntryCreateActivity)), dp(36))
                 addView(buildHero(), matchWrap())
                 message?.let { addView(messageCard(it), matchWrap().apply { topMargin = dp(12) }) }
                 addView(buildKindTabs(), matchWrap().apply { topMargin = dp(16) })
                 addView(buildModeTabs(), matchWrap().apply { topMargin = dp(10) })
                 addView(buildForm(), matchWrap().apply { topMargin = dp(14) })
                 addView(saveButton(), matchWrap().apply { topMargin = dp(18) })
-            }, ViewGroup.LayoutParams(match(), wrap()))
+            }, NativeAdaptive.scrollChildParams(this@NativeBudgetEntryCreateActivity, compact = true))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(header(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
     }
@@ -122,7 +122,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER_VERTICAL
             }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { leftMargin = dp(12) })
             addView(ImageView(context).apply { setImageResource(R.drawable.gleaum_logo_native) }, LinearLayout.LayoutParams(dp(32), dp(32)))
-        }, FrameLayout.LayoutParams(match(), dp(44), Gravity.BOTTOM).apply { leftMargin = dp(20); rightMargin = dp(20); bottomMargin = dp(10) })
+        }, NativeAdaptive.headerContentParams(this@NativeBudgetEntryCreateActivity, dp(44), dp(20), dp(10)))
         addView(View(context).apply { setBackgroundColor(color("#EEF0F4")) }, FrameLayout.LayoutParams(match(), dp(1), Gravity.BOTTOM))
     }
 

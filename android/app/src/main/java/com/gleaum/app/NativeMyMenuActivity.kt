@@ -134,7 +134,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 overScrollMode = View.OVER_SCROLL_NEVER
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(20), statusBarHeight() + dp(76), dp(20), dp(88))
+                    setPadding(dp(NativeAdaptive.pagePaddingDp(this@NativeMyMenuActivity)), statusBarHeight() + dp(76), dp(NativeAdaptive.pagePaddingDp(this@NativeMyMenuActivity)), dp(if (NativeAdaptive.isLarge(this@NativeMyMenuActivity)) 104 else 88))
 
                     addView(buildProfileCard(), matchWrap())
                     if (message != null) addView(buildMessageCard(), matchWrap().apply { topMargin = dp(12) })
@@ -161,11 +161,11 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         MenuRow("앱 버전", "네이티브 전환 작업 진행 중", MenuIcon.INFO, BuildConfig.VERSION_NAME) {},
                         MenuRow("로그아웃", "현재 기기의 로그인 세션을 삭제합니다", MenuIcon.LOGOUT, null) { logout() },
                     )), matchWrap().apply { topMargin = dp(10) })
-                }, ViewGroup.LayoutParams(match(), wrap()))
+                }, NativeAdaptive.scrollChildParams(this@NativeMyMenuActivity))
             }, FrameLayout.LayoutParams(match(), match()))
 
             addView(buildHeaderBar(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
-            addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
+            addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeMyMenuActivity, dp(if (NativeAdaptive.isLarge(this@NativeMyMenuActivity)) 64 else 56)))
         }
     }
 
@@ -198,11 +198,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     setTextColor(color("#1A1B2E"))
                     gravity = Gravity.CENTER_VERTICAL
                 })
-            }, FrameLayout.LayoutParams(match(), dp(44), Gravity.BOTTOM).apply {
-                leftMargin = dp(20)
-                rightMargin = dp(20)
-                bottomMargin = dp(10)
-            })
+            }, NativeAdaptive.headerContentParams(this@NativeMyMenuActivity, dp(44), dp(20), dp(10)))
             addView(View(context).apply { setBackgroundColor(color("#EEF0F4")) }, FrameLayout.LayoutParams(match(), dp(1), Gravity.BOTTOM))
         }
     }
@@ -359,7 +355,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
+            background = roundDrawable("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeMyMenuActivity)) 28 else 0, "#E8E8E4")
             listOf(
                 BottomItem("홈", MenuIcon.HOME) { openWebPath("/home") },
                 BottomItem("일정", MenuIcon.CALENDAR) { startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleListActivity::class.java)); finish() },

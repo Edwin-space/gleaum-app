@@ -81,16 +81,16 @@ class NativeScheduleListActivity : AppCompatActivity() {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(20), statusBarHeight() + dp(96), dp(20), dp(84))
+                setPadding(dp(NativeAdaptive.pagePaddingDp(this@NativeScheduleListActivity)), statusBarHeight() + dp(96), dp(NativeAdaptive.pagePaddingDp(this@NativeScheduleListActivity)), dp(if (NativeAdaptive.isLarge(this@NativeScheduleListActivity)) 104 else 84))
                 addView(buildHero(), matchWrap())
                 addView(buildFilters(), matchWrap().apply { topMargin = dp(14) })
                 errorMessage?.let { addView(messageCard(it), matchWrap().apply { topMargin = dp(14) }) }
                 if (loading) addView(loadingCard(), matchWrap().apply { topMargin = dp(16) })
                 else addScheduleGroups(this)
-            }, ViewGroup.LayoutParams(match(), wrap()))
+            }, NativeAdaptive.scrollChildParams(this@NativeScheduleListActivity))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(buildHeader(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(76), Gravity.TOP))
-        addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
+        addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeScheduleListActivity, dp(if (NativeAdaptive.isLarge(this@NativeScheduleListActivity)) 64 else 56)))
     }
 
     private fun buildHeader(): FrameLayout = FrameLayout(this).apply {
@@ -274,7 +274,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
     private fun buildBottomNav(): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
-        background = round("#FFFFFF", 0, "#E8E8E4")
+        background = round("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeScheduleListActivity)) 28 else 0, "#E8E8E4")
         listOf(
             "홈" to { openWebPath("/home") },
             "일정" to {},

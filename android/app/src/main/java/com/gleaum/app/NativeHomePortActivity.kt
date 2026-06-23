@@ -165,7 +165,7 @@ class NativeHomePortActivity : AppCompatActivity() {
 
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(20), statusBarHeight() + dp(74), dp(20), dp(84))
+                    setPadding(dp(NativeAdaptive.pagePaddingDp(this@NativeHomePortActivity)), statusBarHeight() + dp(74), dp(NativeAdaptive.pagePaddingDp(this@NativeHomePortActivity)), dp(if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 104 else 84))
 
                     if (errorMessage != null) {
                         addView(buildStateCard(), matchWrap())
@@ -182,11 +182,11 @@ class NativeHomePortActivity : AppCompatActivity() {
                     addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
                     addView(buildUpcomingSection(), matchWrap().apply { topMargin = dp(14) })
-                }, ViewGroup.LayoutParams(match(), wrap()))
+                }, NativeAdaptive.scrollChildParams(this@NativeHomePortActivity))
             }, FrameLayout.LayoutParams(match(), match()))
 
             addView(buildHeaderBar(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
-            addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
+            addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeHomePortActivity, dp(if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 64 else 56)))
         }
     }
 
@@ -195,11 +195,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             setBackgroundColor(color("#FAFAFD"))
             elevation = dp(2).toFloat()
 
-            addView(buildHeader(), FrameLayout.LayoutParams(match(), dp(44), Gravity.BOTTOM).apply {
-                leftMargin = dp(20)
-                rightMargin = dp(20)
-                bottomMargin = dp(10)
-            })
+            addView(buildHeader(), NativeAdaptive.headerContentParams(this@NativeHomePortActivity, dp(44), dp(20), dp(10)))
 
             addView(View(context).apply {
                 setBackgroundColor(color("#EEF0F4"))
@@ -1041,7 +1037,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(dp(0), dp(0), dp(0), dp(0))
-            background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
+            background = roundDrawable("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 28 else 0, "#E8E8E4")
 
             listOf(
                 NativeNavItem("홈", NativeNavIcon.HOME, "/home"),

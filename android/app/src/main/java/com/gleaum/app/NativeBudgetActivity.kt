@@ -81,7 +81,7 @@ class NativeBudgetActivity : AppCompatActivity() {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(20), statusBarHeight() + dp(84), dp(20), dp(84))
+                setPadding(dp(NativeAdaptive.pagePaddingDp(this@NativeBudgetActivity)), statusBarHeight() + dp(84), dp(NativeAdaptive.pagePaddingDp(this@NativeBudgetActivity)), dp(if (NativeAdaptive.isLarge(this@NativeBudgetActivity)) 104 else 84))
                 val data = summary
                 if (loading) {
                     addView(messageCard("가계부를 불러오는 중이에요..."), matchWrap())
@@ -94,10 +94,10 @@ class NativeBudgetActivity : AppCompatActivity() {
                     addView(buildRecurringPlan(data), matchWrap().apply { topMargin = dp(18) })
                     addView(buildRecent(data), matchWrap().apply { topMargin = dp(18) })
                 }
-            }, ViewGroup.LayoutParams(match(), wrap()))
+            }, NativeAdaptive.scrollChildParams(this@NativeBudgetActivity))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(buildHeader(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(72), Gravity.TOP))
-        addView(buildBottomNav(), FrameLayout.LayoutParams(match(), dp(56), Gravity.BOTTOM))
+        addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeBudgetActivity, dp(if (NativeAdaptive.isLarge(this@NativeBudgetActivity)) 64 else 56)))
     }
 
     private fun buildHeader(): FrameLayout = FrameLayout(this).apply {
@@ -122,7 +122,7 @@ class NativeBudgetActivity : AppCompatActivity() {
                 background = gradient("#0CC9B5", "#0084CC", 16)
                 setOnClickListener { startActivity(Intent(this@NativeBudgetActivity, NativeBudgetEntryCreateActivity::class.java)) }
             }, LinearLayout.LayoutParams(dp(48), dp(48)))
-        }, FrameLayout.LayoutParams(match(), dp(54), Gravity.BOTTOM).apply { leftMargin = dp(20); rightMargin = dp(20); bottomMargin = dp(8) })
+        }, NativeAdaptive.headerContentParams(this@NativeBudgetActivity, dp(54), dp(20), dp(8)))
         addView(View(context).apply { setBackgroundColor(color("#EEF0F4")) }, FrameLayout.LayoutParams(match(), dp(1), Gravity.BOTTOM))
     }
 
@@ -344,7 +344,7 @@ class NativeBudgetActivity : AppCompatActivity() {
     private fun buildBottomNav(): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
-        background = round("#FFFFFF", 0, "#E8E8E4")
+        background = round("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeBudgetActivity)) 28 else 0, "#E8E8E4")
         listOf(
             "홈" to { openWebPath("/home") },
             "일정" to { startActivity(Intent(this@NativeBudgetActivity, NativeScheduleListActivity::class.java)); finish() },

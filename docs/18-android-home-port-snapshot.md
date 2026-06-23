@@ -596,3 +596,17 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 로그: 테스트 구간에서 `AndroidRuntime`, `FATAL EXCEPTION` 계열 크래시 없음. Lenovo/ZUI 시스템 GPU permission warning은 앱 크래시와 무관한 시스템 로그로 확인.
 - 관찰된 후순위 이슈: 태블릿에서 `LegalWebViewActivity` 문서 좌우 여백/배경이 남아 있음. 기능 장애는 아니며 태블릿/폴더블 최적화 단계에서 정리한다.
 - 테스트에서 실제 DB 저장은 수행하지 않았다. 일정/가계부 저장 버튼은 운영 데이터 생성을 피하기 위해 누르지 않았다.
+
+
+## 2026-06-23 Tablet/Foldable Adaptive Completion Snapshot
+
+- Android large-screen 공통 유틸 `NativeAdaptive`를 추가했다.
+- 기준: `smallestScreenWidthDp >= 600` 또는 `screenWidthDp >= 600`이면 태블릿/폴더블 large-screen으로 판단한다.
+- Native Home, 전체 메뉴, 일정 목록, 공간, 가계부, 가계부 등록 화면은 태블릿에서 콘텐츠 최대 폭을 제한하고 중앙 정렬한다.
+- 하단 네비게이션은 태블릿에서 전체 화면 폭을 먹지 않고 최대 720dp pill 형태로 중앙 배치한다.
+- 헤더 콘텐츠도 large-screen에서 본문 폭과 정렬을 맞춰 좌우로 과하게 벌어지지 않게 조정했다.
+- 가계부 등록 화면은 태블릿에서 compact max width를 사용해 입력 폼이 과도하게 넓어지지 않는다.
+- 약관/개인정보 인앱 문서 뷰어는 태블릿에서 흰/민트 좌우 배경이 드러나던 문제를 어두운 문서 배경으로 통일했다.
+- 실제 단말 검증: Lenovo TB-9707F(`sw640dp`)에 debug APK 설치 후 Native Home, 전체 메뉴, 약관 문서 뷰어 확인.
+- 검증: Android `:app:assembleDebug` 통과.
+- 참고: Lenovo 단말에서 ADB 강제 landscape 회전은 실제 화면 회전으로 반영되지 않았지만, large-screen 분기는 적용 확인했다.
