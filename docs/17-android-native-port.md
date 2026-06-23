@@ -193,6 +193,14 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - Mobile Web 홈 실제 캡처와 Native Preview 세부 UI 비교
 - 하단 네비 아이콘을 임시 문자 기반에서 전용 vector drawable 또는 custom View stroke 아이콘으로 고도화할지 판단
 
+2026-06-23 추가 보정:
+
+- `NativeBottomNavIconView` custom Canvas icon으로 하단 네비 임시 문자 아이콘 제거
+- 하단 네비 아이콘은 Lucide 계열의 outline/stroke 감도에 맞춰 `Paint.Style.STROKE`, round cap/join으로 직접 렌더링
+- 날짜 토글/빈 일정 카드의 임시 `▣` 아이콘도 동일한 custom calendar icon으로 교체
+- `Pixel_9` 에뮬레이터에서 로그인 세션이 있는 Preview 데이터 바인딩 화면 확인
+- Android `:app:assembleDebug` 통과
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:

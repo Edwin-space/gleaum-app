@@ -1,7 +1,12 @@
 package com.gleaum.app
 
 import android.content.Intent
+import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -267,11 +272,17 @@ class NativeHomePortActivity : AppCompatActivity() {
             setPadding(dp(20), dp(14), dp(20), dp(14))
             background = cardDrawable()
 
-            addView(TextView(context).apply {
-                text = "▣  ${formatDateTitle(selectedDate)}"
-                textSize = 15f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#1A1B2E"))
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+
+                addView(NativeBottomNavIconView(context, NativeNavIcon.CALENDAR, color("#1A1B2E")), LinearLayout.LayoutParams(dp(22), dp(22)))
+                addView(TextView(context).apply {
+                    text = formatDateTitle(selectedDate)
+                    textSize = 15f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(color("#1A1B2E"))
+                }, LinearLayout.LayoutParams(wrap(), wrap()).apply { leftMargin = dp(10) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f))
 
             if (selectedDate == summary?.selectedDate) {
@@ -392,12 +403,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             setPadding(dp(20), dp(48), dp(20), dp(48))
             background = cardDrawable(24)
 
-            addView(TextView(context).apply {
-                text = "▣"
-                textSize = 26f
-                gravity = Gravity.CENTER
-                setTextColor(color("#0084CC"))
+            addView(FrameLayout(context).apply {
                 background = roundDrawable("#F0FAFF", 28)
+                addView(NativeBottomNavIconView(context, NativeNavIcon.CALENDAR, color("#0084CC")), FrameLayout.LayoutParams(dp(26), dp(26), Gravity.CENTER))
             }, LinearLayout.LayoutParams(dp(56), dp(56)))
 
             addView(TextView(context).apply {
@@ -566,11 +574,11 @@ class NativeHomePortActivity : AppCompatActivity() {
             background = roundDrawable("#FFFFFF", 0, "#E8E8E4")
 
             listOf(
-                NativeNavItem("홈", "⌂", "/home"),
-                NativeNavItem("일정", "□", "/schedules"),
-                NativeNavItem("공간", "◇", "/space"),
-                NativeNavItem("가계부", "▭", "/budget"),
-                NativeNavItem("마이", "○", "/mypage"),
+                NativeNavItem("홈", NativeNavIcon.HOME, "/home"),
+                NativeNavItem("일정", NativeNavIcon.CALENDAR, "/schedules"),
+                NativeNavItem("공간", NativeNavIcon.SPACE, "/space"),
+                NativeNavItem("가계부", NativeNavIcon.BUDGET, "/budget"),
+                NativeNavItem("마이", NativeNavIcon.MY, "/mypage"),
             ).forEachIndexed { index, item ->
                 addView(buildBottomNavItem(item, active = index == 0), LinearLayout.LayoutParams(0, match(), 1f))
             }
@@ -591,14 +599,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 background = if (active) roundDrawable("#0084CC", 999) else null
             }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(5) })
 
-            addView(TextView(context).apply {
-                text = item.icon
-                textSize = 20f
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                includeFontPadding = false
-                setTextColor(if (active) activeColor else inactiveColor)
-            }, LinearLayout.LayoutParams(dp(28), dp(24)))
+            addView(NativeBottomNavIconView(context, item.icon, if (active) activeColor else inactiveColor), LinearLayout.LayoutParams(dp(28), dp(24)))
 
             addView(TextView(context).apply {
                 text = item.label
@@ -706,6 +707,94 @@ class NativeHomePortActivity : AppCompatActivity() {
 
 private data class NativeNavItem(
     val label: String,
-    val icon: String,
+    val icon: NativeNavIcon,
     val path: String,
 )
+
+private enum class NativeNavIcon {
+    HOME,
+    CALENDAR,
+    SPACE,
+    BUDGET,
+    MY,
+}
+
+private class NativeBottomNavIconView(
+    context: Context,
+    private val icon: NativeNavIcon,
+    private val iconColor: Int,
+) : View(context) {
+
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = iconColor
+        style = Paint.Style.STROKE
+        strokeWidth = 2.7f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val left = w * 0.16f
+        val right = w * 0.84f
+        val top = h * 0.14f
+        val bottom = h * 0.86f
+        val midX = w / 2f
+        val midY = h / 2f
+
+        when (icon) {
+            NativeNavIcon.HOME -> drawHome(canvas, left, right, top, bottom, midX)
+            NativeNavIcon.CALENDAR -> drawCalendar(canvas, left, right, top, bottom, w, h)
+            NativeNavIcon.SPACE -> drawSpace(canvas, left, right, top, bottom, midX, midY)
+            NativeNavIcon.BUDGET -> drawBudget(canvas, left, right, top, bottom)
+            NativeNavIcon.MY -> drawMy(canvas, w, h, midX)
+        }
+    }
+
+    private fun drawHome(canvas: Canvas, left: Float, right: Float, top: Float, bottom: Float, midX: Float) {
+        val path = Path().apply {
+            moveTo(left, bottom * 0.58f)
+            lineTo(midX, top)
+            lineTo(right, bottom * 0.58f)
+            lineTo(right, bottom)
+            lineTo(left, bottom)
+            close()
+        }
+        canvas.drawPath(path, paint)
+        canvas.drawLine(midX - width * 0.11f, bottom, midX - width * 0.11f, bottom * 0.70f, paint)
+        canvas.drawLine(midX + width * 0.11f, bottom, midX + width * 0.11f, bottom * 0.70f, paint)
+    }
+
+    private fun drawCalendar(canvas: Canvas, left: Float, right: Float, top: Float, bottom: Float, w: Float, h: Float) {
+        val rect = RectF(left, top + h * 0.06f, right, bottom)
+        canvas.drawRoundRect(rect, w * 0.08f, w * 0.08f, paint)
+        canvas.drawLine(left, top + h * 0.30f, right, top + h * 0.30f, paint)
+        canvas.drawLine(left + w * 0.17f, top, left + w * 0.17f, top + h * 0.16f, paint)
+        canvas.drawLine(right - w * 0.17f, top, right - w * 0.17f, top + h * 0.16f, paint)
+    }
+
+    private fun drawSpace(canvas: Canvas, left: Float, right: Float, top: Float, bottom: Float, midX: Float, midY: Float) {
+        val path = Path().apply {
+            moveTo(midX, top)
+            lineTo(right, midY)
+            lineTo(midX, bottom)
+            lineTo(left, midY)
+            close()
+        }
+        canvas.drawPath(path, paint)
+    }
+
+    private fun drawBudget(canvas: Canvas, left: Float, right: Float, top: Float, bottom: Float) {
+        val rect = RectF(left, top + height * 0.12f, right, bottom - height * 0.08f)
+        canvas.drawRoundRect(rect, width * 0.08f, width * 0.08f, paint)
+        canvas.drawLine(left, top + height * 0.40f, right, top + height * 0.40f, paint)
+    }
+
+    private fun drawMy(canvas: Canvas, w: Float, h: Float, midX: Float) {
+        canvas.drawCircle(midX, h * 0.30f, w * 0.14f, paint)
+        val body = RectF(w * 0.28f, h * 0.52f, w * 0.72f, h * 0.90f)
+        canvas.drawArc(body, 205f, 130f, false, paint)
+    }
+}
