@@ -1,6 +1,6 @@
 # 17. Android Native Port Guide
 
-> 최종 업데이트: 2026-06-18
+> 최종 업데이트: 2026-06-23
 >
 > 목적: Android 앱을 단순 WebView 앱처럼 보이지 않게 단계적으로 네이티브화하되, 기존 Mobile Web UI를 임의 변경하지 않기 위한 기준 문서.
 
@@ -316,3 +316,13 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 광고/태블릿/다크모드는 후순위로 유지한다.
 - Android `:app:assembleDebug` 통과 및 Pixel_9 emulator에서 홈 → 전체 진입 확인: `/tmp/gleaum-native-menu-shell-retest.png`
 
+
+
+2026-06-23 Native 일정 등록 1차:
+
+- `NativeScheduleCreateActivity`를 추가해 Android 홈의 `+ 새 일정` 버튼이 WebView `/schedules/new` 대신 네이티브 일정 등록 화면으로 진입한다.
+- Native 전체 메뉴의 빠른 액션에도 `일정 추가`를 연결해 홈/전체 메뉴 양쪽에서 동일한 네이티브 등록 흐름을 사용한다.
+- 저장 API는 기존 서버 계약인 `POST /api/native/schedules`를 사용한다. DB 쿼리/권한 판단은 `src/lib/db.ts`의 `createNativeSchedule()` 경로를 재사용한다.
+- 1차 범위는 `개인 / 공유 / 자녀` 일정 등록이다. 가계부 지출/수입 등록은 일정 등록 화면에 섞지 않고 이후 Native Budget Port에서 별도 처리한다.
+- 공유 일정은 서버에서 기존 `space_editor_required` 권한 검사를 그대로 받으므로 네이티브 화면이 임의로 공간 권한을 우회하지 않는다.
+- Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터에서 홈 `+ 새 일정` -> 네이티브 등록 화면 진입 확인: `/tmp/gleaum-native-schedule-create.png`

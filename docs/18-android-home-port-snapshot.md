@@ -1,6 +1,6 @@
 # 18. Android Home Native Port Snapshot
 
-> 최종 업데이트: 2026-06-18
+> 최종 업데이트: 2026-06-23
 >
 > 목적: Android 홈 화면을 네이티브로 이식할 때 현재 Mobile Web 홈 UI를 정답지로 고정한다. 이 문서의 기준 없이 Android 홈 화면을 구현하거나 활성화하지 않는다.
 
@@ -429,3 +429,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Native 전체 메뉴는 기기 기능 설정과 로그아웃을 우선 네이티브 처리하고, 상세 설정은 단계적으로 WebView fallback을 유지한다.
 - 검증 캡처: `/tmp/gleaum-native-menu-shell-retest.png`
 
+
+
+## 2026-06-23 Native 일정 등록 1차
+
+- Home Selected Date Schedule Section의 `+ 새 일정` 버튼을 Android `NativeScheduleCreateActivity`로 연결했다.
+- `NativeScheduleCreateActivity`는 Mobile Web의 일정 생성 흐름을 기준으로 `개인 / 공유 / 자녀` 타입, 제목, 날짜, 시작/종료 시간, 메모를 입력한다.
+- 저장은 `POST /api/native/schedules`를 호출하며, 서버의 personal/shared space 결정 및 shared editor 권한 검사를 그대로 따른다.
+- 지출/수입 등록은 일정 등록에 섞지 않는다. 돈 흐름은 Native Budget Port에서 별도 화면/모델로 처리한다.
+- Native 전체 메뉴 빠른 액션의 `일정 추가`도 동일 Activity를 사용한다.
+- 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-schedule-create.png`

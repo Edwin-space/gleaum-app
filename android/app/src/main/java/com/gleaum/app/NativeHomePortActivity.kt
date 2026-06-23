@@ -1069,6 +1069,12 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun openWebPath(path: String) {
+        if (path == "/schedules/new") {
+            startActivity(Intent(this, NativeScheduleCreateActivity::class.java).apply {
+                putExtra("selected_date", selectedDateKey ?: summary?.selectedDate)
+            })
+            return
+        }
         if (path == "/mypage") {
             startActivity(Intent(this, NativeMyMenuActivity::class.java))
             finish()

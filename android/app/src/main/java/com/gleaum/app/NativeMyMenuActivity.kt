@@ -132,6 +132,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
                     addView(buildProfileCard(), matchWrap())
                     if (message != null) addView(buildMessageCard(), matchWrap().apply { topMargin = dp(12) })
+                    addView(buildQuickActions(), matchWrap().apply { topMargin = dp(16) })
                     addView(buildSectionTitle("앱 설정"), matchWrap().apply { topMargin = dp(22) })
                     addView(buildSettingsGroup(listOf(
                         MenuRow("화면 모드", "다음 단계에서 네이티브화 예정", MenuIcon.SUN, "준비중") { openWebPath("/mypage") },
@@ -239,6 +240,40 @@ class NativeMyMenuActivity : AppCompatActivity() {
         setTextColor(color("#EF4444"))
         setPadding(dp(16), dp(14), dp(16), dp(14))
         background = roundDrawable("#FFF1F2", 18, "#FECACA")
+    }
+
+    private fun buildQuickActions(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            background = roundDrawable("#FFFFFF", 24, "#EEF0F4")
+            elevation = dp(2).toFloat()
+
+            addQuickAction("일정 추가", MenuIcon.CALENDAR) {
+                startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleCreateActivity::class.java))
+            }
+            addQuickAction("가계부", MenuIcon.BUDGET) { openWebPath("/budget") }
+            addQuickAction("공간", MenuIcon.SPACE) { openWebPath("/space") }
+        }
+    }
+
+    private fun LinearLayout.addQuickAction(label: String, icon: MenuIcon, action: () -> Unit) {
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setOnClickListener { action() }
+            addView(FrameLayout(context).apply {
+                background = roundDrawable(iconBg(icon), 16)
+                addView(MenuIconView(context, icon, color(iconColor(icon))), FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER))
+            }, LinearLayout.LayoutParams(dp(52), dp(52)))
+            addView(TextView(context).apply {
+                text = label
+                textSize = 12f
+                typeface = brandBold()
+                gravity = Gravity.CENTER
+                setTextColor(color("#1A1B2E"))
+            }, matchWrap().apply { topMargin = dp(8) })
+        }, LinearLayout.LayoutParams(0, wrap(), 1f))
     }
 
     private fun buildSectionTitle(title: String): TextView = TextView(this).apply {
