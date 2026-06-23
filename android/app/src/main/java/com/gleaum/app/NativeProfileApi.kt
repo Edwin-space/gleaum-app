@@ -34,6 +34,7 @@ data class NativeProfile(
 
 object NativeProfileApi {
     private const val PROFILE_URL = "https://www.gleaum.com/api/native/profile"
+    private const val PASSWORD_URL = "https://www.gleaum.com/api/native/security/password"
 
     fun fetch(context: Context): NativeProfile {
         val json = request(context, "GET", PROFILE_URL)
@@ -47,6 +48,11 @@ object NativeProfileApi {
             .put("nameDisplayMode", nameDisplayMode)
         val json = request(context, "PATCH", PROFILE_URL, body)
         return NativeProfile.fromJson(json.optJSONObject("profile") ?: JSONObject())
+    }
+
+    fun updatePassword(context: Context, password: String) {
+        val body = JSONObject().put("password", password)
+        request(context, "PATCH", PASSWORD_URL, body)
     }
 
     private fun request(context: Context, method: String, url: String, body: JSONObject? = null): JSONObject {

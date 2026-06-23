@@ -458,3 +458,14 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - `비밀번호 설정`은 아직 재인증이 필요한 보안 흐름이므로 WebView fallback 대신 네이티브 안내 다이얼로그로 전환했다. 실제 비밀번호 변경은 다음 보안 단계에서 구현한다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 남은 검증: 실제 로그인 단말에서 전체 메뉴 → 프로필 관리 → 저장 후 프로필 카드/홈 표시명이 갱신되는지 확인한다.
+
+
+## 2026-06-23 Native 비밀번호 설정 1차
+
+- `PATCH /api/native/security/password`를 추가해 Android 네이티브 전체 메뉴에서 이메일 로그인 비밀번호를 직접 변경한다.
+- 인증은 기존 `createNativeRouteAuth()`를 사용해 bearer token 또는 cookie 세션을 모두 지원한다.
+- 서버는 Supabase Auth `updateUser({ password })`로 비밀번호를 변경하며, DB 스키마 변경은 없다.
+- Android `NativeProfileApi.updatePassword()`를 추가하고, `NativeMyMenuActivity`의 `비밀번호 설정`을 안내 다이얼로그에서 실제 입력/확인/저장 다이얼로그로 전환했다.
+- 클라이언트와 서버 양쪽에서 최소 6자, 최대 72자 검증을 수행한다.
+- 검증: `npm run build`, Android `:app:assembleDebug` 통과.
+- 남은 검증: 운영 배포 후 실제 이메일 로그인 계정에서 비밀번호 변경 → 로그아웃 → 새 비밀번호 로그인 회귀 테스트가 필요하다.

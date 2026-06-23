@@ -19,6 +19,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.CalendarContract
 import android.provider.Settings
+import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -405,11 +406,78 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun biometricBadge(): String = if (isBiometricLockEnabled()) "켜짐" else if (biometricSubtitle().contains("가능")) "가능" else "확인"
 
     private fun showPasswordSettingsNotice() {
+        val passwordInput = EditText(this).apply {
+            hint = "새 비밀번호"
+            textSize = 16f
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
+        }
+        val confirmInput = EditText(this).apply {
+            hint = "새 비밀번호 확인"
+            textSize = 16f
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
+        }
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(TextView(context).apply {
+                text = "이메일 로그인에 사용할 비밀번호를 변경합니다. Google 로그인 계정은 기존 방식 그대로 사용할 수 있어요."
+                textSize = 13f
+                typeface = brandMedium()
+                setTextColor(color("#6E6E66"))
+            }, matchWrap())
+            addView(passwordInput, matchWrap().apply { topMargin = dp(14) })
+            addView(confirmInput, matchWrap().apply { topMargin = dp(10) })
+        }
+
         AlertDialog.Builder(this)
             .setTitle("비밀번호 설정")
-            .setMessage("비밀번호 변경은 인증 재확인이 필요한 보안 작업입니다. 다음 단계에서 네이티브 재인증 흐름과 함께 연결합니다.\n\n현재 이메일 로그인은 기존 로그인 화면에서 계속 사용할 수 있어요.")
-            .setPositiveButton("확인", null)
+            .setView(form)
+            .setNegativeButton("취소", null)
+            .setPositiveButton("저장", null)
+            .create()
+            .apply {
+                setOnShowListener {
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val password = passwordInput.text?.toString().orEmpty()
+                        val confirm = confirmInput.text?.toString().orEmpty()
+                        when {
+                            password.length < 6 -> Toast.makeText(this@NativeMyMenuActivity, "비밀번호는 6자 이상 입력해 주세요.", Toast.LENGTH_SHORT).show()
+                            password.length > 72 -> Toast.makeText(this@NativeMyMenuActivity, "비밀번호는 72자 이내로 입력해 주세요.", Toast.LENGTH_SHORT).show()
+                            password != confirm -> Toast.makeText(this@NativeMyMenuActivity, "비밀번호 확인이 일치하지 않아요.", Toast.LENGTH_SHORT).show()
+                            else -> {
+                                dismiss()
+                                updatePassword(password)
+                            }
+                        }
+                    }
+                }
+            }
             .show()
+    }
+
+    private fun updatePassword(password: String) {
+        message = "비밀번호를 변경하는 중이에요."
+        render()
+        Thread {
+            try {
+                NativeProfileApi.updatePassword(this, password)
+                runOnUiThread {
+                    message = "비밀번호를 변경했어요. 다음 로그인부터 새 비밀번호를 사용할 수 있어요."
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyPasswordError(e.message)
+                    render()
+                }
+            }
+        }.start()
     }
 
     private fun loadProfileForEdit() {
@@ -518,6 +586,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
         "display_name_required" -> "닉네임을 입력해 주세요."
         "display_name_too_long" -> "닉네임은 24자 이내로 입력해 주세요."
         else -> "프로필을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
+    }
+
+    private fun friendlyPasswordError(code: String?): String = when (code) {
+        "session_required", "Unauthorized" -> "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요."
+        "password_too_short" -> "비밀번호는 6자 이상 입력해 주세요."
+        "password_too_long" -> "비밀번호는 72자 이내로 입력해 주세요."
+        else -> "비밀번호를 변경하지 못했어요. 잠시 후 다시 시도해 주세요."
     }
 
     private fun themeModeSubtitle(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {

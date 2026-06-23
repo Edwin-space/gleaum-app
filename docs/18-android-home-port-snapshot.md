@@ -540,3 +540,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 수정 가능 항목: 닉네임, 실명, 표시 방식.
 - 비밀번호 변경은 재인증 보안 플로우가 필요해 다음 단계로 분리하고, 현재는 네이티브 안내 다이얼로그로 처리한다.
 - 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+
+
+## 2026-06-23 Native Password Snapshot
+
+- Native 전체 메뉴의 `비밀번호 설정`을 실제 비밀번호 변경 플로우로 연결했다.
+- 신규 API: `PATCH /api/native/security/password`.
+- 인증 방식: Native bearer token 우선, WebView cookie fallback 지원.
+- Android 경로: 전체 메뉴 → 계정 & 보안 → 비밀번호 설정 → 새 비밀번호/확인 입력 → 저장.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+- 다음 검증: 실제 단말에서 변경 후 이메일 로그인 재시도.
