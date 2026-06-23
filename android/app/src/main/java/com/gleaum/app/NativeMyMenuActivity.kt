@@ -252,7 +252,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             addQuickAction("일정 추가", MenuIcon.CALENDAR) {
                 startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleCreateActivity::class.java))
             }
-            addQuickAction("가계부", MenuIcon.BUDGET) { openWebPath("/budget") }
+            addQuickAction("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() }
             addQuickAction("공간", MenuIcon.SPACE) { openWebPath("/space") }
         }
     }
@@ -357,7 +357,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 BottomItem("홈", MenuIcon.HOME) { startActivity(Intent(this@NativeMyMenuActivity, NativeHomePortActivity::class.java)); finish() },
                 BottomItem("일정", MenuIcon.CALENDAR) { startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleListActivity::class.java)); finish() },
                 BottomItem("공간", MenuIcon.SPACE) { openWebPath("/space") },
-                BottomItem("가계부", MenuIcon.BUDGET) { openWebPath("/budget") },
+                BottomItem("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() },
                 BottomItem("전체", MenuIcon.MENU) {},
             ).forEachIndexed { index, item ->
                 addView(buildBottomItem(item, index == 4), LinearLayout.LayoutParams(0, match(), 1f))

@@ -449,3 +449,12 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - Native 일정 API는 목록/상세/수정/삭제를 모두 지원한다.
 - 배포 전 앱은 운영 URL에서 신규 API를 찾지 못할 수 있으므로, 배포 이후 실제 데이터 저장-목록-상세-수정 흐름을 재검증한다.
 - 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-schedule-list-p0.png`
+
+
+## 2026-06-23 Native 가계부 메인 1차
+
+- Home BottomNav와 Native 일정/전체 메뉴의 `가계부` 탭을 Android `NativeBudgetActivity`로 연결했다.
+- Native Budget은 개인 공간 기준 원장(`ledger_entries`, `scope='personal'`)만 조회하여 공간 지출과 개인 가계부 혼입을 방지한다.
+- 현재 범위는 메인 조회 화면이다. 등록/수정/삭제는 다음 단계에서 별도 네이티브화한다.
+- 하단 네비 아이콘은 `NativeTabIconView` stroke icon으로 보정했다.
+- 검증: Android `:app:assembleDebug`, Pixel_9 emulator screenshot `/tmp/gleaum-native-budget-main.png`

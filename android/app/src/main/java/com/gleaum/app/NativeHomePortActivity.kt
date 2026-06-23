@@ -1085,6 +1085,11 @@ class NativeHomePortActivity : AppCompatActivity() {
             startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id))
             return
         }
+        if (path == "/budget") {
+            startActivity(Intent(this, NativeBudgetActivity::class.java))
+            finish()
+            return
+        }
         if (path == "/mypage") {
             startActivity(Intent(this, NativeMyMenuActivity::class.java))
             finish()

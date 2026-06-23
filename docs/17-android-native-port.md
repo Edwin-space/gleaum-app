@@ -337,3 +337,13 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 상태 변경(완료/예정 복귀)과 삭제는 상세 화면에서 네이티브 API로 처리한다.
 - 운영 URL 기반 네이티브 앱은 신규 API 배포 전까지 목록 호출이 실패할 수 있다. GitHub/Vercel 배포 후 실제 저장/목록/상세 회귀 테스트가 필요하다.
 - 검증: `npm run build`, Android `:app:assembleDebug`, Pixel_9 emulator 일정 탭 진입 캡처 `/tmp/gleaum-native-schedule-list-p0.png`
+
+
+2026-06-23 Native 가계부 메인 1차:
+
+- `GET /api/native/budget/summary`를 추가해 Android 네이티브 가계부 메인이 개인 가계부 원장(`ledger_entries`, `scope='personal'`)만 조회한다.
+- Android `NativeBudgetActivity`와 `NativeBudgetApi`를 추가해 순액, 수입/지출 합계, 고정/변동 지출, 정기/일회 수입, 최근 항목을 네이티브로 표시한다.
+- Home/일정/전체 메뉴의 `/budget` 이동을 WebView fallback 대신 `NativeBudgetActivity`로 연결했다.
+- `NativeTabIconView`를 추가해 일정 목록/가계부 하단 네비가 문자 아이콘이 아닌 stroke 기반 네이티브 아이콘을 사용한다.
+- 이번 단계는 조회 메인만 포함한다. 수입/지출 등록·수정·삭제는 다음 Native Budget Port 단계에서 처리한다.
+- 검증: `npm run build`, Android `:app:assembleDebug`, Pixel_9 emulator 가계부 탭 진입 캡처 `/tmp/gleaum-native-budget-main.png`

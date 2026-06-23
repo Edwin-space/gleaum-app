@@ -101,6 +101,10 @@
             android:name=".NativeScheduleDetailActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".NativeBudgetActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <!-- ── Google AdMob ────────────────────────────────────────────────
              App ID: ca-app-pub-7426507548879721~6623452973

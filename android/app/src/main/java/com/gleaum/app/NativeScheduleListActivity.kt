@@ -279,7 +279,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
             "홈" to { startActivity(Intent(this@NativeScheduleListActivity, NativeHomePortActivity::class.java)); finish() },
             "일정" to {},
             "공간" to { openWebPath("/space") },
-            "가계부" to { openWebPath("/budget") },
+            "가계부" to { startActivity(Intent(this@NativeScheduleListActivity, NativeBudgetActivity::class.java)); finish() },
             "전체" to { startActivity(Intent(this@NativeScheduleListActivity, NativeMyMenuActivity::class.java)); finish() },
         ).forEachIndexed { index, item -> addView(bottomItem(item.first, index == 1, item.second), LinearLayout.LayoutParams(0, match(), 1f)) }
     }
@@ -301,6 +301,14 @@ class NativeScheduleListActivity : AppCompatActivity() {
             typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL)
             setTextColor(if (active) color("#0084CC") else color("#8E8E93"))
         }, matchWrap().apply { topMargin = dp(3) })
+    }
+
+    private fun tabIcon(label: String): NativeTabIcon = when (label) {
+        "홈" -> NativeTabIcon.HOME
+        "일정" -> NativeTabIcon.CALENDAR
+        "공간" -> NativeTabIcon.SPACE
+        "가계부" -> NativeTabIcon.BUDGET
+        else -> NativeTabIcon.MENU
     }
 
     private fun openWebPath(path: String) {

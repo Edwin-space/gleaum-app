@@ -1534,6 +1534,27 @@ export interface NativeLedgerItem {
   recurFreq: RecurFreq;
 }
 
+
+export interface NativeBudgetSummary {
+  serverTime: string;
+  month: string;
+  personalSpaceId: string | null;
+  incomeTotal: number;
+  expenseTotal: number;
+  net: number;
+  savingsRate: number;
+  fixedExpenseTotal: number;
+  variableExpenseTotal: number;
+  recurringIncomeTotal: number;
+  onceIncomeTotal: number;
+  pendingExpenseCount: number;
+  pendingIncomeCount: number;
+  completedExpenseCount: number;
+  completedIncomeCount: number;
+  recentEntries: NativeLedgerItem[];
+  categoryTotals: Array<{ category: LedgerCategory; kind: LedgerKind; amount: number }>;
+}
+
 export interface NativeCalendarDay {
   date: string;
   day: number;
@@ -1718,6 +1739,89 @@ function futureRange(days: number, date = new Date()) {
   return {
     start: date.toISOString(),
     end: new Date(date.getFullYear(), date.getMonth(), date.getDate() + days, 23, 59, 59, 999).toISOString(),
+  };
+}
+
+export async function getNativeBudgetSummary(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  options: { month?: string } = {},
+): Promise<NativeBudgetSummary> {
+  const { personalSpaceId, activeSpaceId, sharedSpaceId } = await getNativeProfileContext(supabase, userId);
+  const personalBudgetSpaceId = personalSpaceId ?? (sharedSpaceId ? null : activeSpaceId);
+  const base = options.month && /^\d{4}-\d{2}$/.test(options.month)
+    ? new Date(`${options.month}-01T00:00:00.000Z`)
+    : new Date();
+  const range = monthRange(base);
+
+  if (!personalBudgetSpaceId) {
+    return {
+      serverTime: new Date().toISOString(),
+      month: range.label,
+      personalSpaceId: null,
+      incomeTotal: 0,
+      expenseTotal: 0,
+      net: 0,
+      savingsRate: 0,
+      fixedExpenseTotal: 0,
+      variableExpenseTotal: 0,
+      recurringIncomeTotal: 0,
+      onceIncomeTotal: 0,
+      pendingExpenseCount: 0,
+      pendingIncomeCount: 0,
+      completedExpenseCount: 0,
+      completedIncomeCount: 0,
+      recentEntries: [],
+      categoryTotals: [],
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('ledger_entries')
+    .select('*')
+    .eq('space_id', personalBudgetSpaceId)
+    .eq('scope', 'personal')
+    .gte('occurred_at', range.start)
+    .lte('occurred_at', range.end)
+    .order('occurred_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as LedgerRow[];
+  const incomeRows = rows.filter((row) => row.kind === 'income');
+  const expenseRows = rows.filter((row) => row.kind === 'expense');
+  const incomeTotal = incomeRows.reduce((sum, row) => sum + (row.amount ?? 0), 0);
+  const expenseTotal = expenseRows.reduce((sum, row) => sum + (row.amount ?? 0), 0);
+  const net = incomeTotal - expenseTotal;
+  const savingsRate = incomeTotal > 0 ? Math.max(0, Math.min(100, Math.round((net / incomeTotal) * 100))) : 0;
+
+  const categoryMap = new Map<string, { category: LedgerCategory; kind: LedgerKind; amount: number }>();
+  for (const row of rows) {
+    const category = row.category as LedgerCategory;
+    const key = `${row.kind}:${category}`;
+    const current = categoryMap.get(key) ?? { category, kind: row.kind, amount: 0 };
+    current.amount += row.amount ?? 0;
+    categoryMap.set(key, current);
+  }
+
+  return {
+    serverTime: new Date().toISOString(),
+    month: range.label,
+    personalSpaceId: personalBudgetSpaceId,
+    incomeTotal,
+    expenseTotal,
+    net,
+    savingsRate,
+    fixedExpenseTotal: expenseRows.filter((row) => row.recur_freq !== 'none').reduce((sum, row) => sum + (row.amount ?? 0), 0),
+    variableExpenseTotal: expenseRows.filter((row) => row.recur_freq === 'none').reduce((sum, row) => sum + (row.amount ?? 0), 0),
+    recurringIncomeTotal: incomeRows.filter((row) => row.recur_freq !== 'none').reduce((sum, row) => sum + (row.amount ?? 0), 0),
+    onceIncomeTotal: incomeRows.filter((row) => row.recur_freq === 'none').reduce((sum, row) => sum + (row.amount ?? 0), 0),
+    pendingExpenseCount: expenseRows.filter((row) => row.status !== 'completed').length,
+    pendingIncomeCount: incomeRows.filter((row) => row.status !== 'completed').length,
+    completedExpenseCount: expenseRows.filter((row) => row.status === 'completed').length,
+    completedIncomeCount: incomeRows.filter((row) => row.status === 'completed').length,
+    recentEntries: rows.slice(0, 12).map(nativeLedgerItemFromRow),
+    categoryTotals: Array.from(categoryMap.values()).sort((a, b) => b.amount - a.amount),
   };
 }
 
