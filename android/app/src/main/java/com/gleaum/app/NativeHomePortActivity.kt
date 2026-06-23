@@ -540,32 +540,95 @@ class NativeHomePortActivity : AppCompatActivity() {
             elevation = dp(2).toFloat()
             setOnClickListener { openWebPath("/budget") }
 
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.TOP
+
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+
+                    addView(TextView(context).apply {
+                        text = "MONEY FLOW"
+                        textSize = 11f
+                        typeface = Typeface.DEFAULT_BOLD
+                        letterSpacing = 0.08f
+                        setTextColor(color("#0CC9B5"))
+                    })
+
+                    addView(TextView(context).apply {
+                        text = "이번 달 개인 가계부"
+                        textSize = 18f
+                        typeface = Typeface.DEFAULT_BOLD
+                        letterSpacing = -0.01f
+                        setTextColor(color("#1A1B2E"))
+                    }, matchWrap().apply { topMargin = dp(6) })
+
+                    addView(TextView(context).apply {
+                        text = "수입과 지출, 이번 달 순흐름을 확인하세요."
+                        textSize = 12f
+                        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                        setTextColor(color("#8E8E93"))
+                    }, matchWrap().apply { topMargin = dp(4) })
+                }, LinearLayout.LayoutParams(0, wrap(), 1f))
+
+                addView(FrameLayout(context).apply {
+                    background = roundDrawable("#F0FAFF", 999)
+                    addView(NativeBottomNavIconView(context, NativeNavIcon.BUDGET, color("#0084CC")), FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER))
+                }, LinearLayout.LayoutParams(dp(44), dp(44)).apply { leftMargin = dp(12) })
+            })
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                addBudgetStat("수입", money(data?.incomeTotal ?: 0L), "#ECFDF5", "#0CC9B5", true)
+                addBudgetStat("지출", money(data?.expenseTotal ?: 0L), "#F8FAFC", "#1A1B2E", false)
+                addBudgetStat("순흐름", money(data?.net ?: 0L), "#F8FAFC", if ((data?.net ?: 0L) < 0L) "#F59E0B" else "#0084CC", false)
+            }, matchWrap().apply { topMargin = dp(16) })
+
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+
+                addView(TextView(context).apply {
+                    text = "개인 공간 기준"
+                    textSize = 12f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(color("#8E8E93"))
+                }, LinearLayout.LayoutParams(0, wrap(), 1f))
+
+                addView(TextView(context).apply {
+                    text = "가계부 보기 →"
+                    textSize = 12f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(color("#0084CC"))
+                })
+            }, matchWrap().apply { topMargin = dp(12) })
+        }
+    }
+
+    private fun LinearLayout.addBudgetStat(label: String, value: String, fill: String, valueColor: String, wide: Boolean) {
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+            background = if (wide) gradientDrawable("#E6FFFA", "#EEF7FF", 16) else roundDrawable(fill, 16)
+
             addView(TextView(context).apply {
-                text = "MONEY FLOW"
-                textSize = 11f
+                text = label
+                textSize = 10f
                 typeface = Typeface.DEFAULT_BOLD
-                letterSpacing = 0.08f
-                setTextColor(color("#0CC9B5"))
+                setTextColor(color("#8E8E93"))
             })
 
             addView(TextView(context).apply {
-                text = "이번 달 개인 가계부"
-                textSize = 18f
+                text = value
+                textSize = if (wide) 16f else 14f
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#1A1B2E"))
-            }, matchWrap().apply { topMargin = dp(8) })
-
-            addView(TextView(context).apply {
-                text = if (data == null) {
-                    "지출 기록과 고정 지출 예정 흐름을 확인하세요."
-                } else {
-                    "수입 ${money(data.incomeTotal)} · 지출 ${money(data.expenseTotal)} · 순흐름 ${money(data.net)}"
-                }
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#8E8E93"))
-            }, matchWrap().apply { topMargin = dp(4) })
-        }
+                setTextColor(color(valueColor))
+                maxLines = 1
+                includeFontPadding = false
+            }, matchWrap().apply { topMargin = dp(6) })
+        }, LinearLayout.LayoutParams(0, wrap(), if (wide) 1.2f else 1f).apply {
+            if (childCount > 0) leftMargin = dp(8)
+        })
     }
 
     private fun buildUpcomingSection(): LinearLayout {

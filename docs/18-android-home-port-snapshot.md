@@ -406,3 +406,10 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 주요 카드 surface에 Android elevation을 적용해 flat하게 보이던 Native preview 질감을 보정했다.
 - 검증 캡처: `/tmp/gleaum-native-home-chrome-polish-loaded.png`
 
+## 2026-06-23 Budget Card 보정
+
+- Native Home의 `이번 달 개인 가계부` 카드를 Web MobileHome 카드 구조에 맞춰 확장했다.
+- 한 줄 요약 대신 `수입 / 지출 / 순흐름` 3개 stat box를 노출한다.
+- 하단에 `개인 공간 기준`과 `가계부 보기 →` CTA를 배치해 공간/개인 가계부 경계를 명확히 했다.
+- 검증 캡처: `/tmp/gleaum-native-home-budget-card-scrolled.png`
+

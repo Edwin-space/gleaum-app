@@ -227,6 +227,14 @@ Native Port 화면을 활성화하기 전 반드시 확인한다.
 - Hero/card/toggle/empty/ad/budget surface에 elevation을 부여해 Web의 shadow/card depth와 더 가깝게 보정
 - Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 로딩 후 캡처 확인: `/tmp/gleaum-native-home-chrome-polish-loaded.png`
 
+2026-06-23 Budget card 보정:
+
+- Native Home Budget Summary를 한 줄 요약에서 Web MobileHome과 유사한 card density로 확장
+- `수입 / 지출 / 순흐름` 3분할 stat box 추가
+- 개인 공간 기준 문구와 `가계부 보기 →` CTA를 하단에 배치
+- API 변경 없이 기존 `ledger.incomeTotal`, `ledger.expenseTotal`, `ledger.net` 응답만 사용
+- Android `:app:assembleDebug` 통과 및 `Pixel_9` 에뮬레이터 스크롤 캡처 확인: `/tmp/gleaum-native-home-budget-card-scrolled.png`
+
 2026-06-22에 `NativeHomePortActivity` 비활성 skeleton을 Mobile Web 홈 순서 기준으로 보강하고, debug preview 내부에서 `/api/native/home-summary` 데이터 연결까지 진행했다.
 
 반영 범위:
