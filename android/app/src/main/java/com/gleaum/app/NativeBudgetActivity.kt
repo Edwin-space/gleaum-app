@@ -91,6 +91,7 @@ class NativeBudgetActivity : AppCompatActivity() {
                     addView(buildHero(data), matchWrap())
                     addView(buildStatGrid(data), matchWrap().apply { topMargin = dp(14) })
                     addView(buildBreakdown(data), matchWrap().apply { topMargin = dp(14) })
+                    addView(buildRecurringPlan(data), matchWrap().apply { topMargin = dp(18) })
                     addView(buildRecent(data), matchWrap().apply { topMargin = dp(18) })
                 }
             }, ViewGroup.LayoutParams(match(), wrap()))
@@ -194,6 +195,65 @@ class NativeBudgetActivity : AppCompatActivity() {
         } else {
             data.recentEntries.forEach { entry -> addView(entryCard(entry), matchWrap().apply { topMargin = dp(10) }) }
         }
+    }
+
+    private fun buildRecurringPlan(data: NativeBudgetSummary): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        addView(sectionTitle("반복 예정"))
+        val recurring = data.recentEntries.filter { it.recurFreq != "none" }
+        if (recurring.isEmpty()) {
+            addView(messageCard("등록된 정기 수입/지출이 없어요."), matchWrap().apply { topMargin = dp(10) })
+        } else {
+            addView(TextView(context).apply {
+                text = "매월 월세, 구독료, 급여처럼 반복되는 돈의 흐름을 따로 확인합니다."
+                textSize = 12f
+                typeface = medium()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(8) })
+            recurring.take(6).forEach { entry ->
+                addView(recurringCard(entry), matchWrap().apply { topMargin = dp(10) })
+            }
+        }
+    }
+
+    private fun recurringCard(entry: NativeBudgetEntry): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(16), dp(14), dp(14), dp(14))
+        background = round("#FFFFFF", 20, "#DFF6F3")
+        elevation = dp(2).toFloat()
+        setOnClickListener { openEdit(entry.id) }
+        val income = entry.kind == "income"
+        addView(TextView(context).apply {
+            text = recurLabel(entry.recurFreq)
+            textSize = 12f
+            typeface = bold()
+            gravity = Gravity.CENTER
+            setTextColor(color(if (income) "#10B981" else "#0084CC"))
+            background = round(if (income) "#EAFBF4" else "#F0FAFF", 999)
+        }, LinearLayout.LayoutParams(dp(58), dp(36)))
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(TextView(context).apply {
+                text = entry.title
+                textSize = 15f
+                typeface = bold()
+                setTextColor(color("#1A1B2E"))
+            })
+            addView(TextView(context).apply {
+                text = "다음 예정 ${nextOccurrenceText(entry)} · ${if (income) "수입" else "지출"}"
+                textSize = 12f
+                typeface = medium()
+                setTextColor(color("#8E8E93"))
+            }, matchWrap().apply { topMargin = dp(3) })
+        }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
+        addView(TextView(context).apply {
+            text = "${if (income) "+" else "-"}${money(entry.amount)}"
+            textSize = 14f
+            typeface = bold()
+            gravity = Gravity.RIGHT
+            setTextColor(color(if (income) "#10B981" else "#1A1B2E"))
+        })
     }
 
     private fun entryCard(entry: NativeBudgetEntry): LinearLayout = LinearLayout(this).apply {
@@ -317,6 +377,19 @@ class NativeBudgetActivity : AppCompatActivity() {
     private fun dayText(iso: String): String = parseIso(iso)?.let { SimpleDateFormat("M월 d일", Locale.KOREA).format(it) } ?: iso.take(10)
     private fun parseIso(iso: String): java.util.Date? = runCatching { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(iso) }.getOrNull() ?: runCatching { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(iso) }.getOrNull()
     private fun recurLabel(value: String): String = when (value) { "weekly" -> "매주"; "monthly" -> "매월"; "yearly" -> "매년"; else -> "일회" }
+    private fun nextOccurrenceText(entry: NativeBudgetEntry): String {
+        val base = parseIso(entry.occurredAt) ?: return dayText(entry.occurredAt)
+        val cal = java.util.Calendar.getInstance().apply { time = base }
+        val now = java.util.Calendar.getInstance()
+        while (cal.before(now)) {
+            when (entry.recurFreq) {
+                "weekly" -> cal.add(java.util.Calendar.WEEK_OF_YEAR, 1)
+                "yearly" -> cal.add(java.util.Calendar.YEAR, 1)
+                else -> cal.add(java.util.Calendar.MONTH, 1)
+            }
+        }
+        return SimpleDateFormat("M월 d일", Locale.KOREA).format(cal.time)
+    }
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun medium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private fun color(hex: String): Int = Color.parseColor(hex)

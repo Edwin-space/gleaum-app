@@ -85,6 +85,12 @@
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
 
+        <!-- ── 네이티브 홈 ──────────────────────────────────────────────── -->
+        <activity
+            android:name=".NativeHomePortActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
         <!-- ── 네이티브 일정 등록 ───────────────────────────────────────── -->
         <activity
             android:name=".NativeScheduleCreateActivity"

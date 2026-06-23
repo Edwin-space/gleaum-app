@@ -1074,6 +1074,13 @@ class NativeHomePortActivity : AppCompatActivity() {
             finish()
             return
         }
+        if (path == "/home") {
+            loading = true
+            errorMessage = null
+            render()
+            loadHomeSummary()
+            return
+        }
         if (path == "/schedules/new") {
             startActivity(Intent(this, NativeScheduleCreateActivity::class.java).apply {
                 putExtra("selected_date", selectedDateKey ?: summary?.selectedDate)

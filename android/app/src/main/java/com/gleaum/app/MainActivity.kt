@@ -143,7 +143,8 @@ class MainActivity : BridgeActivity() {
 
           function canTryNative(path) {
             if (!path) return false;
-            return /^\/schedules(\/.*)?([?#].*)?${'$'}/.test(path) ||
+            return /^\/home\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/schedules(\/.*)?([?#].*)?${'$'}/.test(path) ||
                    /^\/budget\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/space(\/new)?\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/mypage\/?([?#].*)?${'$'}/.test(path);
@@ -199,6 +200,7 @@ class MainActivity : BridgeActivity() {
     }
 
     private fun nativeIntentFor(path: String): Intent? = when {
+        path == "/home" -> Intent(this, NativeHomePortActivity::class.java)
         path == "/budget" -> Intent(this, NativeBudgetActivity::class.java)
         path == "/mypage" -> Intent(this, NativeMyMenuActivity::class.java)
         path == "/space" -> Intent(this, NativeSpaceActivity::class.java)

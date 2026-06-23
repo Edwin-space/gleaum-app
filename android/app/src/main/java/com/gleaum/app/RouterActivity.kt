@@ -32,6 +32,7 @@ class RouterActivity : AppCompatActivity() {
         }
 
         val target = when {
+            SessionManager.hasValid(this) && NativePortFlags.ENABLE_NATIVE_HOME -> NativeHomePortActivity::class.java
             SessionManager.hasValid(this) -> MainActivity::class.java
             isOAuthCallback              -> MainActivity::class.java  // OAuth 콜백은 Main 으로
             else                         -> LoginActivity::class.java

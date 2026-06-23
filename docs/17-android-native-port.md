@@ -434,3 +434,16 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 기기 잠금/지문이 준비되지 않은 경우 Android 보안 설정으로 연결한다.
 - 검증: Android `:app:assembleDebug` 통과.
 - 남은 검증: 실제 Android 단말에서 전체 메뉴 → 캘린더 선택, 앱 잠금 켜기/끄기, 앱 재실행 후 WebView `NativeBiometricGate`가 같은 설정을 인식하는지 확인한다.
+
+
+## 2026-06-23 Native 전환 4단계 1차
+
+- Android 홈 운영 연결을 시작했다. `NativePortFlags.ENABLE_NATIVE_HOME=true`로 전환하고, 세션 보유 사용자는 `RouterActivity`에서 `NativeHomePortActivity`로 진입한다.
+- WebView 내부 `/home` 라우팅도 `MainActivity` native route bridge에서 `NativeHomePortActivity`로 승격한다.
+- `NativeHomePortActivity`의 하단 홈 탭은 WebView 재진입이 아니라 네이티브 홈 데이터를 다시 로드한다.
+- 전체 메뉴 하위 설정 중 화면 모드, 홈 레이아웃, 알림 설정을 WebView fallback 대신 네이티브 다이얼로그로 1차 전환했다.
+- 공간 고급 설정은 WebView fallback 대신 현재 네이티브에서 가능한 공간 이름 변경, 초대 코드 재생성, 참여, 생성 액션과 상태 안내를 제공한다.
+- 가계부는 기존 `ledger_entries.recur_freq`를 활용해 정기 수입/지출을 `반복 예정` 섹션으로 별도 노출한다. 이번 단계에서는 새 Supabase 테이블을 만들지 않는다.
+- Debug manifest의 Native Home preview 등록은 main manifest의 운영 등록과 충돌하지 않도록 `tools:replace`로 정리했다.
+- 검증: Android `:app:assembleDebug` 통과.
+- 남은 검증: 실제 로그인 단말에서 앱 시작 → Native Home 진입, 홈 하단 탭 이동, WebView 기능에서 `/home` 복귀 시 Native Home 승격, 전체 메뉴 설정 저장, 반복 예정 표시를 확인한다.

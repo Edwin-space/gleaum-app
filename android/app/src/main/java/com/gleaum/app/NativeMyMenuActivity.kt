@@ -139,10 +139,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     addView(buildQuickActions(), matchWrap().apply { topMargin = dp(16) })
                     addView(buildSectionTitle("앱 설정"), matchWrap().apply { topMargin = dp(22) })
                     addView(buildSettingsGroup(listOf(
-                        MenuRow("화면 모드", "다음 단계에서 네이티브화 예정", MenuIcon.SUN, "준비중") { openWebPath("/mypage") },
-                        MenuRow("홈 레이아웃", "홈 화면 구성 변경", MenuIcon.GRID, null) { openWebPath("/settings/home-layout") },
+                        MenuRow("화면 모드", themeModeSubtitle(), MenuIcon.SUN, themeModeBadge()) { showThemeModeSettings() },
+                        MenuRow("홈 레이아웃", homeLayoutSubtitle(), MenuIcon.GRID, null) { showHomeLayoutSettings() },
                         MenuRow("캘린더 설정", calendarSettingsSubtitle(), MenuIcon.CALENDAR, calendarSettingsBadge()) { showCalendarSettings() },
-                        MenuRow("알림 설정", "푸시와 일정 알림 관리", MenuIcon.BELL, null) { openWebPath("/settings") },
+                        MenuRow("알림 설정", notificationSettingsSubtitle(), MenuIcon.BELL, notificationSettingsBadge()) { showNotificationSettings() },
                     )), matchWrap().apply { topMargin = dp(10) })
 
                     addView(buildSectionTitle("계정 & 보안"), matchWrap().apply { topMargin = dp(22) })
@@ -402,6 +402,88 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun biometricBadge(): String = if (isBiometricLockEnabled()) "켜짐" else if (biometricSubtitle().contains("가능")) "가능" else "확인"
+
+    private fun themeModeSubtitle(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {
+        "light" -> "라이트 모드 고정"
+        "dark" -> "다크 모드 고정"
+        else -> "시스템 설정에 맞춰 자동 변경"
+    }
+
+    private fun themeModeBadge(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {
+        "light" -> "라이트"
+        "dark" -> "다크"
+        else -> "자동"
+    }
+
+    private fun showThemeModeSettings() {
+        val values = arrayOf("system", "light", "dark")
+        val labels = arrayOf("자동", "라이트", "다크")
+        val selected = values.indexOf(nativePrefs().getString(THEME_MODE_KEY, "system")).takeIf { it >= 0 } ?: 0
+        AlertDialog.Builder(this)
+            .setTitle("화면 모드")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                nativePrefs().edit().putString(THEME_MODE_KEY, values[which]).apply()
+                message = "화면 모드를 ${labels[which]}로 저장했어요. 네이티브 화면부터 순차 적용됩니다."
+                dialog.dismiss()
+                render()
+            }
+            .setNegativeButton("닫기", null)
+            .show()
+    }
+
+    private fun homeLayoutSubtitle(): String = when (nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")) {
+        "schedule_first" -> "일정 중심 홈"
+        "budget_first" -> "가계부 중심 홈"
+        "space_first" -> "공간 중심 홈"
+        else -> "균형형 홈 구성"
+    }
+
+    private fun showHomeLayoutSettings() {
+        val values = arrayOf("balanced", "schedule_first", "budget_first", "space_first")
+        val labels = arrayOf("균형형", "일정 중심", "가계부 중심", "공간 중심")
+        val selected = values.indexOf(nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")).takeIf { it >= 0 } ?: 0
+        AlertDialog.Builder(this)
+            .setTitle("홈 레이아웃")
+            .setMessage("네이티브 홈에서 우선 노출할 정보 흐름을 선택합니다.")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                nativePrefs().edit().putString(HOME_LAYOUT_KEY, values[which]).apply()
+                message = "홈 레이아웃을 ${labels[which]}으로 저장했어요."
+                dialog.dismiss()
+                render()
+            }
+            .setNegativeButton("닫기", null)
+            .show()
+    }
+
+    private fun notificationSettingsSubtitle(): String {
+        val schedule = nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true"
+        val budget = nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true"
+        return "일정 ${if (schedule) "켜짐" else "꺼짐"} · 가계부 ${if (budget) "켜짐" else "꺼짐"}"
+    }
+
+    private fun notificationSettingsBadge(): String =
+        if (nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true" || nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true") "켜짐" else "꺼짐"
+
+    private fun showNotificationSettings() {
+        val labels = arrayOf("일정 리마인더", "가계부 결제 알림")
+        val checked = booleanArrayOf(
+            nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true",
+            nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true",
+        )
+        AlertDialog.Builder(this)
+            .setTitle("알림 설정")
+            .setMultiChoiceItems(labels, checked) { _, which, isChecked -> checked[which] = isChecked }
+            .setPositiveButton("저장") { _, _ ->
+                nativePrefs().edit()
+                    .putString(NOTIFY_SCHEDULE_KEY, checked[0].toString())
+                    .putString(NOTIFY_BUDGET_KEY, checked[1].toString())
+                    .apply()
+                message = "알림 설정을 저장했어요."
+                render()
+            }
+            .setNegativeButton("닫기", null)
+            .show()
+    }
 
     private fun showBiometricSettings() {
         val enabled = isBiometricLockEnabled()
@@ -677,6 +759,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
         private const val BIOMETRIC_UNLOCKED_AT_KEY = "gleaum:biometric-unlocked-at"
         private const val BIOMETRIC_LOCK_SCOPES_KEY = "gleaum:biometric-lock-scopes"
         private const val BIOMETRIC_RELOCK_INTERVAL_KEY = "gleaum:biometric-relock-interval"
+        private const val THEME_MODE_KEY = "gleaum:theme-mode"
+        private const val HOME_LAYOUT_KEY = "gleaum:home-layout"
+        private const val NOTIFY_SCHEDULE_KEY = "gleaum:native-notify-schedule"
+        private const val NOTIFY_BUDGET_KEY = "gleaum:native-notify-budget"
     }
 
     private fun nativePrefs(): SharedPreferences = getSharedPreferences(CAPACITOR_PREFS_NAME, Context.MODE_PRIVATE)

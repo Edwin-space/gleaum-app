@@ -521,3 +521,13 @@ Remaining gap: Android Native Preview currently renders a compact weekly date st
 - 캘린더 선택/동기화 사용 여부와 생체인증 잠금/재잠금 간격은 Capacitor Preferences `CapacitorStorage`의 기존 WebView 키를 그대로 사용한다.
 - 검증 완료: Android `:app:assembleDebug`.
 - 다음 검증: 실제 단말에서 설정 변경 후 앱 재실행, 보호 경로 진입, 캘린더 선택 유지 여부 확인.
+
+
+## 2026-06-23 Native Port 4-Step Snapshot
+
+- Android Native Home을 운영 진입 후보로 연결했다. 세션 보유 시 RouterActivity가 NativeHomePortActivity를 연다.
+- `/home` 경로는 MainActivity route bridge에서 NativeHomePortActivity로 승격된다.
+- 전체 메뉴의 화면 모드/홈 레이아웃/알림 설정은 네이티브 다이얼로그로 1차 전환됐다.
+- 공간 고급 설정은 WebView fallback 대신 네이티브 액션 안내/연결로 정리됐다.
+- 가계부는 반복 수입/지출을 `반복 예정` 섹션으로 노출한다.
+- 검증 완료: Android `:app:assembleDebug`.

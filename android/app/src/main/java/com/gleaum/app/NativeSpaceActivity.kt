@@ -267,7 +267,7 @@ class NativeSpaceActivity : AppCompatActivity() {
             else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
         }, matchWrap())
         addView(divider(), matchWrap().apply { leftMargin = dp(16) })
-        addView(manageRow("고급 설정", "아직 네이티브로 옮기지 않은 설정은 웹에서 계속 처리합니다") { openWebPath("/space/settings") }, matchWrap())
+        addView(manageRow("고급 설정", "공간 관리 상태와 지원 항목을 확인합니다") { showAdvancedSpaceDialog() }, matchWrap())
     }
 
     private fun manageRow(title: String, subtitle: String, action: () -> Unit): LinearLayout = LinearLayout(this).apply {
@@ -317,6 +317,43 @@ class NativeSpaceActivity : AppCompatActivity() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("글리움 초대 코드", code))
         Toast.makeText(this, "초대 코드가 복사됐어요.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showAdvancedSpaceDialog() {
+        val active = summary?.activeSpace
+        val message = if (active == null) {
+            "활성 공간을 찾지 못했어요."
+        } else if (active.isPersonal) {
+            "개인 공간은 초대와 멤버 관리를 지원하지 않아요. 공유 공간을 만들거나 초대 코드로 참여하면 함께 관리할 수 있어요."
+        } else {
+            "이 공간은 네이티브에서 이름 변경, 초대 코드 재생성, 멤버 역할 변경, 멤버 내보내기를 지원합니다.\n\n공간 자금 관리는 개인 가계부와 분리된 공간 자금 모델로 확장 예정입니다."
+        }
+        val items = if (active?.isPersonal == true) {
+            arrayOf("새 공유 공간 만들기", "초대 코드로 참여하기")
+        } else {
+            arrayOf("공간 이름 변경", "초대 코드 재생성", "초대 코드로 참여하기", "새 공간 만들기")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("공간 고급 설정")
+            .setMessage(message)
+            .setItems(items) { _, which ->
+                if (active?.isPersonal == true) {
+                    when (which) {
+                        0 -> showCreateSpaceDialog()
+                        1 -> showJoinSpaceDialog()
+                    }
+                } else {
+                    when (which) {
+                        0 -> if (active?.role == "admin") showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
+                        1 -> if (active?.role == "admin") confirmRegenerateInviteCode() else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
+                        2 -> showJoinSpaceDialog()
+                        3 -> showCreateSpaceDialog()
+                    }
+                }
+            }
+            .setNegativeButton("닫기", null)
+            .show()
     }
 
     private fun showCreateSpaceDialog() {

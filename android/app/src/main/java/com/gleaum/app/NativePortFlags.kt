@@ -17,7 +17,7 @@ object NativePortFlags {
      */
     const val ENABLE_NATIVE_HOME_PREVIEW = true
 
-    const val ENABLE_NATIVE_HOME = false
+    const val ENABLE_NATIVE_HOME = true
     const val ENABLE_NATIVE_SCHEDULE_FORM = false
     const val ENABLE_NATIVE_BUDGET = false
     const val ENABLE_NATIVE_SPACE = false
