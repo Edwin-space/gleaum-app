@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 apply plugin: 'com.google.firebase.crashlytics'
 // firebase-perf 플러그인 제거 (AGP 9.x Transform API 호환 불가)
 // firebase-perf-ktx 런타임 라이브러리는 유지 → 커스텀 트레이스 정상 동작
@@ -11,8 +12,8 @@ android {
         applicationId "com.gleaum.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 17
-        versionName "1.0.17"
+        versionCode 23
+        versionName "1.1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         aaptOptions {
@@ -36,8 +37,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
             // 네이티브 디버그 심볼 — Play Console + Crashlytics 크래시 분석용
+            // FULL: 함수명 + 파일/라인까지 → 크래시 스택트레이스 완전 복원
             ndk {
-                debugSymbolLevel 'SYMBOL_TABLE'
+                debugSymbolLevel 'FULL'
             }
         }
         debug {}
@@ -45,6 +47,7 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true  // XML 레이아웃 바인딩
+        compose = true      // Material 3 Compose 전환 기반
     }
     kotlinOptions {
         jvmTarget = '21'
@@ -69,6 +72,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.activity:activity-ktx:$androidxActivityVersion"  // ComponentActivity
+    implementation "androidx.activity:activity-compose:$androidxActivityVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "androidx.webkit:webkit:$androidxWebkitVersion"  // addDocumentStartJavaScript
@@ -77,6 +81,18 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    // ── Jetpack Compose / Material 3 (Android Native UI redesign foundation) ──
+    implementation platform('androidx.compose:compose-bom:2026.06.00')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material3:material3-adaptive-navigation-suite'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.9.1'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
     // ── Google Credential Manager (네이티브 Google 로그인) ─────────────
     implementation 'androidx.credentials:credentials:1.5.0'
@@ -95,6 +111,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-perf-ktx'
     implementation 'com.google.firebase:firebase-config-ktx'
     implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-messaging-ktx'
     // App Check — Play Integrity (프로덕션) + Debug (개발)
     implementation 'com.google.firebase:firebase-appcheck-playintegrity'
     debugImplementation 'com.google.firebase:firebase-appcheck-debug'
