@@ -612,3 +612,41 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 2. 알림 화면을 Compose Material 3로 전환.
 3. 온보딩/보안/프로필 보조 화면의 잔여 View UI를 Material 3 기준으로 정리.
 4. 라이트/다크/태블릿 회귀 QA 후 Google Play 프로덕션 후보 빌드 생성.
+
+## 2026-07-06 진행 기록 — Compose My Menu/Settings 1차 전환
+
+### 완료
+- Android 전체 메뉴/설정 메인 화면을 Compose Material 3 기반으로 연결했다.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/menu/ComposeMyMenuScreen.kt`
+  - Activity 연결: `NativeMyMenuActivity`
+  - 사용 컴포넌트: `ElevatedCard`, `OutlinedCard`, `Card`, `ListItem`, `AssistChip`, `Badge`, `Surface`, `HorizontalDivider`.
+  - 카드 variant 기준:
+    - `ElevatedCard`: 프로필 Hero 영역.
+    - `OutlinedCard`: 빠른 액션 카드.
+    - `Card`/Filled: 설정 그룹 컨테이너.
+    - `ListItem`: 설정 항목 row.
+- 기존 설정 기능 로직은 유지했다.
+  - 화면 모드, 홈 레이아웃, 캘린더 설정, 알림 설정
+  - 생체인증 보안, 비밀번호 설정, 프로필 관리, 계정 탈퇴/복구
+  - 약관/개인정보, 앱 버전, 로그아웃
+- Feature gate 추가/사용.
+  - `NativePortFlags.ENABLE_COMPOSE_MENU = true`
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 직접 확인해야 한다.
+  - `하단 네비게이션 → 전체`
+  - 화면 모드 변경 후 라이트/다크 표시
+  - 홈 레이아웃 변경
+  - 캘린더 설정 권한/선택
+  - 생체인증 설정
+  - 프로필 수정/비밀번호 변경/탈퇴 상태 조회
+  - 로그아웃 후 네이티브 로그인 복귀
+
+### 다음 권장 작업
+1. 알림 화면을 Compose Material 3로 전환.
+2. 온보딩/보안/프로필 보조 화면의 잔여 View UI를 Material 3 기준으로 정리.
+3. 라이트/다크/태블릿 회귀 QA 후 다음 Google Play 업데이트 후보 빌드 생성.

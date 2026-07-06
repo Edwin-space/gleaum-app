@@ -31,6 +31,12 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.setContent
+import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.GleaumScaffold
+import com.gleaum.app.ui.screens.menu.ComposeMyMenuScreen
+import com.gleaum.app.ui.screens.menu.MyMenuAction
+import com.gleaum.app.ui.theme.GleaumTheme
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.json.JSONObject
@@ -115,7 +121,70 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_MENU) {
+            renderComposeMenu()
+            return
+        }
         setContentView(buildScreen())
+    }
+
+    private fun renderComposeMenu() {
+        setContent {
+            GleaumTheme {
+                GleaumScaffold(
+                    title = "전체",
+                    selectedDestination = GleaumDestination.MENU,
+                    onDestinationSelected = ::handleComposeDestination,
+                    onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
+                ) { innerPadding ->
+                    ComposeMyMenuScreen(
+                        innerPadding = innerPadding,
+                        summary = summary,
+                        loading = loading,
+                        message = message,
+                        themeModeSubtitle = themeModeSubtitle(),
+                        themeModeBadge = themeModeBadge(),
+                        homeLayoutSubtitle = homeLayoutSubtitle(),
+                        calendarSubtitle = calendarSettingsSubtitle(),
+                        calendarBadge = calendarSettingsBadge(),
+                        notificationSubtitle = notificationSettingsSubtitle(),
+                        notificationBadge = notificationSettingsBadge(),
+                        biometricSubtitle = biometricSubtitle(),
+                        biometricBadge = biometricBadge(),
+                        appVersion = BuildConfig.VERSION_NAME,
+                        onAction = ::handleMenuAction,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handleComposeDestination(destination: GleaumDestination) {
+        when (destination) {
+            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
+            GleaumDestination.SCHEDULES -> { startActivity(Intent(this, NativeScheduleListActivity::class.java)); finish() }
+            GleaumDestination.SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
+            GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
+            GleaumDestination.MENU -> Unit
+        }
+    }
+
+    private fun handleMenuAction(action: MyMenuAction) {
+        when (action) {
+            MyMenuAction.ADD_SCHEDULE -> startActivity(Intent(this, NativeScheduleCreateActivity::class.java))
+            MyMenuAction.OPEN_BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
+            MyMenuAction.OPEN_SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
+            MyMenuAction.THEME_MODE -> showThemeModeSettings()
+            MyMenuAction.HOME_LAYOUT -> showHomeLayoutSettings()
+            MyMenuAction.CALENDAR_SETTINGS -> showCalendarSettings()
+            MyMenuAction.NOTIFICATION_SETTINGS -> showNotificationSettings()
+            MyMenuAction.BIOMETRIC_SETTINGS -> showBiometricSettings()
+            MyMenuAction.PASSWORD_SETTINGS -> showPasswordSettingsNotice()
+            MyMenuAction.PROFILE -> loadProfileForEdit()
+            MyMenuAction.ACCOUNT_STATUS -> loadAccountStatus()
+            MyMenuAction.LEGAL -> showLegalDocuments()
+            MyMenuAction.LOGOUT -> logout()
+        }
     }
 
     private fun buildScreen(): FrameLayout {
