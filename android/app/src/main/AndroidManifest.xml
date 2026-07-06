@@ -203,13 +203,14 @@
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
-    <!-- 카메라 & 사진 — 프로필 아바타 업로드, 일정 사진 첨부 -->
+    <!-- 카메라 — 사용자가 직접 촬영하는 단발성 첨부/프로필 이미지용 -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- Android 13+ 이미지 접근 -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- Android 12 이하 호환 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+    <!--
+        사진/동영상 라이브러리 권한은 선언하지 않는다.
+        글리움의 이미지 사용은 사용자가 직접 선택하는 단발성 업로드이므로
+        Android Photo Picker / 시스템 파일 선택기 / WebView file chooser 의 URI grant 방식만 사용한다.
+        Google Play 정책상 미디어 라이브러리 읽기 권한은 지속 접근이 핵심 기능인 앱에만 허용된다.
+    -->
 
     <!-- Firebase Cloud Messaging -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
