@@ -327,7 +327,7 @@ export default function OnboardingPage() {
       return;
     }
     if (!biometricAvailability.available) {
-      setBiometricError('이 기기에서는 생체인증 또는 기기 잠금을 사용할 수 없어요.');
+      setBiometricError('이 기기에서는 생체인증을 사용할 수 없어요. 지문, Face ID 또는 Touch ID 등록 상태를 확인해 주세요.');
       return;
     }
 
@@ -997,7 +997,7 @@ export default function OnboardingPage() {
                 🔐
               </div>
               <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>
-                {getNativePlatform() === 'ios' ? 'Face ID / Touch ID 잠금' : '지문 / 기기 잠금'}
+                {getNativePlatform() === 'ios' ? 'Face ID / Touch ID 잠금' : '지문 잠금'}
               </p>
               <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-muted)', lineHeight: 1.65, margin: 0 }}>
                 앱을 다시 열 때 이 기기의 생체인증으로 일정, 공간, 가계부 정보를 보호합니다.
@@ -1029,7 +1029,7 @@ export default function OnboardingPage() {
                   기기 설정이 필요해요
                 </p>
                 <p style={{ fontSize: '13px', fontWeight: 600, color: '#B45309', margin: 0, lineHeight: 1.55 }}>
-                  휴대폰에 지문, Face ID 또는 화면 잠금이 설정되어 있지 않아 지금은 앱 잠금을 켤 수 없습니다.
+                  휴대폰에 지문, Face ID 또는 Touch ID가 등록되어 있지 않아 지금은 앱 잠금을 켤 수 없습니다.
                 </p>
               </div>
             )}

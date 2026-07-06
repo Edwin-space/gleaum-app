@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-06-15
+> **최종 업데이트**: 2026-06-23
 
 ---
 
@@ -29,6 +29,7 @@
 13. **Space 용어 통일** — 코드/문서에서 "가족(family)" → "공간(space)" 용어 사용. DB 테이블명(`family_groups`)은 하위 호환으로 유지.
 14. **개인 공간 / 공유 공간 구분** — 모든 사용자는 `preferences.personalSpaceId`로 개인 공간을 식별. 공유 공간은 `sharedSpaceId`/현재 `family_group_id`로 분리 판단. 자세한 내용은 아래 "공간 아키텍처" 섹션 참고.
 15. **공간 데이터 경계 절대 보장** — 개인 일정/지출은 반드시 개인 공간에만 저장하고, 공유 공간 화면은 `visibility='private'` 데이터를 절대 표시하지 않음.
+16. **Android Native Port는 Web UI 이식 작업** — Android 화면 네이티브화는 UI 개선/재디자인이 아니라 Mobile Web UI를 정답지로 한 Native Port 작업이다. 새 Android 스타일, iOS 스타일, 임의 하단 네비게이션 재해석 금지. 작업 전 `docs/17-android-native-port.md`를 반드시 읽을 것.
 
 ---
 
@@ -44,6 +45,12 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-19 | PC 웹 루트 랜딩 리다이렉트 보정. `RootPageRouter`에서 `useIsDesktop()` hydration 초기값 `false` 때문에 PC에서도 `/login`으로 먼저 이동할 수 있던 문제를 수정. 리다이렉트 effect 내부에서 `window.matchMedia('(min-width: 1024px)')`로 실제 브라우저 뷰포트를 재확인해 PC는 랜딩 페이지를 유지하고, 모바일 웹/네이티브 앱 로그인 이동 정책은 유지. `npm run build` 통과 |
+| 2026-06-18 | Android 이메일 로그인/회원가입 네이티브 전환. 기존 `LoginActivity`의 `이메일로 계속하기`는 `MainActivity start_path=/login?view=email`로 WebView 웹 로그인 폼을 호출했으나, 태블릿/앱 일관성 문제로 네이티브 폼으로 변경. `LoginActivity`에서 Supabase Auth REST API(`/auth/v1/token?grant_type=password`, `/auth/v1/signup`)를 직접 호출하고, 성공 시 `SessionManager`에 세션 저장 → 기존 `MainActivity` localStorage 주입 구조 사용. 회원가입은 이름/닉네임 + 필수 동의 체크 포함. 이후 동의 UX를 보강해 `[필수] 전체 동의`, 개별 동의 동기화, 이용약관/개인정보처리방침 보기 링크 추가. `보기`는 외부 브라우저 이탈 방지를 위해 `LegalWebViewActivity` 인앱 브라우저로 열고 하단 `닫기` 버튼으로 회원가입 화면 복귀. 태블릿에서는 웹 nav/footer/배경 블롭을 숨기고 본문 폭/패딩/텍스트 크기를 문서 뷰에 맞게 재조정. Android `:app:assembleDebug`, `npm run build` 통과 |
+| 2026-06-18 | Android 홈 Native Port 착수 전 스냅샷 문서 추가: `docs/18-android-home-port-snapshot.md`. `MobileHome.tsx`, `BottomNav.tsx`, `InlineFeedAd.tsx`, `ScheduleCard`, `CalendarView` 기준으로 섹션 순서/수치/문구/금지 사항을 고정. Android에는 비활성 골격 `NativeHomePortActivity`, `NativeHomePortModels` 추가. `NativePortFlags.ENABLE_NATIVE_HOME=false`라 운영 진입 흐름 영향 없음 |
+| 2026-06-18 | Android Native Port 기준 문서 추가: `docs/17-android-native-port.md`. Android는 웹 UI 안정화가 아니라 Mobile Web UI를 정답지로 한 단계적 Native Port를 목표로 한다. 단, 화면 재디자인 금지, iOS 스타일 복제 금지, 비활성 구현 → 비교 검증 → 내부 테스트 활성화 → 운영 활성화 순서 준수 |
+| 2026-06-18 | Android/WebView 푸시 등록 경로 정리. 네이티브 앱은 전역 `FCMProvider` → `useFCM` → `@capacitor-firebase/messaging` 경로만 사용하도록 하고, `MobileSpace`의 `useNativePush()` 중복 호출 및 `src/hooks/useNativePush.ts` 구 경로 제거. `usePushSubscription()`은 네이티브 앱에서 스킵해 Web Push(service worker + PushManager)가 Android WebView에서 중복 실행되지 않도록 보정. 네이티브 FCM foreground listener cleanup은 개별 listener handle 제거로 변경. `npm run build`, Android `:app:assembleDebug` 통과 |
+| 2026-06-18 | Android 네이티브 홈 레이어 1차 시도 후 보류. `MainActivity` 위에 별도 네이티브 홈 UI를 얹는 방식은 WebView 홈 복귀 무한루프와 모바일 웹 대비 디자인 이질감이 확인되어 제거. Android는 기존 모바일 웹 UI를 유지하고, 네이티브화는 로그인/세션/생체인증/캘린더/푸시 등 브리지와 권한 안정화 중심으로 진행해야 함. Android `:app:assembleDebug` 통과 |
 | 2026-06-15 | 애플·카카오 로그인 UI 제외(심사·연동 부담으로 보류) + 표현을 "이메일"로 통일("이메일로 로그인/회원가입"). **네이티브 앱 이메일 로그인 파리티 추가**: `LoginActivity`에 "이메일로 계속하기" 버튼 → `MainActivity`를 `start_path=/login?view=email`로 실행 → WebView가 웹 이메일 폼 표시. `/login`은 `?view=email`/`?mode=signup` 딥링크 지원. `NativeAppProvider`가 `onAuthStateChange(SIGNED_IN/TOKEN_REFRESHED)`에서 `saveNativeSession()` 호출 → WebView 이메일 로그인 세션을 네이티브에 저장(콜드 재실행 유지). android assembleDebug 통과 / 런타임은 기기 테스트 권장 |
 | 2026-06-15 | 이메일/비밀번호 회원가입·로그인 추가 + 로그인 화면 소셜 우선 재구성. 구글 우선 배치, 그 아래 이메일 로그인/회원가입 진입 버튼. 이메일 회원가입에 `[필수]` 만 14세 이상 / 이용약관 / 개인정보 수집·이용 동의 체크박스(전체 동의 토글) 추가 — 정보통신망법·개인정보보호법 준수. `useAuth`에 `signUpWithEmail`/`signInWithEmail` 추가 (`src/hooks/useAuth.ts`, `src/app/login/page.tsx`) |
 | 2026-06-15 | 가계부 정기지출(매월/매주/매년) 이월 구현. 기존엔 다음 주기 인스턴스가 어디서도 생성되지 않던 치명적 결함 → `materializeRecurringExpenses()`(가계부 진입 시 lazy, `src/lib/db.ts`) + 서버 크론 `/api/cron/recurring-expenses`(`016`, 매일 00:10 KST) 이중 보강. 부수: 고정지출 수정 시 end_time이 설정돼 크론 missed 전환 설계와 충돌하던 버그, 변동지출 "반영 N건" 집계 오류, 날짜 입력 UTC 자정 파싱(타임존) 수정 |
@@ -1502,3 +1509,199 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 디자인: 어두운 블러 글래스 컨테이너 + 활성 탭 pill 배경 + Teal 활성 색상 + muted 비활성 색상으로 네이티브 홈 톤에 맞춤.
 - 접근성/자동화: 각 탭을 실제 `UIButton`으로 구현하고 `accessibilityLabel`/selected trait 지정. XcodeBuildMCP `snapshot_ui`에서 홈/일정/공간/가계부/전체 버튼 타깃 확인.
 - 검증: XcodeBuildMCP `build_run_sim` 통과 및 Simulator 화면 확인.
+
+---
+
+## 2026-06-23 — Android Firebase 운영 계측/푸시 라우팅 보강
+
+### 배경
+- Android 네이티브 전환 이후 `NativeHomePortActivity` 등 네이티브 화면으로 직접 진입하는 구간이 생겼다.
+- 기존 React `FCMProvider`, `FirebaseServicesProvider`, `trackEvent()`는 WebView/React가 마운트되어야 실행된다.
+- 따라서 완전 네이티브 진입 상태에서는 FCM 토큰 등록, 알림 탭 라우팅, 화면 이벤트 수집이 누락될 수 있었다.
+
+### 수정
+- `android/app/src/main/java/com/gleaum/app/NativeFirebase.kt`
+  - Firebase App/Analytics/Crashlytics/Remote Config 초기화 허브 추가.
+  - 세션 JWT에서 user id를 추출해 Analytics userId, Crashlytics userId/custom key 연결.
+  - FirebaseMessaging token을 받아 Supabase REST `profiles.fcm_token`에 직접 저장.
+  - 모든 Activity 화면 진입을 `screen_view` 이벤트와 Crashlytics `last_screen` key로 기록.
+- `android/app/src/main/java/com/gleaum/app/GleaumFirebaseMessagingService.kt`
+  - FCM token refresh 수신 시 서버 동기화.
+  - foreground/data 메시지를 시스템 알림으로 표시.
+  - 알림 탭 Intent에 `url` extra를 전달.
+- `android/app/src/main/java/com/gleaum/app/NativeDeepLinkRouter.kt`
+  - FCM/App Link/WebView bridge에서 공통으로 사용할 네이티브 경로 매핑 추가.
+  - `/home`, `/schedules`, `/schedules/{id}`, `/budget`, `/notifications`, `/space`, `/mypage`, `/legal/*`를 네이티브 화면으로 매핑.
+- `android/app/src/main/java/com/gleaum/app/SplashActivity.kt`
+  - 스플래시가 RouterActivity로 전환할 때 최초 Intent data/extras/action을 보존하도록 수정.
+  - 푸시 알림/딥링크로 앱을 열 때 URL 정보가 스플래시에서 유실되던 문제 방지.
+- `android/app/src/main/java/com/gleaum/app/RouterActivity.kt`
+  - 로그인 세션이 있고 알림 URL이 네이티브 경로로 매핑 가능하면 해당 Native Activity로 직접 이동.
+  - OAuth callback은 기존대로 MainActivity로 전달.
+- `android/app/src/main/java/com/gleaum/app/SessionManager.kt`
+  - 세션 저장 직후 NativeFirebase 세션 동기화 실행.
+- `android/app/src/main/AndroidManifest.xml`
+  - `GleaumFirebaseMessagingService` 등록.
+- `android/app/build.gradle`
+  - 직접 네이티브 FCM 서비스를 사용하기 위해 `firebase-messaging-ktx` 추가.
+
+### 검증
+- `cd android && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew :app:assembleDebug --quiet` 통과.
+
+### 남은 운영 검증
+- Firebase Console DebugView 또는 실시간 이벤트에서 네이티브 Activity별 `screen_view` 수신 확인.
+- Crashlytics에서 user id / `last_screen` custom key가 붙는지 확인.
+- 실기기에서 FCM token이 `profiles.fcm_token`에 저장되는지 확인.
+- FCM payload `data.url`이 `/schedules/{id}`, `/budget`, `/notifications`일 때 해당 네이티브 화면으로 직접 진입하는지 확인.
+
+---
+
+## 2026-06-23 — Android Native Port 다크모드/태블릿/라우팅 1차 보강
+
+### 목적
+- 모든 핵심 앱 경로가 Android 네이티브 화면을 우선 사용하도록 정리.
+- 기존 네이티브 화면의 라이트 고정 컬러를 시스템 다크모드에 맞춰 대응.
+- 태블릿/폴더블은 `NativeAdaptive` 기준의 최대 폭/중앙 정렬 구조를 유지.
+
+### 수정
+- `NativeTheme.kt` 추가
+  - DESIGN.md의 `--theme-*`에 대응하는 Android 네이티브 테마 매퍼.
+  - `uiMode`가 다크면 배경/표면/보조 텍스트/테두리 컬러를 다크 토큰으로 변환.
+  - `applySystemBars()`로 라이트/다크 시스템바 아이콘 대비를 자동 조정.
+- 주요 Android 네이티브 화면의 `color("#...")` 호출을 `NativeTheme.color()` 경유로 변경.
+- 주요 Android 네이티브 화면의 `applyLightSystemBars()`를 `NativeTheme.applySystemBars()`로 교체.
+- `MainActivity` WebView route bridge의 경로 매핑을 `NativeDeepLinkRouter`로 단일화.
+- `NativeDeepLinkRouter`에 `/invite/{code}`, `/family`, `/space/settings` 매핑 추가.
+- `NativeSpaceActivity`에 `invite_code` extra 처리 추가.
+  - 초대 링크로 진입하면 네이티브 공간 화면에서 참여 확인 다이얼로그 표시.
+- `LoginActivity`가 최초 딥링크/초대 경로를 기억하고, 로그인 후 가능한 네이티브 경로로 이어가도록 보정.
+- `NativePortFlags`의 schedule/budget/space 플래그를 실제 라우팅 상태에 맞춰 `true`로 정리.
+
+### 검증
+- Android `:app:assembleDebug` 통과.
+
+### 아직 완전 네이티브 예외
+- `/onboarding`은 아직 WebView 기반이다. 네이티브 로그인 이후 온보딩/개인화 플로우를 완전히 Android Native로 옮기려면 별도 Activity/API 설계가 필요하다.
+- `/admin/ads`, `/download`는 앱 내부 핵심 사용자 기능이 아니라 웹 유지 가능 영역이다.
+- `/legal/*`은 네이티브 Activity 안의 인앱 WebView 문서 뷰로 유지한다. 법무 문서는 서버 문서 단일 소스가 더 안전하다.
+- 다크모드는 1차 토큰 매핑 적용 단계다. 실기기에서 각 화면별 대비 캡처 검수가 필요하다.
+
+---
+
+## 2026-06-23 — Android 네이티브 온보딩 1차 추가
+
+### 목적
+- 로그인 직후 신규 사용자가 WebView `/onboarding`으로 떨어지지 않게 Android Native 온보딩 흐름을 제공.
+- 웹 온보딩과 같은 `profiles` 필드/`preferences` 구조를 저장하되, Android에서는 1차 핵심 단계로 단순화.
+
+### 수정
+- `src/app/api/native/onboarding/complete/route.ts` 추가
+  - Bearer/cookie 모두 지원하는 `createNativeRouteAuth()` 기반.
+  - `completeNativeOnboarding()` 호출 후 profile summary 반환.
+- `src/lib/db.ts`
+  - `NativeProfileSummary.onboardingCompleted` 추가.
+  - `getNativeProfileSummary()` / `updateNativeProfile()` select에 `onboarding_completed_at` 포함.
+  - `completeNativeOnboarding()` 추가: 웹 `completeOnboarding()`과 동일한 필드 저장.
+- `android/app/src/main/java/com/gleaum/app/NativeOnboardingApi.kt` 추가
+  - `POST https://www.gleaum.com/api/native/onboarding/complete` 호출.
+- `android/app/src/main/java/com/gleaum/app/NativeOnboardingActivity.kt` 추가
+  - 4단계 네이티브 온보딩: 이름/표시 방식 → 사용 목적 → 홈 구성 → 공간/알림.
+  - 저장 데이터는 웹 온보딩과 동일한 `preferences`, `notification_settings`, `onboarding_completed_at`.
+- `android/app/src/main/java/com/gleaum/app/NativeHomePortModels.kt`
+  - 홈 요약의 `user.onboardingCompleted` 파싱.
+- `android/app/src/main/java/com/gleaum/app/NativeHomePortActivity.kt`
+  - 홈 요약 로딩 후 온보딩 미완료 사용자는 `NativeOnboardingActivity`로 전환.
+- `android/app/src/main/java/com/gleaum/app/LoginActivity.kt`
+  - 로그인 성공 기본 목적지를 네이티브 `/home`으로 변경. 홈에서 온보딩 필요 여부를 판정.
+- `android/app/src/main/java/com/gleaum/app/NativeDeepLinkRouter.kt`, `MainActivity.kt`
+  - `/onboarding`도 네이티브 온보딩 Activity로 승격.
+- `android/app/src/main/AndroidManifest.xml`
+  - `NativeOnboardingActivity` 등록.
+
+### 검증
+- Android `:app:assembleDebug` 통과.
+- `npm run build` 통과. `/api/native/onboarding/complete` 라우트 생성 확인.
+
+### 후속
+- 네이티브 온보딩 1차는 생체인증 설정/공간 생성·참여까지 모두 포함하지 않고 핵심 개인화 저장에 집중한다.
+- 공간 생성/참여는 현재 네이티브 `NativeSpaceActivity`에서 처리 가능하므로, 온보딩 내 직접 생성/참여까지 넣을지는 실기기 UX 확인 후 결정.
+
+### 2026-06-23 추가 — Android 온보딩 공간/생체 설정 보강
+- `NativeOnboardingActivity` 4단계 핵심 온보딩을 5단계로 확장.
+- 공간 설정 단계 추가:
+  - `나중에 설정`
+  - `새 공유 공간 만들기` → `NativeSpaceApi.create()` 호출
+  - `초대 코드로 참여` → `NativeSpaceApi.join()` 호출
+- 알림/보안 단계에 생체인증 앱 잠금 토글 추가.
+  - 기기 잠금/지문 사용 가능 여부를 확인하고, 가능할 때만 `CapacitorStorage`의 기존 생체인증 키(`gleaum:biometric-*`)에 설정 저장.
+  - 실제 인증 프롬프트 강제 실행은 하지 않음. 첫 잠금/해제는 기존 앱 잠금 흐름이 처리.
+- Android `:app:assembleDebug` 통과.
+
+### 2026-06-24 추가 — Android Native Theme 사용자 선택값 반영
+
+- `NativeTheme.isDark()`가 시스템 다크모드만 보던 문제를 수정.
+- `CapacitorStorage`의 `gleaum:theme-mode` 값을 읽어 `system/light/dark`를 네이티브 화면 전체 테마 판단에 반영.
+- `NativeMyMenuActivity`에서 화면 모드 변경 직후 system bar 색상까지 즉시 재적용.
+- Android `:app:assembleDebug` 통과.
+
+### 2026-06-24 추가 — Android Native Home Layout 설정 연결
+
+- `NativeMyMenuActivity`의 홈 레이아웃 설정 값을 웹 공통 타입과 맞춤.
+  - 기존 Android 로컬 값 `schedule_first` → `calendar_first`, `budget_first` → `expense_first` 하위 호환 처리.
+  - 신규 저장값은 `balanced/calendar_first/routine_first/expense_first/space_first` 사용.
+- `NativeHomePortActivity`가 `gleaum:home-layout` 값을 읽어 홈 히어로 카피와 캘린더 초기 펼침 상태에 반영.
+- 웹 `MobileHome.tsx` 기준과 동일하게 섹션 전체 재배치가 아니라 홈 개인화 문구/초기 캘린더 상태 중심으로 반영.
+- Android `:app:assembleDebug` 통과.
+
+### 2026-06-24 추가 — Android Native UI 품질 보정
+
+- 다크모드에서 보조 텍스트/chevron/가계부 금액 텍스트가 고정 색상처럼 보이던 구간을 `NativeTheme.text/muted` 기반으로 보정.
+- 화면별로 복붙되어 있던 하단 네비게이션을 `NativeBottomNav` 공통 컴포넌트로 분리.
+  - 홈/일정/공간/가계부/전체 화면이 동일한 높이, 아이콘 위치, 라벨 위치, active indicator를 사용.
+  - 일정 화면의 문자 기반 임시 아이콘(`⌂`, `□`, `⌘`) 제거.
+- 반복되는 작은 타일/칩/통계 박스의 과한 그라데이션을 단색 브랜드 accent/surface 처리로 낮춤.
+- Android `:app:assembleDebug` 통과 후 연결 기기 `HA1R8ST7`에 `installDebug` 완료.
+
+### 2026-06-24 추가 — Android 다크모드 색상 역할 보정 및 M3 개편 계획
+
+- `NativeTheme`에 `rawColor()`, `alpha()`, `onDarkText()`, `onDarkMuted()` 추가.
+- `NativeTheme.text/muted/subtle`을 다크모드에서 명시적 readable color로 반환하도록 수정.
+- 각 Native Activity의 `colorWithAlpha()`가 테마 치환을 타지 않고 절대색 alpha를 쓰도록 일괄 보정.
+- 입력 필드 hint/text 색상 일부를 `NativeTheme.text/subtle`로 보정.
+- 다크모드 실기기 캡처에서 홈 주요 텍스트 대비가 회복됨 확인.
+- Android Material Design 3 전면 개편 계획 문서 추가: `docs/19-android-material3-redesign-plan.md`.
+
+### 2026-06-24 추가 — Android 전면 개편 방향 상향: Compose Material 3
+
+- Android Native UI는 더 이상 수작업 View 기반 Material 유사 UI로 유지하지 않음.
+- Google 공식 Material 3 컴포넌트를 기본 베이스로 삼는 Compose Material 3 전환 방향으로 확정.
+- 현재 Gradle은 Compose 미활성 상태이므로 Phase 0에서 Compose BOM/material3/activity-compose/navigation-compose/adaptive 의존성 추가 필요.
+- M3 컴포넌트 도입 대상: Scaffold, TopAppBar, NavigationBar/Rail/Drawer, FAB, Card, ListItem, TextField, SegmentedButton, Chip, DatePicker, TimePicker, Dialog, BottomSheet, Snackbar, Badge 등.
+- Motion 도입 대상: AnimatedVisibility, animateContentSize, Crossfade, AnimatedContent, animateColorAsState, animateDpAsState, LazyColumn item animation.
+- 사용자 요청인 상위 메뉴 선택 시 하위 메뉴가 펼쳐지는 액션은 `AnimatedVisibility + animateContentSize + chevron rotation` 공통 패턴으로 도입 예정.
+- 상세 계획은 `docs/19-android-material3-redesign-plan.md` 9~14절 참조.
+
+### 2026-06-24 추가 — Compose Material 3 Phase 0 적용
+
+- Android Gradle에 Compose Material 3 기반을 추가.
+  - `org.jetbrains.kotlin.plugin.compose` 적용
+  - `buildFeatures.compose = true`
+  - Compose BOM `2026.06.00`
+  - `androidx.compose.material3:material3`
+  - `material3-adaptive-navigation-suite`
+  - `activity-compose`
+  - `material-icons-extended`
+  - `lifecycle-runtime-compose:2.9.1` (`2.11.0`은 compileSdk 37 요구로 제외)
+- Compose foundation 추가:
+  - `ui/theme/GleaumTheme.kt`
+  - `ui/components/GleaumScaffold.kt`
+  - `ui/components/GleaumExpandableSection.kt`
+  - `ui/screens/Material3ShellPreviewScreen.kt`
+- `Material3ShellPreviewActivity` 추가.
+  - Debug 검증용 Compose M3 Shell Preview.
+  - release build에서는 `BuildConfig.DEBUG` 체크로 즉시 종료.
+  - ADB 직접 실행 검증을 위해 manifest `exported=true` 설정.
+- 실기기 `HA1R8ST7`에서 Preview Activity 실행 및 캡처 확인: `/tmp/gleaum-material3-shell-preview.png`.
+- Android `:app:assembleDebug` 및 `:app:installDebug` 통과.
+
+다음 작업은 기존 `NativeHomePortActivity`를 바로 수정하지 말고, Compose Home screen을 병행 구현한 뒤 feature flag로 전환하는 방식이 안전하다.

@@ -71,7 +71,11 @@ class SplashActivity : ComponentActivity() {
         // 2초 후 RouterActivity 로 이동
         Handler(Looper.getMainLooper()).postDelayed({
             if (!isFinishing) {
-                startActivity(Intent(this, RouterActivity::class.java))
+                startActivity(Intent(this, RouterActivity::class.java).apply {
+                    data = intent?.data
+                    action = intent?.action
+                    if (intent?.extras != null) putExtras(intent.extras!!)
+                })
                 finish()
                 @Suppress("DEPRECATION")
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)

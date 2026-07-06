@@ -53,4 +53,4 @@ gleaum-app/                     ← GitHub 레포지토리 루트
 1. **공유 DB**: 기존 사용자 앱과 동일한 Supabase 프로젝트를 사용. 별도 DB 생성 없음.
 2. **shadcn/ui 정식 설치됨**: `components.json` 기반으로 설치 완료. 모든 UI는 `src/components/ui/`에서 import하여 사용. Tailwind 클래스로 shadcn을 수동 시뮬레이션하는 것은 금지.
 3. **독립 배포**: Vercel에서 `gleaum-app` 레포지토리를 `Root Directory: backoffice`로 별도 Import하여 독립 프로젝트로 배포.
-4. **관리자 인증 미구현(현재)**: 현재 인증 없이 URL 직접 접근 가능. Phase 4에서 Supabase Auth + `is_super_admin` 기반 인증 추가 예정.
+4. **관리자 인증 구현 완료 (Phase 4)**: `src/proxy.ts`에서 Supabase Auth 세션 + `ADMIN_EMAILS` 환경변수 기반으로 모든 페이지/API 라우트를 보호하며, 미인증/비관리자는 `/login`으로 리다이렉트(API는 401/403)됩니다. 비활동 30분 자동 로그아웃(`SessionProvider.tsx`)도 적용되어 있습니다. 자세한 내용은 `03-current-status.md`를 참고하세요.

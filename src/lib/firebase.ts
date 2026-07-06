@@ -130,7 +130,7 @@ export async function onForegroundMessage(
   if (isNativeApp()) {
     try {
       const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-      await FirebaseMessaging.addListener('notificationReceived', (event) => {
+      const handle = await FirebaseMessaging.addListener('notificationReceived', (event) => {
         callback({
           notification: {
             title: event.notification.title,
@@ -139,7 +139,7 @@ export async function onForegroundMessage(
           data: event.notification.data as Record<string, string> | undefined,
         });
       });
-      return () => { FirebaseMessaging.removeAllListeners(); };
+      return () => { handle.remove(); };
     } catch {
       return () => {};
     }

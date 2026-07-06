@@ -28,6 +28,9 @@
 | `13-gcp-account-migration.md` | GCP/Firebase 계정 이관 기록 | 참고 |
 | `14-native-app-plan.md`    | ⭐ **네이티브 앱 확장 계획** (macOS → iOS → Android) | **최우선** |
 | `15-feature-parity-matrix.md` | ⭐ PC Web / Mobile Web / Native App 기능 싱크 기준표 | **최우선** |
+| `16-ios-native-roadmap.md` | ⭐ iOS 네이티브 전환 우선순위와 API 계약 | **최우선** |
+| `17-android-native-port.md` | ⭐ Android Web UI Native Port 기준 — 모바일 웹 UI를 정답지로 한 네이티브 이식 원칙 | **최우선** |
+| `18-android-home-port-snapshot.md` | ⭐ Android 홈 Native Port용 Mobile Web UI 스냅샷/구현 체크리스트 | **최우선** |
 | `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
 ---

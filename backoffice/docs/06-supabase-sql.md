@@ -375,6 +375,7 @@ CREATE POLICY "ad-images: 관리자 삭제"
 | `010_move_private_records_to_personal_space.sql` | private 일정/지출 개인 공간으로 이전 | ⬜ 확인 필요 |
 | `011_add_expense_reflection_columns.sql` | 공간 지출 → 개인 가계부 반영 컬럼 추가 | ⬜ 확인 필요 |
 | `012_cron_overdue_and_digest.sql` | 연체 알림 + 주간 다이제스트 크론잡 | ⬜ **실행 전 app_url·cron_secret 수정 필수** |
+| `015_harden_private_schedule_rls.sql` | 개인(private) 일정 RLS 정책 강화 | ⬜ 확인 필요 |
 
 각 파일의 내용은 `supabase/migrations/` 폴더에서 확인하세요.
 

@@ -18,7 +18,14 @@ object NativePortFlags {
     const val ENABLE_NATIVE_HOME_PREVIEW = true
 
     const val ENABLE_NATIVE_HOME = true
-    const val ENABLE_NATIVE_SCHEDULE_FORM = false
-    const val ENABLE_NATIVE_BUDGET = false
-    const val ENABLE_NATIVE_SPACE = false
+    const val ENABLE_COMPOSE_HOME = true
+    const val ENABLE_COMPOSE_SCHEDULES = true
+    const val ENABLE_COMPOSE_SCHEDULE_DETAIL = true
+    const val ENABLE_COMPOSE_SCHEDULE_FORM = true
+    const val ENABLE_COMPOSE_BUDGET = true
+    const val ENABLE_COMPOSE_BUDGET_FORM = true
+    const val ENABLE_COMPOSE_SPACE = true
+    const val ENABLE_NATIVE_SCHEDULE_FORM = true
+    const val ENABLE_NATIVE_BUDGET = true
+    const val ENABLE_NATIVE_SPACE = true
 }

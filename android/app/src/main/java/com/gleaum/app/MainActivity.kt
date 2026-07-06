@@ -141,10 +141,13 @@ class MainActivity : BridgeActivity() {
           function canTryNative(path) {
             if (!path) return false;
             return /^\/home\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/onboarding\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/schedules(\/.*)?([?#].*)?${'$'}/.test(path) ||
                    /^\/budget\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/notifications\/?([?#].*)?${'$'}/.test(path) ||
-                   /^\/space(\/new)?\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/space(\/new|\/settings)?\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/family\/?([?#].*)?${'$'}/.test(path) ||
+                   /^\/invite\/[^/]+\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/settings\/(security|calendar|home-layout)\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/legal\/(terms|privacy)\/?([?#].*)?${'$'}/.test(path) ||
                    /^\/mypage\/?([?#].*)?${'$'}/.test(path);
@@ -199,36 +202,8 @@ class MainActivity : BridgeActivity() {
         return uri.path?.takeIf { it.isNotBlank() }
     }
 
-    private fun nativeIntentFor(path: String): Intent? = when {
-        path == "/home" -> Intent(this, NativeHomePortActivity::class.java)
-        path == "/budget" -> Intent(this, NativeBudgetActivity::class.java)
-        path == "/notifications" -> Intent(this, NativeNotificationActivity::class.java)
-        path == "/mypage" -> Intent(this, NativeMyMenuActivity::class.java)
-        path == "/settings/security" -> Intent(this, NativeMyMenuActivity::class.java)
-        path == "/settings/calendar" -> Intent(this, NativeMyMenuActivity::class.java)
-        path == "/settings/home-layout" -> Intent(this, NativeMyMenuActivity::class.java)
-        path == "/legal/terms" -> legalIntent("이용약관", "/legal/terms")
-        path == "/legal/privacy" -> legalIntent("개인정보처리방침", "/legal/privacy")
-        path == "/space" -> Intent(this, NativeSpaceActivity::class.java)
-        path == "/space/new" -> Intent(this, NativeSpaceActivity::class.java)
-        path == "/schedules" -> Intent(this, NativeScheduleListActivity::class.java)
-        path == "/schedules/new" -> Intent(this, NativeScheduleCreateActivity::class.java)
-        path.matches(Regex("^/schedules/[^/]+/edit$")) -> {
-            val id = path.removePrefix("/schedules/").removeSuffix("/edit")
-            Intent(this, NativeScheduleCreateActivity::class.java).putExtra("schedule_id", id)
-        }
-        path.matches(Regex("^/schedules/[^/]+$")) && path != "/schedules/children" -> {
-            val id = path.removePrefix("/schedules/")
-            Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id)
-        }
-        else -> null
-    }
-
-    private fun legalIntent(title: String, path: String): Intent =
-        Intent(this, LegalWebViewActivity::class.java).apply {
-            putExtra(LegalWebViewActivity.EXTRA_TITLE, title)
-            putExtra(LegalWebViewActivity.EXTRA_URL, "https://www.gleaum.com$path?view=android-app")
-        }
+    private fun nativeIntentFor(path: String): Intent? =
+        NativeDeepLinkRouter.intentFor(this, path)
 
     private fun loadStartPath(intent: Intent?) {
         intent?.getStringExtra("start_path")?.takeIf { it.isNotBlank() }?.let { path ->

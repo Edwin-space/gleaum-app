@@ -13,7 +13,7 @@
 | 배포 브랜치 | `main` |
 | 빌드 명령어 | `npm run build` (자동 감지) |
 | 현재 배포 URL | `https://gleaum-backoffice.vercel.app` ✅ Ready |
-| 목표 커스텀 도메인 | `https://admin.gleaum.com` (미설정) |
+| 커스텀 도메인 | `admins.gleaum.com` ✅ 설정 완료 (자세한 최신 현황은 `03-current-status.md` 참고) |
 | 배포 상태 | ✅ Production 배포 완료 (2026-05-12) |
 
 ---
@@ -47,7 +47,7 @@ GA_PROPERTY_ID=
 ## 로컬 개발 서버 실행
 
 ```bash
-cd /Users/edwin/Documents/GitHub/gleaum-app/backoffice
+cd "/Volumes/WD_BLACK/Ai Works/gleaum/backoffice"
 npm install        # 최초 1회 실행
 npm run dev        # http://localhost:3001 에서 확인
 ```

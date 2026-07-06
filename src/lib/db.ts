@@ -1597,6 +1597,7 @@ export interface NativeProfileSummary {
   avatar: string | null;
   timezone: string;
   locale: string;
+  onboardingCompleted: boolean;
 }
 
 export interface NativeProfileUpdateInput {
@@ -1746,6 +1747,7 @@ function nativeProfileSummaryFromRow(row: ProfileRow): NativeProfileSummary {
     avatar: row.avatar,
     timezone: row.timezone ?? 'Asia/Seoul',
     locale: row.locale ?? 'ko-KR',
+    onboardingCompleted: !!row.onboarding_completed_at,
   };
 }
 
@@ -1755,7 +1757,7 @@ export async function getNativeProfileSummary(
 ): Promise<NativeProfileSummary> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at')
     .eq('id', userId)
     .single();
 
@@ -1794,10 +1796,60 @@ export async function updateNativeProfile(
     .from('profiles')
     .update(updates)
     .eq('id', userId)
-    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at')
     .single();
 
   if (error || !data) throw new Error(error?.message ?? 'profile_update_failed');
+  return nativeProfileSummaryFromRow(data as ProfileRow);
+}
+
+export async function completeNativeOnboarding(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  input: CompleteOnboardingInput,
+): Promise<NativeProfileSummary> {
+  const displayName = input.displayName.trim();
+  if (!displayName) throw new Error('display_name_required');
+  if (displayName.length > 24) throw new Error('display_name_too_long');
+  if (input.nameDisplayMode !== 'nickname' && input.nameDisplayMode !== 'real_name') {
+    throw new Error('invalid_name_display_mode');
+  }
+
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('preferences')
+    .eq('id', userId)
+    .single();
+
+  const existingPrefs = (existingProfile?.preferences as object) ?? {};
+  const preferences = {
+    ...existingPrefs,
+    primaryGoal: input.primaryGoal,
+    homeLayout: input.homeLayout,
+    enabledModules: input.enabledModules,
+    defaultReminderMinutes: input.defaultReminderMinutes,
+    spaceIntent: input.spaceIntent,
+  };
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      name: displayName,
+      display_name: displayName,
+      real_name: input.realName?.trim() || null,
+      name_display_mode: input.nameDisplayMode,
+      onboarding_completed_at: new Date().toISOString(),
+      timezone: input.timezone ?? 'Asia/Seoul',
+      locale: input.locale ?? 'ko-KR',
+      preferences,
+      notification_settings: input.notificationSettings,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId)
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at')
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'onboarding_update_failed');
   return nativeProfileSummaryFromRow(data as ProfileRow);
 }
 

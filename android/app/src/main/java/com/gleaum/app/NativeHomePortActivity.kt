@@ -21,7 +21,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.GleaumScaffold
+import com.gleaum.app.ui.screens.home.ComposeHomeScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.net.HttpURLConnection
@@ -62,20 +67,13 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
 
         applyLightSystemBars()
+        calendarExpanded = normalizedHomeLayout() == "calendar_first"
         render()
         loadHomeSummary()
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            }
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadHomeSummary() {
@@ -95,6 +93,13 @@ class NativeHomePortActivity : AppCompatActivity() {
             try {
                 val loaded = requestHomeSummary(token)
                 runOnUiThread {
+                    if (!loaded.onboardingCompleted) {
+                        startActivity(Intent(this, NativeOnboardingActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        })
+                        finish()
+                        return@runOnUiThread
+                    }
                     summary = loaded
                     selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
                     loading = false
@@ -151,8 +156,77 @@ class NativeHomePortActivity : AppCompatActivity() {
         return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
     }
 
+    private fun normalizedHomeLayout(): String {
+        val stored = getSharedPreferences(CAPACITOR_PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(HOME_LAYOUT_KEY, "balanced")
+        return when (stored) {
+            "schedule_first" -> "calendar_first"
+            "budget_first" -> "expense_first"
+            "calendar_first", "routine_first", "expense_first", "space_first" -> stored
+            else -> "balanced"
+        }
+    }
+
+    private fun homeLayoutCopy(): String = when (normalizedHomeLayout()) {
+        "calendar_first" -> "가장 가까운 약속과 캘린더 흐름을 우선으로 보여드립니다."
+        "routine_first" -> "반복되는 습관과 완료 확인이 필요한 일을 놓치지 않게 도와드립니다."
+        "expense_first" -> "정기결제와 공동비용 알림을 중심으로 홈을 구성합니다."
+        "space_first" -> "친구·연인과 연결된 공간의 일정과 소식을 우선합니다."
+        else -> "일정, 루틴, 자금, Space를 한 화면에서 확인하세요."
+    }
+
     private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_HOME) {
+            renderComposeHome()
+            return
+        }
         setContentView(buildHomeSkeleton())
+    }
+
+    private fun renderComposeHome() {
+        setContent {
+            GleaumTheme {
+                GleaumScaffold(
+                    title = "gleaum",
+                    selectedDestination = GleaumDestination.HOME,
+                    onDestinationSelected = ::handleComposeDestination,
+                    onNotificationClick = { openWebPath("/notifications") },
+                    onFabClick = { openWebPath("/schedules/new") },
+                ) { innerPadding ->
+                    ComposeHomeScreen(
+                        innerPadding = innerPadding,
+                        summary = summary,
+                        loading = loading,
+                        errorMessage = errorMessage,
+                        selectedDateKey = selectedDateKey,
+                        onRetry = {
+                            loading = true
+                            errorMessage = null
+                            render()
+                            loadHomeSummary()
+                        },
+                        onSelectDate = { date ->
+                            selectedDateKey = date
+                            render()
+                        },
+                        onAddSchedule = { openWebPath("/schedules/new") },
+                        onOpenSchedule = { id -> openWebPath("/schedules/$id") },
+                        onOpenSchedules = { openWebPath("/schedules") },
+                        onOpenBudget = { openWebPath("/budget") },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handleComposeDestination(destination: GleaumDestination) {
+        when (destination) {
+            GleaumDestination.HOME -> openWebPath("/home")
+            GleaumDestination.SCHEDULES -> openWebPath("/schedules")
+            GleaumDestination.SPACE -> openWebPath("/space")
+            GleaumDestination.BUDGET -> openWebPath("/budget")
+            GleaumDestination.MENU -> openWebPath("/mypage")
+        }
     }
 
     private fun buildHomeSkeleton(): FrameLayout {
@@ -186,7 +260,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             }, FrameLayout.LayoutParams(match(), match()))
 
             addView(buildHeaderBar(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
-            addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeHomePortActivity, dp(if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 64 else 56)))
+            addView(NativeBottomNav.create(this@NativeHomePortActivity, NativeBottomDestination.HOME), NativeAdaptive.bottomNavParams(this@NativeHomePortActivity, dp(if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 64 else 56)))
         }
     }
 
@@ -266,7 +340,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 text = "일정, 캘린더, 가계부 흐름을 불러오는 중입니다."
                 textSize = 12f
                 typeface = brandMedium()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(6) })
 
             addView(LinearLayout(context).apply {
@@ -322,8 +396,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 }, matchWrap().apply { topMargin = dp(10) })
 
                 addView(TextView(context).apply {
-                    text = data?.activeSpaceName?.let { "${it} 공간의 일정과 소식을 확인합니다." }
-                        ?: "친구·연인과 연결된 공간의 일정과 소식을 확인합니다."
+                    text = homeLayoutCopy()
                     textSize = 12f
                     typeface = Typeface.create("sans-serif", Typeface.NORMAL)
                     setTextColor(colorWithAlpha("#FFFFFF", 0.50f))
@@ -388,7 +461,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     text = formatDateTitle(selectedDate)
                     textSize = 15f
                     typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                 }, LinearLayout.LayoutParams(wrap(), wrap()).apply { leftMargin = dp(10) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f))
 
@@ -399,7 +472,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     typeface = Typeface.DEFAULT_BOLD
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
-                    background = gradientDrawable("#0CC9B5", "#0084CC", 999)
+                    background = roundDrawable("#0084CC", 999)
                 }, LinearLayout.LayoutParams(dp(58), dp(24)))
             }
 
@@ -408,7 +481,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 textSize = 18f
                 typeface = brandBold()
                 gravity = Gravity.CENTER
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, LinearLayout.LayoutParams(dp(28), dp(24)).apply { leftMargin = dp(8) })
         }
     }
@@ -472,7 +545,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     text = "캘린더 데이터를 준비하는 중이에요"
                     textSize = 12f
                     gravity = Gravity.CENTER
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, LinearLayout.LayoutParams(match(), dp(56)))
                 return@apply
             }
@@ -484,7 +557,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     gravity = Gravity.CENTER
                     setPadding(dp(4), dp(6), dp(4), dp(6))
                     background = when {
-                        isSelected -> gradientDrawable("#0CC9B5", "#0084CC", 16)
+                        isSelected -> roundDrawable("#0084CC", 16)
                         day.isToday -> roundDrawable("#F0FAFF", 16, "#D8F0FF")
                         else -> roundDrawable("#FFFFFF", 16)
                     }
@@ -505,7 +578,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                         textSize = 16f
                         typeface = Typeface.DEFAULT_BOLD
                         gravity = Gravity.CENTER
-                        setTextColor(if (isSelected) Color.WHITE else color("#1A1B2E"))
+                        setTextColor(if (isSelected) Color.WHITE else NativeTheme.text(context))
                     }, matchWrap().apply { topMargin = dp(2) })
 
                     addView(buildTypeDots(day, isSelected), matchWrap().apply { topMargin = dp(5) })
@@ -532,7 +605,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                         textSize = 10f
                         typeface = brandBold()
                         gravity = Gravity.CENTER
-                        setTextColor(color("#8E8E93"))
+                        setTextColor(NativeTheme.muted(context))
                     }, LinearLayout.LayoutParams(0, dp(22), 1f))
                 }
             })
@@ -542,7 +615,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     text = "월간 캘린더 데이터를 준비하는 중이에요"
                     textSize = 12f
                     gravity = Gravity.CENTER
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, LinearLayout.LayoutParams(match(), dp(88)))
                 return@apply
             }
@@ -571,7 +644,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                                 orientation = LinearLayout.VERTICAL
                                 gravity = Gravity.CENTER
                                 background = when {
-                                    isSelected -> gradientDrawable("#0CC9B5", "#0084CC", 14)
+                                    isSelected -> roundDrawable("#0084CC", 14)
                                     day.isToday -> roundDrawable("#F0FAFF", 14, "#D8F0FF")
                                     else -> roundDrawable("#FFFFFF", 14)
                                 }
@@ -585,7 +658,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                                     textSize = 14f
                                     typeface = brandBold()
                                     gravity = Gravity.CENTER
-                                    setTextColor(if (isSelected) Color.WHITE else color("#1A1B2E"))
+                                    setTextColor(if (isSelected) Color.WHITE else NativeTheme.text(context))
                                 })
                                 addView(buildTypeDots(day, isSelected), matchWrap().apply { topMargin = dp(3) })
                             }, LinearLayout.LayoutParams(0, dp(48), 1f).apply {
@@ -610,14 +683,14 @@ class NativeHomePortActivity : AppCompatActivity() {
                 text = "${formatDateTitle(selected)} 상세"
                 textSize = 15f
                 typeface = brandBold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             })
 
             addView(TextView(context).apply {
                 text = if (selectedSchedules.isEmpty()) "선택한 날짜에 등록된 일정이 없어요" else "${selectedSchedules.size}개의 일정이 있어요"
                 textSize = 12f
                 typeface = brandMedium()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(4) })
 
             selectedSchedules.take(2).forEach {
@@ -681,14 +754,14 @@ class NativeHomePortActivity : AppCompatActivity() {
                 textSize = 14f
                 typeface = Typeface.DEFAULT_BOLD
                 gravity = Gravity.CENTER
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, matchWrap().apply { topMargin = dp(18) })
 
             addView(TextView(context).apply {
                 text = "오른쪽 위 새 일정 버튼으로 바로 추가할 수 있어요"
                 textSize = 12f
                 gravity = Gravity.CENTER
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(6) })
         }
     }
@@ -752,14 +825,14 @@ class NativeHomePortActivity : AppCompatActivity() {
                     text = schedule.title
                     textSize = 15f
                     typeface = brandBold()
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                     maxLines = 1
                 }, matchWrap().apply { topMargin = dp(6) })
                 addView(TextView(context).apply {
                     text = scheduleSubtitle(schedule)
                     textSize = 12f
                     typeface = brandMedium()
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, matchWrap().apply { topMargin = dp(4) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
 
@@ -767,7 +840,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 text = "›"
                 textSize = 24f
                 gravity = Gravity.CENTER
-                setTextColor(color("#AEAEA8"))
+                setTextColor(NativeTheme.muted(context))
             }, LinearLayout.LayoutParams(dp(18), match()))
         }
     }
@@ -778,7 +851,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             textSize = 11f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(color("#8E8E93"))
+            setTextColor(NativeTheme.muted(context))
             background = roundDrawable("#F2F4F7", 12)
             elevation = dp(1).toFloat()
         }.also {
@@ -815,14 +888,14 @@ class NativeHomePortActivity : AppCompatActivity() {
                         textSize = 18f
                         typeface = Typeface.DEFAULT_BOLD
                         letterSpacing = -0.01f
-                        setTextColor(color("#1A1B2E"))
+                        setTextColor(NativeTheme.text(context))
                     }, matchWrap().apply { topMargin = dp(6) })
 
                     addView(TextView(context).apply {
                         text = "수입과 지출, 이번 달 순흐름을 확인하세요."
                         textSize = 12f
                         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-                        setTextColor(color("#8E8E93"))
+                        setTextColor(NativeTheme.muted(context))
                     }, matchWrap().apply { topMargin = dp(4) })
                 }, LinearLayout.LayoutParams(0, wrap(), 1f))
 
@@ -847,7 +920,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     text = "개인 공간 기준"
                     textSize = 12f
                     typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, LinearLayout.LayoutParams(0, wrap(), 1f))
 
                 addView(TextView(context).apply {
@@ -864,13 +937,13 @@ class NativeHomePortActivity : AppCompatActivity() {
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(12), dp(12), dp(12))
-            background = if (wide) gradientDrawable("#E6FFFA", "#EEF7FF", 16) else roundDrawable(fill, 16)
+            background = if (wide) roundDrawable("#E6FFFA", 16, "#BDEBFF") else roundDrawable(fill, 16)
 
             addView(TextView(context).apply {
                 text = label
                 textSize = 10f
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             })
 
             addView(TextView(context).apply {
@@ -896,7 +969,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     text = "앞으로 예정된 일정이 없어요"
                     textSize = 13f
                     gravity = Gravity.CENTER
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                     background = roundDrawable("#FFFFFF", 20, "#EEF0F4")
                     setPadding(dp(20), dp(28), dp(20), dp(28))
                 }, matchWrap().apply { topMargin = dp(12) })
@@ -929,13 +1002,13 @@ class NativeHomePortActivity : AppCompatActivity() {
                     textSize = 13f
                     typeface = brandBold()
                     maxLines = 1
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                 })
                 addView(TextView(context).apply {
                     text = scheduleSubtitle(schedule)
                     textSize = 11f
                     typeface = brandMedium()
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, matchWrap().apply { topMargin = dp(2) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(10) })
         }
@@ -968,7 +1041,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     textSize = 16f
                     typeface = brandBold()
                     gravity = Gravity.CENTER
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                 }, matchWrap().apply { topMargin = dp(1) })
             }, LinearLayout.LayoutParams(dp(44), dp(44)))
 
@@ -979,13 +1052,13 @@ class NativeHomePortActivity : AppCompatActivity() {
                     textSize = 14f
                     typeface = brandBold()
                     maxLines = 1
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                 })
                 addView(TextView(context).apply {
                     text = "${formatDateTitle(scheduleDateKey(schedule.startTime))} · ${timeText(schedule.startTime)}"
                     textSize = 12f
                     typeface = brandMedium()
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, matchWrap().apply { topMargin = dp(3) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
 
@@ -993,7 +1066,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 text = "›"
                 textSize = 22f
                 gravity = Gravity.CENTER
-                setTextColor(color("#AEAEA8"))
+                setTextColor(NativeTheme.muted(context))
             }, LinearLayout.LayoutParams(dp(16), match()))
         }
     }
@@ -1007,7 +1080,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                 text = title
                 textSize = 18f
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             })
 
             addView(TextView(context).apply {
@@ -1025,7 +1098,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     typeface = Typeface.DEFAULT_BOLD
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
-                    background = gradientDrawable("#0CC9B5", "#0084CC", 999)
+                    background = roundDrawable("#0084CC", 999)
                     if (actionPath != null) setOnClickListener { openWebPath(actionPath) }
                 }, LinearLayout.LayoutParams(dp(84), dp(32)))
             }
@@ -1239,17 +1312,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             cornerRadius = dp(radius).toFloat()
         }
 
-    private fun color(hex: String): Int = Color.parseColor(hex)
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
 
-    private fun colorWithAlpha(hex: String, alpha: Float): Int {
-        val base = color(hex)
-        return Color.argb(
-            (alpha * 255).toInt(),
-            Color.red(base),
-            Color.green(base),
-            Color.blue(base)
-        )
-    }
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int {
@@ -1262,6 +1327,8 @@ class NativeHomePortActivity : AppCompatActivity() {
 
     companion object {
         private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
+        private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
+        private const val HOME_LAYOUT_KEY = "gleaum:home-layout"
     }
 }
 

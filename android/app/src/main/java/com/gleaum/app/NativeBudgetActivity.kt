@@ -15,7 +15,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.GleaumScaffold
+import com.gleaum.app.ui.screens.budget.ComposeBudgetScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -39,13 +44,7 @@ class NativeBudgetActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadSummary(silent: Boolean = false) {
@@ -73,7 +72,49 @@ class NativeBudgetActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun render() = setContentView(buildScreen())
+    private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_BUDGET) {
+            renderComposeBudget()
+            return
+        }
+        setContentView(buildScreen())
+    }
+
+    private fun renderComposeBudget() {
+        setContent {
+            GleaumTheme {
+                GleaumScaffold(
+                    title = "가계부",
+                    selectedDestination = GleaumDestination.BUDGET,
+                    onDestinationSelected = ::handleComposeDestination,
+                    onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
+                    onFabClick = { startActivity(Intent(this, NativeBudgetEntryCreateActivity::class.java)) },
+                ) { innerPadding ->
+                    ComposeBudgetScreen(
+                        innerPadding = innerPadding,
+                        summary = summary,
+                        loading = loading,
+                        errorMessage = errorMessage,
+                        onRetry = { loadSummary() },
+                        onAddEntry = { startActivity(Intent(this, NativeBudgetEntryCreateActivity::class.java)) },
+                        onEditEntry = { id -> openEdit(id) },
+                        onToggleStatus = { entry -> toggleEntryStatus(entry) },
+                        onDeleteEntry = { entry -> deleteEntry(entry.id) },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handleComposeDestination(destination: GleaumDestination) {
+        when (destination) {
+            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
+            GleaumDestination.SCHEDULES -> { startActivity(Intent(this, NativeScheduleListActivity::class.java)); finish() }
+            GleaumDestination.SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
+            GleaumDestination.BUDGET -> Unit
+            GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
+        }
+    }
 
     private fun buildScreen(): FrameLayout = FrameLayout(this).apply {
         setBackgroundColor(color("#FAFAFD"))
@@ -97,7 +138,7 @@ class NativeBudgetActivity : AppCompatActivity() {
             }, NativeAdaptive.scrollChildParams(this@NativeBudgetActivity))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(buildHeader(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(72), Gravity.TOP))
-        addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeBudgetActivity, dp(if (NativeAdaptive.isLarge(this@NativeBudgetActivity)) 64 else 56)))
+        addView(NativeBottomNav.create(this@NativeBudgetActivity, NativeBottomDestination.BUDGET), NativeAdaptive.bottomNavParams(this@NativeBudgetActivity, dp(if (NativeAdaptive.isLarge(this@NativeBudgetActivity)) 64 else 56)))
     }
 
     private fun buildHeader(): FrameLayout = FrameLayout(this).apply {
@@ -111,7 +152,7 @@ class NativeBudgetActivity : AppCompatActivity() {
                 text = "가계부"
                 textSize = 24f
                 typeface = bold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { leftMargin = dp(10) })
             addView(TextView(context).apply {
                 text = "+"
@@ -119,7 +160,7 @@ class NativeBudgetActivity : AppCompatActivity() {
                 typeface = bold()
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
-                background = gradient("#0CC9B5", "#0084CC", 16)
+                background = round("#0084CC", 16)
                 setOnClickListener { startActivity(Intent(this@NativeBudgetActivity, NativeBudgetEntryCreateActivity::class.java)) }
             }, LinearLayout.LayoutParams(dp(48), dp(48)))
         }, NativeAdaptive.headerContentParams(this@NativeBudgetActivity, dp(54), dp(20), dp(8)))
@@ -129,7 +170,7 @@ class NativeBudgetActivity : AppCompatActivity() {
     private fun buildHero(data: NativeBudgetSummary): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(24), dp(24), dp(24), dp(24))
-        background = gradient("#0CC9B5", "#0084CC", 28)
+        background = round("#0084CC", 28)
         elevation = dp(8).toFloat()
         addView(TextView(context).apply {
             text = "이번 달 순액"
@@ -163,7 +204,7 @@ class NativeBudgetActivity : AppCompatActivity() {
         setPadding(dp(18), 0, dp(18), 0)
         background = round("#FFFFFF", 20, "#EEF0F4")
         elevation = dp(2).toFloat()
-        addView(TextView(context).apply { text = label; textSize = 12f; typeface = bold(); setTextColor(color("#8E8E93")) })
+        addView(TextView(context).apply { text = label; textSize = 12f; typeface = bold(); setTextColor(NativeTheme.muted(context)) })
         addView(TextView(context).apply { text = value; textSize = 20f; typeface = bold(); setTextColor(color(accent)) }, matchWrap().apply { topMargin = dp(5) })
     }
 
@@ -182,8 +223,8 @@ class NativeBudgetActivity : AppCompatActivity() {
     private fun LinearLayout.addMetric(label: String, amount: String, meta: String) {
         addView(LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
-            addView(TextView(context).apply { text = label; textSize = 14f; typeface = bold(); setTextColor(color("#1A1B2E")) }, LinearLayout.LayoutParams(0, wrap(), 1f))
-            addView(TextView(context).apply { text = "$amount\n$meta"; textSize = 13f; gravity = Gravity.RIGHT; typeface = bold(); setTextColor(color("#6E6E66")) })
+            addView(TextView(context).apply { text = label; textSize = 14f; typeface = bold(); setTextColor(NativeTheme.text(context)) }, LinearLayout.LayoutParams(0, wrap(), 1f))
+            addView(TextView(context).apply { text = "$amount\n$meta"; textSize = 13f; gravity = Gravity.RIGHT; typeface = bold(); setTextColor(NativeTheme.color(context, "#6E6E66")) })
         }, matchWrap().apply { topMargin = dp(14) })
     }
 
@@ -208,7 +249,7 @@ class NativeBudgetActivity : AppCompatActivity() {
                 text = "월세, 구독료, 급여처럼 반복되는 돈의 흐름은 이번 달 항목으로 자동 준비됩니다."
                 textSize = 12f
                 typeface = medium()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(8) })
             recurring.take(6).forEach { entry ->
                 addView(recurringCard(entry), matchWrap().apply { topMargin = dp(10) })
@@ -238,13 +279,13 @@ class NativeBudgetActivity : AppCompatActivity() {
                 text = entry.title
                 textSize = 15f
                 typeface = bold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             })
             addView(TextView(context).apply {
                 text = "다음 예정 ${nextOccurrenceText(entry)} · ${if (income) "수입" else "지출"}"
                 textSize = 12f
                 typeface = medium()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(3) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
         addView(TextView(context).apply {
@@ -252,7 +293,7 @@ class NativeBudgetActivity : AppCompatActivity() {
             textSize = 14f
             typeface = bold()
             gravity = Gravity.RIGHT
-            setTextColor(color(if (income) "#10B981" else "#1A1B2E"))
+            setTextColor(if (income) color("#10B981") else NativeTheme.text(context))
         })
     }
 
@@ -274,8 +315,8 @@ class NativeBudgetActivity : AppCompatActivity() {
         }, LinearLayout.LayoutParams(dp(52), dp(44)))
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(TextView(context).apply { text = entry.title; textSize = 15f; typeface = bold(); setTextColor(color("#1A1B2E")) })
-            addView(TextView(context).apply { text = "${dayText(entry.occurredAt)} · ${recurLabel(entry.recurFreq)}"; textSize = 12f; setTextColor(color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+            addView(TextView(context).apply { text = entry.title; textSize = 15f; typeface = bold(); setTextColor(NativeTheme.text(context)) })
+            addView(TextView(context).apply { text = "${dayText(entry.occurredAt)} · ${recurLabel(entry.recurFreq)}"; textSize = 12f; setTextColor(NativeTheme.muted(context)) }, matchWrap().apply { topMargin = dp(3) })
             if (entry.recurFreq != "none") {
                 addView(TextView(context).apply {
                     text = if (entry.status == "completed") (if (income) "수령 완료" else "결제 완료") else (if (income) "수령 예정" else "결제 예정")
@@ -291,7 +332,7 @@ class NativeBudgetActivity : AppCompatActivity() {
             textSize = 15f
             typeface = bold()
             gravity = Gravity.RIGHT
-            setTextColor(color(if (income) "#10B981" else "#1A1B2E"))
+            setTextColor(if (income) color("#10B981") else NativeTheme.text(context))
         })
         addView(TextView(context).apply {
             text = "×"
@@ -338,8 +379,8 @@ class NativeBudgetActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun sectionTitle(title: String): TextView = TextView(this).apply { text = title; textSize = 17f; typeface = bold(); setTextColor(color("#1A1B2E")) }
-    private fun messageCard(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(color("#8E8E93")); setPadding(dp(20), dp(48), dp(20), dp(48)); background = round("#FFFFFF", 24, "#EEF0F4") }
+    private fun sectionTitle(title: String): TextView = TextView(this).apply { text = title; textSize = 17f; typeface = bold(); setTextColor(NativeTheme.text(context)) }
+    private fun messageCard(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(NativeTheme.muted(context)); setPadding(dp(20), dp(48), dp(20), dp(48)); background = round("#FFFFFF", 24, "#EEF0F4") }
 
     private fun buildBottomNav(): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
@@ -359,8 +400,8 @@ class NativeBudgetActivity : AppCompatActivity() {
         gravity = Gravity.CENTER
         setOnClickListener { action() }
         addView(View(context).apply { background = if (active) round("#0084CC", 999) else null }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(6) })
-        addView(NativeTabIconView(context, tabIcon(label), if (active) color("#0084CC") else color("#8E8E93")), LinearLayout.LayoutParams(dp(20), dp(20)))
-        addView(TextView(context).apply { text = label; textSize = 10f; typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL); setTextColor(if (active) color("#0084CC") else color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+        addView(NativeTabIconView(context, tabIcon(label), if (active) color("#0084CC") else NativeTheme.muted(context)), LinearLayout.LayoutParams(dp(20), dp(20)))
+        addView(TextView(context).apply { text = label; textSize = 10f; typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL); setTextColor(if (active) color("#0084CC") else NativeTheme.muted(context)) }, matchWrap().apply { topMargin = dp(3) })
     }
 
     private fun tabIcon(label: String): NativeTabIcon = when (label) {
@@ -400,8 +441,8 @@ class NativeBudgetActivity : AppCompatActivity() {
     }
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun medium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int { val b = color(hex); return Color.argb((alpha * 255).toInt(), Color.red(b), Color.green(b), Color.blue(b)) }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int { val id = resources.getIdentifier("status_bar_height", "dimen", "android"); return if (id > 0) resources.getDimensionPixelSize(id) else 0 }
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT

@@ -1,8 +1,12 @@
 'use client';
 import { useEffect } from 'react';
+import { isNativeApp } from '@/lib/native';
 
 export function usePushSubscription() {
   useEffect(() => {
+    // 네이티브 앱은 FCMProvider(@capacitor-firebase/messaging)가 토큰 등록을 전담한다.
+    // Web Push(service worker + PushManager)를 동시에 시도하면 권한/토큰 흐름이 중복된다.
+    if (isNativeApp()) return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return;
 

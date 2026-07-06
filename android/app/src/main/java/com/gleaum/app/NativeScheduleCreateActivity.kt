@@ -17,7 +17,10 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.ui.screens.schedules.ComposeScheduleFormScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
 import java.util.Calendar
 import java.util.Locale
@@ -34,6 +37,8 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     private lateinit var memoInput: EditText
     private var saving = false
     private var message: String? = null
+    private var draftTitle = ""
+    private var draftMemo = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,17 +60,41 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_SCHEDULE_FORM) {
+            renderComposeForm()
+            return
+        }
         setContentView(buildScreen())
+    }
+
+    private fun renderComposeForm() {
+        setContent {
+            GleaumTheme {
+                ComposeScheduleFormScreen(
+                    isEdit = scheduleId != null,
+                    selectedType = type,
+                    title = draftTitle,
+                    memo = draftMemo,
+                    dateText = dateText(),
+                    startTimeText = timeText(startCalendar),
+                    endTimeText = timeText(endCalendar),
+                    saving = saving,
+                    message = message,
+                    onBack = { finish() },
+                    onTypeChange = { value -> type = value; render() },
+                    onTitleChange = { value -> draftTitle = value },
+                    onMemoChange = { value -> draftMemo = value },
+                    onPickDate = { pickDate() },
+                    onPickStartTime = { pickTime(startCalendar) },
+                    onPickEndTime = { pickTime(endCalendar) },
+                    onSave = { saveSchedule(draftTitle, draftMemo) },
+                )
+            }
+        }
     }
 
     private fun loadScheduleForEdit() {
@@ -77,6 +106,8 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                 runOnUiThread {
                     editingSchedule = loaded
                     type = loaded.type
+                    draftTitle = loaded.title
+                    draftMemo = loaded.memo.orEmpty()
                     applyIsoToCalendar(startCalendar, loaded.startTime)
                     loaded.endTime?.let { applyIsoToCalendar(endCalendar, it) }
                         ?: run { endCalendar.timeInMillis = startCalendar.timeInMillis + 60L * 60L * 1000L }
@@ -124,7 +155,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                     text = "‹"
                     textSize = 34f
                     gravity = Gravity.CENTER
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                     background = roundDrawable("#FFFFFF", 999, "#EEF0F4")
                     setOnClickListener { finish() }
                 }, LinearLayout.LayoutParams(dp(40), dp(40)))
@@ -132,7 +163,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                     text = if (scheduleId == null) "새 일정" else "일정 수정"
                     textSize = 18f
                     typeface = brandBold()
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                     gravity = Gravity.CENTER_VERTICAL
                 }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { leftMargin = dp(12) })
                 addView(ImageView(context).apply {
@@ -241,15 +272,15 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
         this.text = text
         textSize = 13f
         typeface = brandBold()
-        setTextColor(color("#1A1B2E"))
+        setTextColor(NativeTheme.text(context))
     }
 
     private fun input(title: String, hint: String, multiline: Boolean): EditText = EditText(this).apply {
         this.hint = hint
         textSize = 15f
         typeface = brandMedium()
-        setTextColor(color("#1A1B2E"))
-        setHintTextColor(color("#AEAEA8"))
+        setTextColor(NativeTheme.text(context))
+        setHintTextColor(NativeTheme.subtle(context))
         setPadding(dp(16), dp(12), dp(16), dp(12))
         background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
         minHeight = if (multiline) dp(104) else dp(52)
@@ -272,14 +303,14 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
             textSize = 10f
             typeface = brandBold()
             gravity = Gravity.CENTER
-            setTextColor(color("#8E8E93"))
+            setTextColor(NativeTheme.muted(context))
         })
         addView(TextView(context).apply {
             text = value
             textSize = 13f
             typeface = brandBold()
             gravity = Gravity.CENTER
-            setTextColor(color("#1A1B2E"))
+            setTextColor(NativeTheme.text(context))
         }, matchWrap().apply { topMargin = dp(4) })
     }
 
@@ -317,7 +348,12 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     }
 
     private fun saveSchedule() {
-        val title = titleInput.text?.toString()?.trim().orEmpty()
+        saveSchedule(titleInput.text?.toString().orEmpty(), memoInput.text?.toString().orEmpty())
+    }
+
+    private fun saveSchedule(rawTitle: String, rawMemo: String) {
+        val title = rawTitle.trim()
+        val memo = rawMemo.trim()
         if (title.isBlank()) {
             message = "일정 제목을 입력해 주세요."
             render()
@@ -328,7 +364,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
         render()
         Thread {
             try {
-                val payload = buildPayload(title, memoInput.text?.toString()?.trim().orEmpty())
+                val payload = buildPayload(title, memo)
                 val id = scheduleId
                 if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
                 runOnUiThread {
@@ -375,11 +411,8 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     private fun timeText(calendar: Calendar): String = String.format(Locale.KOREA, "%02d:%02d", calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))
     private fun brandMedium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private fun brandBold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int {
-        val base = color(hex)
-        return Color.argb((alpha * 255).toInt(), Color.red(base), Color.green(base), Color.blue(base))
-    }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int {
         val id = resources.getIdentifier("status_bar_height", "dimen", "android")

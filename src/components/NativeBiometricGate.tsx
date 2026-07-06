@@ -152,7 +152,7 @@ function PinSetup({ onComplete, onSkip }: { onComplete: () => void; onSkip: () =
         loading={loading}
       />
       <button onClick={onSkip} style={{ ...ghostButtonStyle, marginTop: 12 }}>
-        나중에 설정하기
+        건너뛰기 (생체인식 잠금은 켜지지 않아요)
       </button>
     </div>
   );
@@ -316,14 +316,21 @@ export function NativeBiometricGate() {
   }, [pathname, unlock]);
 
   // ── 생체인식 활성화 (프롬프트) ───────────────────────────────────────────
+  // 생체인식과 PIN은 함께 저장되어야 한다 — PIN 없이 잠금만 켜지지 않도록
+  // setBiometricLockEnabled는 PIN이 이미 있거나(즉시 적용) PIN 설정이
+  // 끝난 뒤(PinSetup.onComplete)에만 호출한다.
   const enableFromPrompt = async () => {
     setAuthenticating(true);
     const ok = await authenticateForAppUnlock('앞으로 글리움 앱을 열 때 생체인증으로 보호합니다.');
     setAuthenticating(false);
     if (ok) {
-      await setBiometricLockEnabled(true);
       setPromptOpen(false);
-      setPinSetupOpen(true); // PIN 설정 유도
+      const alreadyHasPin = await hasPinCode();
+      if (alreadyHasPin) {
+        await setBiometricLockEnabled(true);
+      } else {
+        setPinSetupOpen(true); // PIN 설정 필수 — 완료 시 PinSetup.onComplete에서 활성화
+      }
     } else {
       setMessage('인증이 완료되어야 앱 잠금을 켤 수 있어요.');
     }
@@ -362,12 +369,19 @@ export function NativeBiometricGate() {
         </div>
       )}
 
-      {/* ── PIN 설정 (생체인식 활성 후 권유) ── */}
+      {/* ── PIN 설정 (생체인식 활성 시 필수) ── */}
       {pinSetupOpen && (
         <div style={overlayStyle}>
           <PinSetup
-            onComplete={() => setPinSetupOpen(false)}
-            onSkip={() => setPinSetupOpen(false)}
+            onComplete={async () => {
+              await setBiometricLockEnabled(true);
+              setPinSetupOpen(false);
+            }}
+            onSkip={async () => {
+              // PIN 없이는 생체인식 잠금도 켜지 않는다 (둘은 함께 저장되어야 함)
+              await markBiometricPromptSeen();
+              setPinSetupOpen(false);
+            }}
           />
         </div>
       )}

@@ -19,7 +19,7 @@ import { scheduleToast, toastError } from '@/lib/toast';
 import { DesktopEditSchedule } from './DesktopEditSchedule';
 
 // 입력 공통 스타일
-const inputBase = 'w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-white border-2 outline-none transition-all';
+const inputBase = 'w-full px-4 py-3.5 rounded-[16px] text-[15px] bg-[var(--theme-surface)] text-[var(--theme-text)] border-2 outline-none transition-all';
 
 // 유형별 칩 설정
 const typeConfig: Record<ScheduleType, { icon: string; activeColor: string; activeBg: string; label: string }> = {

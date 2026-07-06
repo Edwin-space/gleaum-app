@@ -16,6 +16,7 @@ data class NativeProfile(
     val avatar: String?,
     val timezone: String,
     val locale: String,
+    val onboardingCompleted: Boolean,
 ) {
     companion object {
         fun fromJson(json: JSONObject): NativeProfile = NativeProfile(
@@ -28,6 +29,7 @@ data class NativeProfile(
             avatar = json.optString("avatar").takeIf { it.isNotBlank() && it != "null" },
             timezone = json.optString("timezone", "Asia/Seoul"),
             locale = json.optString("locale", "ko-KR"),
+            onboardingCompleted = json.optBoolean("onboardingCompleted", false),
         )
     }
 }

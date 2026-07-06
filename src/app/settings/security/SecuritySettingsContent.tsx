@@ -49,9 +49,11 @@ function biometryLabel(availability: NativeBiometricAvailability): string {
 function unavailableHelp(availability: NativeBiometricAvailability): string {
   if (!isNativeApp()) return '생체인증 앱 잠금은 Android/iOS 앱에서만 사용할 수 있어요.';
   if (availability.available) return '이 기기에서 사용할 수 있어요.';
-  if (availability.reason === 'biometry_not_enrolled') return 'Face ID/Touch ID가 등록되어 있지 않지만, 기기 암호가 설정되어 있으면 앱 잠금으로 사용할 수 있어요.';
-  if (availability.reason === 'passcode_not_set') return '휴대폰 설정에서 기기 암호를 먼저 등록해야 앱 잠금을 사용할 수 있어요.';
-  return '휴대폰 설정에서 지문, Face ID 또는 기기 잠금을 먼저 등록해야 사용할 수 있어요.';
+  if (availability.reason === 'biometry_not_enrolled') return '휴대폰 설정에서 Face ID 또는 Touch ID를 먼저 등록해야 생체인증 앱 잠금을 사용할 수 있어요.';
+  if (availability.reason === 'passcode_not_set') return 'Face ID/Touch ID 등록을 위해 먼저 iPhone 암호를 설정해야 합니다.';
+  if (availability.reason === 'biometry_lockout') return 'Face ID/Touch ID 인증이 일시적으로 잠겼어요. 기기 암호를 한 번 입력해 잠금을 해제한 뒤 다시 시도해 주세요.';
+  if (availability.reason === 'biometry_not_available') return 'Face ID/Touch ID가 등록되어 있지만 지금은 사용할 수 없어요. 화면 잠금을 해제하거나 휴대폰을 다시 시작한 뒤 다시 시도해 주세요.';
+  return '휴대폰 설정에서 지문, Face ID 또는 Touch ID를 먼저 등록해야 사용할 수 있어요.';
 }
 
 function Toggle({ checked, disabled, onClick }: { checked: boolean; disabled?: boolean; onClick: () => void }) {
@@ -151,8 +153,25 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
       setPinExists(nextPinExists);
     }
     void load();
-    return () => { mounted = false; };
-  }, []);
+
+    // 휴대폰 설정에서 Face ID/지문/기기 잠금을 등록하고 돌아왔을 때
+    // 캐시된 availability가 그대로 남아 "등록이 필요하다"는 안내가
+    // 계속 표시되는 문제를 막기 위해, 앱이 다시 활성화될 때 재조회한다.
+    let removeListener: (() => void) | undefined;
+    if (native) {
+      void (async () => {
+        const { App } = await import('@capacitor/app');
+        const handle = await App.addListener('appStateChange', async ({ isActive }) => {
+          if (!isActive) return;
+          const nextAvailability = await getBiometricAvailability();
+          if (mounted) setAvailability(nextAvailability);
+        });
+        removeListener = () => { void handle.remove(); };
+      })();
+    }
+
+    return () => { mounted = false; removeListener?.(); };
+  }, [native]);
 
   const toggleEnabled = async () => {
     if (busy) return;
@@ -361,7 +380,7 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
           <p style={{ fontSize: 12, fontWeight: 900, color: '#2EE895', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 8px' }}>{platformLabel}</p>
           <h1 style={{ fontSize: desktop ? 30 : 24, fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 12px' }}>글리움 보안 잠금</h1>
           <p style={{ ...mutedText, color: 'rgba(255,255,255,0.72)' }}>
-            일정, 가계부, 공간 초대처럼 민감한 화면에 접근할 때 지문, Face ID 또는 기기 잠금으로 한 번 더 확인합니다.
+            일정, 가계부, 공간 초대처럼 민감한 화면에 접근할 때 지문, Face ID 또는 Touch ID로 한 번 더 확인합니다.
           </p>
           <div style={{ marginTop: 22, padding: '14px 16px', borderRadius: 18, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
             <p style={{ fontSize: 13, fontWeight: 900, margin: '0 0 4px' }}>{biometryLabel(availability)}</p>
@@ -381,7 +400,7 @@ export function SecuritySettingsContent({ desktop = false }: { desktop?: boolean
           </div>
 
           {/* PIN 설정 카드 — 생체인식 활성 시 표시 */}
-          {native && (
+          {native && availability.available && (enabled || pinExists) && (
             <div style={cardStyle}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
                 <div style={{ flex: 1 }}>

@@ -32,9 +32,11 @@ class LoginActivity : AppCompatActivity() {
     private var emailSignupMode = false
     private var emailLoading = false
     private var syncingConsentChecks = false
+    private var pendingStartPath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingStartPath = NativeDeepLinkRouter.pathFromIntent(intent)
 
         if (SessionManager.hasValid(this)) { goToMain(); return }
 
@@ -410,7 +412,12 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
     private fun goToMain() {
-        startActivity(Intent(this, MainActivity::class.java).apply {
+        val target = NativeDeepLinkRouter.intentFor(this, pendingStartPath)
+            ?: NativeDeepLinkRouter.intentFor(this, "/home")
+            ?: Intent(this, MainActivity::class.java).apply {
+                pendingStartPath?.let { putExtra("start_path", it) }
+            }
+        startActivity(target.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()

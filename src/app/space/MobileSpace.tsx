@@ -6,7 +6,6 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useSchedules } from '@/hooks/useSchedules';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
-import { useNativePush } from '@/hooks/useNativePush';
 import {
   joinSpaceByCode, updateSpaceName, removeSpaceMember,
   getMySpaces, updateSpaceMemberRole, updateSpaceCoverImage,
@@ -89,7 +88,6 @@ export function MobileSpace() {
 
   // Push subscriptions
   usePushSubscription();
-  useNativePush();
 
   // ★ spaceId(profiles.family_group_id)가 바뀌면 activeSpaceId도 동기화
   useEffect(() => {

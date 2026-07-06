@@ -79,6 +79,12 @@
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".NativeOnboardingActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- ── 네이티브 전체 메뉴 Shell ─────────────────────────────────── -->
         <activity
             android:name=".NativeMyMenuActivity"
@@ -88,6 +94,12 @@
         <activity
             android:name=".NativeNotificationActivity"
             android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <!-- ── Material 3 Compose Shell Preview (전환 검증용) ─────────────── -->
+        <activity
+            android:name=".Material3ShellPreviewActivity"
+            android:exported="true"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <!-- ── 네이티브 홈 ──────────────────────────────────────────────── -->
@@ -158,6 +170,14 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/gleaum_blue" />
+
+        <service
+            android:name=".GleaumFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- FileProvider (파일 공유) -->
         <provider

@@ -17,6 +17,7 @@ object SessionManager {
     /** 세션 저장 (로그인 성공 시) */
     fun save(context: Context, sessionJson: String) {
         prefs(context).edit().putString(KEY_SESSION, sessionJson).apply()
+        NativeFirebase.syncSession(context, "session_saved")
     }
 
     /**

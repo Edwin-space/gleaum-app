@@ -57,11 +57,11 @@ npx shadcn@latest add dropdown-menu -y  # 드롭다운 메뉴
 
 ---
 
-### 점대 규칙 요약
+### 절대 규칙 요약
 
 1. **shadcn/ui 컴포넌트 도입 원칙** — 모든 UI는 `src/components/ui/`의 컴포넌트를 import하여 사용. Tailwind 클래스로 shadcn을 **직접 시뮬레이션하는 수동 작성은 금지**.
 2. **기존 사용자 앱 코드 절대 수정 금지** — `backoffice/` 폴더 외부의 모든 파일은 읽기 전용
-3. **빌드 검증 필수** — `npm run build` 성공(촜코드: 0) 후에만 `git push`
+3. **빌드 검증 필수** — `npm run build` 성공(종료코드: 0) 후에만 `git push`
 4. **공통 Sidebar 수정 시** — `backoffice/src/components/Sidebar.tsx` 단일 파일만 수정. 각 page.tsx에 사이드바 직접 작성 금지
 5. **환경변수 파일 커밋 금지** — `.env.local`은 `.gitignore`로 제외되어 있음
 

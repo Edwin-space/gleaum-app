@@ -14,7 +14,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.GleaumScaffold
+import com.gleaum.app.ui.screens.schedules.ComposeScheduleListScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
@@ -39,13 +44,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadSchedules(silent: Boolean = false) {
@@ -73,7 +72,54 @@ class NativeScheduleListActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun render() = setContentView(buildScreen())
+    private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_SCHEDULES) {
+            renderComposeSchedules()
+            return
+        }
+        setContentView(buildScreen())
+    }
+
+    private fun renderComposeSchedules() {
+        setContent {
+            GleaumTheme {
+                GleaumScaffold(
+                    title = "일정",
+                    selectedDestination = GleaumDestination.SCHEDULES,
+                    onDestinationSelected = ::handleComposeDestination,
+                    onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
+                    onFabClick = { startActivity(Intent(this, NativeScheduleCreateActivity::class.java)) },
+                ) { innerPadding ->
+                    ComposeScheduleListScreen(
+                        innerPadding = innerPadding,
+                        schedules = schedules,
+                        loading = loading,
+                        errorMessage = errorMessage,
+                        activeFilter = filter,
+                        onFilterChange = { key ->
+                            filter = key
+                            loadSchedules()
+                        },
+                        onRetry = { loadSchedules() },
+                        onAddSchedule = { startActivity(Intent(this, NativeScheduleCreateActivity::class.java)) },
+                        onOpenSchedule = { id ->
+                            startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id))
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handleComposeDestination(destination: GleaumDestination) {
+        when (destination) {
+            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
+            GleaumDestination.SCHEDULES -> Unit
+            GleaumDestination.SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
+            GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
+            GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
+        }
+    }
 
     private fun buildScreen(): FrameLayout = FrameLayout(this).apply {
         setBackgroundColor(color("#FAFAFD"))
@@ -90,7 +136,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
             }, NativeAdaptive.scrollChildParams(this@NativeScheduleListActivity))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(buildHeader(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(76), Gravity.TOP))
-        addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeScheduleListActivity, dp(if (NativeAdaptive.isLarge(this@NativeScheduleListActivity)) 64 else 56)))
+        addView(NativeBottomNav.create(this@NativeScheduleListActivity, NativeBottomDestination.SCHEDULES), NativeAdaptive.bottomNavParams(this@NativeScheduleListActivity, dp(if (NativeAdaptive.isLarge(this@NativeScheduleListActivity)) 64 else 56)))
     }
 
     private fun buildHeader(): FrameLayout = FrameLayout(this).apply {
@@ -107,7 +153,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
                 text = "나의 일정"
                 textSize = 24f
                 typeface = bold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { leftMargin = dp(10) })
             addView(TextView(context).apply {
                 text = "+"
@@ -115,7 +161,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 typeface = bold()
                 setTextColor(Color.WHITE)
-                background = gradient("#0CC9B5", "#0084CC", 16)
+                background = round("#0084CC", 16)
                 setOnClickListener { startActivity(Intent(this@NativeScheduleListActivity, NativeScheduleCreateActivity::class.java)) }
             }, LinearLayout.LayoutParams(dp(48), dp(48)))
         }, FrameLayout.LayoutParams(match(), dp(54), Gravity.BOTTOM).apply {
@@ -173,7 +219,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
                 textSize = 13f
                 typeface = bold()
                 setTextColor(if (selected) Color.WHITE else color("#8E8E93"))
-                background = if (selected) gradient("#0084CC", "#0CC9B5", 12) else round("#FFFFFF", 12, "#EEF0F4")
+                background = if (selected) round("#0084CC", 12) else round("#FFFFFF", 12, "#EEF0F4")
                 setOnClickListener {
                     filter = key
                     loadSchedules()
@@ -200,14 +246,14 @@ class NativeScheduleListActivity : AppCompatActivity() {
             text = title
             textSize = 17f
             typeface = bold()
-            setTextColor(color("#1A1B2E"))
+            setTextColor(NativeTheme.text(context))
         }, LinearLayout.LayoutParams(0, wrap(), 1f))
         addView(TextView(context).apply {
             text = count
             textSize = 11f
             typeface = bold()
             gravity = Gravity.CENTER
-            setTextColor(color("#8E8E93"))
+            setTextColor(NativeTheme.muted(context))
             background = round("#F7F8FB", 999)
             setPadding(dp(9), dp(4), dp(9), dp(4))
         })
@@ -243,19 +289,19 @@ class NativeScheduleListActivity : AppCompatActivity() {
                 text = schedule.title
                 textSize = 16f
                 typeface = bold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, matchWrap().apply { topMargin = dp(4) })
             addView(TextView(context).apply {
                 text = statusLabel(schedule.status)
                 textSize = 12f
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(3) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(14) })
         addView(TextView(context).apply {
             text = "›"
             textSize = 24f
             gravity = Gravity.CENTER
-            setTextColor(color("#AEAEA8"))
+            setTextColor(NativeTheme.muted(context))
         }, LinearLayout.LayoutParams(dp(24), dp(48)))
     }
 
@@ -266,7 +312,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
         textSize = 15f
         typeface = bold()
         gravity = Gravity.CENTER
-        setTextColor(color("#8E8E93"))
+        setTextColor(NativeTheme.muted(context))
         setPadding(dp(20), dp(48), dp(20), dp(48))
         background = round("#FFFFFF", 24, "#EEF0F4")
     }
@@ -293,13 +339,13 @@ class NativeScheduleListActivity : AppCompatActivity() {
             text = when (label) { "홈" -> "⌂"; "일정" -> "□"; "공간" -> "⌘"; "가계부" -> "▭"; else -> "☰" }
             textSize = 18f
             gravity = Gravity.CENTER
-            setTextColor(if (active) color("#0084CC") else color("#8E8E93"))
+            setTextColor(if (active) color("#0084CC") else NativeTheme.muted(context))
         }, LinearLayout.LayoutParams(dp(22), dp(20)))
         addView(TextView(context).apply {
             text = label
             textSize = 10f
             typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL)
-            setTextColor(if (active) color("#0084CC") else color("#8E8E93"))
+            setTextColor(if (active) color("#0084CC") else NativeTheme.muted(context))
         }, matchWrap().apply { topMargin = dp(3) })
     }
 
@@ -339,8 +385,8 @@ class NativeScheduleListActivity : AppCompatActivity() {
         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(iso)
     }.getOrNull()
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int { val b = color(hex); return Color.argb((alpha * 255).toInt(), Color.red(b), Color.green(b), Color.blue(b)) }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int { val id = resources.getIdentifier("status_bar_height", "dimen", "android"); return if (id > 0) resources.getDimensionPixelSize(id) else 0 }
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT

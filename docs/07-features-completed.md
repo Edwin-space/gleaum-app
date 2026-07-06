@@ -1,5 +1,82 @@
 # 07. 완료된 기능
 
+### 2026-06-19 — PC 웹 루트 랜딩 리다이렉트 보정
+
+- `www.gleaum.com` 접속 시 PC에서도 `/login`으로 이동할 수 있던 문제 수정
+- 원인: `RootPageRouter`가 `useIsDesktop()`의 hydration 초기값 `false`를 기준으로 `/login` 리다이렉트를 먼저 실행할 수 있었음
+- 조치: 루트 리다이렉트 effect 내부에서 `window.matchMedia('(min-width: 1024px)')`로 실제 브라우저 뷰포트를 재확인
+- PC 웹은 랜딩 페이지 유지, 모바일 웹/네이티브 앱의 로그인 이동 정책은 유지
+
+검증:
+- `npm run build` 통과
+
+
+### 2026-06-18 — Android 이메일 로그인/회원가입 네이티브 전환
+
+- Android `LoginActivity`의 `이메일로 계속하기`가 더 이상 WebView `/login?view=email`을 호출하지 않도록 변경
+- 네이티브 이메일 로그인/회원가입 폼 추가
+- Supabase Auth REST API 직접 연동
+  - 로그인: `/auth/v1/token?grant_type=password`
+  - 회원가입: `/auth/v1/signup`
+- 이메일 로그인 성공 시 Supabase 세션 JSON에 `expires_at`을 보강해 `SessionManager`에 저장
+- 저장된 세션은 기존 `MainActivity`의 localStorage 주입 구조를 그대로 사용
+- 회원가입에는 이름/닉네임 입력과 필수 동의 체크(만 14세 이상, 이용약관, 개인정보 수집·이용)를 포함
+- 회원가입 동의 구간 보강: `[필수] 전체 동의`, 개별 동의 상태 동기화, 이용약관/개인정보처리방침 보기 링크 추가
+- 약관/개인정보 `보기`는 외부 브라우저가 아니라 Android 인앱 `LegalWebViewActivity`로 열리도록 변경
+- 인앱 약관 브라우저 하단에 `닫기` 버튼 제공해 회원가입 화면으로 즉시 복귀
+- 태블릿에서 약관/개인정보 문서가 모바일 폭으로 떠 좌우 배경이 과도하게 노출되던 문제 보정
+- Android 인앱 약관 브라우저에서 웹 nav/footer/배경 블롭을 숨기고, 본문 폭/패딩/텍스트 크기를 태블릿 문서 뷰에 맞게 재조정
+- 태블릿 환경에서 로그인 컨트롤 폭이 과도하게 늘어나지 않도록 최대 폭 보정
+
+검증:
+- Android `:app:assembleDebug` 통과
+- `npm run build` 통과
+
+### 2026-06-18 — Android 홈 Native Port 스냅샷 + 비활성 골격
+
+- `docs/18-android-home-port-snapshot.md` 추가
+- Android 홈 네이티브화의 원본 기준을 `src/app/home/MobileHome.tsx`, `BottomNav`, `InlineFeedAd`, `ScheduleCard`, `CalendarView`로 고정
+- 섹션 순서, 주요 수치, 문구, 광고 위치, 가계부 카드, 하단 네비게이션 기준을 문서화
+- `NativeHomePortModels.kt` 추가: `/api/native/home-summary` 응답을 Android 홈 포트용 데이터 계약으로 정리
+- `NativeHomePortActivity.kt` 추가: 운영 진입점에 연결하지 않은 비활성 골격
+- `NativePortFlags.ENABLE_NATIVE_HOME=false` 유지
+
+검증:
+- 운영 앱 흐름 영향 없음: Activity는 Manifest에 등록하지 않았고 `MainActivity`와도 연결하지 않음
+- `npm run build` 통과
+- Android `:app:assembleDebug` 통과
+
+다음 단계:
+- Mobile Web 홈 화면 캡처 기준으로 Android 네이티브 첫 섹션부터 픽셀/문구 비교
+- `ENABLE_NATIVE_HOME`은 비활성 구현 → 비교 검증 → 내부 테스트 활성화 전까지 절대 켜지 않음
+
+### 2026-06-18 — Android 네이티브 홈 레이어 1차 시도 후 보류
+
+- Android 앱은 **현재 모바일 웹 UI를 최대한 유지**하는 방향이어야 함
+- `MainActivity` 위에 별도 네이티브 홈 레이어를 얹는 방식은 WebView 홈 복귀 무한루프와 디자인 이질감이 확인되어 철회
+- `NativeHomeController` / `NativeHomeWebViewClient` 1차 구현은 제거하고, Android는 기존 WebView UI 안정성을 유지
+- 다음 Android 네이티브화는 화면 전체 재구현이 아니라 기존 모바일 웹 UI를 유지하면서 로그인/세션/캘린더/생체인증/푸시 등 네이티브 기능 브리지 안정화부터 진행
+
+검증:
+- Android `:app:assembleDebug` 통과
+
+다음 단계:
+- Android Google/이메일 로그인 후 기존 모바일 웹 UI가 그대로 표시되는지 회귀 테스트
+- 일정 등록 실패 사용자 제보 재현
+- 네이티브 기능은 UI 재작성보다 WebView 내 현재 UI에 연결되는 브리지/권한/세션 안정화 방식으로 진행
+
+### 2026-06-18 — Android/WebView 푸시 등록 경로 정리
+
+- 네이티브 앱은 전역 `FCMProvider` → `useFCM` → `@capacitor-firebase/messaging` 경로로 FCM 토큰 등록을 일원화
+- `MobileSpace`에서 별도로 실행되던 `useNativePush()` 제거
+- 미사용 `src/hooks/useNativePush.ts` 삭제 (`@capacitor/push-notifications` 기반 구 경로)
+- `usePushSubscription()`은 네이티브 앱에서 실행하지 않도록 방어 추가 — Web Push(service worker + PushManager)는 웹/PWA 전용
+- 네이티브 포그라운드 FCM 리스너 cleanup을 `removeAllListeners()`에서 개별 listener handle 제거로 변경해 알림 탭 리스너가 같이 제거되지 않도록 보정
+
+검증:
+- `npm run build` 통과
+- Android `:app:assembleDebug` 통과
+
 ## Day 1 — 프로젝트 기반 (완료)
 
 - [x] Next.js 16 App Router + TypeScript + Tailwind CSS v4 프로젝트 생성
@@ -926,3 +1003,89 @@ npm run cap:open:android # Android Studio 열기
 - [x] `UIButton.Configuration` 기반으로 접근성/자동화 타깃 보강
 - [x] XcodeBuildMCP `build_run_sim` 통과
 - [x] `snapshot_ui`에서 홈/일정/공간/가계부/전체 버튼 타깃 확인
+
+
+## Android Firebase 운영 계측/푸시 라우팅 보강 (완료 — 2026-06-23)
+
+- [x] 네이티브 Android Firebase 초기화 허브 `NativeFirebase` 추가
+- [x] Activity 화면 진입을 Firebase Analytics `screen_view`와 Crashlytics `last_screen`으로 기록
+- [x] 세션 저장/앱 재개 시 Analytics/Crashlytics user id 연결
+- [x] 네이티브 FirebaseMessaging token을 Supabase `profiles.fcm_token`에 직접 저장
+- [x] FCM token refresh/foreground message 수신 서비스 추가
+- [x] foreground FCM 수신 시 시스템 알림 표시
+- [x] 스플래시 화면이 푸시/딥링크 Intent data/extras를 RouterActivity로 보존 전달
+- [x] 알림 `data.url`을 네이티브 화면으로 직접 라우팅하는 `NativeDeepLinkRouter` 추가
+- [x] Android debug 빌드 통과
+
+
+## Android Native Port 다크모드/태블릿/라우팅 1차 보강 (완료 — 2026-06-23)
+
+- [x] Android 네이티브 공통 `NativeTheme` 추가
+- [x] Android 네이티브 핵심 화면의 색상 호출을 시스템 다크모드 대응 경로로 전환
+- [x] Android 네이티브 핵심 화면의 시스템바를 라이트/다크 모드에 맞춰 자동 조정
+- [x] WebView 내부 핵심 링크를 `NativeDeepLinkRouter` 단일 매퍼로 네이티브 화면 승격
+- [x] `/invite/{code}` 초대 링크를 네이티브 공간 참여 흐름으로 연결
+- [x] 로그인 화면에서 최초 딥링크 경로를 보존해 로그인 후 이어가기 보강
+- [x] schedule/budget/space Native Port flag를 실제 활성 상태와 일치시킴
+- [x] Android debug 빌드 통과
+
+
+## Android 네이티브 온보딩 1차 (완료 — 2026-06-23)
+
+- [x] Native onboarding complete API 추가
+- [x] Native profile summary에 onboarding 완료 여부 추가
+- [x] Android `NativeOnboardingActivity` 추가
+- [x] 이름/표시 방식, 사용 목적, 홈 구성, 공간/알림 핵심 단계 제공
+- [x] 웹 온보딩과 동일한 `preferences`, `notification_settings`, `onboarding_completed_at` 저장
+- [x] 네이티브 홈 진입 시 온보딩 미완료 사용자를 Native onboarding으로 전환
+- [x] `/onboarding` 라우트를 Android Native Activity로 승격
+- [x] Android debug 빌드 통과
+- [x] `npm run build` 통과
+
+
+## Android 온보딩 공간/생체 설정 보강 (완료 — 2026-06-23)
+
+- [x] 네이티브 온보딩에 공간 설정 단계 추가
+- [x] 온보딩 중 새 공유 공간 생성 지원
+- [x] 온보딩 중 초대 코드로 공간 참여 지원
+- [x] 온보딩 마지막 단계에 생체인증 앱 잠금 토글 추가
+- [x] 기존 `CapacitorStorage` 생체인증 설정 키와 호환
+- [x] Android debug 빌드 통과
+
+## Android Native Theme 사용자 선택값 반영 (완료 — 2026-06-24)
+
+- 네이티브 화면의 다크/라이트 판단이 시스템 설정만 따르던 문제 수정
+- `gleaum:theme-mode` 저장값(`system/light/dark`)을 `NativeTheme`에서 직접 반영
+- 전체 메뉴의 화면 모드 변경 직후 상태바/네비게이션바 색상 재적용
+- Android debug 빌드 통과
+
+## Android Native Home Layout 설정 연결 (완료 — 2026-06-24)
+
+- 전체 메뉴의 홈 레이아웃 저장값을 웹 공통 타입과 일치시킴
+- 기존 Android 로컬 저장값 `schedule_first`, `budget_first` 하위 호환 처리
+- 네이티브 홈 히어로 카피와 캘린더 초기 열림 상태에 홈 레이아웃 반영
+- Android debug 빌드 통과
+
+## Android Native UI 품질 보정 (완료 — 2026-06-24)
+
+- 다크모드 텍스트 대비 문제 일부 보정
+- 하단 네비게이션 공통 컴포넌트 `NativeBottomNav` 추가
+- 홈/일정/공간/가계부/전체 하단 네비게이션 UI 일관화
+- 반복 타일/칩의 과한 그라데이션 축소
+- Android debug 빌드 및 실기기 설치 완료
+
+## Android 다크모드 색상 역할 보정 (완료 — 2026-06-24)
+
+- `NativeTheme`에 절대색/테마색 역할 분리 추가
+- 다크 카드 위 white alpha 텍스트가 surface 색으로 오염되던 문제 수정
+- 주요 입력 필드 text/hint 색상 보정
+- Android debug 빌드 및 실기기 설치 완료
+- Material Design 3 전면 개편 계획 문서 작성
+
+## Android Compose Material 3 Phase 0 적용 (완료 — 2026-06-24)
+
+- Compose Material 3 Gradle 기반 추가
+- Gleaum Compose Theme/Scaffold/NavigationBar/ExpandableSection 추가
+- Material3ShellPreviewActivity 추가
+- 상위 메뉴 선택 시 하위 메뉴가 펼쳐지는 M3 motion 샘플 구현
+- Android debug 빌드 및 실기기 Preview 실행 확인

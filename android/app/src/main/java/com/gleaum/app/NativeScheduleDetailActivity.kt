@@ -14,7 +14,10 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.ui.screens.schedules.ComposeScheduleDetailScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,13 +43,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#1A1B2E")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = 0
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadSchedule(silent: Boolean = false) {
@@ -79,7 +76,30 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun render() = setContentView(buildScreen())
+    private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_SCHEDULE_DETAIL) {
+            renderComposeDetail()
+            return
+        }
+        setContentView(buildScreen())
+    }
+
+    private fun renderComposeDetail() {
+        setContent {
+            GleaumTheme {
+                ComposeScheduleDetailScreen(
+                    schedule = schedule,
+                    loading = loading,
+                    errorMessage = errorMessage,
+                    onBack = { finish() },
+                    onEdit = { id -> openEdit(id) },
+                    onToggleComplete = { status -> patchStatus(status) },
+                    onDelete = { deleteSchedule() },
+                    onRetry = { loadSchedule() },
+                )
+            }
+        }
+    }
 
     private fun buildScreen(): FrameLayout = FrameLayout(this).apply {
         setBackgroundColor(color("#FAFAFD"))
@@ -171,13 +191,13 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
             textSize = 11f
             typeface = bold()
             letterSpacing = 0.08f
-            setTextColor(color("#8E8E93"))
+            setTextColor(NativeTheme.muted(context))
         }, matchWrap().apply { if (childCount > 0) topMargin = dp(18) })
         addView(TextView(context).apply {
             text = value
             textSize = 16f
             typeface = bold()
-            setTextColor(color("#1A1B2E"))
+            setTextColor(NativeTheme.text(context))
         }, matchWrap().apply { topMargin = dp(6) })
     }
 
@@ -243,7 +263,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
         textSize = 15f
         typeface = bold()
         gravity = Gravity.CENTER
-        setTextColor(color("#8E8E93"))
+        setTextColor(NativeTheme.muted(context))
         setPadding(dp(20), dp(48), dp(20), dp(48))
         background = round("#FFFFFF", 24, "#EEF0F4")
     }
@@ -268,8 +288,8 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     private fun parseIso(iso: String): Date? = runCatching { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(iso) }.getOrNull()
         ?: runCatching { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(iso) }.getOrNull()
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int { val b = color(hex); return Color.argb((alpha * 255).toInt(), Color.red(b), Color.green(b), Color.blue(b)) }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int { val id = resources.getIdentifier("status_bar_height", "dimen", "android"); return if (id > 0) resources.getDimensionPixelSize(id) else 0 }
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT

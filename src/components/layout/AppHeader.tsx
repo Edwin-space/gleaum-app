@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GleaumBI } from '@/components/ui/GleaumLogo';
+import { useTheme } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
 
 interface AppHeaderProps {
@@ -27,12 +28,14 @@ export function AppHeader({
   dark = false,
 }: AppHeaderProps) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const isDarkVisual = dark || resolvedTheme === 'dark';
 
   return (
     <header
       className={cn(
         'sticky top-0 z-40 flex items-center justify-between px-5 h-14',
-        dark ? 'bg-[var(--brand-navy)]' : 'bg-white/80',
+        dark ? 'bg-[var(--brand-navy)]' : 'bg-[var(--theme-nav-bg)]',
         className
       )}
       style={{
@@ -40,7 +43,7 @@ export function AppHeader({
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: dark
           ? '1px solid rgba(255,255,255,0.06)'
-          : '1px solid rgba(0,132,204,0.06)',
+          : '1px solid var(--theme-border)',
       }}
     >
       {/* 왼쪽 */}
@@ -48,7 +51,7 @@ export function AppHeader({
         {showBack && (
           <button
             onClick={() => router.back()}
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-colors active:bg-gray-100"
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-colors active:bg-[var(--theme-control-bg)]"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6"
@@ -57,7 +60,7 @@ export function AppHeader({
             </svg>
           </button>
         )}
-        {showLogo && !title && <GleaumBI variant={dark ? 'white' : 'dark'} width={88} />}
+        {showLogo && !title && <GleaumBI variant={isDarkVisual ? 'white' : 'dark'} width={88} />}
         {title && (
           <h1
             className="text-[17px] font-bold tracking-tight"
@@ -74,7 +77,7 @@ export function AppHeader({
         {showNotification && (
           <Link
             href="/notifications"
-            className="relative w-9 h-9 flex items-center justify-center rounded-full transition-colors active:bg-gray-100"
+            className="relative w-9 h-9 flex items-center justify-center rounded-full transition-colors active:bg-[var(--theme-control-bg)]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
               fill="none" stroke={dark ? 'white' : 'var(--color-ink)'}

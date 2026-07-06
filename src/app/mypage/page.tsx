@@ -128,7 +128,7 @@ export default function MyPage() {
       const availability = await getBiometricAvailability();
       setBiometricAvailability(availability);
       if (!availability.available) {
-        alert('이 기기에서는 생체인증 또는 기기 잠금을 사용할 수 없습니다. 휴대폰 설정을 확인해 주세요.');
+        alert('이 기기에서는 생체인증을 사용할 수 없습니다. 휴대폰 설정에서 지문, Face ID 또는 Touch ID 등록 상태를 확인해 주세요.');
         return;
       }
 

@@ -12,6 +12,7 @@ import org.json.JSONObject
  */
 data class NativeHomePortSummary(
     val displayName: String,
+    val onboardingCompleted: Boolean,
     val timezone: String,
     val activeSpaceName: String?,
     val memberCount: Int,
@@ -43,6 +44,7 @@ data class NativeHomePortSummary(
 
             return NativeHomePortSummary(
                 displayName = user.optString("displayName", "사용자"),
+                onboardingCompleted = user.optBoolean("onboardingCompleted", true),
                 timezone = user.optString("timezone", "Asia/Seoul"),
                 activeSpaceName = spaces.optNullableString("activeSpaceName"),
                 memberCount = spaces.optInt("memberCount", 0),

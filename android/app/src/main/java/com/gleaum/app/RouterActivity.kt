@@ -31,7 +31,17 @@ class RouterActivity : AppCompatActivity() {
             saveImplicitSession(intent?.data)
         }
 
+        NativeFirebase.syncSession(this, "router_entry")
+
+        val notificationPath = NativeDeepLinkRouter.pathFromIntent(intent)
+        val nativeDeepLinkIntent = if (SessionManager.hasValid(this) && !isOAuthCallback) {
+            NativeDeepLinkRouter.intentFor(this, notificationPath)
+        } else {
+            null
+        }
+
         val target = when {
+            nativeDeepLinkIntent != null -> null
             SessionManager.hasValid(this) && NativePortFlags.ENABLE_NATIVE_HOME -> NativeHomePortActivity::class.java
             SessionManager.hasValid(this) -> MainActivity::class.java
             isOAuthCallback              -> MainActivity::class.java  // OAuth 콜백은 Main 으로
@@ -39,11 +49,12 @@ class RouterActivity : AppCompatActivity() {
         }
 
         startActivity(
-            Intent(this, target).apply {
+            (nativeDeepLinkIntent ?: Intent(this, target!!)).apply {
                 // 딥링크 / App Link Intent 데이터 그대로 전달
                 data   = intent?.data
                 action = intent?.action
                 if (intent?.extras != null) putExtras(intent.extras!!)
+                if (!notificationPath.isNullOrBlank()) putExtra("start_path", notificationPath)
                 // singleTask Main 재활용 방지 — 새 인스턴스로 시작
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -82,6 +93,7 @@ class RouterActivity : AppCompatActivity() {
         }
 
         SessionManager.save(this, session.toString())
+        NativeFirebase.syncSession(this, "oauth_callback")
         android.util.Log.d("GleaumRouter", "OAuth implicit 세션 저장 완료")
     }
 }

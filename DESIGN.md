@@ -76,6 +76,43 @@ background: linear-gradient(135deg, #2EE895 0%, #0CC9B5 50%, #0084CC 100%);
 | Neutral Gray 600 | `#6E6E66` | Secondary 텍스트 |
 | Muted Text | `#8E8E93` | 시간 표시, 부가 정보 |
 
+### 2.6. Dark Mode / Theme Tokens (`--theme-*`)
+
+> 라이트/다크/시스템 자동 전환은 `ThemeProvider`(`useTheme()` → `resolvedTheme: 'light' | 'dark'`)가 담당하며,
+> 실제 색상 값은 `src/styles/tokens.css`의 `:root` (라이트) / `:root[data-theme='dark']` (다크) 블록에 정의됩니다.
+
+**다크 모드를 지원해야 하는 모든 UI는 위 2.1~2.5의 고정 Hex 값 대신 아래 `--theme-*` 변수를 사용하세요.**
+브랜드 컬러(Blue/Teal/Green/Navy)나 마케팅용 그라디언트처럼 테마와 무관하게 고정되어야 하는 요소는 예외입니다.
+
+| Variable | Light | Dark | Usage |
+| :--- | :--- | :--- | :--- |
+| `--theme-bg` | `#FFFFFF` | `#0F172A` | 페이지 기본 배경 |
+| `--theme-surface` | `#FFFFFF` | `#151D2F` | 카드/입력창 등 표면 |
+| `--theme-surface-muted` | `#F7F8FB` | `#1D2638` | 보조 표면 (구분되는 영역) |
+| `--theme-surface-glass` | `rgba(255,255,255,0.78)` | `rgba(21,29,47,0.78)` | 글래스모피즘 배경 |
+| `--theme-text` | `#1A1B2E` | `#F8FAFC` | 본문 텍스트 |
+| `--theme-text-muted` | `#6E6E66` | `#CBD5E1` | 보조 텍스트 |
+| `--theme-text-subtle` | `#8E8E93` | `#94A3B8` | 가장 옅은 텍스트 (empty state 등) |
+| `--theme-border` | `rgba(26,27,46,0.08)` | `rgba(255,255,255,0.10)` | 일반 구분선/테두리 |
+| `--theme-control-bg` | `#F5F5F7` | `#1D2638` | 버튼 active 배경, 토글 등 컨트롤 |
+| `--theme-nav-bg` | `rgba(255,255,255,0.92)` | `rgba(15,23,42,0.92)` | 헤더/하단 네비게이션 배경 |
+| `--theme-disabled-bg` / `--theme-disabled-text` | `#E5E5EA` / `#AEAEA8` | `#263246` / `#7D8796` | 비활성 요소 |
+
+**적용 패턴:**
+```tsx
+// ✅ 올바른 방법 — 테마 토큰 사용
+<div style={{ background: 'var(--theme-surface)', color: 'var(--theme-text)' }} />
+<header className="bg-[var(--theme-nav-bg)]" style={{ borderBottom: '1px solid var(--theme-border)' }} />
+
+// 로고처럼 다크 배경 위에서 색이 반전되어야 하는 요소는 resolvedTheme로 분기
+const { resolvedTheme } = useTheme();
+<GleaumBI variant={resolvedTheme === 'dark' ? 'white' : 'dark'} />
+
+// ❌ 금지 — 다크 모드에서 대비가 깨지는 고정 Hex/Tailwind 그레이
+<p className="text-[#8E8E93]" />
+<div className="bg-white active:bg-gray-100" />
+```
+
 ---
 
 ## 3. Typography

@@ -59,15 +59,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            }
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadSummary() {
@@ -165,7 +157,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             }, FrameLayout.LayoutParams(match(), match()))
 
             addView(buildHeaderBar(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
-            addView(buildBottomNav(), NativeAdaptive.bottomNavParams(this@NativeMyMenuActivity, dp(if (NativeAdaptive.isLarge(this@NativeMyMenuActivity)) 64 else 56)))
+            addView(NativeBottomNav.create(this@NativeMyMenuActivity, NativeBottomDestination.MENU), NativeAdaptive.bottomNavParams(this@NativeMyMenuActivity, dp(if (NativeAdaptive.isLarge(this@NativeMyMenuActivity)) 64 else 56)))
         }
     }
 
@@ -195,7 +187,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     text = "전체"
                     textSize = 18f
                     typeface = brandBold()
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                     gravity = Gravity.CENTER_VERTICAL
                 })
             }, NativeAdaptive.headerContentParams(this@NativeMyMenuActivity, dp(44), dp(20), dp(10)))
@@ -274,7 +266,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 textSize = 12f
                 typeface = brandBold()
                 gravity = Gravity.CENTER
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, matchWrap().apply { topMargin = dp(8) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f))
     }
@@ -283,7 +275,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
         text = title
         textSize = 13f
         typeface = brandBold()
-        setTextColor(color("#8E8E93"))
+        setTextColor(NativeTheme.muted(context))
     }
 
     private fun buildSettingsGroup(rows: List<MenuRow>): LinearLayout {
@@ -319,14 +311,14 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     text = row.title
                     textSize = 15f
                     typeface = brandBold()
-                    setTextColor(color("#1A1B2E"))
+                    setTextColor(NativeTheme.text(context))
                 })
                 addView(TextView(context).apply {
                     text = row.subtitle
                     textSize = 12f
                     typeface = brandMedium()
                     maxLines = 1
-                    setTextColor(color("#8E8E93"))
+                    setTextColor(NativeTheme.muted(context))
                 }, matchWrap().apply { topMargin = dp(4) })
             }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(14) })
 
@@ -345,7 +337,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                     text = "›"
                     textSize = 24f
                     gravity = Gravity.CENTER
-                    setTextColor(color("#AEAEA8"))
+                    setTextColor(NativeTheme.muted(context))
                 }, LinearLayout.LayoutParams(dp(18), match()))
             }
         }
@@ -376,13 +368,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
             addView(View(context).apply {
                 background = if (active) roundDrawable("#0084CC", 999) else null
             }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(5) })
-            addView(MenuIconView(context, item.icon, if (active) color("#0084CC") else color("#8E8E93")), LinearLayout.LayoutParams(dp(20), dp(20)))
+            addView(MenuIconView(context, item.icon, if (active) color("#0084CC") else NativeTheme.muted(context)), LinearLayout.LayoutParams(dp(20), dp(20)))
             addView(TextView(context).apply {
                 text = item.label
                 textSize = 10f
                 typeface = if (active) brandBold() else brandRegular()
                 includeFontPadding = false
-                setTextColor(if (active) color("#0084CC") else color("#8E8E93"))
+                setTextColor(if (active) color("#0084CC") else NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(3) })
         }
     }
@@ -408,6 +400,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             textSize = 16f
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setTextColor(NativeTheme.text(context))
+            setHintTextColor(NativeTheme.subtle(context))
             setPadding(dp(16), dp(10), dp(16), dp(10))
             background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
         }
@@ -416,6 +410,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             textSize = 16f
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setTextColor(NativeTheme.text(context))
+            setHintTextColor(NativeTheme.subtle(context))
             setPadding(dp(16), dp(10), dp(16), dp(10))
             background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
         }
@@ -426,7 +422,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 text = "이메일 로그인에 사용할 비밀번호를 변경합니다. Google 로그인 계정은 기존 방식 그대로 사용할 수 있어요."
                 textSize = 13f
                 typeface = brandMedium()
-                setTextColor(color("#6E6E66"))
+                setTextColor(NativeTheme.color(context, "#6E6E66"))
             }, matchWrap())
             addView(passwordInput, matchWrap().apply { topMargin = dp(14) })
             addView(confirmInput, matchWrap().apply { topMargin = dp(10) })
@@ -502,6 +498,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             textSize = 16f
             setSingleLine(true)
             setText(profile.displayName)
+            setTextColor(NativeTheme.text(context))
+            setHintTextColor(NativeTheme.subtle(context))
             setPadding(dp(16), dp(10), dp(16), dp(10))
             background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
         }
@@ -510,6 +508,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             textSize = 16f
             setSingleLine(true)
             setText(profile.realName.orEmpty())
+            setTextColor(NativeTheme.text(context))
+            setHintTextColor(NativeTheme.subtle(context))
             setPadding(dp(16), dp(10), dp(16), dp(10))
             background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
         }
@@ -525,7 +525,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 text = profile.email.ifBlank { "계정 이메일 없음" }
                 textSize = 12f
                 typeface = brandBold()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap())
             addView(displayInput, matchWrap().apply { topMargin = dp(12) })
             addView(realNameInput, matchWrap().apply { topMargin = dp(10) })
@@ -533,7 +533,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 text = "앱에서 나를 어떻게 부를지 선택해 주세요."
                 textSize = 12f
                 typeface = brandMedium()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(12) })
             modeButton = TextView(context).apply {
                 text = modeLabel()
@@ -636,6 +636,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             hint = "탈퇴 사유 (선택, 200자 이내)"
             textSize = 15f
             minLines = 3
+            setTextColor(NativeTheme.text(context))
+            setHintTextColor(NativeTheme.subtle(context))
             setPadding(dp(16), dp(12), dp(16), dp(12))
             background = roundDrawable("#F8FAFC", 16, "#EEF0F4")
         }
@@ -741,23 +743,25 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 nativePrefs().edit().putString(THEME_MODE_KEY, values[which]).apply()
                 message = "화면 모드를 ${labels[which]}로 저장했어요. 네이티브 화면부터 순차 적용됩니다."
                 dialog.dismiss()
+                applyLightSystemBars()
                 render()
             }
             .setNegativeButton("닫기", null)
             .show()
     }
 
-    private fun homeLayoutSubtitle(): String = when (nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")) {
-        "schedule_first" -> "일정 중심 홈"
-        "budget_first" -> "가계부 중심 홈"
+    private fun homeLayoutSubtitle(): String = when (normalizedHomeLayout()) {
+        "calendar_first" -> "일정 중심 홈"
+        "expense_first" -> "가계부 중심 홈"
+        "routine_first" -> "루틴 중심 홈"
         "space_first" -> "공간 중심 홈"
         else -> "균형형 홈 구성"
     }
 
     private fun showHomeLayoutSettings() {
-        val values = arrayOf("balanced", "schedule_first", "budget_first", "space_first")
-        val labels = arrayOf("균형형", "일정 중심", "가계부 중심", "공간 중심")
-        val selected = values.indexOf(nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")).takeIf { it >= 0 } ?: 0
+        val values = arrayOf("balanced", "calendar_first", "routine_first", "expense_first", "space_first")
+        val labels = arrayOf("균형형", "일정 중심", "루틴 중심", "가계부 중심", "공간 중심")
+        val selected = values.indexOf(normalizedHomeLayout()).takeIf { it >= 0 } ?: 0
         AlertDialog.Builder(this)
             .setTitle("홈 레이아웃")
             .setMessage("네이티브 홈에서 우선 노출할 정보 흐름을 선택합니다.")
@@ -769,6 +773,15 @@ class NativeMyMenuActivity : AppCompatActivity() {
             }
             .setNegativeButton("닫기", null)
             .show()
+    }
+
+    private fun normalizedHomeLayout(): String {
+        return when (nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")) {
+            "schedule_first" -> "calendar_first"
+            "budget_first" -> "expense_first"
+            "calendar_first", "routine_first", "expense_first", "space_first" -> nativePrefs().getString(HOME_LAYOUT_KEY, "balanced").orEmpty()
+            else -> "balanced"
+        }
     }
 
     private fun notificationSettingsSubtitle(): String {
@@ -1045,11 +1058,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun brandRegular(): Typeface = Typeface.create("sans-serif", Typeface.NORMAL)
     private fun brandMedium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private fun brandBold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int {
-        val base = color(hex)
-        return Color.argb((alpha * 255).toInt(), Color.red(base), Color.green(base), Color.blue(base))
-    }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int {
         val id = resources.getIdentifier("status_bar_height", "dimen", "android")

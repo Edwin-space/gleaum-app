@@ -16,7 +16,10 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.ui.screens.budget.ComposeBudgetEntryFormScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -37,6 +40,9 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     private lateinit var titleInput: EditText
     private lateinit var amountInput: EditText
     private lateinit var memoInput: EditText
+    private var draftTitle = ""
+    private var draftAmount = ""
+    private var draftMemo = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,16 +54,48 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
-    private fun render() = setContentView(buildScreen())
+    private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_BUDGET_FORM) {
+            renderComposeForm()
+            return
+        }
+        setContentView(buildScreen())
+    }
+
+    private fun renderComposeForm() {
+        setContent {
+            GleaumTheme {
+                ComposeBudgetEntryFormScreen(
+                    isEdit = entryId != null,
+                    kind = kind,
+                    entryMode = entryMode,
+                    recurFreq = recurFreq,
+                    category = category,
+                    paymentMethod = paymentMethod,
+                    title = draftTitle,
+                    amount = draftAmount,
+                    memo = draftMemo,
+                    dateText = dateText(),
+                    saving = saving,
+                    message = message,
+                    onBack = { finish() },
+                    onKindChange = { value -> kind = value; category = if (kind == "income") "salary" else "food"; render() },
+                    onEntryModeChange = { value -> entryMode = value; render() },
+                    onRecurFreqChange = { value -> recurFreq = value; render() },
+                    onCategoryChange = { value -> category = value; render() },
+                    onPaymentMethodChange = { value -> paymentMethod = value; render() },
+                    onTitleChange = { value -> draftTitle = value },
+                    onAmountChange = { value -> draftAmount = value },
+                    onMemoChange = { value -> draftMemo = value },
+                    onPickDate = { pickDate() },
+                    onSave = { save(draftTitle, draftAmount, draftMemo) },
+                )
+            }
+        }
+    }
 
     private fun loadEntryForEdit() {
         saving = true
@@ -72,6 +110,9 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                     recurFreq = if (loaded.recurFreq == "none") "monthly" else loaded.recurFreq
                     category = loaded.category
                     paymentMethod = loaded.method ?: paymentMethod
+                    draftTitle = loaded.title
+                    draftAmount = loaded.amount.takeIf { it > 0 }?.toString().orEmpty()
+                    draftMemo = loaded.memo.orEmpty()
                     applyIsoToDate(loaded.occurredAt)
                     saving = false
                     render()
@@ -110,7 +151,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 text = "‹"
                 textSize = 34f
                 gravity = Gravity.CENTER
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
                 background = round("#FFFFFF", 999, "#EEF0F4")
                 setOnClickListener { finish() }
             }, LinearLayout.LayoutParams(dp(40), dp(40)))
@@ -118,7 +159,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 text = if (entryId == null) { if (kind == "income") "수입 추가" else "지출 추가" } else "항목 수정"
                 textSize = 18f
                 typeface = bold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
                 gravity = Gravity.CENTER_VERTICAL
             }, LinearLayout.LayoutParams(0, dp(44), 1f).apply { leftMargin = dp(12) })
             addView(ImageView(context).apply { setImageResource(R.drawable.gleaum_logo_native) }, LinearLayout.LayoutParams(dp(32), dp(32)))
@@ -183,7 +224,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 text = "정기 항목은 중지하기 전까지 매월/매주/매년 해당 월의 예정 항목으로 자동 준비됩니다."
                 textSize = 12f
                 typeface = medium()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(8) })
         }
         addView(label("카테고리"), matchWrap().apply { topMargin = dp(18) }); addView(categoryChips(), matchWrap().apply { topMargin = dp(8) })
@@ -229,8 +270,13 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     }
 
     private fun save() {
-        val title = titleInput.text?.toString()?.trim().orEmpty()
-        val amount = amountInput.text?.toString()?.trim()?.toLongOrNull() ?: 0L
+        save(titleInput.text?.toString().orEmpty(), amountInput.text?.toString().orEmpty(), memoInput.text?.toString().orEmpty())
+    }
+
+    private fun save(rawTitle: String, rawAmount: String, rawMemo: String) {
+        val title = rawTitle.trim()
+        val amount = rawAmount.trim().toLongOrNull() ?: 0L
+        val memo = rawMemo.trim()
         if (title.isBlank()) { message = "항목명을 입력해 주세요."; render(); return }
         if (amount <= 0) { message = "금액을 입력해 주세요."; render(); return }
         saving = true; message = null; render()
@@ -244,7 +290,6 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                     put("occurredAt", toIsoUtc(date))
                     put("recurFreq", if (entryMode == "recurring") recurFreq else "none")
                     if (kind == "expense") put("method", paymentMethod)
-                    val memo = memoInput.text?.toString()?.trim().orEmpty()
                     put("memo", memo)
                 }
                 val id = entryId
@@ -257,9 +302,9 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     }
 
     private fun pickDate() { DatePickerDialog(this, { _, y, m, d -> date.set(y, m, d); render() }, date.get(Calendar.YEAR), date.get(Calendar.MONTH), date.get(Calendar.DAY_OF_MONTH)).show() }
-    private fun label(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 13f; typeface = bold(); setTextColor(color("#1A1B2E")) }
-    private fun input(hintValue: String, multiline: Boolean): EditText = EditText(this).apply { hint = hintValue; textSize = 15f; typeface = medium(); setTextColor(color("#1A1B2E")); setHintTextColor(color("#AEAEA8")); setPadding(dp(16), dp(12), dp(16), dp(12)); background = round("#F8FAFC", 16, "#EEF0F4"); minHeight = if (multiline) dp(104) else dp(52); if (multiline) { gravity = Gravity.TOP; minLines = 3 } else setSingleLine(true) }
-    private fun pickerBox(value: String, action: () -> Unit): TextView = TextView(this).apply { text = value; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER_VERTICAL; setTextColor(color("#1A1B2E")); setPadding(dp(16), 0, dp(16), 0); minHeight = dp(52); background = round("#F8FAFC", 16, "#EEF0F4"); setOnClickListener { action() } }
+    private fun label(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 13f; typeface = bold(); setTextColor(NativeTheme.text(context)) }
+    private fun input(hintValue: String, multiline: Boolean): EditText = EditText(this).apply { hint = hintValue; textSize = 15f; typeface = medium(); setTextColor(NativeTheme.text(context)); setHintTextColor(NativeTheme.subtle(context)); setPadding(dp(16), dp(12), dp(16), dp(12)); background = round("#F8FAFC", 16, "#EEF0F4"); minHeight = if (multiline) dp(104) else dp(52); if (multiline) { gravity = Gravity.TOP; minLines = 3 } else setSingleLine(true) }
+    private fun pickerBox(value: String, action: () -> Unit): TextView = TextView(this).apply { text = value; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER_VERTICAL; setTextColor(NativeTheme.text(context)); setPadding(dp(16), 0, dp(16), 0); minHeight = dp(52); background = round("#F8FAFC", 16, "#EEF0F4"); setOnClickListener { action() } }
     private fun messageCard(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 13f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(color("#EF4444")); setPadding(dp(16), dp(14), dp(16), dp(14)); background = round("#FFF1F2", 18, "#FECACA") }
     private fun expenseCategories() = listOf("food" to "식비", "daily" to "생활", "transport" to "교통", "culture" to "문화", "medical" to "의료", "social" to "경조사", "housing" to "주거", "subscription" to "구독", "other" to "기타")
     private fun incomeCategories() = listOf("salary" to "급여", "business" to "사업", "investment" to "투자", "bonus" to "상여", "refund" to "환급", "gift" to "용돈", "other_income" to "기타")
@@ -273,8 +318,8 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     private fun toIsoUtc(calendar: Calendar): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(calendar.time)
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun medium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int { val b = color(hex); return Color.argb((alpha * 255).toInt(), Color.red(b), Color.green(b), Color.blue(b)) }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int { val id = resources.getIdentifier("status_bar_height", "dimen", "android"); return if (id > 0) resources.getDimensionPixelSize(id) else 0 }
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT

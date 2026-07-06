@@ -79,7 +79,7 @@ export default function ScheduleDetailPage() {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4">
         <span className="text-5xl">📭</span>
-        <p className="text-[#8E8E93]">일정을 찾을 수 없습니다</p>
+        <p style={{ color: 'var(--theme-text-subtle)' }}>일정을 찾을 수 없습니다</p>
         <button onClick={() => router.back()} className="px-8 py-3 rounded-full text-[14px] font-bold text-white bg-brand-blue">돌아가기</button>
       </div>
     );

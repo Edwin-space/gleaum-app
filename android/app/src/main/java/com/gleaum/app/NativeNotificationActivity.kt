@@ -34,13 +34,7 @@ class NativeNotificationActivity : AppCompatActivity() {
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadNotifications(silent: Boolean = false) {
@@ -105,7 +99,7 @@ class NativeNotificationActivity : AppCompatActivity() {
             text = "알림"
             textSize = 22f
             typeface = brandBold()
-            setTextColor(color("#1A1B2E"))
+            setTextColor(NativeTheme.text(context))
             gravity = Gravity.CENTER_VERTICAL
         }, FrameLayout.LayoutParams(wrap(), dp(48), Gravity.BOTTOM or Gravity.START).apply { leftMargin = dp(20) })
         addView(TextView(context).apply {
@@ -150,7 +144,7 @@ class NativeNotificationActivity : AppCompatActivity() {
             text = "최근 알림"
             textSize = 17f
             typeface = brandBold()
-            setTextColor(color("#1A1B2E"))
+            setTextColor(NativeTheme.text(context))
         }, LinearLayout.LayoutParams(0, wrap(), 1f))
         addView(TextView(context).apply {
             text = if (unreadCount > 0) "모두 읽음" else "정리됨"
@@ -184,20 +178,20 @@ class NativeNotificationActivity : AppCompatActivity() {
                 text = item.title.ifBlank { "알림" }
                 textSize = 15f
                 typeface = brandBold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, matchWrap())
             addView(TextView(context).apply {
                 text = item.body.ifBlank { "내용을 확인해 주세요." }
                 textSize = 12f
                 typeface = brandMedium()
-                setTextColor(color("#6E6E66"))
+                setTextColor(NativeTheme.color(context, "#6E6E66"))
                 maxLines = 2
             }, matchWrap().apply { topMargin = dp(4) })
             addView(TextView(context).apply {
                 text = relativeDate(item.createdAt)
                 textSize = 11f
                 typeface = brandBold()
-                setTextColor(color("#8E8E93"))
+                setTextColor(NativeTheme.muted(context))
             }, matchWrap().apply { topMargin = dp(6) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
 
@@ -259,7 +253,7 @@ class NativeNotificationActivity : AppCompatActivity() {
                 textSize = 11f
                 typeface = brandBold()
                 gravity = Gravity.CENTER
-                setTextColor(if (label == "홈") color("#0084CC") else color("#8E8E93"))
+                setTextColor(if (label == "홈") color("#0084CC") else NativeTheme.muted(context))
                 setOnClickListener { action() }
             }, LinearLayout.LayoutParams(0, match(), 1f))
         }
@@ -288,7 +282,7 @@ class NativeNotificationActivity : AppCompatActivity() {
     private fun brandMedium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
     private fun statusBarHeight(): Int = resources.getIdentifier("status_bar_height", "dimen", "android").takeIf { it > 0 }?.let { resources.getDimensionPixelSize(it) } ?: dp(24)
-    private fun color(hex: String): Int = Color.parseColor(hex)
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
     private fun match() = ViewGroup.LayoutParams.MATCH_PARENT
     private fun wrap() = ViewGroup.LayoutParams.WRAP_CONTENT
     private fun matchWrap() = LinearLayout.LayoutParams(match(), wrap())

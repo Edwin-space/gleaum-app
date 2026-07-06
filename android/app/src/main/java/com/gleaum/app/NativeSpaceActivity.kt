@@ -21,27 +21,30 @@ import android.widget.Toast
 import android.app.AlertDialog
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.setContent
+import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.GleaumScaffold
+import com.gleaum.app.ui.screens.space.ComposeSpaceScreen
+import com.gleaum.app.ui.screens.space.SpaceManageAction
+import com.gleaum.app.ui.theme.GleaumTheme
 
 class NativeSpaceActivity : AppCompatActivity() {
     private var summary: NativeSpaceSummary? = null
     private var loading = true
     private var errorMessage: String? = null
+    private var pendingInviteCode: String? = null
+    private var invitePromptShown = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingInviteCode = intent.getStringExtra("invite_code")?.trim()?.uppercase()?.takeIf { it.isNotBlank() }
         applyLightSystemBars()
         render()
         loadSummary()
     }
 
     private fun applyLightSystemBars() {
-        window.statusBarColor = color("#FAFAFD")
-        window.navigationBarColor = color("#FAFAFD")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            window.decorView.systemUiVisibility = flags
-        }
+        NativeTheme.applySystemBars(window, this)
     }
 
     private fun loadSummary() {
@@ -51,14 +54,77 @@ class NativeSpaceActivity : AppCompatActivity() {
         Thread {
             try {
                 val loaded = NativeSpaceApi.summary(this)
-                runOnUiThread { summary = loaded; loading = false; render() }
+                runOnUiThread {
+                    summary = loaded
+                    loading = false
+                    render()
+                    showPendingInviteIfNeeded()
+                }
             } catch (e: Exception) {
                 runOnUiThread { loading = false; errorMessage = friendlyError(e.message); render() }
             }
         }.start()
     }
 
-    private fun render() = setContentView(buildScreen())
+    private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_SPACE) {
+            renderComposeSpace()
+            return
+        }
+        setContentView(buildScreen())
+    }
+
+    private fun renderComposeSpace() {
+        setContent {
+            GleaumTheme {
+                GleaumScaffold(
+                    title = "공간",
+                    selectedDestination = GleaumDestination.SPACE,
+                    onDestinationSelected = ::handleComposeDestination,
+                    onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
+                    onFabClick = { showCreateSpaceDialog() },
+                ) { innerPadding ->
+                    ComposeSpaceScreen(
+                        innerPadding = innerPadding,
+                        summary = summary,
+                        loading = loading,
+                        errorMessage = errorMessage,
+                        onRetry = { loadSummary() },
+                        onCopyInviteCode = { code -> copyInviteCode(code) },
+                        onSpaceClick = { space -> if (space.isActive) toast("현재 사용 중인 공간이에요.") else toast("공간 전환 기능은 준비 중이에요.") },
+                        onMemberClick = { member -> showMemberActions(member) },
+                        onManageAction = { action -> handleSpaceManageAction(action) },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun handleComposeDestination(destination: GleaumDestination) {
+        when (destination) {
+            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
+            GleaumDestination.SCHEDULES -> { startActivity(Intent(this, NativeScheduleListActivity::class.java)); finish() }
+            GleaumDestination.SPACE -> Unit
+            GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
+            GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
+        }
+    }
+
+    private fun handleSpaceManageAction(action: SpaceManageAction) {
+        val active = summary?.activeSpace
+        val canManage = active?.role == "admin"
+        when (action) {
+            SpaceManageAction.JOIN -> showJoinSpaceDialog()
+            SpaceManageAction.CREATE -> showCreateSpaceDialog()
+            SpaceManageAction.RENAME -> if (canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
+            SpaceManageAction.REGENERATE_INVITE -> {
+                if (active?.isPersonal == true) toast("개인 공간은 초대할 수 없어요.")
+                else if (canManage) confirmRegenerateInviteCode()
+                else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
+            }
+            SpaceManageAction.ADVANCED -> showAdvancedSpaceDialog()
+        }
+    }
 
     private fun buildScreen(): FrameLayout = FrameLayout(this).apply {
         setBackgroundColor(color("#FAFAFD"))
@@ -83,7 +149,7 @@ class NativeSpaceActivity : AppCompatActivity() {
             }, NativeAdaptive.scrollChildParams(this@NativeSpaceActivity))
         }, FrameLayout.LayoutParams(match(), match()))
         addView(header(), FrameLayout.LayoutParams(match(), statusBarHeight() + dp(64), Gravity.TOP))
-        addView(bottomNav(), NativeAdaptive.bottomNavParams(this@NativeSpaceActivity, dp(if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 64 else 56)))
+        addView(NativeBottomNav.create(this@NativeSpaceActivity, NativeBottomDestination.SPACE), NativeAdaptive.bottomNavParams(this@NativeSpaceActivity, dp(if (NativeAdaptive.isLarge(this@NativeSpaceActivity)) 64 else 56)))
     }
 
     private fun header(): FrameLayout = FrameLayout(this).apply {
@@ -101,7 +167,7 @@ class NativeSpaceActivity : AppCompatActivity() {
                 text = "공간"
                 textSize = 27f
                 typeface = bold()
-                setTextColor(color("#1A1B2E"))
+                setTextColor(NativeTheme.text(context))
             }, matchWrap().apply { leftMargin = dp(12) })
             addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
             addView(TextView(context).apply {
@@ -110,7 +176,7 @@ class NativeSpaceActivity : AppCompatActivity() {
                 typeface = bold()
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
-                background = gradient("#0CC9B5", "#0084CC", 26)
+                background = round("#0084CC", 26, null)
                 setOnClickListener { showCreateSpaceDialog() }
             }, LinearLayout.LayoutParams(dp(52), dp(52)))
         }, NativeAdaptive.headerContentParams(this@NativeSpaceActivity, dp(54), dp(20), dp(0)).apply { gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL })
@@ -166,7 +232,7 @@ class NativeSpaceActivity : AppCompatActivity() {
         background = round("#FFFFFF", 22, "#FFFFFF")
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(TextView(context).apply { text = "초대 코드"; textSize = 11f; typeface = bold(); letterSpacing = 0.08f; setTextColor(color("#8E8E93")) })
+            addView(TextView(context).apply { text = "초대 코드"; textSize = 11f; typeface = bold(); letterSpacing = 0.08f; setTextColor(NativeTheme.muted(context)) })
             addView(TextView(context).apply { text = code; textSize = 22f; typeface = bold(); letterSpacing = 0.12f; setTextColor(color("#0CC9B5")) }, matchWrap().apply { topMargin = dp(4) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f))
         addView(TextView(context).apply {
@@ -206,8 +272,8 @@ class NativeSpaceActivity : AppCompatActivity() {
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(TextView(context).apply { text = space.name; textSize = 16f; typeface = bold(); setTextColor(color("#1A1B2E")) })
-            addView(TextView(context).apply { text = "${space.memberCount}명 · ${roleLabel(space.role)}"; textSize = 12f; typeface = medium(); setTextColor(color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+            addView(TextView(context).apply { text = space.name; textSize = 16f; typeface = bold(); setTextColor(NativeTheme.text(context)) })
+            addView(TextView(context).apply { text = "${space.memberCount}명 · ${roleLabel(space.role)}"; textSize = 12f; typeface = medium(); setTextColor(NativeTheme.muted(context)) }, matchWrap().apply { topMargin = dp(3) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
         if (space.isActive) {
             addView(TextView(context).apply { text = "현재"; textSize = 11f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(color("#0084CC")); background = round("#EAF6FD", 999, null) }, LinearLayout.LayoutParams(dp(52), dp(28)))
@@ -239,13 +305,13 @@ class NativeSpaceActivity : AppCompatActivity() {
             textSize = 18f
             typeface = bold()
             gravity = Gravity.CENTER
-            setTextColor(color("#1A1B2E"))
+            setTextColor(NativeTheme.text(context))
             background = round("#F0FBF8", 18, null)
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(TextView(context).apply { text = member.displayName + if (member.isMe) " (나)" else ""; textSize = 15f; typeface = bold(); setTextColor(color("#1A1B2E")) })
-            addView(TextView(context).apply { text = member.email.ifBlank { roleLabel(member.role) }; textSize = 12f; typeface = medium(); setTextColor(color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+            addView(TextView(context).apply { text = member.displayName + if (member.isMe) " (나)" else ""; textSize = 15f; typeface = bold(); setTextColor(NativeTheme.text(context)) })
+            addView(TextView(context).apply { text = member.email.ifBlank { roleLabel(member.role) }; textSize = 12f; typeface = medium(); setTextColor(NativeTheme.muted(context)) }, matchWrap().apply { topMargin = dp(3) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f).apply { leftMargin = dp(12) })
         addView(TextView(context).apply { text = roleLabel(member.role); textSize = 11f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(color("#0084CC")); background = round("#EAF6FD", 999, null) }, LinearLayout.LayoutParams(dp(74), dp(28)))
     }
@@ -277,10 +343,10 @@ class NativeSpaceActivity : AppCompatActivity() {
         setOnClickListener { action() }
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            addView(TextView(context).apply { text = title; textSize = 15f; typeface = bold(); setTextColor(color("#1A1B2E")) })
-            addView(TextView(context).apply { text = subtitle; textSize = 12f; typeface = medium(); setTextColor(color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+            addView(TextView(context).apply { text = title; textSize = 15f; typeface = bold(); setTextColor(NativeTheme.text(context)) })
+            addView(TextView(context).apply { text = subtitle; textSize = 12f; typeface = medium(); setTextColor(NativeTheme.muted(context)) }, matchWrap().apply { topMargin = dp(3) })
         }, LinearLayout.LayoutParams(0, wrap(), 1f))
-        addView(TextView(context).apply { text = "›"; textSize = 24f; gravity = Gravity.CENTER; setTextColor(color("#AEAEA8")) }, LinearLayout.LayoutParams(dp(20), dp(40)))
+        addView(TextView(context).apply { text = "›"; textSize = 24f; gravity = Gravity.CENTER; setTextColor(NativeTheme.muted(context)) }, LinearLayout.LayoutParams(dp(20), dp(40)))
     }
 
     private fun bottomNav(): LinearLayout = LinearLayout(this).apply {
@@ -301,8 +367,8 @@ class NativeSpaceActivity : AppCompatActivity() {
         gravity = Gravity.CENTER
         setOnClickListener { action() }
         addView(View(context).apply { background = if (active) round("#0084CC", 999, null) else null }, LinearLayout.LayoutParams(dp(28), dp(3)).apply { bottomMargin = dp(6) })
-        addView(NativeTabIconView(context, tabIcon(label), if (active) color("#0084CC") else color("#8E8E93")), LinearLayout.LayoutParams(dp(20), dp(20)))
-        addView(TextView(context).apply { text = label; textSize = 10f; typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL); setTextColor(if (active) color("#0084CC") else color("#8E8E93")) }, matchWrap().apply { topMargin = dp(3) })
+        addView(NativeTabIconView(context, tabIcon(label), if (active) color("#0084CC") else NativeTheme.muted(context)), LinearLayout.LayoutParams(dp(20), dp(20)))
+        addView(TextView(context).apply { text = label; textSize = 10f; typeface = Typeface.create("sans-serif", if (active) Typeface.BOLD else Typeface.NORMAL); setTextColor(if (active) color("#0084CC") else NativeTheme.muted(context)) }, matchWrap().apply { topMargin = dp(3) })
     }
 
     private fun tabIcon(label: String): NativeTabIcon = when (label) {
@@ -400,6 +466,18 @@ class NativeSpaceActivity : AppCompatActivity() {
             })
             .setNegativeButton("취소", null)
             .setPositiveButton("참여") { _, _ -> joinSpace(input.text?.toString().orEmpty()) }
+            .show()
+    }
+
+    private fun showPendingInviteIfNeeded() {
+        val code = pendingInviteCode ?: return
+        if (invitePromptShown) return
+        invitePromptShown = true
+        AlertDialog.Builder(this)
+            .setTitle("초대받은 공간에 참여할까요?")
+            .setMessage("초대 코드 $code 로 공간 멤버로 참여합니다.")
+            .setNegativeButton("나중에", null)
+            .setPositiveButton("참여") { _, _ -> joinSpace(code) }
             .show()
     }
 
@@ -509,9 +587,9 @@ class NativeSpaceActivity : AppCompatActivity() {
     }
 
     private fun loadingCard(): TextView = messageCard("공간 정보를 불러오는 중...")
-    private fun messageCard(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(color("#8E8E93")); setPadding(dp(20), dp(64), dp(20), dp(64)); background = round("#FFFFFF", 24, "#EEF0F4") }
-    private fun sectionTitle(title: String): TextView = TextView(this).apply { text = title; textSize = 17f; typeface = bold(); setTextColor(color("#1A1B2E")) }
-    private fun emptyText(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 14f; gravity = Gravity.CENTER; setTextColor(color("#8E8E93")); setPadding(dp(18), dp(30), dp(18), dp(30)) }
+    private fun messageCard(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 15f; typeface = bold(); gravity = Gravity.CENTER; setTextColor(NativeTheme.muted(context)); setPadding(dp(20), dp(64), dp(20), dp(64)); background = round("#FFFFFF", 24, "#EEF0F4") }
+    private fun sectionTitle(title: String): TextView = TextView(this).apply { text = title; textSize = 17f; typeface = bold(); setTextColor(NativeTheme.text(context)) }
+    private fun emptyText(textValue: String): TextView = TextView(this).apply { text = textValue; textSize = 14f; gravity = Gravity.CENTER; setTextColor(NativeTheme.muted(context)); setPadding(dp(18), dp(30), dp(18), dp(30)) }
     private fun cardGroup(): LinearLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; background = round("#FFFFFF", 24, "#EEF0F4"); elevation = dp(2).toFloat() }
     private fun divider(): View = View(this).apply { setBackgroundColor(color("#EEF0F4")); layoutParams = LinearLayout.LayoutParams(match(), 1) }
     private fun roleLabel(role: String?): String = when (role) { "admin" -> "공간 지기"; "editor" -> "공간 운영자"; "viewer" -> "공간 멤버"; else -> "공간 멤버" }
@@ -528,8 +606,8 @@ class NativeSpaceActivity : AppCompatActivity() {
     }
     private fun bold(): Typeface = Typeface.create("sans-serif", Typeface.BOLD)
     private fun medium(): Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-    private fun color(hex: String): Int = Color.parseColor(hex)
-    private fun colorWithAlpha(hex: String, alpha: Float): Int { val b = color(hex); return Color.argb((alpha * 255).toInt(), Color.red(b), Color.green(b), Color.blue(b)) }
+    private fun color(hex: String): Int = NativeTheme.color(this, hex)
+    private fun colorWithAlpha(hex: String, alpha: Float): Int = NativeTheme.alpha(hex, alpha)
     private fun round(fill: String, radius: Int, stroke: String?): GradientDrawable = GradientDrawable().apply { setColor(color(fill)); cornerRadius = dp(radius).toFloat(); if (stroke != null) setStroke(1, color(stroke)) }
     private fun gradient(start: String, end: String, radius: Int): GradientDrawable = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(color(start), color(end))).apply { cornerRadius = dp(radius).toFloat() }
     private fun match(): Int = ViewGroup.LayoutParams.MATCH_PARENT

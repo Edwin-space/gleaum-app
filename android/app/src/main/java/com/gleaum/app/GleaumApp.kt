@@ -38,6 +38,8 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
     override fun onCreate() {
         super<Application>.onCreate()
 
+        NativeFirebase.bootstrap(this)
+
         registerActivityLifecycleCallbacks(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
@@ -73,6 +75,8 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
 
     override fun onActivityResumed(activity: Activity) {
         currentActivity = activity
+        NativeFirebase.screen(activity, activity.javaClass.simpleName.removeSuffix("Activity"))
+        NativeFirebase.syncSession(activity, "activity_resumed")
     }
 
     override fun onActivityPaused(activity: Activity) {
