@@ -15,6 +15,10 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.setContent
+import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.screens.notifications.ComposeNotificationScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 
 class NativeNotificationActivity : AppCompatActivity() {
     private var loading = true
@@ -62,7 +66,40 @@ class NativeNotificationActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun render() = setContentView(buildScreen())
+    private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_NOTIFICATIONS) {
+            renderComposeNotifications()
+            return
+        }
+        setContentView(buildScreen())
+    }
+
+    private fun renderComposeNotifications() {
+        setContent {
+            GleaumTheme {
+                ComposeNotificationScreen(
+                    summary = summary,
+                    loading = loading,
+                    message = message,
+                    onRefresh = { loadNotifications() },
+                    onMarkAllRead = { markAllRead() },
+                    onNotificationClick = { openNotification(it) },
+                    onBack = { finish() },
+                    onDestinationSelected = ::handleComposeDestination,
+                )
+            }
+        }
+    }
+
+    private fun handleComposeDestination(destination: GleaumDestination) {
+        when (destination) {
+            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
+            GleaumDestination.SCHEDULES -> { startActivity(Intent(this, NativeScheduleListActivity::class.java)); finish() }
+            GleaumDestination.SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
+            GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
+            GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
+        }
+    }
 
     private fun buildScreen(): FrameLayout = FrameLayout(this).apply {
         setBackgroundColor(color("#FAFAFD"))

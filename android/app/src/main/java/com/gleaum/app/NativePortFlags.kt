@@ -26,6 +26,7 @@ object NativePortFlags {
     const val ENABLE_COMPOSE_BUDGET_FORM = true
     const val ENABLE_COMPOSE_SPACE = true
     const val ENABLE_COMPOSE_MENU = true
+    const val ENABLE_COMPOSE_NOTIFICATIONS = true
     const val ENABLE_NATIVE_SCHEDULE_FORM = true
     const val ENABLE_NATIVE_BUDGET = true
     const val ENABLE_NATIVE_SPACE = true

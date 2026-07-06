@@ -650,3 +650,41 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 알림 화면을 Compose Material 3로 전환.
 2. 온보딩/보안/프로필 보조 화면의 잔여 View UI를 Material 3 기준으로 정리.
 3. 라이트/다크/태블릿 회귀 QA 후 다음 Google Play 업데이트 후보 빌드 생성.
+
+## 2026-07-06 진행 기록 — Compose Notification 1차 전환
+
+### 완료
+- Android 알림 화면을 Compose Material 3 기반으로 연결했다.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/notifications/ComposeNotificationScreen.kt`
+  - Activity 연결: `NativeNotificationActivity`
+  - 사용 컴포넌트: `Scaffold`, `TopAppBar`, `NavigationBar`, `ElevatedCard`, `OutlinedCard`, `ListItem`, `AssistChip`, `Badge`, `FilledTonalButton`, `TextButton`, `Surface`.
+  - 카드 variant 기준:
+    - `ElevatedCard`: 알림 요약 Hero 영역.
+    - `OutlinedCard`: 알림 리스트 아이템, 로딩/에러/빈 상태 카드.
+    - `ListItem`: 알림 제목/본문/시간 정보 row.
+- 기존 알림 기능 로직은 유지했다.
+  - 알림 목록 조회: `NativeNotificationApi.fetch()`
+  - 모두 읽음 처리: `NativeNotificationApi.markAllRead()`
+  - 개별 알림 읽음 처리: `NativeNotificationApi.markRead()`
+  - 일정 알림 클릭 시 `NativeScheduleDetailActivity`로 이동.
+- 기존 수작업 View 기반 그라데이션/커스텀 하단 네비게이션 대신 Material 3 `TopAppBar`/`NavigationBar` 구조로 통일했다.
+- Feature gate 추가/사용.
+  - `NativePortFlags.ENABLE_COMPOSE_NOTIFICATIONS = true`
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 직접 확인해야 한다.
+  - 홈/전체 메뉴 등에서 `알림` 진입
+  - 새로고침
+  - 모두 읽음 처리
+  - 개별 알림 클릭 후 읽음 처리
+  - 일정 알림 클릭 시 일정 상세 이동
+  - 빈 알림/에러 상태 표시
+
+### 다음 권장 작업
+1. 온보딩/보안/프로필 보조 화면의 잔여 View UI를 Material 3 기준으로 정리.
+2. 알림 설정/홈 레이아웃/캘린더 설정 등 설정 하위 화면의 Compose 전환 범위 확정.
+3. 라이트/다크/태블릿 회귀 QA 후 다음 Google Play 업데이트 후보 빌드 생성.
