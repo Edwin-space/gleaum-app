@@ -34,6 +34,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
+import com.gleaum.app.ui.screens.menu.CalendarChoice
 import com.gleaum.app.ui.screens.menu.ComposeMyMenuScreen
 import com.gleaum.app.ui.screens.menu.MyMenuAction
 import com.gleaum.app.ui.screens.menu.MyMenuSettingsDialog
@@ -162,6 +163,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         biometricLockEnabled = isBiometricLockEnabled(),
                         biometricAvailable = isBiometricAvailableForLock(),
                         biometricRelockInterval = getBiometricRelockInterval(),
+                        calendarPermissionGranted = hasCalendarPermission(),
+                        calendarSyncEnabled = isCalendarSyncEnabled(),
+                        selectedCalendarId = selectedCalendarId(),
+                        calendarChoices = calendarChoicesForSettings(),
                         onDismissSettingsDialog = { dismissComposeSettingsDialog() },
                         onThemeModeSelected = { saveThemeMode(it) },
                         onHomeLayoutSelected = { saveHomeLayout(it) },
@@ -169,6 +174,9 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         onBiometricLockChanged = { setBiometricLock(it) },
                         onBiometricRelockIntervalSelected = { setBiometricRelockInterval(it) },
                         onOpenDeviceSecuritySettings = { openDeviceSecuritySettings() },
+                        onRequestCalendarPermission = { requestCalendarPermissionFromCompose() },
+                        onCalendarSelected = { setSelectedCalendar(it.toDeviceCalendarRow()) },
+                        onCalendarSyncDisabled = { disableCalendarSync() },
                         onAction = ::handleMenuAction,
                     )
                 }
@@ -193,7 +201,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             MyMenuAction.OPEN_SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
             MyMenuAction.THEME_MODE -> openComposeSettingsDialog(MyMenuSettingsDialog.THEME_MODE) { showThemeModeSettings() }
             MyMenuAction.HOME_LAYOUT -> openComposeSettingsDialog(MyMenuSettingsDialog.HOME_LAYOUT) { showHomeLayoutSettings() }
-            MyMenuAction.CALENDAR_SETTINGS -> showCalendarSettings()
+            MyMenuAction.CALENDAR_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.CALENDAR) { showCalendarSettings() }
             MyMenuAction.NOTIFICATION_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.NOTIFICATIONS) { showNotificationSettings() }
             MyMenuAction.BIOMETRIC_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.BIOMETRIC) { showBiometricSettings() }
             MyMenuAction.PASSWORD_SETTINGS -> showPasswordSettingsNotice()
@@ -1043,6 +1051,27 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun requestCalendarPermissionFromCompose() {
+        activeComposeSettingsDialog = null
+        requestCalendarPermission()
+    }
+
+    private fun disableCalendarSync() {
+        activeComposeSettingsDialog = null
+        nativePrefs().edit()
+            .putString(CALENDAR_ENABLED_KEY, "false")
+            .apply()
+        message = "기기 캘린더 동기화를 껐어요."
+        render()
+    }
+
+    private fun calendarChoicesForSettings(): List<CalendarChoice> =
+        if (hasCalendarPermission()) queryWritableCalendars().map { it.toCalendarChoice() } else emptyList()
+
+    private fun CalendarChoice.toDeviceCalendarRow(): DeviceCalendarRow = DeviceCalendarRow(id = id, name = name, accountName = accountName)
+
+    private fun DeviceCalendarRow.toCalendarChoice(): CalendarChoice = CalendarChoice(id = id, name = name, accountName = accountName)
+
     private fun requestCalendarPermission() {
         if (hasCalendarPermission()) {
             message = "캘린더 권한이 이미 허용되어 있어요."
@@ -1152,6 +1181,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun isCalendarSyncEnabled(): Boolean = nativePrefs().getString(CALENDAR_ENABLED_KEY, "false") == "true"
 
     private fun setSelectedCalendar(calendar: DeviceCalendarRow) {
+        activeComposeSettingsDialog = null
         nativePrefs().edit()
             .putString(CALENDAR_ENABLED_KEY, "true")
             .putString(SELECTED_CALENDAR_KEY, calendar.id)

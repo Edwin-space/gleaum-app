@@ -76,7 +76,14 @@ enum class MyMenuSettingsDialog {
     HOME_LAYOUT,
     NOTIFICATIONS,
     BIOMETRIC,
+    CALENDAR,
 }
+
+data class CalendarChoice(
+    val id: String,
+    val name: String,
+    val accountName: String,
+)
 
 @Composable
 fun ComposeMyMenuScreen(
@@ -102,6 +109,10 @@ fun ComposeMyMenuScreen(
     biometricLockEnabled: Boolean = false,
     biometricAvailable: Boolean = false,
     biometricRelockInterval: String = "always",
+    calendarPermissionGranted: Boolean = false,
+    calendarSyncEnabled: Boolean = false,
+    selectedCalendarId: String? = null,
+    calendarChoices: List<CalendarChoice> = emptyList(),
     onDismissSettingsDialog: () -> Unit = {},
     onThemeModeSelected: (String) -> Unit = {},
     onHomeLayoutSelected: (String) -> Unit = {},
@@ -109,6 +120,9 @@ fun ComposeMyMenuScreen(
     onBiometricLockChanged: (Boolean) -> Unit = {},
     onBiometricRelockIntervalSelected: (String) -> Unit = {},
     onOpenDeviceSecuritySettings: () -> Unit = {},
+    onRequestCalendarPermission: () -> Unit = {},
+    onCalendarSelected: (CalendarChoice) -> Unit = {},
+    onCalendarSyncDisabled: () -> Unit = {},
     onAction: (MyMenuAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -202,6 +216,16 @@ fun ComposeMyMenuScreen(
             onEnabledChange = onBiometricLockChanged,
             onRelockIntervalSelected = onBiometricRelockIntervalSelected,
             onOpenDeviceSecuritySettings = onOpenDeviceSecuritySettings,
+            onDismiss = onDismissSettingsDialog,
+        )
+        MyMenuSettingsDialog.CALENDAR -> CalendarSettingsDialog(
+            permissionGranted = calendarPermissionGranted,
+            syncEnabled = calendarSyncEnabled,
+            selectedCalendarId = selectedCalendarId,
+            calendars = calendarChoices,
+            onRequestPermission = onRequestCalendarPermission,
+            onCalendarSelected = onCalendarSelected,
+            onSyncDisabled = onCalendarSyncDisabled,
             onDismiss = onDismissSettingsDialog,
         )
         null -> Unit
@@ -349,6 +373,75 @@ private fun NotificationSettingsDialog(
         },
         confirmButton = { TextButton(onClick = { onSave(scheduleChecked, budgetChecked) }) { Text("저장") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
+    )
+}
+
+@Composable
+private fun CalendarSettingsDialog(
+    permissionGranted: Boolean,
+    syncEnabled: Boolean,
+    selectedCalendarId: String?,
+    calendars: List<CalendarChoice>,
+    onRequestPermission: () -> Unit,
+    onCalendarSelected: (CalendarChoice) -> Unit,
+    onSyncDisabled: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("캘린더 설정", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                when {
+                    !permissionGranted -> {
+                        Text(
+                            "글리움 일정을 기기 캘린더와 연결하려면 캘린더 읽기/쓰기 권한이 필요합니다.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        ListItem(
+                            headlineContent = { Text("캘린더 권한 허용", fontWeight = FontWeight.SemiBold) },
+                            supportingContent = { Text("Android 권한 요청 창을 엽니다.") },
+                            leadingContent = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onRequestPermission() },
+                        )
+                    }
+                    calendars.isEmpty() -> {
+                        Text(
+                            "쓰기 가능한 기기 캘린더를 찾지 못했어요. Google 캘린더 또는 기기 캘린더 계정을 먼저 확인해 주세요.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    else -> {
+                        Text(
+                            if (syncEnabled) "글리움 일정을 기록할 기기 캘린더를 선택합니다." else "동기화할 캘린더를 선택하면 기기 캘린더 연동이 켜집니다.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        calendars.forEach { calendar ->
+                            ListItem(
+                                headlineContent = { Text(calendar.name, fontWeight = FontWeight.SemiBold) },
+                                supportingContent = { Text(calendar.accountName.ifBlank { "기기 캘린더" }) },
+                                leadingContent = { RadioButton(selected = selectedCalendarId == calendar.id, onClick = { onCalendarSelected(calendar) }) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onCalendarSelected(calendar) },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
+        dismissButton = {
+            when {
+                !permissionGranted -> TextButton(onClick = onRequestPermission) { Text("권한 허용") }
+                syncEnabled -> TextButton(onClick = onSyncDisabled) { Text("동기화 끄기") }
+            }
+        },
     )
 }
 

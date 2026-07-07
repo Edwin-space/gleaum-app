@@ -749,3 +749,37 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 캘린더 설정을 권한 요청/캘린더 선택 단계로 분리해 Compose Material 3로 전환.
 2. 프로필/비밀번호/계정 상태 다이얼로그를 Compose Material 3 기반으로 정리.
 3. 온보딩 화면의 Material 3 정리 범위를 확정.
+
+## 2026-07-07 진행 기록 — Compose Calendar Settings 전환
+
+### 완료
+- Android 전체 메뉴의 캘린더 설정 다이얼로그를 Compose Material 3 기반으로 전환했다.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/menu/ComposeMyMenuScreen.kt`
+  - Activity 연결: `NativeMyMenuActivity`
+  - 사용 컴포넌트: `AlertDialog`, `ListItem`, `RadioButton`, `TextButton`, `Icon`.
+- 기존 권한/저장 로직은 유지했다.
+  - 권한 확인: `hasCalendarPermission()`
+  - 권한 요청: `requestCalendarPermission()`
+  - 기기 캘린더 목록 조회: `queryWritableCalendars()`
+  - 캘린더 선택/동기화 켜기: `setSelectedCalendar()`
+  - 동기화 끄기: `CALENDAR_ENABLED_KEY = false`
+- Compose UI 전용 모델 `CalendarChoice`를 추가하고, 기존 private `DeviceCalendarRow`와 Activity 내부에서 변환하도록 구성했다.
+- 권한이 없을 때는 Compose 다이얼로그에서 권한 요청 액션을 제공하고, 권한이 있되 쓰기 가능한 캘린더가 없으면 안내 상태를 표시한다.
+- `NativePortFlags.ENABLE_COMPOSE_MENU`가 꺼져 있을 경우 기존 `AlertDialog.Builder` 기반 설정으로 fallback 되도록 유지했다.
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 확인해야 한다.
+  - `전체 → 캘린더 설정 → 권한 허용`
+  - 권한 허용 후 캘린더 목록 표시
+  - 캘린더 선택 시 동기화 켜짐 및 메뉴 설명 갱신
+  - 동기화 끄기 후 메뉴 배지/설명 갱신
+  - 쓰기 가능한 캘린더가 없는 계정 상태 안내
+
+### 다음 권장 작업
+1. 프로필/비밀번호/계정 상태 다이얼로그를 Compose Material 3 기반으로 정리.
+2. 온보딩 화면의 Material 3 정리 범위 확정.
+3. 설정 하위 화면 실기기 회귀 QA 후 Google Play 업데이트 후보 빌드 생성.
