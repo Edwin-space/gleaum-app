@@ -36,6 +36,7 @@ import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.menu.ComposeMyMenuScreen
 import com.gleaum.app.ui.screens.menu.MyMenuAction
+import com.gleaum.app.ui.screens.menu.MyMenuSettingsDialog
 import com.gleaum.app.ui.theme.GleaumTheme
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -56,6 +57,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private var summary: NativeHomePortSummary? = null
     private var loading = true
     private var message: String? = null
+    private var activeComposeSettingsDialog: MyMenuSettingsDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -152,6 +154,15 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         biometricSubtitle = biometricSubtitle(),
                         biometricBadge = biometricBadge(),
                         appVersion = BuildConfig.VERSION_NAME,
+                        activeSettingsDialog = activeComposeSettingsDialog,
+                        themeModeValue = themeModeValue(),
+                        homeLayoutValue = normalizedHomeLayout(),
+                        notificationScheduleEnabled = isScheduleNotificationEnabled(),
+                        notificationBudgetEnabled = isBudgetNotificationEnabled(),
+                        onDismissSettingsDialog = { dismissComposeSettingsDialog() },
+                        onThemeModeSelected = { saveThemeMode(it) },
+                        onHomeLayoutSelected = { saveHomeLayout(it) },
+                        onNotificationSettingsSaved = { schedule, budget -> saveNotificationSettings(schedule, budget) },
                         onAction = ::handleMenuAction,
                     )
                 }
@@ -174,10 +185,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
             MyMenuAction.ADD_SCHEDULE -> startActivity(Intent(this, NativeScheduleCreateActivity::class.java))
             MyMenuAction.OPEN_BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
             MyMenuAction.OPEN_SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
-            MyMenuAction.THEME_MODE -> showThemeModeSettings()
-            MyMenuAction.HOME_LAYOUT -> showHomeLayoutSettings()
+            MyMenuAction.THEME_MODE -> openComposeSettingsDialog(MyMenuSettingsDialog.THEME_MODE) { showThemeModeSettings() }
+            MyMenuAction.HOME_LAYOUT -> openComposeSettingsDialog(MyMenuSettingsDialog.HOME_LAYOUT) { showHomeLayoutSettings() }
             MyMenuAction.CALENDAR_SETTINGS -> showCalendarSettings()
-            MyMenuAction.NOTIFICATION_SETTINGS -> showNotificationSettings()
+            MyMenuAction.NOTIFICATION_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.NOTIFICATIONS) { showNotificationSettings() }
             MyMenuAction.BIOMETRIC_SETTINGS -> showBiometricSettings()
             MyMenuAction.PASSWORD_SETTINGS -> showPasswordSettingsNotice()
             MyMenuAction.PROFILE -> loadProfileForEdit()
@@ -185,6 +196,63 @@ class NativeMyMenuActivity : AppCompatActivity() {
             MyMenuAction.LEGAL -> showLegalDocuments()
             MyMenuAction.LOGOUT -> logout()
         }
+    }
+
+    private fun openComposeSettingsDialog(dialog: MyMenuSettingsDialog, fallback: () -> Unit) {
+        if (!NativePortFlags.ENABLE_COMPOSE_MENU) {
+            fallback()
+            return
+        }
+        activeComposeSettingsDialog = dialog
+        render()
+    }
+
+    private fun dismissComposeSettingsDialog() {
+        activeComposeSettingsDialog = null
+        render()
+    }
+
+    private fun themeModeValue(): String = nativePrefs().getString(THEME_MODE_KEY, "system") ?: "system"
+
+    private fun saveThemeMode(value: String) {
+        val label = when (value) {
+            "light" -> "라이트"
+            "dark" -> "다크"
+            else -> "자동"
+        }
+        nativePrefs().edit().putString(THEME_MODE_KEY, value).apply()
+        activeComposeSettingsDialog = null
+        message = "화면 모드를 ${label}로 저장했어요. 네이티브 화면부터 순차 적용됩니다."
+        applyLightSystemBars()
+        render()
+    }
+
+    private fun saveHomeLayout(value: String) {
+        val label = when (value) {
+            "calendar_first" -> "일정 중심"
+            "routine_first" -> "루틴 중심"
+            "expense_first" -> "가계부 중심"
+            "space_first" -> "공간 중심"
+            else -> "균형형"
+        }
+        nativePrefs().edit().putString(HOME_LAYOUT_KEY, value).apply()
+        activeComposeSettingsDialog = null
+        message = "홈 레이아웃을 ${label}으로 저장했어요."
+        render()
+    }
+
+    private fun isScheduleNotificationEnabled(): Boolean = nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true"
+
+    private fun isBudgetNotificationEnabled(): Boolean = nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true"
+
+    private fun saveNotificationSettings(scheduleEnabled: Boolean, budgetEnabled: Boolean) {
+        nativePrefs().edit()
+            .putString(NOTIFY_SCHEDULE_KEY, scheduleEnabled.toString())
+            .putString(NOTIFY_BUDGET_KEY, budgetEnabled.toString())
+            .apply()
+        activeComposeSettingsDialog = null
+        message = "알림 설정을 저장했어요."
+        render()
     }
 
     private fun buildScreen(): FrameLayout {
@@ -790,13 +858,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
         })
     }
 
-    private fun themeModeSubtitle(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {
+    private fun themeModeSubtitle(): String = when (themeModeValue()) {
         "light" -> "라이트 모드 고정"
         "dark" -> "다크 모드 고정"
         else -> "시스템 설정에 맞춰 자동 변경"
     }
 
-    private fun themeModeBadge(): String = when (nativePrefs().getString(THEME_MODE_KEY, "system")) {
+    private fun themeModeBadge(): String = when (themeModeValue()) {
         "light" -> "라이트"
         "dark" -> "다크"
         else -> "자동"
@@ -809,11 +877,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("화면 모드")
             .setSingleChoiceItems(labels, selected) { dialog, which ->
-                nativePrefs().edit().putString(THEME_MODE_KEY, values[which]).apply()
-                message = "화면 모드를 ${labels[which]}로 저장했어요. 네이티브 화면부터 순차 적용됩니다."
                 dialog.dismiss()
-                applyLightSystemBars()
-                render()
+                saveThemeMode(values[which])
             }
             .setNegativeButton("닫기", null)
             .show()
@@ -835,10 +900,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .setTitle("홈 레이아웃")
             .setMessage("네이티브 홈에서 우선 노출할 정보 흐름을 선택합니다.")
             .setSingleChoiceItems(labels, selected) { dialog, which ->
-                nativePrefs().edit().putString(HOME_LAYOUT_KEY, values[which]).apply()
-                message = "홈 레이아웃을 ${labels[which]}으로 저장했어요."
                 dialog.dismiss()
-                render()
+                saveHomeLayout(values[which])
             }
             .setNegativeButton("닫기", null)
             .show()
@@ -854,13 +917,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun notificationSettingsSubtitle(): String {
-        val schedule = nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true"
-        val budget = nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true"
+        val schedule = isScheduleNotificationEnabled()
+        val budget = isBudgetNotificationEnabled()
         return "일정 ${if (schedule) "켜짐" else "꺼짐"} · 가계부 ${if (budget) "켜짐" else "꺼짐"}"
     }
 
     private fun notificationSettingsBadge(): String =
-        if (nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true" || nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true") "켜짐" else "꺼짐"
+        if (isScheduleNotificationEnabled() || isBudgetNotificationEnabled()) "켜짐" else "꺼짐"
 
     private fun showNotificationSettings() {
         val labels = arrayOf("일정 리마인더", "가계부 결제 알림")
@@ -872,12 +935,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .setTitle("알림 설정")
             .setMultiChoiceItems(labels, checked) { _, which, isChecked -> checked[which] = isChecked }
             .setPositiveButton("저장") { _, _ ->
-                nativePrefs().edit()
-                    .putString(NOTIFY_SCHEDULE_KEY, checked[0].toString())
-                    .putString(NOTIFY_BUDGET_KEY, checked[1].toString())
-                    .apply()
-                message = "알림 설정을 저장했어요."
-                render()
+                saveNotificationSettings(checked[0], checked[1])
             }
             .setNegativeButton("닫기", null)
             .show()

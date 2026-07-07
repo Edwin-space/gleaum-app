@@ -688,3 +688,33 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 온보딩/보안/프로필 보조 화면의 잔여 View UI를 Material 3 기준으로 정리.
 2. 알림 설정/홈 레이아웃/캘린더 설정 등 설정 하위 화면의 Compose 전환 범위 확정.
 3. 라이트/다크/태블릿 회귀 QA 후 다음 Google Play 업데이트 후보 빌드 생성.
+
+## 2026-07-07 진행 기록 — Compose Settings Dialog 1차 전환
+
+### 완료
+- Android 전체 메뉴에서 직접 호출되는 설정 하위 다이얼로그 3종을 Compose Material 3 기반으로 전환했다.
+  - 대상: 화면 모드, 홈 레이아웃, 알림 설정.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/menu/ComposeMyMenuScreen.kt`
+  - Activity 연결: `NativeMyMenuActivity`
+  - 사용 컴포넌트: `AlertDialog`, `ListItem`, `RadioButton`, `Checkbox`, `TextButton`.
+- 기존 저장 로직과 preference key는 유지했다.
+  - 화면 모드: `THEME_MODE_KEY`
+  - 홈 레이아웃: `HOME_LAYOUT_KEY`
+  - 알림 설정: `NOTIFY_SCHEDULE_KEY`, `NOTIFY_BUDGET_KEY`
+- `NativePortFlags.ENABLE_COMPOSE_MENU`가 꺼져 있을 경우 기존 `AlertDialog.Builder` 기반 다이얼로그로 fallback 되도록 했다.
+- 권한/시스템 설정 호출이 포함된 캘린더 설정, 생체인증 설정은 이번 전환에서 제외하고 기존 네이티브 로직을 유지했다.
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 확인해야 한다.
+  - `전체 → 화면 모드` 선택/저장 후 라이트/다크 반영
+  - `전체 → 홈 레이아웃` 선택/저장 후 홈 구성 반영
+  - `전체 → 알림 설정` 체크/저장 후 메뉴 배지/설명 갱신
+
+### 다음 권장 작업
+1. 캘린더 설정을 권한 요청/캘린더 선택 단계로 분리해 Compose 화면 또는 M3 다이얼로그로 전환.
+2. 생체인증 보안 설정을 상태 카드 + 재잠금 옵션 선택 UI로 Compose 전환.
+3. 프로필/비밀번호/계정 상태 다이얼로그를 Compose Material 3 기반으로 정리.
