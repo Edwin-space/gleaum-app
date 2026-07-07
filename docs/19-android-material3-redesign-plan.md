@@ -718,3 +718,34 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 캘린더 설정을 권한 요청/캘린더 선택 단계로 분리해 Compose 화면 또는 M3 다이얼로그로 전환.
 2. 생체인증 보안 설정을 상태 카드 + 재잠금 옵션 선택 UI로 Compose 전환.
 3. 프로필/비밀번호/계정 상태 다이얼로그를 Compose Material 3 기반으로 정리.
+
+## 2026-07-07 진행 기록 — Compose Biometric Settings 전환
+
+### 완료
+- Android 전체 메뉴의 생체인증 보안 설정 다이얼로그를 Compose Material 3 기반으로 전환했다.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/menu/ComposeMyMenuScreen.kt`
+  - Activity 연결: `NativeMyMenuActivity`
+  - 사용 컴포넌트: `AlertDialog`, `ListItem`, `Switch`, `RadioButton`, `TextButton`.
+- 기존 보안/저장 로직은 유지했다.
+  - 앱 잠금 켜기/끄기: `setBiometricLock()`
+  - 재잠금 기준 변경: `setBiometricRelockInterval()`
+  - 사용 가능 여부 판단: `isBiometricAvailableForLock()`
+  - Android 기기 보안 설정 이동: `Settings.ACTION_SECURITY_SETTINGS`
+- 생체인증을 사용할 수 없는 기기에서는 앱 잠금 토글 시 기기 보안 설정으로 이동하도록 처리했다.
+- `NativePortFlags.ENABLE_COMPOSE_MENU`가 꺼져 있을 경우 기존 `AlertDialog.Builder` 기반 설정으로 fallback 되도록 유지했다.
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 확인해야 한다.
+  - `전체 → 생체인증 보안 → 앱 잠금 켜기/끄기`
+  - 앱 잠금 켠 상태에서 재잠금 기준 `항상/5분/15분/30분` 변경
+  - 기기 잠금 미설정 상태에서 `기기 보안 설정` 이동
+  - 메뉴 배지/설명 갱신
+
+### 다음 권장 작업
+1. 캘린더 설정을 권한 요청/캘린더 선택 단계로 분리해 Compose Material 3로 전환.
+2. 프로필/비밀번호/계정 상태 다이얼로그를 Compose Material 3 기반으로 정리.
+3. 온보딩 화면의 Material 3 정리 범위를 확정.

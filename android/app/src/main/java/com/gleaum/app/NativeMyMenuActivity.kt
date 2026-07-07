@@ -159,10 +159,16 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         homeLayoutValue = normalizedHomeLayout(),
                         notificationScheduleEnabled = isScheduleNotificationEnabled(),
                         notificationBudgetEnabled = isBudgetNotificationEnabled(),
+                        biometricLockEnabled = isBiometricLockEnabled(),
+                        biometricAvailable = isBiometricAvailableForLock(),
+                        biometricRelockInterval = getBiometricRelockInterval(),
                         onDismissSettingsDialog = { dismissComposeSettingsDialog() },
                         onThemeModeSelected = { saveThemeMode(it) },
                         onHomeLayoutSelected = { saveHomeLayout(it) },
                         onNotificationSettingsSaved = { schedule, budget -> saveNotificationSettings(schedule, budget) },
+                        onBiometricLockChanged = { setBiometricLock(it) },
+                        onBiometricRelockIntervalSelected = { setBiometricRelockInterval(it) },
+                        onOpenDeviceSecuritySettings = { openDeviceSecuritySettings() },
                         onAction = ::handleMenuAction,
                     )
                 }
@@ -189,7 +195,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             MyMenuAction.HOME_LAYOUT -> openComposeSettingsDialog(MyMenuSettingsDialog.HOME_LAYOUT) { showHomeLayoutSettings() }
             MyMenuAction.CALENDAR_SETTINGS -> showCalendarSettings()
             MyMenuAction.NOTIFICATION_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.NOTIFICATIONS) { showNotificationSettings() }
-            MyMenuAction.BIOMETRIC_SETTINGS -> showBiometricSettings()
+            MyMenuAction.BIOMETRIC_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.BIOMETRIC) { showBiometricSettings() }
             MyMenuAction.PASSWORD_SETTINGS -> showPasswordSettingsNotice()
             MyMenuAction.PROFILE -> loadProfileForEdit()
             MyMenuAction.ACCOUNT_STATUS -> loadAccountStatus()
@@ -941,6 +947,11 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun openDeviceSecuritySettings() {
+        activeComposeSettingsDialog = null
+        startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+    }
+
     private fun showBiometricSettings() {
         val enabled = isBiometricLockEnabled()
         val available = isBiometricAvailableForLock()
@@ -1063,6 +1074,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun isBiometricLockEnabled(): Boolean = nativePrefs().getString(BIOMETRIC_LOCK_ENABLED_KEY, "false") == "true"
 
     private fun setBiometricLock(enabled: Boolean) {
+        activeComposeSettingsDialog = null
         nativePrefs().edit()
             .putString(BIOMETRIC_LOCK_ENABLED_KEY, if (enabled) "true" else "false")
             .putString(BIOMETRIC_PROMPT_SEEN_KEY, "true")
@@ -1077,6 +1089,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
         nativePrefs().getString(BIOMETRIC_RELOCK_INTERVAL_KEY, "always") ?: "always"
 
     private fun setBiometricRelockInterval(interval: String) {
+        activeComposeSettingsDialog = null
         nativePrefs().edit().putString(BIOMETRIC_RELOCK_INTERVAL_KEY, interval).apply()
         message = "재잠금 기준을 ${relockIntervalLabel(interval)}로 변경했어요."
         render()

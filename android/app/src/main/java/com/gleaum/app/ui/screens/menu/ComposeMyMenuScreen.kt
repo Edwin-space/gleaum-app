@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,6 +75,7 @@ enum class MyMenuSettingsDialog {
     THEME_MODE,
     HOME_LAYOUT,
     NOTIFICATIONS,
+    BIOMETRIC,
 }
 
 @Composable
@@ -97,10 +99,16 @@ fun ComposeMyMenuScreen(
     homeLayoutValue: String = "balanced",
     notificationScheduleEnabled: Boolean = true,
     notificationBudgetEnabled: Boolean = true,
+    biometricLockEnabled: Boolean = false,
+    biometricAvailable: Boolean = false,
+    biometricRelockInterval: String = "always",
     onDismissSettingsDialog: () -> Unit = {},
     onThemeModeSelected: (String) -> Unit = {},
     onHomeLayoutSelected: (String) -> Unit = {},
     onNotificationSettingsSaved: (Boolean, Boolean) -> Unit = { _, _ -> },
+    onBiometricLockChanged: (Boolean) -> Unit = {},
+    onBiometricRelockIntervalSelected: (String) -> Unit = {},
+    onOpenDeviceSecuritySettings: () -> Unit = {},
     onAction: (MyMenuAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -185,6 +193,15 @@ fun ComposeMyMenuScreen(
             scheduleEnabled = notificationScheduleEnabled,
             budgetEnabled = notificationBudgetEnabled,
             onSave = onNotificationSettingsSaved,
+            onDismiss = onDismissSettingsDialog,
+        )
+        MyMenuSettingsDialog.BIOMETRIC -> BiometricSettingsDialog(
+            enabled = biometricLockEnabled,
+            available = biometricAvailable,
+            relockInterval = biometricRelockInterval,
+            onEnabledChange = onBiometricLockChanged,
+            onRelockIntervalSelected = onBiometricRelockIntervalSelected,
+            onOpenDeviceSecuritySettings = onOpenDeviceSecuritySettings,
             onDismiss = onDismissSettingsDialog,
         )
         null -> Unit
@@ -332,6 +349,64 @@ private fun NotificationSettingsDialog(
         },
         confirmButton = { TextButton(onClick = { onSave(scheduleChecked, budgetChecked) }) { Text("저장") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
+    )
+}
+
+@Composable
+private fun BiometricSettingsDialog(
+    enabled: Boolean,
+    available: Boolean,
+    relockInterval: String,
+    onEnabledChange: (Boolean) -> Unit,
+    onRelockIntervalSelected: (String) -> Unit,
+    onOpenDeviceSecuritySettings: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (enabled) "생체인증 보안" else "앱 잠금 설정", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = if (available) "앱을 다시 열거나 보호 구간에 접근할 때 지문 또는 기기 잠금으로 확인합니다." else "이 기능을 사용하려면 먼저 Android 기기 잠금 또는 지문을 설정해야 합니다.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                ListItem(
+                    headlineContent = { Text("앱 잠금", fontWeight = FontWeight.SemiBold) },
+                    supportingContent = { Text(if (available) "지문 또는 기기 잠금으로 보호" else "기기 보안 설정 후 사용할 수 있어요") },
+                    trailingContent = {
+                        Switch(
+                            checked = enabled,
+                            onCheckedChange = { checked -> if (available || !checked) onEnabledChange(checked) else onOpenDeviceSecuritySettings() },
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { if (available || enabled) onEnabledChange(!enabled) else onOpenDeviceSecuritySettings() },
+                )
+                if (enabled) {
+                    Text("재잠금 기준", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    listOf(
+                        SettingsChoice("always", "항상", "앱을 다시 열 때마다 확인합니다."),
+                        SettingsChoice("5m", "5분 후", "잠금 해제 후 5분 동안 유지합니다."),
+                        SettingsChoice("15m", "15분 후", "잠금 해제 후 15분 동안 유지합니다."),
+                        SettingsChoice("30m", "30분 후", "잠금 해제 후 30분 동안 유지합니다."),
+                    ).forEach { option ->
+                        ListItem(
+                            headlineContent = { Text(option.label, fontWeight = FontWeight.SemiBold) },
+                            supportingContent = { Text(option.description) },
+                            leadingContent = { RadioButton(selected = relockInterval == option.value, onClick = { onRelockIntervalSelected(option.value) }) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onRelockIntervalSelected(option.value) },
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
+        dismissButton = { TextButton(onClick = onOpenDeviceSecuritySettings) { Text("기기 보안 설정") } },
     )
 }
 
