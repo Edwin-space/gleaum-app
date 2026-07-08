@@ -846,3 +846,43 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 온보딩 화면을 Material 3 기준으로 정리.
 2. 설정 하위 화면 전체 실기기 회귀 QA.
 3. Google Play 업데이트 후보 빌드 생성 전 라이트/다크/태블릿 체크.
+
+## 2026-07-08 진행 기록 — Compose Onboarding 1차 전환
+
+### 완료
+- Android 온보딩 화면을 Compose Material 3 기반으로 1차 전환했다.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/onboarding/ComposeOnboardingScreen.kt`
+  - Activity 연결: `NativeOnboardingActivity`
+  - 사용 컴포넌트: `LazyColumn`, `ElevatedCard`, `OutlinedCard`, `Card`, `ListItem`, `OutlinedTextField`, `RadioButton`, `Switch`, `Button`, `TextButton`, `LinearProgressIndicator`, `AssistChip`.
+- 기존 5단계 온보딩 흐름은 유지했다.
+  - 1단계: 닉네임/실명/표시 방식.
+  - 2단계: 사용 중심 목표.
+  - 3단계: 홈 레이아웃.
+  - 4단계: 공간 사용 방식/생성/참여.
+  - 5단계: 알림/생체인증 앱 잠금.
+- 기존 저장/API 로직은 유지했다.
+  - 공유 공간 생성/참여: `NativeSpaceApi.create()`, `NativeSpaceApi.join()`
+  - 온보딩 완료: `NativeOnboardingApi.complete()`
+  - 생체인증 선호값 저장: `applyBiometricPreferenceIfNeeded()`
+- Compose 입력 화면에서는 입력값을 Activity state와 동기화하도록 연결했다.
+- Feature gate 추가/사용.
+  - `NativePortFlags.ENABLE_COMPOSE_ONBOARDING = true`
+- Feature gate가 꺼져 있을 경우 기존 programmatic View 기반 온보딩 UI로 fallback 되도록 유지했다.
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 신규/온보딩 미완료 계정으로 다음 플로우를 실기기에서 확인해야 한다.
+  - 닉네임/실명 입력 후 다음 단계 이동
+  - 목표 선택 시 홈 레이아웃 자동 제안
+  - 홈 레이아웃 직접 선택
+  - 공간 나중에 설정/새 공간 만들기/초대 코드 참여
+  - 알림/생체인증 설정 후 온보딩 완료
+  - 완료 후 `NativeHomePortActivity` 진입
+
+### 다음 권장 작업
+1. 온보딩 실기기 QA에서 입력값 유지/키보드/단계 이동을 확인.
+2. Android 네이티브 화면 전체 라이트/다크/태블릿 회귀 QA.
+3. Google Play 업데이트 후보 빌드 생성 전 미푸시 커밋 동기화.

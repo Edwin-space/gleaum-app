@@ -22,6 +22,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.setContent
+import com.gleaum.app.ui.screens.onboarding.ComposeOnboardingScreen
+import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
 
 class NativeOnboardingActivity : AppCompatActivity() {
@@ -95,6 +98,10 @@ class NativeOnboardingActivity : AppCompatActivity() {
     }
 
     private fun render() {
+        if (NativePortFlags.ENABLE_COMPOSE_ONBOARDING) {
+            renderComposeOnboarding()
+            return
+        }
         setContentView(FrameLayout(this).apply {
             setBackgroundColor(color("#FAFAFD"))
             addView(ScrollView(context).apply {
@@ -108,6 +115,50 @@ class NativeOnboardingActivity : AppCompatActivity() {
                 }, NativeAdaptive.scrollChildParams(this@NativeOnboardingActivity, compact = true))
             }, FrameLayout.LayoutParams(match(), match()))
         })
+    }
+
+
+    private fun renderComposeOnboarding() {
+        setContent {
+            GleaumTheme {
+                ComposeOnboardingScreen(
+                    step = step,
+                    saving = saving,
+                    displayName = displayName,
+                    realName = realName,
+                    nameMode = nameMode,
+                    primaryGoal = primaryGoal,
+                    homeLayout = homeLayout,
+                    spaceIntent = spaceIntent,
+                    spaceSetupMode = spaceSetupMode,
+                    newSpaceName = newSpaceName,
+                    joinCode = joinCode,
+                    biometricLock = biometricLock,
+                    biometricAvailable = isBiometricAvailableForLock(),
+                    scheduleReminders = scheduleReminders,
+                    expenseReminders = expenseReminders,
+                    spaceUpdates = spaceUpdates,
+                    goals = goals,
+                    layouts = layouts,
+                    spaces = spaces,
+                    onDisplayNameChange = { displayName = it },
+                    onRealNameChange = { realName = it },
+                    onNameModeChange = { nameMode = it; render() },
+                    onGoalSelected = { option -> primaryGoal = option.key; homeLayout = option.value; render() },
+                    onLayoutSelected = { option -> homeLayout = option.key; render() },
+                    onSpaceIntentSelected = { option -> spaceIntent = option.key; if (option.key == "solo") spaceSetupMode = "skip"; render() },
+                    onSpaceSetupModeChange = { spaceSetupMode = it; render() },
+                    onNewSpaceNameChange = { newSpaceName = it },
+                    onJoinCodeChange = { joinCode = it },
+                    onScheduleRemindersChange = { scheduleReminders = it; render() },
+                    onExpenseRemindersChange = { expenseReminders = it; render() },
+                    onSpaceUpdatesChange = { spaceUpdates = it; render() },
+                    onBiometricLockChange = { biometricLock = it; render() },
+                    onPrevious = { step -= 1; hideKeyboard(); render() },
+                    onNext = { next() },
+                )
+            }
+        }
     }
 
     private fun hero(): LinearLayout = LinearLayout(this).apply {
@@ -247,13 +298,23 @@ class NativeOnboardingActivity : AppCompatActivity() {
     private fun next() {
         if (saving) return
         if (step == 0) {
-            displayName = nameInput?.text?.toString()?.trim().orEmpty()
-            realName = realNameInput?.text?.toString()?.trim().orEmpty()
+            if (!NativePortFlags.ENABLE_COMPOSE_ONBOARDING) {
+                displayName = nameInput?.text?.toString()?.trim().orEmpty()
+                realName = realNameInput?.text?.toString()?.trim().orEmpty()
+            } else {
+                displayName = displayName.trim()
+                realName = realName.trim()
+            }
             if (displayName.isBlank()) { toast("표시 이름을 입력해 주세요."); return }
         }
         if (step == 3) {
-            newSpaceName = spaceNameInput?.text?.toString()?.trim().orEmpty()
-            joinCode = joinCodeInput?.text?.toString()?.trim().orEmpty()
+            if (!NativePortFlags.ENABLE_COMPOSE_ONBOARDING) {
+                newSpaceName = spaceNameInput?.text?.toString()?.trim().orEmpty()
+                joinCode = joinCodeInput?.text?.toString()?.trim().orEmpty()
+            } else {
+                newSpaceName = newSpaceName.trim()
+                joinCode = joinCode.trim()
+            }
             if (spaceSetupMode == "create" && newSpaceName.isBlank()) { toast("새 공간 이름을 입력해 주세요."); return }
             if (spaceSetupMode == "join" && joinCode.isBlank()) { toast("초대 코드를 입력해 주세요."); return }
         }
