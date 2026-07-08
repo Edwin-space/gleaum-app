@@ -59,6 +59,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private var loading = true
     private var message: String? = null
     private var activeComposeSettingsDialog: MyMenuSettingsDialog? = null
+    private var composeProfile: NativeProfile? = null
+    private var composeAccountStatus: NativeAccountStatus? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -167,6 +169,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         calendarSyncEnabled = isCalendarSyncEnabled(),
                         selectedCalendarId = selectedCalendarId(),
                         calendarChoices = calendarChoicesForSettings(),
+                        profile = composeProfile,
+                        accountStatus = composeAccountStatus,
                         onDismissSettingsDialog = { dismissComposeSettingsDialog() },
                         onThemeModeSelected = { saveThemeMode(it) },
                         onHomeLayoutSelected = { saveHomeLayout(it) },
@@ -177,6 +181,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         onRequestCalendarPermission = { requestCalendarPermissionFromCompose() },
                         onCalendarSelected = { setSelectedCalendar(it.toDeviceCalendarRow()) },
                         onCalendarSyncDisabled = { disableCalendarSync() },
+                        onPasswordSave = { password, confirm -> validateAndUpdatePassword(password, confirm) },
+                        onProfileSave = { displayName, realName, mode -> updateProfile(displayName, realName, mode) },
+                        onAccountWithdraw = { reason -> withdrawAccount(reason) },
+                        onAccountRestore = { restoreAccount() },
                         onAction = ::handleMenuAction,
                     )
                 }
@@ -204,7 +212,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             MyMenuAction.CALENDAR_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.CALENDAR) { showCalendarSettings() }
             MyMenuAction.NOTIFICATION_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.NOTIFICATIONS) { showNotificationSettings() }
             MyMenuAction.BIOMETRIC_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.BIOMETRIC) { showBiometricSettings() }
-            MyMenuAction.PASSWORD_SETTINGS -> showPasswordSettingsNotice()
+            MyMenuAction.PASSWORD_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.PASSWORD) { showPasswordSettingsNotice() }
             MyMenuAction.PROFILE -> loadProfileForEdit()
             MyMenuAction.ACCOUNT_STATUS -> loadAccountStatus()
             MyMenuAction.LEGAL -> showLegalDocuments()
@@ -545,6 +553,18 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
     private fun biometricBadge(): String = if (isBiometricLockEnabled()) "켜짐" else if (biometricSubtitle().contains("가능")) "가능" else "확인"
 
+    private fun validateAndUpdatePassword(password: String, confirm: String) {
+        when {
+            password.length < 6 -> Toast.makeText(this, "비밀번호는 6자 이상 입력해 주세요.", Toast.LENGTH_SHORT).show()
+            password.length > 72 -> Toast.makeText(this, "비밀번호는 72자 이내로 입력해 주세요.", Toast.LENGTH_SHORT).show()
+            password != confirm -> Toast.makeText(this, "비밀번호 확인이 일치하지 않아요.", Toast.LENGTH_SHORT).show()
+            else -> {
+                activeComposeSettingsDialog = null
+                updatePassword(password)
+            }
+        }
+    }
+
     private fun showPasswordSettingsNotice() {
         val passwordInput = EditText(this).apply {
             hint = "새 비밀번호"
@@ -606,6 +626,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun updatePassword(password: String) {
+        activeComposeSettingsDialog = null
         message = "비밀번호를 변경하는 중이에요."
         render()
         Thread {
@@ -632,7 +653,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 val profile = NativeProfileApi.fetch(this)
                 runOnUiThread {
                     message = null
-                    showProfileEditDialog(profile)
+                    if (NativePortFlags.ENABLE_COMPOSE_MENU) {
+                        composeProfile = profile
+                        activeComposeSettingsDialog = MyMenuSettingsDialog.PROFILE
+                        render()
+                    } else {
+                        showProfileEditDialog(profile)
+                    }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -713,6 +740,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun updateProfile(displayName: String, realName: String, nameDisplayMode: String) {
+        activeComposeSettingsDialog = null
         Thread {
             try {
                 NativeProfileApi.update(this, displayName.trim(), realName.trim().ifBlank { null }, nameDisplayMode)
@@ -751,8 +779,14 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 val status = NativeAccountApi.status(this)
                 runOnUiThread {
                     message = null
-                    render()
-                    showAccountStatusDialog(status)
+                    if (NativePortFlags.ENABLE_COMPOSE_MENU) {
+                        composeAccountStatus = status
+                        activeComposeSettingsDialog = MyMenuSettingsDialog.ACCOUNT_STATUS
+                        render()
+                    } else {
+                        render()
+                        showAccountStatusDialog(status)
+                    }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -806,6 +840,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun withdrawAccount(reason: String) {
+        activeComposeSettingsDialog = null
         message = "탈퇴 신청을 처리하는 중이에요."
         render()
         Thread {
@@ -829,6 +864,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun restoreAccount() {
+        activeComposeSettingsDialog = null
         message = "계정을 복구하는 중이에요."
         render()
         Thread {

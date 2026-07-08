@@ -783,3 +783,38 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 프로필/비밀번호/계정 상태 다이얼로그를 Compose Material 3 기반으로 정리.
 2. 온보딩 화면의 Material 3 정리 범위 확정.
 3. 설정 하위 화면 실기기 회귀 QA 후 Google Play 업데이트 후보 빌드 생성.
+
+## 2026-07-08 진행 기록 — Compose Profile/Security/Account Dialog 전환
+
+### 완료
+- Android 전체 메뉴의 계정/보안 하위 다이얼로그 3종을 Compose Material 3 기반으로 전환했다.
+  - 대상: 프로필 관리, 비밀번호 설정, 계정 탈퇴/복구.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/menu/ComposeMyMenuScreen.kt`
+  - Activity 연결: `NativeMyMenuActivity`
+  - 사용 컴포넌트: `AlertDialog`, `OutlinedTextField`, `ListItem`, `RadioButton`, `Button`, `TextButton`.
+- 기존 API/저장 로직은 유지했다.
+  - 프로필 조회/수정: `NativeProfileApi.fetch()`, `NativeProfileApi.update()`
+  - 비밀번호 변경: `NativeProfileApi.updatePassword()`
+  - 계정 상태/탈퇴/복구: `NativeAccountApi.status()`, `withdraw()`, `restore()`
+- 비밀번호 검증 기준은 기존과 동일하게 유지했다.
+  - 6자 이상, 72자 이하, 확인값 일치.
+- 프로필 다이얼로그는 닉네임, 실명, 표시 방식(`nickname`/`real_name`)을 Compose 입력 UI로 제공한다.
+- 계정 상태 다이얼로그는 탈퇴 신청 전/후 상태를 분기한다.
+  - 탈퇴 전: 탈퇴 사유 200자 입력 + 탈퇴 신청.
+  - 탈퇴 신청 중: 남은 일수/삭제 예정일 안내 + 복구하기.
+- `NativePortFlags.ENABLE_COMPOSE_MENU`가 꺼져 있을 경우 기존 `AlertDialog.Builder` 기반 UI로 fallback 되도록 유지했다.
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 확인해야 한다.
+  - `전체 → 프로필 관리 → 닉네임/실명/표시 방식 저장`
+  - `전체 → 비밀번호 설정 → 검증 실패/저장 성공`
+  - `전체 → 계정 탈퇴/복구 → 상태 조회/탈퇴 신청/복구`
+
+### 다음 권장 작업
+1. 약관 및 개인정보 선택 다이얼로그를 Compose Material 3로 전환하거나 현재 LegalWebView 진입 UI를 정리.
+2. 온보딩 화면의 Material 3 정리 범위 확정.
+3. 설정 하위 화면 전체 실기기 회귀 QA 후 Google Play 업데이트 후보 빌드 생성.

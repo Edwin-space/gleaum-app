@@ -37,7 +37,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
@@ -51,9 +53,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.gleaum.app.NativeAccountStatus
 import com.gleaum.app.NativeHomePortSummary
+import com.gleaum.app.NativeProfile
 
 enum class MyMenuAction {
     ADD_SCHEDULE,
@@ -77,6 +82,9 @@ enum class MyMenuSettingsDialog {
     NOTIFICATIONS,
     BIOMETRIC,
     CALENDAR,
+    PASSWORD,
+    PROFILE,
+    ACCOUNT_STATUS,
 }
 
 data class CalendarChoice(
@@ -113,6 +121,8 @@ fun ComposeMyMenuScreen(
     calendarSyncEnabled: Boolean = false,
     selectedCalendarId: String? = null,
     calendarChoices: List<CalendarChoice> = emptyList(),
+    profile: NativeProfile? = null,
+    accountStatus: NativeAccountStatus? = null,
     onDismissSettingsDialog: () -> Unit = {},
     onThemeModeSelected: (String) -> Unit = {},
     onHomeLayoutSelected: (String) -> Unit = {},
@@ -123,6 +133,10 @@ fun ComposeMyMenuScreen(
     onRequestCalendarPermission: () -> Unit = {},
     onCalendarSelected: (CalendarChoice) -> Unit = {},
     onCalendarSyncDisabled: () -> Unit = {},
+    onPasswordSave: (String, String) -> Unit = { _, _ -> },
+    onProfileSave: (String, String, String) -> Unit = { _, _, _ -> },
+    onAccountWithdraw: (String) -> Unit = {},
+    onAccountRestore: () -> Unit = {},
     onAction: (MyMenuAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -226,6 +240,21 @@ fun ComposeMyMenuScreen(
             onRequestPermission = onRequestCalendarPermission,
             onCalendarSelected = onCalendarSelected,
             onSyncDisabled = onCalendarSyncDisabled,
+            onDismiss = onDismissSettingsDialog,
+        )
+        MyMenuSettingsDialog.PASSWORD -> PasswordSettingsDialog(
+            onSave = onPasswordSave,
+            onDismiss = onDismissSettingsDialog,
+        )
+        MyMenuSettingsDialog.PROFILE -> ProfileSettingsDialog(
+            profile = profile,
+            onSave = onProfileSave,
+            onDismiss = onDismissSettingsDialog,
+        )
+        MyMenuSettingsDialog.ACCOUNT_STATUS -> AccountStatusDialog(
+            status = accountStatus,
+            onWithdraw = onAccountWithdraw,
+            onRestore = onAccountRestore,
             onDismiss = onDismissSettingsDialog,
         )
         null -> Unit
@@ -372,6 +401,136 @@ private fun NotificationSettingsDialog(
             }
         },
         confirmButton = { TextButton(onClick = { onSave(scheduleChecked, budgetChecked) }) { Text("저장") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
+    )
+}
+
+@Composable
+private fun PasswordSettingsDialog(
+    onSave: (String, String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var password by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("비밀번호 설정", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("이메일 로그인에 사용할 비밀번호를 변경합니다. Google 로그인 계정은 기존 방식 그대로 사용할 수 있어요.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("새 비밀번호") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = confirm,
+                    onValueChange = { confirm = it },
+                    label = { Text("새 비밀번호 확인") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = { Button(onClick = { onSave(password, confirm) }) { Text("저장") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
+    )
+}
+
+@Composable
+private fun ProfileSettingsDialog(
+    profile: NativeProfile?,
+    onSave: (String, String, String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var displayName by remember(profile?.id) { mutableStateOf(profile?.displayName.orEmpty()) }
+    var realName by remember(profile?.id) { mutableStateOf(profile?.realName.orEmpty()) }
+    var displayMode by remember(profile?.id) { mutableStateOf(profile?.nameDisplayMode?.takeIf { it == "real_name" } ?: "nickname") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("프로필 관리", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(profile?.email?.ifBlank { "계정 이메일 없음" } ?: "프로필 정보를 불러오는 중이에요.", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    value = displayName,
+                    onValueChange = { displayName = it },
+                    label = { Text("닉네임") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = realName,
+                    onValueChange = { realName = it },
+                    label = { Text("실명 (선택)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text("앱에서 나를 어떻게 부를지 선택해 주세요.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                listOf(
+                    SettingsChoice("nickname", "닉네임으로 표시", "공간과 일정에서 닉네임을 우선 사용합니다."),
+                    SettingsChoice("real_name", "실명으로 표시", "실명을 입력한 경우 실명을 우선 사용합니다."),
+                ).forEach { option ->
+                    ListItem(
+                        headlineContent = { Text(option.label, fontWeight = FontWeight.SemiBold) },
+                        supportingContent = { Text(option.description) },
+                        leadingContent = { RadioButton(selected = displayMode == option.value, onClick = { displayMode = option.value }) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { displayMode = option.value },
+                    )
+                }
+            }
+        },
+        confirmButton = { Button(onClick = { onSave(displayName, realName, displayMode) }, enabled = profile != null) { Text("저장") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
+    )
+}
+
+@Composable
+private fun AccountStatusDialog(
+    status: NativeAccountStatus?,
+    onWithdraw: (String) -> Unit,
+    onRestore: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var reason by remember(status?.withdrawalPending) { mutableStateOf("") }
+    val pending = status?.withdrawalPending == true
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (pending) "탈퇴 신청 중" else "계정 탈퇴", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (status == null) {
+                    Text("계정 상태를 확인하는 중이에요.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else if (pending) {
+                    Text("계정 삭제까지 ${status.daysLeft}일 남았어요. 복구하면 기존 계정을 계속 사용할 수 있습니다.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    status.deleteScheduledAt?.let { Text("삭제 예정일: ${it.take(10)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                } else {
+                    Text("탈퇴 신청 후 30일 동안 복구할 수 있고, 이후 개인정보가 삭제됩니다. 먼저 데이터를 확인한 뒤 진행해 주세요.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OutlinedTextField(
+                        value = reason,
+                        onValueChange = { if (it.length <= 200) reason = it },
+                        label = { Text("탈퇴 사유 (선택)") },
+                        minLines = 3,
+                        supportingText = { Text("${reason.length}/200") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            when {
+                status == null -> TextButton(onClick = onDismiss) { Text("닫기") }
+                pending -> Button(onClick = onRestore) { Text("복구하기") }
+                else -> Button(onClick = { onWithdraw(reason) }) { Text("탈퇴 신청") }
+            }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
     )
 }
