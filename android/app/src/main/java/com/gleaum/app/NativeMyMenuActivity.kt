@@ -185,6 +185,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         onProfileSave = { displayName, realName, mode -> updateProfile(displayName, realName, mode) },
                         onAccountWithdraw = { reason -> withdrawAccount(reason) },
                         onAccountRestore = { restoreAccount() },
+                        onOpenTerms = { openLegalDocumentFromCompose("이용약관", "/legal/terms") },
+                        onOpenPrivacy = { openLegalDocumentFromCompose("개인정보처리방침", "/legal/privacy") },
                         onAction = ::handleMenuAction,
                     )
                 }
@@ -215,7 +217,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
             MyMenuAction.PASSWORD_SETTINGS -> openComposeSettingsDialog(MyMenuSettingsDialog.PASSWORD) { showPasswordSettingsNotice() }
             MyMenuAction.PROFILE -> loadProfileForEdit()
             MyMenuAction.ACCOUNT_STATUS -> loadAccountStatus()
-            MyMenuAction.LEGAL -> showLegalDocuments()
+            MyMenuAction.LEGAL -> openComposeSettingsDialog(MyMenuSettingsDialog.LEGAL) { showLegalDocuments() }
             MyMenuAction.LOGOUT -> logout()
         }
     }
@@ -899,6 +901,11 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 else openLegalDocument("개인정보처리방침", "/legal/privacy")
             }
             .show()
+    }
+
+    private fun openLegalDocumentFromCompose(title: String, path: String) {
+        activeComposeSettingsDialog = null
+        openLegalDocument(title, path)
     }
 
     private fun openLegalDocument(title: String, path: String) {

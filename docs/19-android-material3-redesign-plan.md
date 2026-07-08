@@ -818,3 +818,31 @@ android/app/src/main/java/com/gleaum/app/ui/screens/
 1. 약관 및 개인정보 선택 다이얼로그를 Compose Material 3로 전환하거나 현재 LegalWebView 진입 UI를 정리.
 2. 온보딩 화면의 Material 3 정리 범위 확정.
 3. 설정 하위 화면 전체 실기기 회귀 QA 후 Google Play 업데이트 후보 빌드 생성.
+
+## 2026-07-08 진행 기록 — Compose Legal Documents Dialog 전환
+
+### 완료
+- Android 전체 메뉴의 `약관 및 개인정보` 선택 다이얼로그를 Compose Material 3 기반으로 전환했다.
+  - 파일: `android/app/src/main/java/com/gleaum/app/ui/screens/menu/ComposeMyMenuScreen.kt`
+  - Activity 연결: `NativeMyMenuActivity`
+  - 사용 컴포넌트: `AlertDialog`, `ListItem`, `Icon`, `TextButton`.
+- 기존 문서 열람 흐름은 유지했다.
+  - 이용약관: `LegalWebViewActivity` + `/legal/terms?view=android-app`
+  - 개인정보처리방침: `LegalWebViewActivity` + `/legal/privacy?view=android-app`
+- Compose 다이얼로그에서 문서 선택 후 기존 인앱 WebView로 이동하도록 연결했다.
+- `NativePortFlags.ENABLE_COMPOSE_MENU`가 꺼져 있을 경우 기존 `AlertDialog.Builder` 기반 UI로 fallback 되도록 유지했다.
+
+### 검증
+- 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
+- 결과: `BUILD SUCCESSFUL`
+
+### 남은 확인
+- 로그인된 실기기에서 다음 플로우를 확인해야 한다.
+  - `전체 → 약관 및 개인정보 → 이용약관`
+  - `전체 → 약관 및 개인정보 → 개인정보처리방침`
+  - LegalWebView 하단 닫기/뒤로가기 동작
+
+### 다음 권장 작업
+1. 온보딩 화면을 Material 3 기준으로 정리.
+2. 설정 하위 화면 전체 실기기 회귀 QA.
+3. Google Play 업데이트 후보 빌드 생성 전 라이트/다크/태블릿 체크.

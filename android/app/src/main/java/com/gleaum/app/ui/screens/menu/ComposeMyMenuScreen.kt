@@ -85,6 +85,7 @@ enum class MyMenuSettingsDialog {
     PASSWORD,
     PROFILE,
     ACCOUNT_STATUS,
+    LEGAL,
 }
 
 data class CalendarChoice(
@@ -137,6 +138,8 @@ fun ComposeMyMenuScreen(
     onProfileSave: (String, String, String) -> Unit = { _, _, _ -> },
     onAccountWithdraw: (String) -> Unit = {},
     onAccountRestore: () -> Unit = {},
+    onOpenTerms: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
     onAction: (MyMenuAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -255,6 +258,11 @@ fun ComposeMyMenuScreen(
             status = accountStatus,
             onWithdraw = onAccountWithdraw,
             onRestore = onAccountRestore,
+            onDismiss = onDismissSettingsDialog,
+        )
+        MyMenuSettingsDialog.LEGAL -> LegalDocumentsDialog(
+            onOpenTerms = onOpenTerms,
+            onOpenPrivacy = onOpenPrivacy,
             onDismiss = onDismissSettingsDialog,
         )
         null -> Unit
@@ -402,6 +410,40 @@ private fun NotificationSettingsDialog(
         },
         confirmButton = { TextButton(onClick = { onSave(scheduleChecked, budgetChecked) }) { Text("저장") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
+    )
+}
+
+@Composable
+private fun LegalDocumentsDialog(
+    onOpenTerms: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("약관 및 개인정보", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("글리움 서비스 이용에 필요한 문서를 앱 안에서 확인합니다.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ListItem(
+                    headlineContent = { Text("이용약관", fontWeight = FontWeight.SemiBold) },
+                    supportingContent = { Text("서비스 이용 조건과 기본 정책") },
+                    leadingContent = { Icon(Icons.Outlined.Description, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenTerms() },
+                )
+                ListItem(
+                    headlineContent = { Text("개인정보처리방침", fontWeight = FontWeight.SemiBold) },
+                    supportingContent = { Text("개인정보 수집, 이용, 보관, 삭제 기준") },
+                    leadingContent = { Icon(Icons.Outlined.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenPrivacy() },
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
     )
 }
 
