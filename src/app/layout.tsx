@@ -47,8 +47,11 @@ const themeInitScript = `
 })();
 `;
 
+const SITE_URL = 'https://gleaum.com';
+const ANDROID_PACKAGE = 'com.gleaum.app';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://gleaum.com'),
+  metadataBase: new URL(SITE_URL),
   title: '글리움 - 나, 그리고 연인/가족/모임 모든 일상 네트워크',
   description: '나, 그리고 연인, 가족 등 공간을 통한 일상 네트워크를 한 곳에서 도와 드립니다.',
   keywords: ['글리움', '가족 일정 관리', '공유 캘린더', '커플 앱', '일상 네트워크', '모임 관리', '가족 앱', 'gleaum'],
@@ -100,7 +103,18 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://gleaum.com',
+    canonical: SITE_URL,
+  },
+  appLinks: {
+    android: {
+      package: ANDROID_PACKAGE,
+      app_name: '글리움',
+      url: SITE_URL,
+    },
+    web: {
+      url: SITE_URL,
+      should_fallback: true,
+    },
   },
   appleWebApp: {
     capable: true,
@@ -126,6 +140,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* ── Supabase 연결 사전 설정 ── */}
         <link rel="preconnect" href="https://lbzroynnmcvjnpqopagg.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://lbzroynnmcvjnpqopagg.supabase.co" />
+        <link rel="preconnect" href="https://play.google.com" />
+        <link rel="alternate" href={`android-app://${ANDROID_PACKAGE}/https/gleaum.com`} />
+        <link rel="alternate" href={`android-app://${ANDROID_PACKAGE}/https/www.gleaum.com`} />
 
         {/* ── Pretendard: preconnect + non-blocking async load ──────────────
             Outfit은 next/font로 처리 (같은 도메인, 렌더 차단 없음)

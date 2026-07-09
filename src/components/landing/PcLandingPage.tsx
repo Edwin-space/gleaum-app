@@ -14,6 +14,7 @@ const CARD_BD = 'rgba(255,255,255,0.08)';
 const TEXT1   = '#FFFFFF';
 const TEXT2   = 'rgba(255,255,255,0.6)';
 const GRAD    = `linear-gradient(135deg, ${BLUE}, ${TEAL}, ${GREEN})`;
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.gleaum.app';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function soon() {
@@ -53,8 +54,11 @@ function AppStoreBadge({ small }: { small?: boolean }) {
 
 function GooglePlayBadge({ small }: { small?: boolean }) {
   return (
-    <button
-      onClick={soon}
+    <a
+      href={PLAY_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Google Play에서 글리움 Android 앱 다운로드"
       style={{
         display: 'inline-flex', alignItems: 'center', gap: '12px',
         padding: small ? '8px 18px' : '10px 22px',
@@ -62,6 +66,7 @@ function GooglePlayBadge({ small }: { small?: boolean }) {
         border: '1.5px solid rgba(255,255,255,0.2)', cursor: 'pointer',
         transition: 'opacity 0.2s', height: small ? '56px' : '66px',
         minWidth: small ? '170px' : '200px',
+        textDecoration: 'none',
       }}
       onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
       onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
@@ -77,7 +82,7 @@ function GooglePlayBadge({ small }: { small?: boolean }) {
         <div style={{ fontSize: small ? '9px' : '10px', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.02em' }}>Google Play에서</div>
         <div style={{ fontSize: small ? '15px' : '17px', fontWeight: 700, color: 'white', letterSpacing: '-0.3px' }}>다운로드하기</div>
       </div>
-    </button>
+    </a>
   );
 }
 
@@ -332,16 +337,24 @@ export function PcLandingPage() {
 
           {/* Links */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
-            {[
+            {([
               { label: '서비스 소개', fn: soon },
               { label: '기능', fn: soon },
-              { label: '다운로드', fn: soon },
-            ].map(({ label, fn }) => (
-              <button key={label} onClick={fn}
-                style={{ background: 'none', border: 'none', color: TEXT2, fontSize: '15px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.2s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = TEXT1; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = TEXT2; }}
-              >{label}</button>
+              { label: '다운로드', href: '/download' },
+            ] as const).map((item) => (
+              'fn' in item ? (
+                <button key={item.label} onClick={item.fn}
+                  style={{ background: 'none', border: 'none', color: TEXT2, fontSize: '15px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = TEXT1; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = TEXT2; }}
+                >{item.label}</button>
+              ) : (
+                <Link key={item.label} href={item.href}
+                  style={{ color: TEXT2, fontSize: '15px', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = TEXT1; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = TEXT2; }}
+                >{item.label}</Link>
+              )
             ))}
           </div>
 
@@ -893,7 +906,7 @@ export function PcLandingPage() {
                   links: [
                     { label: '서비스 소개', fn: soon },
                     { label: '기능 안내', fn: soon },
-                    { label: '다운로드', fn: soon },
+              { label: '다운로드', href: '/download' },
                   ],
                 },
                 {

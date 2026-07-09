@@ -3,12 +3,6 @@
 import { useEffect, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 
-// BeforeInstallPromptEvent 타입 (브라우저 표준에 미포함)
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
 type Platform = 'ios' | 'android' | 'other';
 
 function detectPlatform(): Platform {
@@ -28,12 +22,11 @@ function isInStandaloneMode(): boolean {
 }
 
 const DISMISSED_KEY = 'gleaum_pwa_banner_dismissed';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.gleaum.app';
 
 export function PWAInstallBanner() {
-  const [platform, setPlatform]             = useState<Platform>('other');
-  const [showBanner, setShowBanner]         = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installing, setInstalling]         = useState(false);
+  const [platform, setPlatform]     = useState<Platform>('other');
+  const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
     // 네이티브 앱(Capacitor)에서는 PWA 설치 배너 완전 비활성
@@ -47,22 +40,11 @@ export function PWAInstallBanner() {
     const plat = detectPlatform();
     setPlatform(plat);
 
-    if (plat === 'ios') {
+    if (plat === 'ios' || plat === 'android') {
       setTimeout(() => {
         setShowBanner(true);
-        void trackEvent('pwa_banner_show', { platform: 'ios' });
+        void trackEvent('pwa_banner_show', { platform: plat });
       }, 1500);
-    } else if (plat === 'android') {
-      const handler = (e: Event) => {
-        e.preventDefault();
-        setDeferredPrompt(e as BeforeInstallPromptEvent);
-        setTimeout(() => {
-          setShowBanner(true);
-          void trackEvent('pwa_banner_show', { platform: 'android' });
-        }, 1000);
-      };
-      window.addEventListener('beforeinstallprompt', handler);
-      return () => window.removeEventListener('beforeinstallprompt', handler);
     }
   }, []);
 
@@ -74,18 +56,9 @@ export function PWAInstallBanner() {
     sessionStorage.setItem(DISMISSED_KEY, '1');
   };
 
-  const handleInstallAndroid = async () => {
-    if (!deferredPrompt) return;
-    setInstalling(true);
-    void trackEvent('pwa_install_accept', { platform: 'android' });
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      void trackEvent('pwa_installed', { platform: 'android' });
-      setShowBanner(false);
-    }
-    setInstalling(false);
-    setDeferredPrompt(null);
+  const handleOpenPlayStore = () => {
+    void trackEvent('navigation_click', { destination: 'google_play_install_banner' });
+    window.location.href = PLAY_STORE_URL;
   };
 
   if (!showBanner) return null;
@@ -331,10 +304,10 @@ export function PWAInstallBanner() {
             {platform === 'android' && (
               <div>
                 <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 6px', letterSpacing: '-0.2px' }}>
-                  홈 화면에 추가하세요
+                  Google Play 앱으로 더 안정적으로 사용하세요
                 </p>
                 <p style={{ fontSize: '13px', color: 'var(--theme-text-muted)', margin: '0 0 24px', lineHeight: 1.5 }}>
-                  앱처럼 빠르게 실행하고 오프라인에서도 사용할 수 있어요.
+                  Android 단말에서는 공식 앱을 설치하면 네이티브 로그인, 알림, 캘린더 연동을 더 안정적으로 사용할 수 있어요.
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
@@ -352,11 +325,10 @@ export function PWAInstallBanner() {
                       transition: 'opacity 0.15s',
                     }}
                   >
-                    나중에
+                    웹으로 계속
                   </button>
                   <button
-                    onClick={handleInstallAndroid}
-                    disabled={installing}
+                    onClick={handleOpenPlayStore}
                     style={{
                       flex: 2,
                       height: '52px',
@@ -366,16 +338,15 @@ export function PWAInstallBanner() {
                       color: 'white',
                       background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
                       border: 'none',
-                      cursor: installing ? 'not-allowed' : 'pointer',
-                      opacity: installing ? 0.70 : 1,
+                      cursor: 'pointer',
                       boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
                       transition: 'opacity 0.15s, transform 0.15s',
                       letterSpacing: '-0.2px',
                     }}
-                    onTouchStart={e => { if (!installing) e.currentTarget.style.transform = 'scale(0.96)'; }}
+                    onTouchStart={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
                     onTouchEnd={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                   >
-                    {installing ? '설치 중...' : '홈 화면에 추가'}
+                    Google Play에서 설치
                   </button>
                 </div>
               </div>

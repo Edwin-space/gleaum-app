@@ -13,17 +13,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
 import { getAuthUser, isCronRequest, isInternalRequest } from '@/lib/supabase/route-auth';
+import { isUuid, sanitizeInternalUrl, trimText } from '@/lib/api/request-guards';
 
 export async function POST(req: NextRequest) {
   // ── 인증 검증 ──────────────────────────────────────────────
   const authHeader = req.headers.get('authorization');
   const isServer   = isCronRequest(authHeader) || isInternalRequest(authHeader);
+  let requesterId: string | null = null;
 
   if (!isServer) {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    requesterId = user.id;
   }
 
   // ── 요청 처리 ─────────────────────────────────────────────
@@ -32,15 +35,50 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { scheduleId, title, body, url } = await req.json() as {
+  const payload = await req.json().catch(() => null) as {
     scheduleId: string;
     title: string;
     body: string;
     url?: string;
-  };
+  } | null;
 
-  if (!scheduleId || !title) {
+  const scheduleId = trimText(payload?.scheduleId, 80);
+  const title      = trimText(payload?.title, 120);
+  const body       = trimText(payload?.body, 500);
+  const url        = sanitizeInternalUrl(payload?.url, `/schedules/${scheduleId}`);
+
+  if (!isUuid(scheduleId) || !title) {
     return NextResponse.json({ error: '파라미터 누락' }, { status: 400 });
+  }
+
+  // ── 권한 검증: 일정 작성자 또는 해당 공간 editor/admin 만 재알림 가능 ──
+  const { data: schedule, error: scheduleError } = await supabaseAdmin
+    .from('schedules')
+    .select('id, family_group_id, created_by, visibility')
+    .eq('id', scheduleId)
+    .single();
+
+  if (scheduleError || !schedule) {
+    return NextResponse.json({ error: '일정을 찾을 수 없습니다' }, { status: 404 });
+  }
+
+  if (!isServer && requesterId) {
+    const isCreator = schedule.created_by === requesterId;
+    let canEdit = false;
+
+    if (schedule.visibility !== 'private') {
+      const { data: membership } = await supabaseAdmin
+        .from('space_members')
+        .select('role')
+        .eq('space_id', schedule.family_group_id)
+        .eq('user_id', requesterId)
+        .maybeSingle();
+      canEdit = membership?.role === 'admin' || membership?.role === 'editor';
+    }
+
+    if (!isCreator && !canEdit) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
 
   // ── 1) 일정 참여자 조회 ────────────────────────────────────
@@ -53,19 +91,11 @@ export async function POST(req: NextRequest) {
 
   // 참여자 없으면 공간 전체 멤버 (space_members 기반)
   if (targetIds.length === 0) {
-    const { data: schedule } = await supabaseAdmin
-      .from('schedules')
-      .select('family_group_id')
-      .eq('id', scheduleId)
-      .single();
-
-    if (schedule) {
-      const { data: spaceMembers } = await supabaseAdmin
-        .from('space_members')
-        .select('user_id')
-        .eq('space_id', schedule.family_group_id);
-      targetIds = (spaceMembers ?? []).map((m: { user_id: string }) => m.user_id);
-    }
+    const { data: spaceMembers } = await supabaseAdmin
+      .from('space_members')
+      .select('user_id')
+      .eq('space_id', schedule.family_group_id);
+    targetIds = (spaceMembers ?? []).map((m: { user_id: string }) => m.user_id);
   }
 
   if (targetIds.length === 0) {
@@ -86,14 +116,14 @@ export async function POST(req: NextRequest) {
   const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
 
   // ── 3) FCM v1 발송 ────────────────────────────────────────
-  const sent = await sendFCMToMultiple(tokens, title, body ?? '', url ?? `/schedules/${scheduleId}`);
+  const sent = await sendFCMToMultiple(tokens, title, body, url);
 
   // ── 4) 알림 기록 ──────────────────────────────────────────
   const records = profiles.map((p: { id: string }) => ({
     user_id:     p.id,
     schedule_id: scheduleId,
     title,
-    body:        body ?? '',
+    body,
     type:        're_notify',
   }));
   await supabaseAdmin.from('notifications').insert(records);

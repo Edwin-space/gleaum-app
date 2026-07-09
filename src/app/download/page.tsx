@@ -20,6 +20,25 @@ import { GleaumAppIcon, GleaumBI } from '@/components/ui/GleaumLogo';
 
 const PLAY_STORE_URL  = 'https://play.google.com/store/apps/details?id=com.gleaum.app';
 const APP_STORE_URL   = null; // App Store 등록 후 URL 교체
+const softwareApplicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: '글리움',
+  alternateName: 'Gleaum',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Android',
+  url: 'https://gleaum.com/download',
+  downloadUrl: PLAY_STORE_URL,
+  installUrl: PLAY_STORE_URL,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'KRW',
+    url: PLAY_STORE_URL,
+  },
+  description: 'Google Play에서 글리움 Android 앱을 설치하고 일정, 공간, 가계부를 한 곳에서 관리하세요.',
+  inLanguage: 'ko-KR',
+};
 
 type Platform = 'android' | 'ios' | 'desktop' | 'unknown';
 
@@ -74,6 +93,10 @@ export default function DownloadPage() {
       padding: 'calc(env(safe-area-inset-top) + 32px) 24px calc(env(safe-area-inset-bottom) + 32px)',
       position: 'relative', overflow: 'hidden',
     }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+      />
       {/* 배경 글로우 */}
       <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,132,204,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '15%', right: '-10%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(12,201,181,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
