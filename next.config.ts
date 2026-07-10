@@ -82,6 +82,21 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'date-fns', 'sonner'],
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: 'https://admins.gleaum.com',
+        permanent: true,
+      },
+      {
+        source: '/admin/:path*',
+        destination: 'https://admins.gleaum.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       // 정적 자산(JS/CSS/폰트): 1년 불변 캐시 (hash 포함 파일명)

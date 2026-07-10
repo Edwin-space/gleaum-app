@@ -33,12 +33,15 @@ const channels = [
 const VARIABLES = ["{{user_name}}", "{{space_name}}", "{{last_expense}}"];
 
 type SendResult = { sent: number; failed: number; total: number; message: string };
+type SpaceOption = { id: string; name: string; inviteCode?: string | null };
 type Status     = "idle" | "counting" | "sending" | "success" | "error";
 
 /* ── 컴포넌트 ──────────────────────────────────────────── */
 export default function CampaignsPage() {
   const [activeChannel, setActiveChannel] = useState("app_push");
   const [segment,       setSegment]       = useState("all");
+  const [spaceId,       setSpaceId]       = useState("");
+  const [spaces,        setSpaces]        = useState<SpaceOption[]>([]);
   const [title,         setTitle]         = useState("{{user_name}}님, 오늘 어떤 일정이 있나요?");
   const [body,          setBody]          = useState("글리움에 접속해서 {{space_name}} 공간의 새로운 소식을 확인해 보세요!");
   const [deeplink,      setDeeplink]      = useState("");
@@ -48,12 +51,20 @@ export default function CampaignsPage() {
   const [result,      setResult]      = useState<SendResult | null>(null);
   const [errorMsg,    setErrorMsg]    = useState("");
 
+  useEffect(() => {
+    fetch("/api/spaces/options")
+      .then((res) => res.json())
+      .then((data: { spaces?: SpaceOption[] }) => setSpaces(data.spaces ?? []))
+      .catch(() => setSpaces([]));
+  }, []);
+
   /* 세그먼트·채널 변경 시 대상 수 자동 조회 */
   const fetchCount = useCallback(async () => {
     setTargetCount(null);
     setStatus("counting");
     try {
       const params = new URLSearchParams({ segment, channel: activeChannel });
+      if (segment === "space_member" && spaceId) params.set("spaceId", spaceId);
       const res  = await fetch(`/api/campaigns/count?${params}`);
       const data = await res.json() as { count: number };
       setTargetCount(data.count ?? 0);
@@ -62,7 +73,7 @@ export default function CampaignsPage() {
     } finally {
       setStatus((prev) => (prev === "counting" ? "idle" : prev));
     }
-  }, [segment, activeChannel]);
+  }, [segment, activeChannel, spaceId]);
 
   useEffect(() => { fetchCount(); }, [fetchCount]);
 
@@ -72,6 +83,11 @@ export default function CampaignsPage() {
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) {
       setErrorMsg("제목과 본문을 입력해주세요.");
+      setStatus("error");
+      return;
+    }
+    if (segment === "space_member" && !spaceId) {
+      setErrorMsg("특정 Space 멤버 발송은 대상 공간을 선택해야 합니다.");
       setStatus("error");
       return;
     }
@@ -87,7 +103,7 @@ export default function CampaignsPage() {
       const res = await fetch("/api/campaigns/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ segment, channel: activeChannel, title, body, url: deeplink || undefined }),
+        body: JSON.stringify({ segment, spaceId: segment === "space_member" ? spaceId : undefined, channel: activeChannel, title, body, url: deeplink || undefined }),
       });
       const data = await res.json() as SendResult & { error?: string };
       if (!res.ok || data.error) {
@@ -165,7 +181,7 @@ export default function CampaignsPage() {
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>발송 조건</Label>
-                <Select value={segment} onValueChange={setSegment}>
+                <Select value={segment} onValueChange={(value) => { setSegment(value); if (value !== "space_member") setSpaceId(""); }}>
                   <SelectTrigger><SelectValue placeholder="조건 선택" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">전체 회원 발송</SelectItem>
@@ -174,6 +190,22 @@ export default function CampaignsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {segment === "space_member" && (
+                <div className="space-y-2 col-span-2">
+                  <Label>대상 Space</Label>
+                  <Select value={spaceId} onValueChange={setSpaceId}>
+                    <SelectTrigger><SelectValue placeholder="발송할 공간을 선택하세요" /></SelectTrigger>
+                    <SelectContent>
+                      {spaces.map((space) => (
+                        <SelectItem key={space.id} value={space.id}>
+                          {space.name}{space.inviteCode ? ` · ${space.inviteCode}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">선택한 공간의 space_members 멤버 중 FCM 토큰이 있는 사용자에게만 발송됩니다.</p>
+                </div>
+              )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>예상 도달 유저</Label>
@@ -316,7 +348,7 @@ export default function CampaignsPage() {
             <p className="flex justify-between">
               <span>세그먼트</span>
               <span className="font-medium text-foreground">
-                {segment === "all" ? "전체" : segment === "no_onboarding" ? "온보딩 미완료" : "Space 멤버"}
+                {segment === "all" ? "전체" : segment === "no_onboarding" ? "온보딩 미완료" : `Space 멤버${spaceId ? ` · ${spaces.find((s) => s.id === spaceId)?.name ?? "선택됨"}` : ""}`}
               </span>
             </p>
             <p className="flex justify-between">
@@ -330,7 +362,7 @@ export default function CampaignsPage() {
           <Button
             className="w-full h-12 gap-2" size="lg"
             onClick={handleSend}
-            disabled={isSending || targetCount === 0 || status === "counting"}
+            disabled={isSending || targetCount === 0 || status === "counting" || (segment === "space_member" && !spaceId)}
           >
             {isSending ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> 발송 중...</>

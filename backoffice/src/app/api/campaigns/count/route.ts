@@ -13,22 +13,48 @@ export async function GET(req: NextRequest) {
   const channel = searchParams.get('channel') ?? 'app_push';
 
   try {
-    // 앱 푸시는 fcm_token 보유 여부로 필터
-    const needsFcm = channel === 'app_push';
-
-    let query = supabase.from('profiles').select('id', { count: 'exact', head: true });
-
-    if (needsFcm) {
-      query = query.not('fcm_token', 'is', null);
+    if (channel !== 'app_push') {
+      return NextResponse.json({ count: 0 });
     }
+
+    if (segment === 'space_member') {
+      if (!spaceId) {
+        return NextResponse.json({ error: 'spaceId가 필요합니다.', count: 0 }, { status: 400 });
+      }
+
+      const { data: members, error: memberError } = await supabase
+        .from('space_members')
+        .select('user_id')
+        .eq('space_id', spaceId);
+
+      if (memberError) {
+        return NextResponse.json({ error: memberError.message, count: 0 }, { status: 500 });
+      }
+
+      const userIds = Array.from(new Set((members ?? []).map((m) => m.user_id).filter(Boolean)));
+      if (userIds.length === 0) return NextResponse.json({ count: 0 });
+
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .in('id', userIds)
+        .not('fcm_token', 'is', null);
+
+      if (error) {
+        return NextResponse.json({ error: error.message, count: 0 }, { status: 500 });
+      }
+
+      return NextResponse.json({ count: count ?? 0 });
+    }
+
+    let query = supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .not('fcm_token', 'is', null);
 
     if (segment === 'no_onboarding') {
       query = query.is('onboarding_completed_at', null);
-    } else if (segment === 'space_member' && spaceId) {
-      // family_group_id 기준 필터
-      query = query.eq('family_group_id', spaceId);
     }
-    // segment === 'all' → 추가 필터 없음
 
     const { count, error } = await query;
 

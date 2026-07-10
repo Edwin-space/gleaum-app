@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,12 @@ export interface SpaceRow {
 
 interface Props {
   spaces: SpaceRow[];
+  page: number;
+  totalPages: number;
+  total: number;
 }
 
-export function SpacesClient({ spaces }: Props) {
+export function SpacesClient({ spaces, page, totalPages, total }: Props) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -43,8 +47,8 @@ export function SpacesClient({ spaces }: Props) {
           <CardTitle className="text-base">공간 목록</CardTitle>
           <CardDescription>
             {query
-              ? `"${query}" 검색 결과 ${filtered.length}개 (전체 ${spaces.length}개)`
-              : `최근 생성된 ${spaces.length}개`}
+              ? `"${query}" 검색 결과 ${filtered.length}개 (현재 페이지 ${spaces.length}개)`
+              : `페이지 ${page}/${totalPages} · 전체 ${total.toLocaleString("ko-KR")}개`}
           </CardDescription>
         </div>
         <div className="relative w-64">
@@ -89,7 +93,7 @@ export function SpacesClient({ spaces }: Props) {
                     {new Date(space.created_at).toLocaleDateString("ko-KR")}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm">상세 보기</Button>
+                    <Button variant="outline" size="sm" asChild><Link href={`/spaces/${space.id}`}>상세 보기</Link></Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -103,6 +107,21 @@ export function SpacesClient({ spaces }: Props) {
           </TableBody>
         </Table>
       </CardContent>
+        {filtered.length > 0 && (
+          <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
+            <span>현재 페이지 {spaces.length}개 표시</span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild aria-disabled={page <= 1}>
+                <Link href={page <= 1 ? "/spaces?page=1" : `/spaces?page=${page - 1}`}>이전</Link>
+              </Button>
+              <span className="font-mono">{page} / {totalPages}</span>
+              <Button variant="outline" size="sm" asChild aria-disabled={page >= totalPages}>
+                <Link href={page >= totalPages ? `/spaces?page=${totalPages}` : `/spaces?page=${page + 1}`}>다음</Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
     </Card>
   );
 }

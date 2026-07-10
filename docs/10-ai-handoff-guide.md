@@ -1705,3 +1705,164 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - Android `:app:assembleDebug` 및 `:app:installDebug` 통과.
 
 다음 작업은 기존 `NativeHomePortActivity`를 바로 수정하지 말고, Compose Home screen을 병행 구현한 뒤 feature flag로 전환하는 방식이 안전하다.
+
+### 2026-07-09 추가 — Android Kakao AdFit SDK 탑재
+
+- Android 네이티브 앱에 Kakao AdFit SDK 기반 의존성을 추가했다.
+- 추가 파일:
+  - `android/build.gradle`
+    - Kakao Dev Maven repository `https://devrepo.kakao.com/nexus/content/groups/public/` 추가.
+  - `android/app/build.gradle`
+    - `com.kakao.adfit:ads-base:3.22.2`
+    - `com.google.android.gms:play-services-ads-identifier:18.2.0`
+- 현재 상태:
+  - SDK 탑재 완료.
+  - 홈 화면 하단 광고 지면 연결 완료.
+  - 광고 단위명: 앱 실행 하단.
+  - 광고 단위 코드: `DAN-Brd0FQAE3ByDWwJu`.
+  - 스플래시 종료 후 `NativeHomePortActivity`의 Compose 홈 화면에 진입하면 하단 NavigationBar 바로 위에 노출된다.
+- 추가 파일:
+  - `android/app/src/main/java/com/gleaum/app/ui/components/AdFitBanner.kt`
+    - `BannerAdView`를 Compose `AndroidView`로 감싼 홈 하단 전용 배너 컴포넌트.
+    - Activity lifecycle에 맞춰 `resume/pause/destroy` 처리.
+- 변경 파일:
+  - `android/app/src/main/java/com/gleaum/app/ui/components/GleaumScaffold.kt`
+    - 홈 화면에만 하단 광고 슬롯을 주입할 수 있도록 `bottomContent` 추가.
+  - `android/app/src/main/java/com/gleaum/app/NativeHomePortActivity.kt`
+    - `GleaumScaffold(bottomContent = { AdFitHomeBottomBanner() })` 연결.
+  - `android/app/src/main/java/com/gleaum/app/ui/screens/home/ComposeHomeScreen.kt`
+    - 기존 중간 광고 placeholder 제거.
+- 주의:
+  - Android 네이티브 AdFit은 웹 `<script>` 방식이 아니라 SDK + 광고 단위 ID 기반으로 연결한다.
+  - 기존 AdMob/App Open Ad 구조와 충돌하지 않도록 AdFit 지면은 별도 네이티브 컴포넌트로 분리했다.
+  - AdFit 광고 View는 심사/수익 문제 방지를 위해 라운딩, 클리핑, 오버레이 없이 원본 영역 그대로 노출해야 한다.
+  - 검증: Android `:app:assembleDebug` 통과.
+
+### 2026-07-09 추가 — 웹 검색/관리자 크롤링 차단/Google Play 연결
+
+- Google Play 프로덕션 승인 이후 웹 SEO/보안 노출 정책을 보강했다.
+- 프론트 공개 구간:
+  - `src/app/robots.ts` 추가.
+    - `/` 검색 허용.
+    - `/admin/`, `/api/admin/`, `/api/cron/`, `/api/native/`, `/api/push/`, `/auth/callback` 크롤링 차단.
+    - `https://gleaum.com/sitemap.xml` 연결.
+  - `src/app/sitemap.ts` 추가.
+    - `/`, `/download`, `/legal/terms`, `/legal/privacy`, `/legal/delete-account`만 사이트맵에 포함.
+- 관리자/백엔드 검색 차단:
+  - `next.config.ts`에 `X-Robots-Tag: noindex, nofollow, noarchive` 헤더 추가.
+    - `/admin/:path*`
+    - `/api/admin/:path*`
+    - `/api/cron/:path*`
+  - `src/app/admin/layout.tsx`에 `robots: noindex/nofollow` metadata 추가.
+- Google Play 다운로드 연결:
+  - Play Store URL: `https://play.google.com/store/apps/details?id=com.gleaum.app`
+  - `src/components/landing/PcLandingPage.tsx`
+    - Google Play 배지 클릭 시 실제 Play Store로 이동.
+    - 랜딩 상단/하단 `다운로드` 링크는 `/download`로 이동.
+  - `src/app/download/layout.tsx` 추가.
+    - `/download` canonical, OpenGraph, App Links metadata, Google Play 앱 힌트 추가.
+- 앱 링크/검색 결과 보강:
+  - `src/app/layout.tsx`
+    - Android App Links metadata 추가.
+    - `android-app://com.gleaum.app/https/gleaum.com`, `android-app://com.gleaum.app/https/www.gleaum.com` alternate 추가.
+  - `src/app/page.tsx`, `src/app/download/page.tsx`
+    - `SoftwareApplication` JSON-LD 추가.
+  - `public/manifest.json`
+    - `related_applications`에 Google Play 앱(`com.gleaum.app`) 추가.
+    - `prefer_related_applications`는 `false` 유지. PWA 설치를 강제하지 않고 네이티브 앱 연관성만 제공.
+- 기존 Android App Links 기반:
+  - `public/.well-known/assetlinks.json`은 이미 `com.gleaum.app`과 release SHA-256을 포함.
+  - AndroidManifest는 `gleaum.com`, `www.gleaum.com` https App Links와 `gleaum://` scheme을 이미 처리.
+- 검증:
+  - `npm run build` 통과.
+
+### 2026-07-09 추가 — 모바일 웹 OS별 앱 설치 안내 분리
+
+- 모바일 웹 사용자의 설치 안내를 OS별로 분리했다.
+- 변경 파일:
+  - `src/components/PWAInstallBanner.tsx`
+- Android 모바일 브라우저:
+  - 기존 `beforeinstallprompt` 기반 PWA 설치 안내를 1순위로 쓰지 않는다.
+  - 1.5초 후 공식 Google Play 설치 CTA를 노출한다.
+  - 문구: `Google Play 앱으로 더 안정적으로 사용하세요`
+  - 주요 CTA: `Google Play에서 설치`
+  - 보조 CTA: `웹으로 계속`
+  - Play Store URL: `https://play.google.com/store/apps/details?id=com.gleaum.app`
+- iPhone/iPad Safari:
+  - iOS 앱 출시 전까지 기존 PWA 홈 화면 추가 안내를 유지한다.
+  - 공유 버튼 → 홈 화면에 추가 → 추가 순서 안내.
+- 네이티브 앱 내부:
+  - 기존처럼 Capacitor 네이티브 앱에서는 설치 배너를 표시하지 않는다.
+- 검증:
+  - `npm run build` 통과.
+
+### 2026-07-09 추가 — 백엔드 P0 RLS/알림 API 하드닝 1차
+
+- 목적:
+  - 공간 멤버십, 알림, 캠페인 로그, 푸시 발송 구간의 우회 가능성을 먼저 차단했다.
+  - 운영 DB에는 아래 SQL을 Supabase SQL Editor에서 별도 실행해야 실제 반영된다.
+- 추가 파일:
+  - `supabase/migrations/018_harden_backend_rls.sql`
+    - `space_members` 자가 참여 insert 정책 제거.
+    - 초대코드 참여는 서버 `service_role` 기반 API에서만 처리하도록 RLS 경계 보강.
+    - `notifications` 일반 클라이언트 insert는 본인 알림만 허용.
+    - `campaign_logs`, `campaign_clicks`, `campaign_send_details`는 `service_role` 전용 정책으로 교체.
+    - 주요 `SECURITY DEFINER` 함수의 `search_path`와 `EXECUTE` 권한 하드닝.
+    - `schedules` UPDATE `WITH CHECK` 추가.
+    - `schedule_participants` insert 시 같은 공간 멤버만 추가 가능하도록 제한.
+  - `src/lib/api/request-guards.ts`
+    - UUID, 내부 URL, 문자열 길이 제한 검증 유틸.
+- 변경 파일:
+  - `src/app/api/notifications/send/route.ts`
+    - raw FCM token 직접 발송 API를 `CRON_SECRET`/`INTERNAL_API_SECRET` 서버 호출 전용으로 제한.
+    - title/body/url/fcmToken 길이 및 내부 URL 검증 추가.
+  - `src/app/api/notifications/renotify/route.ts`
+    - 일정 존재 확인 후 작성자 또는 공간 editor/admin만 재알림 가능하도록 권한 검증 추가.
+    - 외부 URL 주입 방지.
+  - `src/app/api/push/send/route.ts`
+    - 요청자 인증 필수화.
+    - 요청자가 해당 공간 멤버인지 먼저 검증.
+    - 멤버/토큰 조회는 검증 후 `service_role`로 수행.
+    - `VAPID_PRIVATE_KEY`가 없어도 네이티브 FCM 발송은 계속 가능하도록 웹푸시/FCM 흐름 분리.
+- 검증:
+  - `npm run build` 통과.
+- 운영 반영 필요:
+  - Supabase Dashboard → SQL Editor → New query에서 `supabase/migrations/018_harden_backend_rls.sql` 파일 전체 내용을 복사해 실행해야 한다.
+  - 실행 후 마지막 `pg_policies` 결과에서 새 정책명이 보이는지 확인한다.
+
+### 2026-07-09 추가 — space_members UPDATE 정책 추가 하드닝
+
+- Supabase에서 `018_harden_backend_rls.sql` 실행 후 `space_members` 닉네임 수정 UPDATE 정책이 중복으로 남아 있는 것이 확인됐다.
+- 추가 파일:
+  - `supabase/migrations/019_tighten_space_member_update_policies.sql`
+- 목적:
+  - `space_members: 본인 닉네임 수정` / `space_members_nickname_update` 중복 정책 정리.
+  - RLS가 컬럼 단위 제한이 아니라는 점을 보완하기 위해 `guard_space_member_update()` 트리거 추가.
+  - 일반 사용자는 본인 닉네임만 수정 가능하고, `role`, `space_id`, `user_id`, `joined_at` 변경은 기존 공간 admin만 가능하도록 DB 레벨에서 차단.
+  - `space_members`, `schedules`, `schedule_participants`의 기존 `{public}` 정책을 `TO authenticated`로 명확화.
+- 운영 반영 필요:
+  - Supabase Dashboard → SQL Editor → New query에서 `supabase/migrations/019_tighten_space_member_update_policies.sql` 파일 전체 내용을 복사해 실행한다.
+
+### 2026-07-10 추가 — 관리자 콘솔 단일화 및 운영 기능 보강
+
+- 공식 관리자 콘솔은 `admins.gleaum.com` 백오피스만 사용한다.
+- 메인 앱 내부 `/admin` 광고 관리 페이지와 `/api/admin/ads` 계열 API는 제거했다.
+- `https://gleaum.com/admin` 및 하위 경로는 `https://admins.gleaum.com`으로 영구 리다이렉트한다.
+- 백오피스 공간 관리 보강:
+  - `/spaces`에 서버 페이지네이션을 추가했다. 기본 50개 단위.
+  - `/spaces/[id]` 상세 페이지를 추가했다.
+  - 공간 상세에서 멤버, 역할, FCM 상태, 최근 일정, 원장 항목, 초대코드, 커뮤니티 게시글 수를 확인한다.
+- 백오피스 회원 관리 보강:
+  - `/users`에 서버 페이지네이션을 추가했다. 기본 50명 단위.
+- 캠페인 Space 세그먼트 오류 수정:
+  - `space_member` 발송 조건 선택 시 대상 Space 선택 UI를 추가했다.
+  - 대상 수 조회와 발송 대상을 `profiles.family_group_id`가 아니라 `space_members.space_id` 기준으로 변경했다.
+  - `{{space_name}}` 변수도 선택한 Space 이름 기준으로 치환한다.
+- 광고 관리 보강:
+  - 백오피스 `/ads`가 공식 광고 관리 화면이다.
+  - 광고 삭제 버튼은 물리 삭제가 아니라 `is_active=false`, `ends_at=now()` 보관 처리로 변경했다.
+  - 광고 슬롯은 백오피스의 `ad_slots` DB 로딩 기준을 사용한다.
+- 검증:
+  - `npm run build` 루트 통과.
+  - `npm run build` 백오피스 통과.
+  - `npx tsc --noEmit` 백오피스 통과.

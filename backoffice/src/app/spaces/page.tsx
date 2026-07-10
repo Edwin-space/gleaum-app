@@ -5,12 +5,26 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { SpacesClient } from "./SpacesClient";
 
-export default async function SpacesPage() {
-  const { data: spaces, error } = await supabase
+interface PageProps {
+  searchParams?: Promise<{ page?: string }>;
+}
+
+const PAGE_SIZE = 50;
+
+export default async function SpacesPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params?.page ?? "1") || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const { data: spaces, error, count } = await supabase
     .from("family_groups")
-    .select("id, name, invite_code, created_at, created_by")
+    .select("id, name, invite_code, created_at, created_by", { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(200);
+    .range(from, to);
+
+  const total = count ?? spaces?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <main className="p-8">
@@ -19,11 +33,7 @@ export default async function SpacesPage() {
           <h1 className="text-3xl font-bold tracking-tight">공간(Space) 관리</h1>
           <p className="text-muted-foreground mt-1">
             생성된 공간 현황 및 초대 코드를 관리합니다.
-            {spaces && (
-              <span className="ml-2 font-semibold text-foreground">
-                총 {spaces.length}개
-              </span>
-            )}
+            <span className="ml-2 font-semibold text-foreground">총 {total.toLocaleString("ko-KR")}개</span>
           </p>
         </div>
         <Button variant="outline" asChild>
@@ -38,7 +48,7 @@ export default async function SpacesPage() {
         </div>
       )}
 
-      <SpacesClient spaces={spaces ?? []} />
+      <SpacesClient spaces={spaces ?? []} page={page} totalPages={totalPages} total={total} />
     </main>
   );
 }

@@ -17,7 +17,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import imageCompression from "browser-image-compression";
 import { createBrowserClient } from "@supabase/ssr";
 import {
-  MonitorPlay, Plus, Pencil, Trash2, Copy,
+  MonitorPlay, Plus, Pencil, Archive, Copy,
   Globe, Smartphone, Apple, ImageIcon, X,
   TrendingUp, MousePointerClick, Eye, Percent,
 } from "lucide-react";
@@ -217,10 +217,10 @@ export default function AdsPage() {
     setSaving(false);
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`"${title}" 광고를 삭제하시겠습니까?`)) return;
+  const handleArchive = async (id: string, title: string) => {
+    if (!confirm(`"${title}" 광고를 보관 처리하시겠습니까? 보관된 광고는 즉시 노출되지 않습니다.`)) return;
     const supabase = getBrowserClient();
-    await supabase.from("ads").delete().eq("id", id);
+    await supabase.from("ads").update({ is_active: false, ends_at: new Date().toISOString() }).eq("id", id);
     await load();
   };
 
@@ -555,7 +555,7 @@ export default function AdsPage() {
           {filtered.map(ad => (
             <AdRow key={ad.id} ad={ad} expired={isExpired(ad)}
               slotLabels={slotLabels}
-              onEdit={handleEdit} onDelete={handleDelete}
+              onEdit={handleEdit} onArchive={handleArchive}
               onToggle={handleToggle} onDuplicate={handleDuplicate} />
           ))}
         </div>
@@ -695,10 +695,10 @@ function AdPreview({ form }: { form: FormState }) {
 }
 
 // ── 광고 행 ──────────────────────────────────────────────────────
-function AdRow({ ad, expired, slotLabels, onEdit, onDelete, onToggle, onDuplicate }: {
+function AdRow({ ad, expired, slotLabels, onEdit, onArchive, onToggle, onDuplicate }: {
   ad: Ad; expired: boolean;
   slotLabels: Record<string, string>;
-  onEdit: (a: Ad) => void; onDelete: (id: string, title: string) => void;
+  onEdit: (a: Ad) => void; onArchive: (id: string, title: string) => void;
   onToggle: (a: Ad) => void; onDuplicate: (a: Ad) => void;
 }) {
   return (
@@ -761,8 +761,8 @@ function AdRow({ ad, expired, slotLabels, onEdit, onDelete, onToggle, onDuplicat
             <Button size="sm" variant="outline" className="gap-1 h-8 px-2.5 text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => onDuplicate(ad)}>
               <Copy className="w-3 h-3" /><span className="text-xs">복제</span>
             </Button>
-            <Button size="sm" variant="outline" className="gap-1 h-8 px-2.5 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => onDelete(ad.id, ad.title)}>
-              <Trash2 className="w-3 h-3" /><span className="text-xs">삭제</span>
+            <Button size="sm" variant="outline" className="gap-1 h-8 px-2.5 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => onArchive(ad.id, ad.title)}>
+              <Archive className="w-3 h-3" /><span className="text-xs">보관</span>
             </Button>
           </div>
         </div>

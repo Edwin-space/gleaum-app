@@ -59,7 +59,29 @@ export async function POST(req: NextRequest) {
 
   // ── 2. 대상 유저 + FCM 토큰 + 이름 수집 ──────────────────
   //    display_name / name : 템플릿 {{user_name}} 치환용
-  //    family_group_id     : {{space_name}} 치환을 위한 스페이스 조인용
+  //    space_member 세그먼트는 profiles.family_group_id가 아니라 space_members 기준으로 조회한다.
+  let targetUserIds: string[] | null = null;
+
+  if (segment === 'space_member') {
+    if (!spaceId) return NextResponse.json({ error: 'spaceId가 필요합니다.' }, { status: 400 });
+
+    const { data: members, error: memberError } = await supabase
+      .from('space_members')
+      .select('user_id')
+      .eq('space_id', spaceId);
+
+    if (memberError) {
+      await updateLog(campaignId, 0, 0, 0, 'failed');
+      return NextResponse.json({ error: `멤버 조회 실패: ${memberError.message}` }, { status: 500 });
+    }
+
+    targetUserIds = Array.from(new Set((members ?? []).map((member) => member.user_id).filter(Boolean)));
+    if (targetUserIds.length === 0) {
+      await updateLog(campaignId, 0, 0, 0, 'failed');
+      return NextResponse.json({ sent: 0, failed: 0, total: 0, message: '발송 대상 없음', campaignId });
+    }
+  }
+
   let query = supabase
     .from('profiles')
     .select('id, fcm_token, display_name, name, family_group_id')
@@ -67,9 +89,8 @@ export async function POST(req: NextRequest) {
 
   if (segment === 'no_onboarding') {
     query = query.is('onboarding_completed_at', null);
-  } else if (segment === 'space_member') {
-    if (!spaceId) return NextResponse.json({ error: 'spaceId가 필요합니다.' }, { status: 400 });
-    query = query.eq('family_group_id', spaceId);
+  } else if (targetUserIds) {
+    query = query.in('id', targetUserIds);
   }
 
   const { data: profiles, error: dbError } = await query;
@@ -90,9 +111,10 @@ export async function POST(req: NextRequest) {
 
   if (needsSpaceName) {
     const uniqueSpaceIds = Array.from(new Set(
-      profiles
-        .map((p: { family_group_id: string | null }) => p.family_group_id)
-        .filter(Boolean) as string[]
+      [
+        ...(spaceId ? [spaceId] : []),
+        ...profiles.map((p: { family_group_id: string | null }) => p.family_group_id).filter(Boolean),
+      ] as string[]
     ));
 
     if (uniqueSpaceIds.length > 0) {
@@ -120,7 +142,8 @@ export async function POST(req: NextRequest) {
     .filter((p: ProfileRow) => !!p.fcm_token)
     .map((p: ProfileRow) => {
       const userName  = p.display_name ?? p.name ?? '사용자';
-      const spaceName = p.family_group_id ? (spaceNameMap[p.family_group_id] ?? '내 공간') : '내 공간';
+      const effectiveSpaceId = segment === 'space_member' ? spaceId : p.family_group_id;
+      const spaceName = effectiveSpaceId ? (spaceNameMap[effectiveSpaceId] ?? '내 공간') : '내 공간';
       const vars = { user_name: userName, space_name: spaceName };
 
       return {

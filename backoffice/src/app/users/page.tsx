@@ -5,32 +5,49 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { UsersClient } from "./UsersClient";
 
-export default async function UsersPage() {
-  // profiles 테이블에 created_at 컬럼 없음 → updated_at 기준 정렬
-  const { data: profiles, error } = await supabase
+interface PageProps {
+  searchParams?: Promise<{ page?: string }>;
+}
+
+const PAGE_SIZE = 50;
+
+export default async function UsersPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params?.page ?? "1") || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const { data: profiles, error, count } = await supabase
     .from("profiles")
     .select(
-      "id, name, display_name, email, onboarding_completed_at, updated_at, family_group_id, fcm_token"
+      "id, name, display_name, email, onboarding_completed_at, updated_at, family_group_id, fcm_token",
+      { count: "exact" }
     )
     .order("updated_at", { ascending: false })
-    .limit(500);
+    .range(from, to);
 
-  // auth.users에서 실제 가입일 조회 (SUPABASE_SERVICE_ROLE_KEY 필요)
   let createdAtMap = new Map<string, string>();
   try {
+    const ids = (profiles ?? []).map((profile) => profile.id);
     const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({
       perPage: 1000,
     });
-    createdAtMap = new Map((authUsers ?? []).map((u) => [u.id, u.created_at]));
+    createdAtMap = new Map(
+      (authUsers ?? [])
+        .filter((user) => ids.includes(user.id))
+        .map((user) => [user.id, user.created_at])
+    );
   } catch {
     // service role key 미설정 시 fallback — updated_at 사용
   }
 
-  // profiles + 실제 가입일 병합
-  const enriched = (profiles ?? []).map((p) => ({
-    ...p,
-    created_at: createdAtMap.get(p.id) ?? p.updated_at ?? "",
+  const enriched = (profiles ?? []).map((profile) => ({
+    ...profile,
+    created_at: createdAtMap.get(profile.id) ?? profile.updated_at ?? "",
   }));
+
+  const total = count ?? enriched.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <main className="p-8">
@@ -39,11 +56,7 @@ export default async function UsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">회원 관리</h1>
           <p className="text-muted-foreground mt-1">
             가입된 회원 목록 및 상세 정보를 관리합니다.
-            {enriched.length > 0 && (
-              <span className="ml-2 font-semibold text-foreground">
-                총 {enriched.length}명
-              </span>
-            )}
+            <span className="ml-2 font-semibold text-foreground">총 {total.toLocaleString("ko-KR")}명</span>
           </p>
         </div>
         <Button variant="outline" asChild>
@@ -56,14 +69,12 @@ export default async function UsersPage() {
           <p className="font-semibold">데이터 로드 실패</p>
           <p className="mt-1 text-xs font-mono">{error.message}</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            <code>backoffice/.env.local</code>에{" "}
-            <code>NEXT_PUBLIC_SUPABASE_URL</code>,{" "}
-            <code>SUPABASE_SERVICE_ROLE_KEY</code>가 올바르게 설정되어 있는지 확인하세요.
+            <code>backoffice/.env.local</code>에 <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>가 올바르게 설정되어 있는지 확인하세요.
           </p>
         </div>
       )}
 
-      <UsersClient profiles={enriched} />
+      <UsersClient profiles={enriched} page={page} totalPages={totalPages} total={total} />
     </main>
   );
 }

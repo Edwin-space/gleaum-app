@@ -28,9 +28,12 @@ export interface ProfileRow {
 
 interface Props {
   profiles: ProfileRow[];
+  page: number;
+  totalPages: number;
+  total: number;
 }
 
-export function UsersClient({ profiles }: Props) {
+export function UsersClient({ profiles, page, totalPages, total }: Props) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -51,7 +54,7 @@ export function UsersClient({ profiles }: Props) {
         <div>
           <CardTitle className="text-base">회원 목록</CardTitle>
           <CardDescription>
-            최근 가입 순 · FCM 토큰 보유 {fcmCount}/{profiles.length}명
+            페이지 {page}/{totalPages} · 현재 페이지 FCM 토큰 보유 {fcmCount}/{profiles.length}명
           </CardDescription>
         </div>
         <div className="relative w-64">
@@ -132,10 +135,21 @@ export function UsersClient({ profiles }: Props) {
           </TableBody>
         </Table>
         {filtered.length > 0 && (
-          <div className="px-4 py-3 text-xs text-muted-foreground border-t">
-            {query
-              ? `${filtered.length}명 검색됨 (전체 ${profiles.length}명)`
-              : `총 ${profiles.length}명 표시 중`}
+          <div className="flex items-center justify-between gap-4 px-4 py-3 text-xs text-muted-foreground border-t">
+            <span>
+              {query
+                ? `${filtered.length}명 검색됨 (현재 페이지 ${profiles.length}명)`
+                : `전체 ${total.toLocaleString("ko-KR")}명 중 현재 페이지 ${profiles.length}명 표시`}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild aria-disabled={page <= 1}>
+                <Link href={page <= 1 ? "/users?page=1" : `/users?page=${page - 1}`}>이전</Link>
+              </Button>
+              <span className="font-mono">{page} / {totalPages}</span>
+              <Button variant="outline" size="sm" asChild aria-disabled={page >= totalPages}>
+                <Link href={page >= totalPages ? `/users?page=${totalPages}` : `/users?page=${page + 1}`}>다음</Link>
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
