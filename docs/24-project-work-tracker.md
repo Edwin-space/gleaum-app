@@ -4,7 +4,7 @@
 >
 > 최초 작성: 2026-07-16
 > 최종 업데이트: 2026-07-16
-> 현재 Git 기준점: `a60d187` (`main`) + Android·캘린더/테마 브리지·문서 미커밋 작업 트리
+> 현재 Git 기준점: `86ba9ed` (`main`) + Android·캘린더/테마 브리지·Android 결합 문서 미커밋 작업 트리
 
 ## 1. 운영 규칙
 
@@ -42,10 +42,11 @@
 | 6 | `SEC-007` | 광고 이벤트 무제한 Data API INSERT 차단 | `✅ 완료` | 2026-07-16 API 선배포·DB 직접 INSERT 차단·Advisor 확인 |
 | 7 | `AUTH-001` | Supabase 유출 비밀번호 차단 활성화 | `🔴 차단` | Pro 이상 확인 및 Dashboard Auth 설정 권한 필요 |
 | 8 | `OPS-003` | 백오피스 보안 변경 배포·스모크 테스트 | `🔴 차단` | 배포·미인증 검증 완료, 관리자/비관리자 로그인 세션 필요 |
-| 9 | `REPO-001` | 현재 대규모 미커밋 작업 안전한 체크포인트 | `🟠 진행 중` | `8b15af7` 보안/운영, `ff43799` 가족·자녀·공간, `a60d187` 웹 광고 완료. Android 결합 캘린더/테마는 제외 유지, 문서 일관성 정리 |
-| 10 | `AND-001` | Android 실기기 핵심·시각 QA | `🔴 차단` | 잠금 해제 단말 확보 후 light/dark/system 및 핵심 회귀 수행 |
-| 11 | `AND-002` | Android Release AAB 출시 검증 | `⬜ 대기` | `bundleRelease`, mapping, native symbols, Firebase/AdFit 확인 |
-| 12 | `FAM-001` | 가족·자녀 공통 capability 적용 | `⬜ 대기` | `/api/session/context`를 Web/Android/iOS 권한 분기에 연결 |
+| 9 | `REPO-001` | 현재 대규모 미커밋 작업 안전한 체크포인트 | `✅ 완료` | 2026-07-16 Android 제외 범위 7개 체크포인트 커밋 완료 |
+| 10 | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `⬜ 대기` | 테스트 구조 확인 후 개인 일정·지출 비노출과 공간 멤버 역할 자동 검증 |
+| 11 | `FAM-001` | 가족·자녀 공통 capability 적용 | `⬜ 대기` | 우선 Web 메뉴·광고·가계부·공간 API/UI에 `/api/session/context` 적용 |
+| 12 | `AND-001` | Android 실기기 핵심·시각 QA | `⏸ 보류` | 사용자가 Android 검증 재개를 지시하고 잠금 해제 단말을 확보하면 수행 |
+| 13 | `AND-002` | Android Release AAB 출시 검증 | `⏸ 보류` | Android 검증 범위 재개 후 `bundleRelease`, mapping, native symbols, Firebase/AdFit 확인 |
 
 ## 3. P0 보안·운영
 
@@ -71,7 +72,7 @@
 |---|---|---|---|---|---|---|
 | [x] | `REPO-000` | 프로젝트를 외장 SSD 작업 경로로 이전 | `✅ 완료` | 2026-07-14 | 2026-07-16 | 현재 경로 `/Volumes/Portable SSD/AI/gleaum`, `.git`과 untracked 파일 확인 |
 | [x] | `DOC-001` | 프로젝트 통합 작업 트래커 도입 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 전체 도메인 작업에 ID·상태·날짜·완료 기준을 부여하고 `AGENTS.md` 시작/종료 규칙에 연결 |
-| [ ] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `🟠 진행 중` | 2026-07-16 | — | Android 파일·검증 제외. `8b15af7` 보안/운영, `ff43799` 가족·자녀·공간, `a60d187` 웹 광고 체크포인트 완료. 루트 build·대상 lint·diff check와 운영 DB 권한 재검증 통과. 캘린더/테마 Web 브리지는 제외 중인 Android 구현과 결합되어 함께 보류. 남은 범위는 문서의 Git 기준점·완료 주장 일관성 정리 |
+| [x] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `✅ 완료` | 2026-07-16 | 2026-07-16 | Android 파일·검증 제외 범위 완료. `8b15af7` 보안/운영, `ff43799` 가족·자녀·공간, `a60d187` 웹 광고, `459a2aa` 트래커, `d8393d8` 제품/DB 문서, `86ba9ed` 외장 복구 문서. build·lint·audit·diff check와 운영 배포/DB 권한 검증 근거 보존. 캘린더/테마·Android 결합 문서는 Android 범위로 보류 |
 | [ ] | `REPO-002` | 비밀·환경·릴리즈 키 백업 상태 확인 | `⬜ 대기` | — | — | `.env.local`, Android release keystore, 서명 비밀번호의 저장소 외 백업 확인 |
 | [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `⬜ 대기` | — | — | 루트 build 통과, Vercel 배포 성공, 로그인/홈/공간/가계부 핵심 흐름 확인 |
 
@@ -82,11 +83,11 @@
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
-| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🔴 차단` | — | — | 잠금 해제 단말 필요. 로그인, CRUD, 공간, 알림, 생체인증, 캘린더와 light/dark/system 캡처 |
-| [ ] | `AND-002` | Release AAB 검증 | `⬜ 대기` | — | — | 서명 AAB, R8 `mapping.txt`, native symbols, Crashlytics/Analytics/FCM, AdFit fallback 확인 |
+| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `⏸ 보류` | — | — | 사용자 지시로 Android 검증 제외. 재개 지시와 잠금 해제 단말 확보 후 로그인, CRUD, 공간, 알림, 생체인증, 캘린더와 light/dark/system 캡처 |
+| [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | — | — | 사용자 지시로 Android 검증 제외. 재개 후 서명 AAB, R8 `mapping.txt`, native symbols, Crashlytics/Analytics/FCM, AdFit fallback 확인 |
 | [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `⬜ 대기` | — | — | NavigationRail, 폰 가로, expanded 폭, 글꼴 1.3배, TalkBack 통과 |
 | [ ] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `⬜ 대기` | — | — | 현 XML 86/B를 Compose 전환하거나 브랜드 예외로 승인하고 결정일 기록 |
-| [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🟠 진행 중` | 2026-07-14 | — | 현재 미커밋 자동 동기화 변경 검토 후 export/import/중복/권한 거부 실기기 확인 |
+| [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `⏸ 보류` | 2026-07-14 | — | 사용자 지시로 Android 검증 제외. 캘린더 Web 브리지와 네이티브 자동 동기화 변경은 함께 보존하고 재개 시 export/import/중복/권한 거부 확인 |
 | [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `⬜ 대기` | — | — | 스토어 정보, 데이터 안전, 콘텐츠 등급, 개인정보 URL, 릴리즈 SHA-1 확인 |
 
 상세 QA: `docs/20-android-native-release-qa.md`, `docs/22-android-material3-ui-audit.md`
@@ -169,6 +170,8 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-16 | `REPO-001` | 완료 | Android 제외 범위의 기존 미커밋 작업을 기능·위험 단위 7개 체크포인트로 분리·보존 | build·lint·audit·diff check 및 운영 배포/DB 검증 근거 기록. 남은 변경은 Android·캘린더/테마 결합 범위로 보류. 다음은 `WEB-001` |
+| 2026-07-16 | `REPO-001` | 문서 체크포인트 | DB/가족 제품 모델 `d8393d8`, 외장 복구 절차·문서 인덱스 `86ba9ed` 보존 | 완료/후속/보류 경계, 링크 존재, 비밀 패턴, diff check 확인 |
 | 2026-07-16 | `REPO-001` | 세 번째 체크포인트 | 하우스 광고의 HTTP(S) URL 검증·테마 토큰과 Kakao 다중 슬롯 SDK 간섭 제거를 `a60d187`로 보존 | Android 파일 0개. 대상 ESLint·diff check·루트 production build/TypeScript 통과 |
 | 2026-07-16 | `REPO-001`, `AND-005` | 범위 보류 | 캘린더 설정·테마 Web 브리지는 Android `updateEvent/deleteEvent`·자동 동기화·테마 bridge 구현과 결합됨 | Android 제외 원칙에 따라 분리 커밋하지 않음. Android 범위를 재개할 때 네이티브 코드와 함께 검증·커밋 |
 | 2026-07-16 | `REPO-001`, `FAM-000` | 두 번째 체크포인트 | 가족·자녀 사전등록, 보호자 이메일 동의, 자녀 초대·승인, 공간 UI/API를 `ff43799`로 보존 | Android 파일 0개. 루트 build·대상 lint·diff check 통과, 운영 DB migration 020~022·RLS/권한·SECURITY DEFINER RPC 8종 재검증. 다음은 비Android 캘린더 브리지 검토 |
