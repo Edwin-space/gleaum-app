@@ -31,8 +31,8 @@ fun GleaumAdaptiveContent(
     Box(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
                 .widthIn(max = contentMaxWidth)
+                .fillMaxSize()
                 .align(Alignment.TopCenter),
         ) {
             content()
