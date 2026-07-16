@@ -4,7 +4,7 @@
 >
 > 최초 작성: 2026-07-16
 > 최종 업데이트: 2026-07-16
-> 현재 기능 기준점: `da2384e` (`main`, Android·캘린더/테마 브리지·release 하드닝 체크포인트)
+> 현재 기능 기준점: `bf69e1e`, `5ad7ba0` (`main`, Android 적응형 실기기 QA·Play 권한/개인정보 정합성 체크포인트)
 
 ## 1. 운영 규칙
 
@@ -47,6 +47,7 @@
 | 11 | `FAM-001` | 가족·자녀 공통 capability 적용 | `⬜ 대기` | 우선 Web 메뉴·광고·가계부·공간 API/UI에 `/api/session/context` 적용 |
 | 12 | `AND-001` | Android 실기기 핵심·시각 QA | `🔴 차단` | debug 설치·스플래시→로그인·시각·무크래시 통과. 인증 계정 세션 확보 후 핵심 화면 회귀 |
 | 13 | `AND-002` | Android Release AAB 출시 검증 | `🔴 차단` | R8·manifest·서명 전 package 통과. 저장소 밖 release 서명 비밀번호 환경 주입 후 최종 AAB 생성 |
+| 14 | `AND-006` | Play Console 출시 자료·정책 점검 | `🔴 차단` | 로컬 정책 정합성·운영 URL 확인 완료. Console의 Data safety/IARC/App access/서명 인증서·스토어 자료 확인 필요 |
 
 ## 3. P0 보안·운영
 
@@ -86,11 +87,12 @@
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
 | [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🔴 차단` | 2026-07-16 | — | `SM_F731N`에 debug `1.1.5 (26)` 설치, 스플래시→로그인, UI 계층·1080×2640 캡처, 무크래시 통과. 인증 계정 세션이 없어 홈·CRUD·공간·알림·생체인증 실사용 회귀 차단 |
 | [ ] | `AND-002` | Release AAB 검증 | `🔴 차단` | 2026-07-16 | — | R8·lintVital·manifest·Crashlytics mapping upload·`packageReleaseBundle` 통과. intermediary AAB 약 96MB, mapping 약 84MB. release keystore password 환경변수 미설정으로 최종 서명만 차단 |
-| [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `⬜ 대기` | — | — | NavigationRail, 폰 가로, expanded 폭, 글꼴 1.3배, TalkBack 통과 |
-| [ ] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `⬜ 대기` | — | — | 현 XML 86/B를 Compose 전환하거나 브랜드 예외로 승인하고 결정일 기록 |
+| [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🔴 차단` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과, 단말 설정 복원. 실제 TalkBack 음성 탐색과 인증 이후 화면 수동 QA 필요 |
+| [x] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 브랜드 고정 다크 XML 예외 승인. 1080×2640·글꼴 1.3배에서 잘림/겹침 없음. 기능·정보 구조 대폭 변경 시 Compose 재평가 |
 | [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🔴 차단` | 2026-07-14 | — | Web/네이티브 경계·자동 동기화 정적 감사와 build 통과, 네이티브에서도 글리움 표식·캘린더 일치 강제. 인증 세션 확보 후 권한 거부·생성·수정·삭제·가져오기·중복 실기기 검증 |
-| [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `⬜ 대기` | — | — | 스토어 정보, 데이터 안전, 콘텐츠 등급, 개인정보 URL, 릴리즈 SHA-1 확인 |
+| [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `🔴 차단` | 2026-07-16 | — | targetSdk 36·권한·운영 privacy/assetlinks/app-ads·Data safety 초안 확인. `docs/25-google-play-release-readiness.md` 기준 Console의 최신 versionCode·IARC·App access·Play 서명 인증서·스토어 이미지·최종 산출물 확인 필요 |
 | [x] | `AND-007` | Android 백업·컴포넌트·R8·캘린더 변경 경계 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `allowBackup=false`, preview Activity 비공개, 광범위 ProGuard keep 제거, 캘린더 표식/대상 검증. debug/test/lint/release package 재통과 |
+| [x] | `AND-008` | Android 권한·개인정보·Data safety 정합성 보완 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 미사용 CAMERA/feature 제거, 캘린더·Firebase·AdMob/AdFit 개인정보처리방침 반영, Play 입력 초안 문서화. release package manifest의 카메라·미디어·외부 저장소 권한 0건·Android debug/test/lint·웹 lint/build 통과 |
 
 상세 QA: `docs/20-android-native-release-qa.md`, `docs/22-android-material3-ui-audit.md`
 
@@ -172,6 +174,10 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-16 | `AND-003`, `AND-004`, `AND-006`, `AND-008` | 체크포인트 | 적응형 840dp 폭 수정·debug 전용 preview·로그인 XML 예외 결정을 `bf69e1e`, 미사용 권한 제거·개인정보/Data safety 정합화를 `5ad7ba0`으로 분리 보존 | Android debug/test/lint/release manifest, 웹 lint/build, compact·글꼴 1.3배·다크·expanded 실기기 QA 통과. 남은 수동/Console 항목은 각 차단 행 기준 재개 |
+| 2026-07-16 | `AND-006`, `AND-008` | 부분 완료·차단 | 공식 Play/Firebase/AdMob 정책과 앱 권한·SDK·운영 URL을 대조해 미사용 CAMERA 제거 및 개인정보/Data safety 초안 정합화 | 운영 privacy·assetlinks·app-ads 200. Console 권한 확보 후 Data safety/IARC/App access/서명 인증서·스토어 자료 확인 |
+| 2026-07-16 | `AND-003`, `AND-004` | 부분 완료·의사결정 | compact·1.3배 글꼴·다크·expanded 실기기 QA, 적응형 폭 버그 수정. 로그인 XML은 브랜드 예외 승인 | 실제 TalkBack 음성 탐색과 인증 이후 전체 화면만 수동 QA로 남김 |
+| 2026-07-16 | `AND-003` | 시작 | 외부 자격정보 없이 가능한 폴더블·적응형 레이아웃·큰 글꼴·접근성 정적/실기기 QA 시작 | 단말 원래 화면 크기·밀도·글꼴 설정을 기록한 뒤 preview 화면 검증 후 복원 |
 | 2026-07-16 | `REPO-001`, `AND-001`, `AND-002`, `AND-005`, `AND-007` | 체크포인트 | Android 네이티브 UI·캘린더/테마 브리지·release 하드닝과 결합 문서를 `da2384e`로 보존 | `.idea/deploymentTargetSelector.xml` 제외. debug/test/lint/release package·웹 lint/build·실기기 로그인 통과 |
 | 2026-07-16 | `AND-001`, `AND-002`, `AND-005`, `AND-007` | 부분 완료·차단 | Android debug/test/lint와 release 서명 전 패키징, 실기기 설치·로그인 시각·무크래시 확인 및 즉시 보안 보완 완료 | 최종 서명은 비밀번호 환경, 인증 이후 핵심·캘린더 회귀는 계정 세션 확보 후 재개 |
 | 2026-07-16 | `AND-001`, `AND-002`, `AND-005` | 재개 | 사용자 지시로 Android 파일·빌드·release·캘린더 검증 보류 해제 | 코드/설정 감사 후 debug/lint/release 산출물, 연결 단말 순서로 검증 |
