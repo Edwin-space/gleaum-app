@@ -114,6 +114,8 @@ class NativeHomePortActivity : AppCompatActivity() {
                         finish()
                         return@runOnUiThread
                     }
+                    NativeAccountContextStore.save(this, loaded.account)
+                    (application as? GleaumApp)?.syncAdvertisingEligibility()
                     summary = loaded
                     selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
                     loading = false
@@ -182,7 +184,9 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
-    private fun homeLayoutCopy(): String = when (normalizedHomeLayout()) {
+    private fun homeLayoutCopy(): String = if (isManagedAccount()) {
+        "오늘 할 일과 가까운 일정을 하나씩 확인해 보세요."
+    } else when (normalizedHomeLayout()) {
         "calendar_first" -> "가장 가까운 약속과 캘린더 흐름을 우선으로 보여드립니다."
         "routine_first" -> "반복되는 습관과 완료 확인이 필요한 일을 놓치지 않게 도와드립니다."
         "expense_first" -> "정기결제와 공동비용 알림을 중심으로 홈을 구성합니다."
@@ -235,11 +239,12 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun maybeShowLaunchBottomAd() {
+        if (summary?.account?.capabilities?.canShowAds != true) return
         if (popupAdRequested || isFinishing || isDestroyed) return
         popupAdRequested = true
 
         Handler(Looper.getMainLooper()).postDelayed({
-            if (isFinishing || isDestroyed) return@postDelayed
+            if (isFinishing || isDestroyed || !NativeAccountContextStore.capabilities(this).canShowAds) return@postDelayed
 
             val loader = AdFitPopupAdLoader.create(this, HOME_BOTTOM_ADFIT_CLIENT_ID)
             popupAdLoader = loader
@@ -257,7 +262,11 @@ class NativeHomePortActivity : AppCompatActivity() {
                 request,
                 object : AdFitPopupAdLoader.OnAdLoadListener {
                     override fun onAdLoaded(ad: AdFitPopupAd) {
-                        if (isFinishing || isDestroyed) return
+                        if (isFinishing || isDestroyed || !NativeAccountContextStore.capabilities(this@NativeHomePortActivity).canShowAds) {
+                            popupAdLoader?.destroy()
+                            popupAdLoader = null
+                            return
+                        }
                         Log.d(TAG, "AdFit launch popup loaded")
                         runOnUiThread {
                             runCatching {
@@ -294,7 +303,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             GleaumDestination.HOME -> openWebPath("/home")
             GleaumDestination.SCHEDULES -> openWebPath("/schedules")
             GleaumDestination.SPACE -> openWebPath("/space")
-            GleaumDestination.BUDGET -> openWebPath("/budget")
+            GleaumDestination.BUDGET -> if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                openWebPath("/budget")
+            }
             GleaumDestination.MENU -> openWebPath("/mypage")
         }
     }
@@ -318,13 +329,20 @@ class NativeHomePortActivity : AppCompatActivity() {
                     }
                     if (previewDisabled) return@apply
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
+                    if (isManagedAccount()) {
+                        addView(buildManagedAccountCard(), matchWrap().apply { topMargin = dp(14) })
+                    }
                     addView(buildTodayToggle(), matchWrap().apply { topMargin = dp(14) })
                     if (calendarExpanded) {
                         addView(buildCalendarPanel(), matchWrap().apply { topMargin = dp(10) })
                     }
                     addView(buildSelectedDateSection(), matchWrap().apply { topMargin = dp(14) })
-                    addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
-                    addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
+                    if (summary?.account?.capabilities?.canShowAds == true) {
+                        addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
+                    }
+                    if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                        addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
+                    }
                     addView(buildUpcomingSection(), matchWrap().apply { topMargin = dp(14) })
                 }, NativeAdaptive.scrollChildParams(this@NativeHomePortActivity))
             }, FrameLayout.LayoutParams(match(), match()))
@@ -482,6 +500,42 @@ class NativeHomePortActivity : AppCompatActivity() {
             }, FrameLayout.LayoutParams(match(), wrap()))
         }
     }
+
+    private fun buildManagedAccountCard(): LinearLayout {
+        val pendingConsent = summary?.account?.accountMode in setOf("pending_guardian_consent", "teen_consent_pending")
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(20), dp(20), dp(20))
+            background = cardDrawable(24)
+            elevation = dp(2).toFloat()
+
+            addView(TextView(context).apply {
+                text = if (pendingConsent) "동의 확인 필요" else "보호자 관리 계정"
+                textSize = 11f
+                typeface = brandBold()
+                setTextColor(color("#0084CC"))
+            })
+            addView(TextView(context).apply {
+                text = if (pendingConsent) "동의 상태를 확인하고 있어요" else "일정과 루틴에 집중하는 홈이에요"
+                textSize = 18f
+                typeface = brandBold()
+                setTextColor(NativeTheme.text(context))
+            }, matchWrap().apply { topMargin = dp(8) })
+            addView(TextView(context).apply {
+                text = "가계부·공간 관리·멤버 초대·광고는 나이와 동의 상태에 맞게 제한됩니다."
+                textSize = 13f
+                typeface = brandMedium()
+                setTextColor(NativeTheme.muted(context))
+            }, matchWrap().apply { topMargin = dp(6) })
+        }
+    }
+
+    private fun isManagedAccount(): Boolean = summary?.account?.accountMode in setOf(
+        "pending_guardian_consent",
+        "child_managed",
+        "teen_consent_pending",
+        "teen",
+    )
 
     private fun LinearLayout.addMetric(value: String, label: String, valueColor: Int) {
         addView(LinearLayout(context).apply {
@@ -1182,13 +1236,15 @@ class NativeHomePortActivity : AppCompatActivity() {
             setPadding(dp(0), dp(0), dp(0), dp(0))
             background = roundDrawable("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 28 else 0, "#E8E8E4")
 
-            listOf(
-                NativeNavItem("홈", NativeNavIcon.HOME, "/home"),
-                NativeNavItem("일정", NativeNavIcon.CALENDAR, "/schedules"),
-                NativeNavItem("공간", NativeNavIcon.SPACE, "/space"),
-                NativeNavItem("가계부", NativeNavIcon.BUDGET, "/budget"),
-                NativeNavItem("전체", NativeNavIcon.MENU, "/mypage"),
-            ).forEachIndexed { index, item ->
+            buildList {
+                add(NativeNavItem("홈", NativeNavIcon.HOME, "/home"))
+                add(NativeNavItem("일정", NativeNavIcon.CALENDAR, "/schedules"))
+                add(NativeNavItem("공간", NativeNavIcon.SPACE, "/space"))
+                if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                    add(NativeNavItem("가계부", NativeNavIcon.BUDGET, "/budget"))
+                }
+                add(NativeNavItem("전체", NativeNavIcon.MENU, "/mypage"))
+            }.forEachIndexed { index, item ->
                 addView(buildBottomNavItem(item, active = index == 0), LinearLayout.LayoutParams(0, match(), 1f))
             }
         }
@@ -1246,6 +1302,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             return
         }
         if (path == "/budget") {
+            if (summary?.account?.capabilities?.canViewHouseholdBudget != true) return
             startActivity(Intent(this, NativeBudgetActivity::class.java))
             finish()
             return

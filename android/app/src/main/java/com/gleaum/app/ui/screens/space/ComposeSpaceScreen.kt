@@ -81,6 +81,8 @@ private enum class SpaceSection(val label: String) {
 fun ComposeSpaceScreen(
     innerPadding: PaddingValues,
     summary: NativeSpaceSummary?,
+    canManageSpaces: Boolean,
+    canInviteMembers: Boolean,
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
@@ -118,7 +120,7 @@ fun ComposeSpaceScreen(
                     CurrentSpaceCard(
                         active = summary.activeSpace,
                         onSwitch = { showSpacePicker = true },
-                        onSettings = { showManagement = true },
+                        onSettings = if (canManageSpaces || canInviteMembers) ({ showManagement = true }) else null,
                     )
                 }
                 item { SectionTabs(section) { sectionName = it.name } }
@@ -144,9 +146,9 @@ fun ComposeSpaceScreen(
                         }
                     }
                     SpaceSection.MEMBERS -> {
-                        item { MemberSectionHeader(summary.members.size, summary.activeSpace?.isPersonal != true) { showManagement = true } }
+                        item { MemberSectionHeader(summary.members.size, canInviteMembers && summary.activeSpace?.isPersonal != true) { showManagement = true } }
                         if (summary.members.isEmpty()) {
-                            item { EmptyCard("표시할 멤버가 없어요", "공간 설정에서 멤버를 초대할 수 있어요.", "공간 설정", { showManagement = true }) }
+                            item { EmptyCard("표시할 멤버가 없어요", "아직 이 공간에 함께하는 멤버가 없어요.") }
                         } else {
                             summary.members.forEach { member ->
                                 item(key = "member-${member.id}") {
@@ -207,14 +209,18 @@ fun ComposeSpaceScreen(
                         showSpacePicker = false
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (canManageSpaces || canInviteMembers) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (canInviteMembers) {
                     OutlinedButton(onClick = { showSpacePicker = false; onManageAction(SpaceManageAction.JOIN) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = null, modifier = Modifier.size(18.dp))
                         Text("코드로 참여", Modifier.padding(start = 6.dp))
                     }
+                    }
+                    if (canManageSpaces) {
                     FilledTonalButton(onClick = { showSpacePicker = false; onManageAction(SpaceManageAction.CREATE) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Outlined.AddHome, contentDescription = null, modifier = Modifier.size(18.dp))
                         Text("새 공간", Modifier.padding(start = 6.dp))
+                    }
                     }
                 }
             }
@@ -229,8 +235,8 @@ fun ComposeSpaceScreen(
             ) {
                 Text("공간 설정", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text("초대와 역할 같은 운영 정보는 이곳에서 관리합니다.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                summary.activeSpace?.inviteCode?.let { InviteCodeCard(it, onCopyInviteCode) }
-                ManageCard(summary.activeSpace) {
+                if (canInviteMembers) summary.activeSpace?.inviteCode?.let { InviteCodeCard(it, onCopyInviteCode) }
+                ManageCard(summary.activeSpace, canManageSpaces, canInviteMembers) {
                     showManagement = false
                     onManageAction(it)
                 }
@@ -240,7 +246,7 @@ fun ComposeSpaceScreen(
 }
 
 @Composable
-private fun CurrentSpaceCard(active: NativeSpaceItem?, onSwitch: () -> Unit, onSettings: () -> Unit) {
+private fun CurrentSpaceCard(active: NativeSpaceItem?, onSwitch: () -> Unit, onSettings: (() -> Unit)?) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(
@@ -259,7 +265,7 @@ private fun CurrentSpaceCard(active: NativeSpaceItem?, onSwitch: () -> Unit, onS
                 }
                 Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = "공간 전환", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = "공간 설정") }
+            if (onSettings != null) IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = "공간 설정") }
         }
     }
 }
@@ -414,18 +420,26 @@ private fun MemberItemCard(member: NativeSpaceMember, canManage: Boolean, onClic
 }
 
 @Composable
-private fun ManageCard(active: NativeSpaceItem?, onManageAction: (SpaceManageAction) -> Unit) {
+private fun ManageCard(active: NativeSpaceItem?, canManageSpaces: Boolean, canInviteMembers: Boolean, onManageAction: (SpaceManageAction) -> Unit) {
     val canManage = active?.role == "admin"
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        if (canInviteMembers) {
         ManageRow(Icons.Outlined.GroupAdd, "공간 참여하기", "초대 코드로 다른 공간에 입장합니다") { onManageAction(SpaceManageAction.JOIN) }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        if (canManageSpaces) {
         ManageRow(Icons.Outlined.Groups, "새 공간 만들기", "친구, 연인, 가족과 함께할 공간을 만듭니다") { onManageAction(SpaceManageAction.CREATE) }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         ManageRow(Icons.Outlined.Edit, "공간 이름 변경", if (canManage) "현재 공간의 이름을 수정합니다" else "공간 지기만 수정할 수 있어요") { onManageAction(SpaceManageAction.RENAME) }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        if (canInviteMembers) {
         ManageRow(Icons.Outlined.Refresh, "초대 코드 새로 만들기", if (active?.isPersonal == true) "개인 공간은 초대할 수 없어요" else "기존 코드를 새 코드로 교체합니다") { onManageAction(SpaceManageAction.REGENERATE_INVITE) }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        if (canManageSpaces) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        if (canManageSpaces) {
         ManageRow(Icons.Outlined.Settings, "고급 설정", "공간 관리 상태를 확인합니다") { onManageAction(SpaceManageAction.ADVANCED) }
+        }
     }
 }
 
@@ -440,12 +454,12 @@ private fun ManageRow(icon: androidx.compose.ui.graphics.vector.ImageVector, tit
 }
 
 @Composable
-private fun EmptyCard(title: String, body: String, actionLabel: String, onClick: () -> Unit) {
+private fun EmptyCard(title: String, body: String, actionLabel: String? = null, onClick: (() -> Unit)? = null) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onClick = onClick) { Text(actionLabel) }
+            if (actionLabel != null && onClick != null) Button(onClick = onClick) { Text(actionLabel) }
         }
     }
 }

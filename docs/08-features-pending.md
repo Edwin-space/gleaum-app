@@ -13,7 +13,7 @@
 | 🔴 | Release AAB 검증 | `bundleRelease`, R8 mapping, native symbols, Firebase Crashlytics/Analytics/FCM, AdFit 실패 fallback 확인 |
 | 🟡 | 로그인/가입 UI A등급 판단 | 현재 XML 기반 86/B. Compose Material 3 전환 또는 브랜드 예외 승인 후 태블릿·큰 글꼴 QA |
 | 🟡 | 태블릿·폴더블·접근성 | NavigationRail 전환, 1.3배 글꼴, TalkBack, 폰 가로/expanded 폭 검증 |
-| 🟡 | 가족/자녀 capability 적용 | `/api/session/context`를 메뉴·가계부·광고·공간 권한에 적용하고 자녀 홈/보호자 승인 이후 기능 제한 구현 |
+| ✅ | Web·Android 가족/자녀 capability 적용 | `/api/session/context` 기반 메뉴·가계부·광고·공간 권한과 자녀 홈 제한 구현 완료 (`FAM-001`, `FAM-002`) |
 | 🟡 | iOS 기능 동등화 | Android 안정화 후 EventKit, APNs, 앱 링크, 자녀 capability 및 주요 화면 네이티브화 |
 
 ## 우선순위 기준
@@ -109,8 +109,10 @@
 - [x] 보호자 휴대폰 직접 공유와 `/invite/child/[token]` 랜딩
 - [x] Google OAuth 완료 후 자녀 초대 claim 복귀
 - [ ] 서비스 볼륨 확대 시 SMS OTP/PASS/NICE/KCB 본인확인으로 전환
-- [ ] 공통 `/api/session/context`를 Web/Android/iOS 메뉴·광고·가계부 권한에 적용
-- [ ] 자녀 전용 홈과 만 14세 본인 재동의 화면
+- [x] 공통 `/api/session/context`를 Web/Android 메뉴·광고·가계부·공간 권한에 적용
+- [ ] iOS 메뉴·홈·광고 capability 동등화 (`IOS-005`)
+- [x] Web·Android 자녀 전용 홈 적용
+- [ ] 만 14세 본인 재동의 화면
 - [ ] 일정 assignee/observer 및 자녀/보호자 전용 RLS
 - [ ] 만 14세·19세 전환 알림과 일괄 Cron
 - [ ] 수동 위치 체크인 MVP 및 별도 위치 동의

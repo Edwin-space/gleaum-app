@@ -102,6 +102,7 @@ fun ComposeMyMenuScreen(
     summary: NativeHomePortSummary?,
     loading: Boolean,
     message: String?,
+    canViewHouseholdBudget: Boolean,
     modifier: Modifier = Modifier,
     messageKind: FeedbackKind = FeedbackKind.ERROR,
     themeModeSubtitle: String,
@@ -163,7 +164,7 @@ fun ComposeMyMenuScreen(
         if (!message.isNullOrBlank()) {
             item { GleaumFeedbackBanner(message = message, kind = messageKind) }
         }
-        item { QuickActions(onAction) }
+        item { QuickActions(onAction, canViewHouseholdBudget) }
         item { SectionTitle("앱 설정") }
         item {
             MenuGroup(
@@ -217,13 +218,13 @@ fun ComposeMyMenuScreen(
         MyMenuSettingsDialog.HOME_LAYOUT -> ChoiceSettingsDialog(
             title = "홈 레이아웃",
             description = "홈에서 먼저 보여줄 정보 흐름을 선택합니다.",
-            options = listOf(
-                SettingsChoice("balanced", "균형형", "일정, 공간, 가계부를 고르게 보여줍니다."),
-                SettingsChoice("calendar_first", "일정 중심", "오늘과 다가오는 일정을 먼저 보여줍니다."),
-                SettingsChoice("routine_first", "루틴 중심", "반복 흐름과 할 일을 우선합니다."),
-                SettingsChoice("expense_first", "가계부 중심", "수입/지출 흐름을 먼저 보여줍니다."),
-                SettingsChoice("space_first", "공간 중심", "함께 쓰는 공간 정보를 우선합니다."),
-            ),
+            options = buildList {
+                add(SettingsChoice("balanced", "균형형", "일정과 공간 흐름을 고르게 보여줍니다."))
+                add(SettingsChoice("calendar_first", "일정 중심", "오늘과 다가오는 일정을 먼저 보여줍니다."))
+                add(SettingsChoice("routine_first", "루틴 중심", "반복 흐름과 할 일을 우선합니다."))
+                if (canViewHouseholdBudget) add(SettingsChoice("expense_first", "가계부 중심", "수입/지출 흐름을 먼저 보여줍니다."))
+                add(SettingsChoice("space_first", "공간 중심", "함께 쓰는 공간 정보를 우선합니다."))
+            },
             selectedValue = homeLayoutValue,
             onSelected = onHomeLayoutSelected,
             onDismiss = onDismissSettingsDialog,
@@ -231,6 +232,7 @@ fun ComposeMyMenuScreen(
         MyMenuSettingsDialog.NOTIFICATIONS -> NotificationSettingsDialog(
             scheduleEnabled = notificationScheduleEnabled,
             budgetEnabled = notificationBudgetEnabled,
+            canViewHouseholdBudget = canViewHouseholdBudget,
             onSave = onNotificationSettingsSaved,
             onDismiss = onDismissSettingsDialog,
         )
@@ -298,10 +300,12 @@ private fun ProfileHero(summary: NativeHomePortSummary?, loading: Boolean) {
 }
 
 @Composable
-private fun QuickActions(onAction: (MyMenuAction) -> Unit) {
+private fun QuickActions(onAction: (MyMenuAction) -> Unit, canViewHouseholdBudget: Boolean) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
         QuickActionCard("일정 추가", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { onAction(MyMenuAction.ADD_SCHEDULE) }
-        QuickActionCard("가계부", Icons.Outlined.CreditCard, Modifier.weight(1f)) { onAction(MyMenuAction.OPEN_BUDGET) }
+        if (canViewHouseholdBudget) {
+            QuickActionCard("가계부", Icons.Outlined.CreditCard, Modifier.weight(1f)) { onAction(MyMenuAction.OPEN_BUDGET) }
+        }
         QuickActionCard("공간", Icons.Outlined.SpaceDashboard, Modifier.weight(1f)) { onAction(MyMenuAction.OPEN_SPACE) }
     }
 }
@@ -386,6 +390,7 @@ private fun ChoiceSettingsDialog(
 private fun NotificationSettingsDialog(
     scheduleEnabled: Boolean,
     budgetEnabled: Boolean,
+    canViewHouseholdBudget: Boolean,
     onSave: (Boolean, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -404,15 +409,17 @@ private fun NotificationSettingsDialog(
                     checked = scheduleChecked,
                     onCheckedChange = { scheduleChecked = it },
                 )
-                CheckSettingRow(
-                    title = "가계부 결제 알림",
-                    description = "정기 지출 예정 알림을 받습니다.",
-                    checked = budgetChecked,
-                    onCheckedChange = { budgetChecked = it },
-                )
+                if (canViewHouseholdBudget) {
+                    CheckSettingRow(
+                        title = "가계부 결제 알림",
+                        description = "정기 지출 예정 알림을 받습니다.",
+                        checked = budgetChecked,
+                        onCheckedChange = { budgetChecked = it },
+                    )
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(scheduleChecked, budgetChecked) }) { Text("저장") } },
+        confirmButton = { TextButton(onClick = { onSave(scheduleChecked, canViewHouseholdBudget && budgetChecked) }) { Text("저장") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
     )
 }

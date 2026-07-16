@@ -45,10 +45,11 @@
 | 9 | `REPO-001` | 현재 대규모 미커밋 작업 안전한 체크포인트 | `✅ 완료` | 2026-07-16 Android 제외 범위 7개 체크포인트 커밋 완료 |
 | 10 | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `🔴 차단` | 1차 8개 완료. Docker daemon 실행·Supabase CLI/config 준비 후 로컬 RLS 통합 테스트 |
 | 11 | `FAM-001` | 가족·자녀 공통 capability 적용 | `✅ 완료` | 2026-07-16 Cookie/Bearer 공통 계약, Web/UI·API·RLS 우회 차단·운영 검증 |
-| 12 | `FAM-002` | 자녀 전용 홈·메뉴 제한 | `⬜ 대기` | Android 포함 자녀 홈 정보 구조와 네이티브 메뉴·진입점을 capability로 동기화 |
-| 13 | `AND-001` | Android 실기기 핵심·시각 QA | `🔴 차단` | debug 설치·스플래시→로그인·시각·무크래시 통과. 인증 계정 세션 확보 후 핵심 화면 회귀 |
-| 14 | `AND-002` | Android Release AAB 출시 검증 | `🔴 차단` | R8·manifest·서명 전 package 통과. 저장소 밖 release 서명 비밀번호 환경 주입 후 최종 AAB 생성 |
-| 15 | `AND-006` | Play Console 출시 자료·정책 점검 | `🔴 차단` | 로컬 정책 정합성·운영 URL 확인 완료. Console의 Data safety/IARC/App access/서명 인증서·스토어 자료 확인 필요 |
+| 12 | `FAM-002` | 자녀 전용 홈·메뉴 제한 | `✅ 완료` | 2026-07-16 Web·Android 홈·메뉴·딥링크·광고 진입점을 공통 capability로 동기화 |
+| 13 | `IOS-005` | iOS 가족·자녀 capability 동등화 | `⬜ 대기` | iOS 홈·메뉴·딥링크·광고가 `/api/session/context` 계약을 소비하도록 구현 |
+| 14 | `AND-001` | Android 실기기 핵심·시각 QA | `🔴 차단` | debug 설치·스플래시→로그인·시각·무크래시 통과. 인증 계정 세션 확보 후 핵심 화면 회귀 |
+| 15 | `AND-002` | Android Release AAB 출시 검증 | `🔴 차단` | R8·manifest·서명 전 package 통과. 저장소 밖 release 서명 비밀번호 환경 주입 후 최종 AAB 생성 |
+| 16 | `AND-006` | Play Console 출시 자료·정책 점검 | `🔴 차단` | 로컬 정책 정합성·운영 URL 확인 완료. Console의 Data safety/IARC/App access/서명 인증서·스토어 자료 확인 필요 |
 
 ## 3. P0 보안·운영
 
@@ -103,7 +104,7 @@
 |---|---|---|---|---|---|---|
 | [x] | `FAM-000` | 자녀 사전등록·보호자 이메일 확인·초대·승인 기반 | `✅ 완료` | 2026-07-13 | 2026-07-14 | migration 020~022 운영 적용 기록과 Web/API 기반 구현 |
 | [x] | `FAM-001` | 공통 session context capability 적용 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `/api/session/context` Cookie·Bearer 검증, 공통 mapper/provider, Web 메뉴·광고·가계부·공간 UI, Web/native API, 운영 RLS 7개 차단. capability 4건·데이터 경계 8건·변경 대상 ESLint·tsc·build 통과. 네이티브 전용 UI는 `FAM-002`/`IOS-005` |
-| [ ] | `FAM-002` | 자녀 전용 홈·메뉴 제한 | `⬜ 대기` | — | — | 승인 상태와 연령에 따라 노출/행동/API가 모두 제한됨 |
+| [x] | `FAM-002` | 자녀 전용 홈·메뉴 제한 | `✅ 완료` | 2026-07-16 | 2026-07-16 | Web 자녀 안내 홈·문구, Android account context 캐시·자녀 홈 카드, 가계부/공간 관리 메뉴·액티비티·딥링크 차단, AdMob 네이티브/App Open 광고 차단. capability 4/4·데이터 경계 8/8·변경 대상 ESLint·tsc·production build·Android compile/test/lint/assemble 통과 |
 | [ ] | `FAM-003` | 일정 assignee/observer 모델·RLS | `⬜ 대기` | — | — | 자녀/보호자 역할별 조회·수정 테스트 포함 |
 | [ ] | `FAM-004` | 만 14세 재동의·만 19세 전환 | `⬜ 대기` | — | — | UI, 알림, 일괄 Cron, 과거 동의 이력 보존 검증 |
 | [ ] | `FAM-005` | 약관·개인정보처리방침 개정 운영 | `⬜ 대기` | — | — | 사전 고지일·시행일·버전 기록과 법률 검토 완료 |
@@ -175,6 +176,8 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-16 | `FAM-002` | 시작 | 자녀 전용 홈·메뉴 제한을 Web·Android에 적용 시작 | 현재 홈 요약·메뉴·딥링크·AdMob 진입점과 session context 소비 구조를 먼저 감사 |
+| 2026-07-16 | `FAM-002` | 완료 | Web·Android가 동일 account capability를 소비하도록 홈 정보 구조, 메뉴, 딥링크, 공간 관리 액션, 가계부 액티비티와 네이티브 광고를 동기화 | capability 4/4·데이터 경계 8/8, 변경 대상 ESLint·tsc·production build, Android `compileDebugKotlin`·`testDebugUnitTest`·`lintDebug`·`assembleDebug` 통과. 전체 `npm run lint` 기존 산출물/소스 부채는 `SEC-004`, 다음 `IOS-005` |
 | 2026-07-16 | `FAM-001` | 완료 | account mode를 단일 capability mapper로 통합하고 Web provider/UI, Cookie·Bearer API, 가계부·공간·초대·광고 서버 경계와 운영 RLS에 적용 | 운영 migration `20260716061100`·`20260716061330`, RLS 7개, helper anon 불가·Security Advisor 신규 경고 0. capability 4/4, 데이터 경계 8/8, 변경 대상 ESLint·tsc·production build 통과. 전체 lint 기존 오류는 `SEC-004`, 다음 `FAM-002` |
 | 2026-07-16 | `FAM-001` | 시작 | 가족·자녀 공통 session capability를 Web 메뉴·광고·가계부·공간 API/UI와 네이티브 계약에 적용 시작 | 기존 `/api/session/context`·DB 권한·클라이언트 노출을 먼저 감사하고 서버 우회 요청 회귀 테스트 추가 |
 | 2026-07-16 | `AND-003`, `AND-004`, `AND-006`, `AND-008` | 체크포인트 | 적응형 840dp 폭 수정·debug 전용 preview·로그인 XML 예외 결정을 `bf69e1e`, 미사용 권한 제거·개인정보/Data safety 정합화를 `5ad7ba0`으로 분리 보존 | Android debug/test/lint/release manifest, 웹 lint/build, compact·글꼴 1.3배·다크·expanded 실기기 QA 통과. 남은 수동/Console 항목은 각 차단 행 기준 재개 |

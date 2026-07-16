@@ -18,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import com.gleaum.app.R
+import com.gleaum.app.NativeAccountContextStore
 import com.gleaum.app.ui.theme.isDark
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -44,9 +46,12 @@ fun GleaumScaffold(
     bottomContent: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val capabilities = NativeAccountContextStore.capabilities(LocalContext.current)
     NavigationSuiteScaffold(
         navigationItems = {
-            GleaumDestination.entries.forEach { destination ->
+            GleaumDestination.entries
+                .filter { it != GleaumDestination.BUDGET || capabilities.canViewHouseholdBudget }
+                .forEach { destination ->
                 NavigationSuiteItem(
                     selected = selectedDestination == destination,
                     onClick = { onDestinationSelected(destination) },

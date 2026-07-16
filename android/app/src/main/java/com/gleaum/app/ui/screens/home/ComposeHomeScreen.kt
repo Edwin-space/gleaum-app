@@ -124,6 +124,10 @@ fun ComposeHomeScreen(
             HeroCard(summary = summary)
         }
 
+        if (isManagedAccount(summary?.account?.accountMode)) {
+            item { ManagedAccountCard(summary?.account?.accountMode.orEmpty()) }
+        }
+
         item {
             TodayCalendarToggle(
                 selectedDate = selected,
@@ -166,8 +170,10 @@ fun ComposeHomeScreen(
             }
         }
 
-        item {
-            BudgetCard(summary = summary, onOpenBudget = onOpenBudget)
+        if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+            item {
+                BudgetCard(summary = summary, onOpenBudget = onOpenBudget)
+            }
         }
 
         item {
@@ -232,8 +238,12 @@ private fun HeroCard(summary: NativeHomePortSummary?) {
                         fontWeight = FontWeight.ExtraBold,
                     )
                     Text(
-                        text = summary?.activeSpaceName?.let { "$it 공간의 일정과 자금 흐름을 확인하세요." }
-                            ?: "오늘 필요한 일정과 자금 흐름을 확인하세요.",
+                        text = if (isManagedAccount(summary?.account?.accountMode)) {
+                            "오늘 할 일과 가까운 일정을 하나씩 확인해 보세요."
+                        } else {
+                            summary?.activeSpaceName?.let { "$it 공간의 일정과 자금 흐름을 확인하세요." }
+                                ?: "오늘 필요한 일정과 자금 흐름을 확인하세요."
+                        },
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f),
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -248,6 +258,37 @@ private fun HeroCard(summary: NativeHomePortSummary?) {
         }
     }
 }
+
+@Composable
+private fun ManagedAccountCard(accountMode: String) {
+    val pendingConsent = accountMode == "teen_consent_pending" || accountMode == "pending_guardian_consent"
+    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            GleaumLabelBadge(if (pendingConsent) "동의 확인 필요" else "보호자 관리 계정")
+            Text(
+                text = if (pendingConsent) "동의 상태를 확인하고 있어요"
+                    else "일정과 루틴에 집중하는 홈이에요",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "가계부·공간 관리·멤버 초대·광고는 나이와 동의 상태에 맞게 제한됩니다.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun isManagedAccount(accountMode: String?): Boolean = accountMode in setOf(
+    "pending_guardian_consent",
+    "child_managed",
+    "teen_consent_pending",
+    "teen",
+)
 
 @Composable
 private fun HeroMetric(label: String, value: String, modifier: Modifier = Modifier) {

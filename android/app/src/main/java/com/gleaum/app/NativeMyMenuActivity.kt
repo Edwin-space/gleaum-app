@@ -94,6 +94,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             try {
                 val loaded = requestHomeSummary(token)
                 runOnUiThread {
+                    NativeAccountContextStore.save(this, loaded.account)
+                    (application as? GleaumApp)?.syncAdvertisingEligibility()
                     summary = loaded
                     loading = false
                     message = null
@@ -153,6 +155,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         summary = summary,
                         loading = loading,
                         message = message,
+                        canViewHouseholdBudget = summary?.account?.capabilities?.canViewHouseholdBudget == true,
                         messageKind = menuFeedbackKind(message),
                         themeModeSubtitle = themeModeSubtitle(),
                         themeModeBadge = themeModeBadge(),
@@ -224,7 +227,9 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun handleMenuAction(action: MyMenuAction) {
         when (action) {
             MyMenuAction.ADD_SCHEDULE -> startActivity(Intent(this, NativeScheduleCreateActivity::class.java))
-            MyMenuAction.OPEN_BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
+            MyMenuAction.OPEN_BUDGET -> if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                startActivity(Intent(this, NativeBudgetActivity::class.java)); finish()
+            }
             MyMenuAction.OPEN_SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
             MyMenuAction.THEME_MODE -> openComposeSettingsDialog(MyMenuSettingsDialog.THEME_MODE) { showThemeModeSettings() }
             MyMenuAction.HOME_LAYOUT -> openComposeSettingsDialog(MyMenuSettingsDialog.HOME_LAYOUT) { showHomeLayoutSettings() }
@@ -432,7 +437,9 @@ class NativeMyMenuActivity : AppCompatActivity() {
             addQuickAction("일정 추가", MenuIcon.CALENDAR) {
                 startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleCreateActivity::class.java))
             }
-            addQuickAction("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() }
+            if (canViewHouseholdBudget()) {
+                addQuickAction("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() }
+            }
             addQuickAction("공간", MenuIcon.SPACE) { startActivity(Intent(this@NativeMyMenuActivity, NativeSpaceActivity::class.java)); finish() }
         }
     }
@@ -533,14 +540,15 @@ class NativeMyMenuActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             background = roundDrawable("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeMyMenuActivity)) 28 else 0, "#E8E8E4")
-            listOf(
-                BottomItem("홈", MenuIcon.HOME) { openWebPath("/home") },
-                BottomItem("일정", MenuIcon.CALENDAR) { startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleListActivity::class.java)); finish() },
-                BottomItem("공간", MenuIcon.SPACE) { startActivity(Intent(this@NativeMyMenuActivity, NativeSpaceActivity::class.java)); finish() },
-                BottomItem("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() },
-                BottomItem("전체", MenuIcon.MENU) {},
-            ).forEachIndexed { index, item ->
-                addView(buildBottomItem(item, index == 4), LinearLayout.LayoutParams(0, match(), 1f))
+            val items = buildList {
+                add(BottomItem("홈", MenuIcon.HOME) { openWebPath("/home") })
+                add(BottomItem("일정", MenuIcon.CALENDAR) { startActivity(Intent(this@NativeMyMenuActivity, NativeScheduleListActivity::class.java)); finish() })
+                add(BottomItem("공간", MenuIcon.SPACE) { startActivity(Intent(this@NativeMyMenuActivity, NativeSpaceActivity::class.java)); finish() })
+                if (canViewHouseholdBudget()) add(BottomItem("가계부", MenuIcon.BUDGET) { startActivity(Intent(this@NativeMyMenuActivity, NativeBudgetActivity::class.java)); finish() })
+                add(BottomItem("전체", MenuIcon.MENU) {})
+            }
+            items.forEachIndexed { index, item ->
+                addView(buildBottomItem(item, index == items.lastIndex), LinearLayout.LayoutParams(0, match(), 1f))
             }
         }
     }
@@ -980,8 +988,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun showHomeLayoutSettings() {
-        val values = arrayOf("balanced", "calendar_first", "routine_first", "expense_first", "space_first")
-        val labels = arrayOf("균형형", "일정 중심", "루틴 중심", "가계부 중심", "공간 중심")
+        val values = if (canViewHouseholdBudget()) arrayOf("balanced", "calendar_first", "routine_first", "expense_first", "space_first")
+            else arrayOf("balanced", "calendar_first", "routine_first", "space_first")
+        val labels = if (canViewHouseholdBudget()) arrayOf("균형형", "일정 중심", "루틴 중심", "가계부 중심", "공간 중심")
+            else arrayOf("균형형", "일정 중심", "루틴 중심", "공간 중심")
         val selected = values.indexOf(normalizedHomeLayout()).takeIf { it >= 0 } ?: 0
         AlertDialog.Builder(this)
             .setTitle("홈 레이아웃")
@@ -995,24 +1005,36 @@ class NativeMyMenuActivity : AppCompatActivity() {
     }
 
     private fun normalizedHomeLayout(): String {
-        return when (nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")) {
+        val normalized = when (nativePrefs().getString(HOME_LAYOUT_KEY, "balanced")) {
             "schedule_first" -> "calendar_first"
             "budget_first" -> "expense_first"
             "calendar_first", "routine_first", "expense_first", "space_first" -> nativePrefs().getString(HOME_LAYOUT_KEY, "balanced").orEmpty()
             else -> "balanced"
         }
+        return if (!canViewHouseholdBudget() && normalized == "expense_first") "calendar_first" else normalized
     }
 
     private fun notificationSettingsSubtitle(): String {
         val schedule = isScheduleNotificationEnabled()
+        if (!canViewHouseholdBudget()) return "일정 ${if (schedule) "켜짐" else "꺼짐"}"
         val budget = isBudgetNotificationEnabled()
         return "일정 ${if (schedule) "켜짐" else "꺼짐"} · 가계부 ${if (budget) "켜짐" else "꺼짐"}"
     }
 
     private fun notificationSettingsBadge(): String =
-        if (isScheduleNotificationEnabled() || isBudgetNotificationEnabled()) "켜짐" else "꺼짐"
+        if (isScheduleNotificationEnabled() || (canViewHouseholdBudget() && isBudgetNotificationEnabled())) "켜짐" else "꺼짐"
 
     private fun showNotificationSettings() {
+        if (!canViewHouseholdBudget()) {
+            val checked = booleanArrayOf(nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true")
+            AlertDialog.Builder(this)
+                .setTitle("알림 설정")
+                .setMultiChoiceItems(arrayOf("일정 리마인더"), checked) { _, _, isChecked -> checked[0] = isChecked }
+                .setPositiveButton("저장") { _, _ -> saveNotificationSettings(checked[0], false) }
+                .setNegativeButton("닫기", null)
+                .show()
+            return
+        }
         val labels = arrayOf("일정 리마인더", "가계부 결제 알림")
         val checked = booleanArrayOf(
             nativePrefs().getString(NOTIFY_SCHEDULE_KEY, "true") == "true",
@@ -1027,6 +1049,9 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .setNegativeButton("닫기", null)
             .show()
     }
+
+    private fun canViewHouseholdBudget(): Boolean =
+        summary?.account?.capabilities?.canViewHouseholdBudget == true
 
     private fun openDeviceSecuritySettings() {
         activeComposeSettingsDialog = null

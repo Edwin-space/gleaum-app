@@ -29,6 +29,7 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
 
     private val appOpenAdManager = AppOpenAdManager()
     private var currentActivity: Activity? = null
+    private var mobileAdsInitialized = false
 
     /** 콜드 스타트 여부 — 첫 번째 ON_START 는 스플래시 지연 후 표시 */
     private var isColdStart = true
@@ -43,16 +44,23 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         registerActivityLifecycleCallbacks(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
-        // MobileAds 초기화 (백그라운드 스레드 권장)
-        MobileAds.initialize(this)
-
-        appOpenAdManager.loadAd(this)
-
     }
 
     /** LoginActivity 에서는 App Open Ad 표시 안 함 */
     private fun isLoginActivity(): Boolean =
         currentActivity?.javaClass?.simpleName == "LoginActivity"
+
+    fun syncAdvertisingEligibility() {
+        if (!NativeAccountContextStore.capabilities(this).canShowAds) {
+            appOpenAdManager.clear()
+            return
+        }
+        if (!mobileAdsInitialized) {
+            MobileAds.initialize(this)
+            mobileAdsInitialized = true
+        }
+        appOpenAdManager.loadAd(this)
+    }
 
     // ── DefaultLifecycleObserver: 앱 포그라운드 감지 ─────────────────────────
 
@@ -61,10 +69,15 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         val activity = currentActivity ?: return
         // 로그인 화면에서는 App Open Ad 표시하지 않음
         if (isLoginActivity()) return
+        if (!NativeAccountContextStore.capabilities(this).canShowAds) return
         if (isColdStart) {
             isColdStart = false
             activity.window.decorView.postDelayed({
-                if (!isLoginActivity()) appOpenAdManager.showAdIfAvailable(activity)
+                if (!isLoginActivity() && NativeAccountContextStore.capabilities(this).canShowAds) {
+                    appOpenAdManager.showAdIfAvailable(activity)
+                } else {
+                    appOpenAdManager.clear()
+                }
             }, 2500L)
         } else {
             appOpenAdManager.showAdIfAvailable(activity)
@@ -117,8 +130,18 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         private val adUnitId: String
             get() = if (BuildConfig.DEBUG) AD_UNIT_ID_TEST else AD_UNIT_ID
 
+        fun clear() {
+            appOpenAd = null
+            isLoadingAd = false
+            isShowingAd = false
+        }
+
         /** 광고 로드 */
         fun loadAd(context: android.content.Context) {
+            if (!NativeAccountContextStore.capabilities(context).canShowAds) {
+                clear()
+                return
+            }
             if (isLoadingAd || isAdAvailable()) return
             isLoadingAd = true
 
@@ -128,6 +151,10 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
                 AdRequest.Builder().build(),
                 object : AppOpenAd.AppOpenAdLoadCallback() {
                     override fun onAdLoaded(ad: AppOpenAd) {
+                        if (!NativeAccountContextStore.capabilities(context).canShowAds) {
+                            clear()
+                            return
+                        }
                         appOpenAd   = ad
                         isLoadingAd = false
                         loadTime    = Date().time
@@ -152,6 +179,10 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
 
         /** 조건이 충족되면 광고 표시 */
         fun showAdIfAvailable(activity: Activity) {
+            if (!NativeAccountContextStore.capabilities(activity).canShowAds) {
+                clear()
+                return
+            }
             if (isShowingAd) return
             if (!isCooldownOver()) return
 

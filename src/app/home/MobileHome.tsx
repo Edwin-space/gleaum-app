@@ -14,7 +14,9 @@ import { useTimeGreeting } from '@/hooks/useTimeGreeting';
 import type { Schedule } from '@/types';
 import type { ProfileRow } from '@/lib/db';
 import type { HomeLayoutPreference, OnboardingPreferences, User } from '@/types';
-import { useAccountCapability } from '@/components/AccountSessionProvider';
+import { useAccountSession } from '@/components/AccountSessionProvider';
+import { ChildAccountHomeBanner } from '@/components/ChildAccountHomeBanner';
+import { isManagedMinorAccountMode } from '@/lib/account-capabilities';
 
 interface MobileHomeProps {
   user: User | null;
@@ -26,7 +28,9 @@ interface MobileHomeProps {
 
 export default function MobileHome({ user, profile, schedules, personalExpenses, loading }: MobileHomeProps) {
   const router = useRouter();
-  const canViewBudget = useAccountCapability('canViewHouseholdBudget');
+  const { capabilities, context: accountContext } = useAccountSession();
+  const canViewBudget = capabilities.canViewHouseholdBudget;
+  const isManagedMinor = isManagedMinorAccountMode(accountContext?.accountMode ?? 'unknown');
   const { resolvedTheme } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -251,7 +255,7 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
               {displayName}님
             </h1>
             <p style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.50)', margin: '0 0 16px', lineHeight: 1.5 }}>
-              {layoutCopy[homeLayout]}
+              {isManagedMinor ? '오늘 할 일과 가까운 일정을 하나씩 확인해 보세요.' : layoutCopy[homeLayout]}
             </p>
 
             {/* 오늘 통계 */}
@@ -307,6 +311,8 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
             )}
           </div>
         </div>
+
+        <ChildAccountHomeBanner />
 
         {/* ── 오늘(투데이/달력) ── */}
         <button

@@ -47,6 +47,11 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!NativeAccountContextStore.capabilities(this).canViewHouseholdBudget) {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
         entryId = intent.getStringExtra("entry_id")
         kind = intent.getStringExtra("kind") ?: "expense"
         category = if (kind == "income") "salary" else "food"

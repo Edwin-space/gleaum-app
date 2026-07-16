@@ -39,22 +39,28 @@ object NativeDeepLinkRouter {
 
     fun intentFor(context: Context, pathWithQuery: String?): Intent? {
         val path = routePath(pathWithQuery) ?: return null
+        val capabilities = NativeAccountContextStore.capabilities(context)
         return when {
             path == "/home" -> Intent(context, NativeHomePortActivity::class.java)
             path == "/onboarding" -> Intent(context, NativeOnboardingActivity::class.java)
-            path == "/budget" -> Intent(context, NativeBudgetActivity::class.java)
+            path == "/budget" && capabilities.canViewHouseholdBudget -> Intent(context, NativeBudgetActivity::class.java)
+            path == "/budget" -> Intent(context, NativeHomePortActivity::class.java)
             path == "/notifications" -> Intent(context, NativeNotificationActivity::class.java)
             path == "/mypage" -> Intent(context, NativeMyMenuActivity::class.java)
             path == "/settings/security" -> Intent(context, NativeMyMenuActivity::class.java)
             path == "/settings/calendar" -> Intent(context, NativeMyMenuActivity::class.java)
             path == "/settings/home-layout" -> Intent(context, NativeMyMenuActivity::class.java)
-            path == "/space" || path == "/space/new" -> Intent(context, NativeSpaceActivity::class.java)
+            path == "/space" -> Intent(context, NativeSpaceActivity::class.java)
+            path == "/space/new" && capabilities.canManageSpaces -> Intent(context, NativeSpaceActivity::class.java)
+            path == "/space/new" -> Intent(context, NativeSpaceActivity::class.java)
+            path == "/space/settings" && capabilities.canManageSpaces -> Intent(context, NativeSpaceActivity::class.java)
             path == "/space/settings" -> Intent(context, NativeSpaceActivity::class.java)
             path == "/family" -> Intent(context, NativeSpaceActivity::class.java)
-            path.matches(Regex("^/invite/[^/]+$")) -> {
+            path.matches(Regex("^/invite/[^/]+$")) && capabilities.canInviteMembers -> {
                 val code = path.removePrefix("/invite/")
                 Intent(context, NativeSpaceActivity::class.java).putExtra("invite_code", code)
             }
+            path.matches(Regex("^/invite/[^/]+$")) -> Intent(context, NativeHomePortActivity::class.java)
             path == "/schedules" -> Intent(context, NativeScheduleListActivity::class.java)
             path == "/schedules/new" -> Intent(context, NativeScheduleCreateActivity::class.java)
             path.matches(Regex("^/schedules/[^/]+/edit$")) -> {

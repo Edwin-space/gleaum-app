@@ -41,6 +41,12 @@ class NativeAdPlugin : Plugin() {
      */
     @PluginMethod
     fun loadAd(call: PluginCall) {
+        if (!NativeAccountContextStore.capabilities(context).canShowAds) {
+            currentNativeAd?.destroy()
+            currentNativeAd = null
+            call.resolve(JSObject().apply { put("ad", null) })
+            return
+        }
         val adUnitId = if (IS_DEBUG) AD_UNIT_ID_TEST else AD_UNIT_ID
 
         activity.runOnUiThread {
@@ -51,6 +57,11 @@ class NativeAdPlugin : Plugin() {
 
                 val adLoader = AdLoader.Builder(activity, adUnitId)
                     .forNativeAd { nativeAd ->
+                        if (!NativeAccountContextStore.capabilities(context).canShowAds) {
+                            nativeAd.destroy()
+                            call.resolve(JSObject().apply { put("ad", null) })
+                            return@forNativeAd
+                        }
                         currentNativeAd = nativeAd
                         val imageUrl = nativeAd.images.firstOrNull()?.uri?.toString()
                         android.util.Log.d("NativeAdPlugin", "광고 로드 성공: ${nativeAd.headline}")

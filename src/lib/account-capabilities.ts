@@ -2,6 +2,13 @@ import type { AccountCapabilities, AccountMode, AccountSessionContext } from '@/
 
 export type AccountCapability = keyof AccountCapabilities;
 
+export function isManagedMinorAccountMode(mode: AccountMode): boolean {
+  return mode === 'pending_guardian_consent'
+    || mode === 'child_managed'
+    || mode === 'teen_consent_pending'
+    || mode === 'teen';
+}
+
 export const DENIED_ACCOUNT_CAPABILITIES: Readonly<AccountCapabilities> = Object.freeze({
   canManageSpaces: false,
   canInviteMembers: false,
@@ -13,10 +20,7 @@ export const DENIED_ACCOUNT_CAPABILITIES: Readonly<AccountCapabilities> = Object
 });
 
 export function capabilitiesForAccountMode(mode: AccountMode): AccountCapabilities {
-  const isRestricted = mode === 'child_managed'
-    || mode === 'pending_guardian_consent'
-    || mode === 'teen_consent_pending'
-    || mode === 'teen';
+  const isRestricted = isManagedMinorAccountMode(mode);
 
   return {
     canManageSpaces: !isRestricted,

@@ -33,6 +33,11 @@ class NativeBudgetActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!NativeAccountContextStore.capabilities(this).canViewHouseholdBudget) {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
         applyLightSystemBars()
         render()
         loadSummary()
