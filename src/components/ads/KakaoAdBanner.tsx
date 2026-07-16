@@ -20,10 +20,11 @@ interface KakaoAdBannerProps {
  *
  * React SPA 대응:
  *  - useEffect: <ins> 가 DOM에 마운트된 뒤 스크립트 삽입 보장
- *  - 기존 스크립트 제거 후 재삽입 → SPA 이동 후에도 재실행
- *  - document.body 에 append (가이드 권장 위치)
+ *  - 각 광고 컨테이너에 독립 스크립트 삽입 → 다른 슬롯을 제거하지 않음
+ *  - <ins> 바로 뒤에 SDK 스크립트를 배치
  */
 export function KakaoAdBanner({ adUnit, width, height, className, style }: KakaoAdBannerProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const safeStyle = style ? { ...style } : undefined;
 
@@ -43,9 +44,8 @@ export function KakaoAdBanner({ adUnit, width, height, className, style }: Kakao
   }
 
   useEffect(() => {
-    // 이전에 삽입된 동일 스크립트 제거 (SPA 재진입 시 재실행 보장)
-    const existing = document.querySelector('script[src*="ba.min.js"]');
-    if (existing) existing.remove();
+    const container = containerRef.current;
+    if (!container) return;
 
     const script = document.createElement('script');
     script.type      = 'text/javascript';
@@ -53,17 +53,19 @@ export function KakaoAdBanner({ adUnit, width, height, className, style }: Kakao
     script.src       = 'https://t1.kakaocdn.net/kas/static/ba.min.js';
     script.async     = true;
 
-    // 공식 가이드: </body> 바로 위 배치 권장
-    document.body.appendChild(script);
+    // 공식 가이드와 SPA 재진입을 모두 만족시키기 위해 각 <ins> 바로 뒤에
+    // SDK 스크립트를 붙인다. 다른 슬롯의 스크립트는 건드리지 않는다.
+    container.appendChild(script);
     scriptRef.current = script;
 
     return () => {
       try { script.remove(); } catch { /* 이미 제거됨 */ }
     };
-  }, []); // 마운트 1회 — <ins>가 DOM에 존재한 뒤 실행
+  }, [adUnit, width, height]);
 
   return (
     <div
+      ref={containerRef}
       className={className}
       style={{
         width: `${width}px`,

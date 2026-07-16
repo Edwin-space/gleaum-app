@@ -28,6 +28,44 @@ interface AdSlotProps {
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? '';
 
+function hasEmbeddedAdScript(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes('<script') ||
+    normalized.includes('</script') ||
+    normalized.includes('<ins') ||
+    normalized.includes('adsbygoogle') ||
+    normalized.includes('kakao_ad_area') ||
+    normalized.includes('ba.min.js') ||
+    normalized.includes('pagead2.googlesyndication.com')
+  );
+}
+
+function isSafeHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function isRenderableHouseAd(ad: ActiveAd): boolean {
+  return Boolean(
+    ad.id &&
+    ad.title &&
+    ad.link_url &&
+    isSafeHttpUrl(ad.link_url) &&
+    (!ad.image_url || isSafeHttpUrl(ad.image_url)) &&
+    !hasEmbeddedAdScript(ad.title) &&
+    !hasEmbeddedAdScript(ad.description) &&
+    !hasEmbeddedAdScript(ad.image_url) &&
+    !hasEmbeddedAdScript(ad.link_url) &&
+    !hasEmbeddedAdScript(ad.cta_text),
+  );
+}
+
 export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, className }: AdSlotProps) {
   const [ad, setAd]    = useState<ActiveAd | null | 'loading'>('loading');
   const trackedRef     = useRef(false);
@@ -41,7 +79,8 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
         if (!res.ok) { setAd(null); return; }
         const json = await res.json();
         if (json && typeof json.id === 'string' && typeof json.link_url === 'string') {
-          setAd(json as ActiveAd);
+          const activeAd = json as ActiveAd;
+          setAd(isRenderableHouseAd(activeAd) ? activeAd : null);
         } else {
           setAd(null);
         }
@@ -71,7 +110,7 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
 
   // ── 로딩 중 ──────────────────────────────────────────────────
   if (ad === 'loading') {
-    return <div style={{ width, height, borderRadius: 12, background: 'rgba(0,0,0,0.03)' }} />;
+    return <div style={{ width, height, borderRadius: 12, background: 'var(--theme-surface-muted)' }} />;
   }
 
   // ── 하우스 광고 렌더 (웹/앱 공통) ────────────────────────────
@@ -104,7 +143,7 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
             width: '100%', height: '100%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '0 16px', gap: 8,
-            background: 'linear-gradient(135deg, #F8F9FF 0%, #EEF2FF 100%)',
+            background: 'var(--theme-surface-muted)',
           }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--theme-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {ad.title}
@@ -120,7 +159,7 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
         )}
         <span style={{
           position: 'absolute', top: 3, right: 5,
-          fontSize: 9, fontWeight: 700, color: 'rgba(0,0,0,0.3)', letterSpacing: '0.05em',
+          fontSize: 9, fontWeight: 700, color: 'var(--theme-text-subtle)', letterSpacing: '0.05em',
         }}>AD</span>
       </a>
     );
