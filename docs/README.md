@@ -14,6 +14,7 @@
 | 파일 | 내용 | 중요도 |
 |------|------|--------|
 | `24-project-work-tracker.md` | ⭐ 전체 작업의 우선순위·상태·시작일·완료일·검증 근거·작업 일지 단일 기준 | **최우선** |
+| `25-google-play-release-readiness.md` | Google Play 정책·Data safety·스토어 자료·서명 산출물 체크리스트 | **최우선** |
 | `01-project-overview.md`   | 프로젝트 비전, 목표, 서비스 개요 | 참고 |
 | `02-tech-stack.md`         | 기술 스택 전체 상세 | 참고 |
 | `03-design-system.md`      | 디자인 시스템 (컬러, 타이포, 컴포넌트 규칙) | 참고 |
@@ -48,7 +49,7 @@
 - **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 구현 체크포인트**: `8b15af7` 운영 보안, `ff43799` 가족·자녀·공간, `a60d187` 웹 광고. Android·캘린더/테마 결합 변경은 미커밋이므로 `24-project-work-tracker.md`와 `23-external-work-checkpoint.md`를 함께 확인
+- **최근 구현 체크포인트**: `da2384e` Android·캘린더/테마·release 하드닝, `3971f1b` Android 검증 트래커. 이후 상태는 `24-project-work-tracker.md` 확인
 
 ---
 
