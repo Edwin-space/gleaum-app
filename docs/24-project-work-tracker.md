@@ -4,7 +4,7 @@
 >
 > 최초 작성: 2026-07-16
 > 최종 업데이트: 2026-07-16
-> 현재 Git 기준점: `8261b31` (`main`) + Android·캘린더/테마 브리지·Android 결합 문서 미커밋 작업 트리
+> 현재 기능 기준점: `da2384e` (`main`, Android·캘린더/테마 브리지·release 하드닝 체크포인트)
 
 ## 1. 운영 규칙
 
@@ -45,8 +45,8 @@
 | 9 | `REPO-001` | 현재 대규모 미커밋 작업 안전한 체크포인트 | `✅ 완료` | 2026-07-16 Android 제외 범위 7개 체크포인트 커밋 완료 |
 | 10 | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `🔴 차단` | 1차 8개 완료. Docker daemon 실행·Supabase CLI/config 준비 후 로컬 RLS 통합 테스트 |
 | 11 | `FAM-001` | 가족·자녀 공통 capability 적용 | `⬜ 대기` | 우선 Web 메뉴·광고·가계부·공간 API/UI에 `/api/session/context` 적용 |
-| 12 | `AND-001` | Android 실기기 핵심·시각 QA | `⏸ 보류` | 사용자가 Android 검증 재개를 지시하고 잠금 해제 단말을 확보하면 수행 |
-| 13 | `AND-002` | Android Release AAB 출시 검증 | `⏸ 보류` | Android 검증 범위 재개 후 `bundleRelease`, mapping, native symbols, Firebase/AdFit 확인 |
+| 12 | `AND-001` | Android 실기기 핵심·시각 QA | `🔴 차단` | debug 설치·스플래시→로그인·시각·무크래시 통과. 인증 계정 세션 확보 후 핵심 화면 회귀 |
+| 13 | `AND-002` | Android Release AAB 출시 검증 | `🔴 차단` | R8·manifest·서명 전 package 통과. 저장소 밖 release 서명 비밀번호 환경 주입 후 최종 AAB 생성 |
 
 ## 3. P0 보안·운영
 
@@ -73,7 +73,7 @@
 |---|---|---|---|---|---|---|
 | [x] | `REPO-000` | 프로젝트를 외장 SSD 작업 경로로 이전 | `✅ 완료` | 2026-07-14 | 2026-07-16 | 현재 경로 `/Volumes/Portable SSD/AI/gleaum`, `.git`과 untracked 파일 확인 |
 | [x] | `DOC-001` | 프로젝트 통합 작업 트래커 도입 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 전체 도메인 작업에 ID·상태·날짜·완료 기준을 부여하고 `AGENTS.md` 시작/종료 규칙에 연결 |
-| [x] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `✅ 완료` | 2026-07-16 | 2026-07-16 | Android 파일·검증 제외 범위 완료. `8b15af7` 보안/운영, `ff43799` 가족·자녀·공간, `a60d187` 웹 광고, `459a2aa` 트래커, `d8393d8` 제품/DB 문서, `86ba9ed` 외장 복구 문서. build·lint·audit·diff check와 운영 배포/DB 권한 검증 근거 보존. 캘린더/테마·Android 결합 문서는 Android 범위로 보류 |
+| [x] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 비Android 7개 체크포인트 후 Android·캘린더/테마·문서를 `da2384e`로 보존. Android debug/test/lint/release package, 웹 lint/build, 실기기 로그인 검증 근거 포함 |
 | [ ] | `REPO-002` | 비밀·환경·릴리즈 키 백업 상태 확인 | `⬜ 대기` | — | — | `.env.local`, Android release keystore, 서명 비밀번호의 저장소 외 백업 확인 |
 | [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `⬜ 대기` | — | — | 루트 build 통과, Vercel 배포 성공, 로그인/홈/공간/가계부 핵심 흐름 확인 |
 
@@ -84,12 +84,13 @@
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
-| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `⏸ 보류` | — | — | 사용자 지시로 Android 검증 제외. 재개 지시와 잠금 해제 단말 확보 후 로그인, CRUD, 공간, 알림, 생체인증, 캘린더와 light/dark/system 캡처 |
-| [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | — | — | 사용자 지시로 Android 검증 제외. 재개 후 서명 AAB, R8 `mapping.txt`, native symbols, Crashlytics/Analytics/FCM, AdFit fallback 확인 |
+| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🔴 차단` | 2026-07-16 | — | `SM_F731N`에 debug `1.1.5 (26)` 설치, 스플래시→로그인, UI 계층·1080×2640 캡처, 무크래시 통과. 인증 계정 세션이 없어 홈·CRUD·공간·알림·생체인증 실사용 회귀 차단 |
+| [ ] | `AND-002` | Release AAB 검증 | `🔴 차단` | 2026-07-16 | — | R8·lintVital·manifest·Crashlytics mapping upload·`packageReleaseBundle` 통과. intermediary AAB 약 96MB, mapping 약 84MB. release keystore password 환경변수 미설정으로 최종 서명만 차단 |
 | [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `⬜ 대기` | — | — | NavigationRail, 폰 가로, expanded 폭, 글꼴 1.3배, TalkBack 통과 |
 | [ ] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `⬜ 대기` | — | — | 현 XML 86/B를 Compose 전환하거나 브랜드 예외로 승인하고 결정일 기록 |
-| [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `⏸ 보류` | 2026-07-14 | — | 사용자 지시로 Android 검증 제외. 캘린더 Web 브리지와 네이티브 자동 동기화 변경은 함께 보존하고 재개 시 export/import/중복/권한 거부 확인 |
+| [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🔴 차단` | 2026-07-14 | — | Web/네이티브 경계·자동 동기화 정적 감사와 build 통과, 네이티브에서도 글리움 표식·캘린더 일치 강제. 인증 세션 확보 후 권한 거부·생성·수정·삭제·가져오기·중복 실기기 검증 |
 | [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `⬜ 대기` | — | — | 스토어 정보, 데이터 안전, 콘텐츠 등급, 개인정보 URL, 릴리즈 SHA-1 확인 |
+| [x] | `AND-007` | Android 백업·컴포넌트·R8·캘린더 변경 경계 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `allowBackup=false`, preview Activity 비공개, 광범위 ProGuard keep 제거, 캘린더 표식/대상 검증. debug/test/lint/release package 재통과 |
 
 상세 QA: `docs/20-android-native-release-qa.md`, `docs/22-android-material3-ui-audit.md`
 
@@ -171,6 +172,9 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-16 | `REPO-001`, `AND-001`, `AND-002`, `AND-005`, `AND-007` | 체크포인트 | Android 네이티브 UI·캘린더/테마 브리지·release 하드닝과 결합 문서를 `da2384e`로 보존 | `.idea/deploymentTargetSelector.xml` 제외. debug/test/lint/release package·웹 lint/build·실기기 로그인 통과 |
+| 2026-07-16 | `AND-001`, `AND-002`, `AND-005`, `AND-007` | 부분 완료·차단 | Android debug/test/lint와 release 서명 전 패키징, 실기기 설치·로그인 시각·무크래시 확인 및 즉시 보안 보완 완료 | 최종 서명은 비밀번호 환경, 인증 이후 핵심·캘린더 회귀는 계정 세션 확보 후 재개 |
+| 2026-07-16 | `AND-001`, `AND-002`, `AND-005` | 재개 | 사용자 지시로 Android 파일·빌드·release·캘린더 검증 보류 해제 | 코드/설정 감사 후 debug/lint/release 산출물, 연결 단말 순서로 검증 |
 | 2026-07-16 | `WEB-001` | 2차 차단 | 운영 DB 비변형 RLS 통합 테스트 환경을 확인했으나 Docker daemon 미실행, Supabase CLI/config 없음 | 운영 DB 테스트 데이터 생성은 하지 않음. Docker Desktop·로컬 Supabase 준비 후 재개하며 그동안 다음 큐 `FAM-001` 진행 가능 |
 | 2026-07-16 | `WEB-001` | 1차 완료·계속 진행 | 운영 코드가 사용하는 데이터 경계 순수 함수와 접근 매트릭스 8개를 `3867550`으로 추가 | 8/8, 대상 ESLint, TypeScript, production build 통과. 다음은 운영 DB를 변형하지 않는 로컬 Supabase RLS 통합 테스트 |
 | 2026-07-16 | `SEC-008` | 발견·완료 | npm 감사에서 루트 Next와 전이 의존성 high/critical 범위를 발견해 즉시 업데이트 | Next/eslint-config-next 16.2.10·PostCSS 8.5.12, `npm audit` 0건. Android 파일·검증 미포함 |
