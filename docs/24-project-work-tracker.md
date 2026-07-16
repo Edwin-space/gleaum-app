@@ -4,7 +4,7 @@
 >
 > 최초 작성: 2026-07-16
 > 최종 업데이트: 2026-07-16
-> 현재 Git 기준점: `86ba9ed` (`main`) + Android·캘린더/테마 브리지·Android 결합 문서 미커밋 작업 트리
+> 현재 Git 기준점: `3867550` (`main`) + Android·캘린더/테마 브리지·Android 결합 문서 미커밋 작업 트리
 
 ## 1. 운영 규칙
 
@@ -43,7 +43,7 @@
 | 7 | `AUTH-001` | Supabase 유출 비밀번호 차단 활성화 | `🔴 차단` | Pro 이상 확인 및 Dashboard Auth 설정 권한 필요 |
 | 8 | `OPS-003` | 백오피스 보안 변경 배포·스모크 테스트 | `🔴 차단` | 배포·미인증 검증 완료, 관리자/비관리자 로그인 세션 필요 |
 | 9 | `REPO-001` | 현재 대규모 미커밋 작업 안전한 체크포인트 | `✅ 완료` | 2026-07-16 Android 제외 범위 7개 체크포인트 커밋 완료 |
-| 10 | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `⬜ 대기` | 테스트 구조 확인 후 개인 일정·지출 비노출과 공간 멤버 역할 자동 검증 |
+| 10 | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `🟠 진행 중` | 1차 접근 매트릭스 8개 완료. 다음은 운영 DB 비변형 로컬 Supabase RLS 통합 테스트 환경 구성 |
 | 11 | `FAM-001` | 가족·자녀 공통 capability 적용 | `⬜ 대기` | 우선 Web 메뉴·광고·가계부·공간 API/UI에 `/api/session/context` 적용 |
 | 12 | `AND-001` | Android 실기기 핵심·시각 QA | `⏸ 보류` | 사용자가 Android 검증 재개를 지시하고 잠금 해제 단말을 확보하면 수행 |
 | 13 | `AND-002` | Android Release AAB 출시 검증 | `⏸ 보류` | Android 검증 범위 재개 후 `bundleRelease`, mapping, native symbols, Firebase/AdFit 확인 |
@@ -62,6 +62,7 @@
 | [x] | `SEC-005` | Supabase 함수 권한·실행 환경 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | migration `20260716024712`: `cleanup_old_invite_attempts()`는 service role 전용, 함수 3종 `search_path=public, pg_temp`. Advisor에서 관련 WARN 6건 제거 확인 |
 | [x] | `SEC-006` | 공개 광고 이미지 버킷 목록 노출 차단 | `✅ 완료` | 2026-07-16 | 2026-07-16 | migration `20260716025042`: broad SELECT 0, 관리자 INSERT/DELETE 각 1, public bucket 유지, 기존 이미지 URL 200, Advisor 경고 제거 |
 | [x] | `SEC-007` | 광고 이벤트 무제한 Data API INSERT 차단 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 배포 `dpl_2QYcncve3PajMHpBTVUtV1kqQ6dV` READY·운영 검증 404, migration `20260716025712`: anon/auth INSERT·sequence false, service role true, INSERT policy 0, Advisor 경고 제거 |
+| [x] | `SEC-008` | 루트 웹 의존성 보안 업데이트 | `✅ 완료` | 2026-07-16 | 2026-07-16 | Next·eslint-config-next `16.2.10`, PostCSS `8.5.12` override, 안전 범위 전이 업데이트. `npm audit` 0건, production build·TypeScript 통과 (`3867550`) |
 | [ ] | `AUTH-001` | Supabase 유출 비밀번호 차단 활성화 | `🔴 차단` | 2026-07-16 | — | Pro 이상 기능. Dashboard `Authentication → Providers → Email`의 leaked password protection 활성화 권한 또는 Management API PAT 필요. 활성화 뒤 Advisor 재검사 |
 | [ ] | `OPS-003` | 백오피스 배포 및 인증 스모크 테스트 | `🔴 차단` | 2026-07-16 | — | 배포 `dpl_EN4cMqPT3ReXG7NduMcRv1vn3S4b` READY·`admins.gleaum.com` 연결. 로그인 200, 미인증 페이지 307→`/login`, API 401 확인. 완료에는 비관리자 403·관리자 페이지/API 2xx 실제 세션 검증 필요. 환경 미설정 503은 코드 fail-closed/build로 확인 |
 | [ ] | `SEC-004` | 백오피스 전체 source lint 정상화 | `⬜ 대기` | — | — | `.next` 제외 설정 후 기존 React effect/타입 lint 오류 해결, `npm run lint` 0 error |
@@ -111,7 +112,7 @@
 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
-| [ ] | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `⬜ 대기` | — | — | 개인 일정·지출 비노출, 공간 지출 분리, 멤버 역할을 테스트 데이터로 자동 검증 |
+| [ ] | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `🟠 진행 중` | 2026-07-16 | — | `3867550`: Node/tsx 기반 접근 매트릭스 8개 통과. 개인 일정·개인 원장 비노출, 공간 데이터 멤버십, admin/editor 쓰기, 개인 일정의 공유 공간 폴백 차단을 운영 코드와 함께 검증. 완료 전 로컬 Supabase에서 실제 RLS·역할별 CRUD 통합 테스트 추가 필요 |
 | [ ] | `WEB-002` | 이메일 가입 운영 설정 검증 | `⬜ 대기` | — | — | Custom SMTP, 확인 템플릿, Redirect URL, 만료/재발송 실제 계정 테스트 |
 | [ ] | `WEB-003` | 이미지 첨부 실제 업로드 | `⬜ 대기` | — | — | Storage/RLS/용량·확장자 제한/삭제·실패 UX 구현 |
 | [ ] | `WEB-004` | 통계·분석 확장 | `⬜ 대기` | — | — | 지표 정의 후 웹/백오피스 소유 경계를 확정하고 구현 |
@@ -170,6 +171,9 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-16 | `WEB-001` | 1차 완료·계속 진행 | 운영 코드가 사용하는 데이터 경계 순수 함수와 접근 매트릭스 8개를 `3867550`으로 추가 | 8/8, 대상 ESLint, TypeScript, production build 통과. 다음은 운영 DB를 변형하지 않는 로컬 Supabase RLS 통합 테스트 |
+| 2026-07-16 | `SEC-008` | 발견·완료 | npm 감사에서 루트 Next와 전이 의존성 high/critical 범위를 발견해 즉시 업데이트 | Next/eslint-config-next 16.2.10·PostCSS 8.5.12, `npm audit` 0건. Android 파일·검증 미포함 |
+| 2026-07-16 | `WEB-001` | 시작 | 개인/공유 공간 데이터 경계 자동 회귀 테스트 기반 조사 시작 | 기존 테스트 러너 없음. DB 함수·RLS 중 어느 계층을 로컬에서 재현할지 확인 후 최소 의존성으로 구성 |
 | 2026-07-16 | `REPO-001` | 완료 | Android 제외 범위의 기존 미커밋 작업을 기능·위험 단위 7개 체크포인트로 분리·보존 | build·lint·audit·diff check 및 운영 배포/DB 검증 근거 기록. 남은 변경은 Android·캘린더/테마 결합 범위로 보류. 다음은 `WEB-001` |
 | 2026-07-16 | `REPO-001` | 문서 체크포인트 | DB/가족 제품 모델 `d8393d8`, 외장 복구 절차·문서 인덱스 `86ba9ed` 보존 | 완료/후속/보류 경계, 링크 존재, 비밀 패턴, diff check 확인 |
 | 2026-07-16 | `REPO-001` | 세 번째 체크포인트 | 하우스 광고의 HTTP(S) URL 검증·테마 토큰과 Kakao 다중 슬롯 SDK 간섭 제거를 `a60d187`로 보존 | Android 파일 0개. 대상 ESLint·diff check·루트 production build/TypeScript 통과 |
