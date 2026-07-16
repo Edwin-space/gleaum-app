@@ -158,6 +158,9 @@ export interface SpaceVoteOption {
 /** 공간 목적 */
 export type SpacePurpose = 'family' | 'couple' | 'friends' | 'work' | 'other';
 
+/** 저장·권한 기준 공간 종류 */
+export type SpaceKind = 'personal' | 'general' | 'family';
+
 /** 공간(Space) 정보 */
 export interface Space {
   id:             string;
@@ -172,6 +175,8 @@ export interface Space {
   coverImageUrl?: string;
   /** 공간 목적 (settings.purpose) */
   purpose?:       SpacePurpose;
+  /** 공간의 저장·권한 종류 (family_groups.space_type) */
+  spaceKind?:     SpaceKind;
   /** 공간 일정 유형 목록 (settings.scheduleTypes) */
   scheduleTypes?: string[];
   /** 공간 기준 시각대 (IANA timezone, 예: 'Asia/Seoul') */
@@ -187,6 +192,68 @@ export type FamilyGroup = Omit<Space, 'members'> & {
 
 /** 공간 유형 (설정/표시 목적) */
 export type SpaceType = 'friend' | 'couple' | 'group' | 'custom';
+
+// ── 가족 공간·자녀 계정 ──────────────────────────────────
+
+export type FamilyDependentGender = 'male' | 'female' | 'other' | 'undisclosed';
+export type FamilyDependentStatus =
+  | 'consent_pending'
+  | 'ready'
+  | 'invited'
+  | 'approval_pending'
+  | 'linked'
+  | 'suspended'
+  | 'unlinked';
+
+export type GuardianRelationshipType = 'parent' | 'guardian';
+export type GuardianVerificationStatus = 'pending' | 'verified' | 'rejected' | 'revoked';
+
+export type AccountMode =
+  | 'unknown'
+  | 'pending_guardian_consent'
+  | 'child_managed'
+  | 'teen_consent_pending'
+  | 'teen'
+  | 'adult';
+
+export interface FamilyDependent {
+  id: string;
+  spaceId: string;
+  displayName: string;
+  birthDate: string;
+  gender?: FamilyDependentGender;
+  expectedEmail: string;
+  status: FamilyDependentStatus;
+  linkedUserId?: string;
+  createdBy?: string;
+  linkedAt?: Date;
+  createdAt: Date;
+}
+
+export interface AccountCapabilities {
+  canManageSpaces: boolean;
+  canInviteMembers: boolean;
+  canViewHouseholdBudget: boolean;
+  canCompleteRoutine: boolean;
+  canUseCheckIn: boolean;
+  canRequestLocationPermission: boolean;
+  canShowAds: boolean;
+}
+
+export interface FamilyMembershipContext {
+  spaceId: string;
+  dependentId: string;
+  relationship: 'child';
+  guardianUserIds: string[];
+}
+
+export interface AccountSessionContext {
+  accountMode: AccountMode;
+  birthDate?: string;
+  nextTransitionAt?: string;
+  familyMemberships: FamilyMembershipContext[];
+  capabilities: AccountCapabilities;
+}
 
 // ── 일정 ──────────────────────────────────────────────────
 

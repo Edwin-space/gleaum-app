@@ -21,6 +21,17 @@ Supabase 대시보드 → SQL Editor → New Query
 | `013_ad_system.sql` | 광고 시스템 (ad_slots / ads / ad_events 테이블, RLS, get_active_ad 함수) | ⬜ **Supabase SQL Editor 실행 필요** |
 | `014_ad_platforms.sql` | ads.platforms 컬럼 추가 + get_active_ad p_platform 파라미터 보정 | ⬜ **013 실행 후 반드시 이어서 실행** |
 | `015_harden_private_schedule_rls.sql` | private 일정/개인 가계부가 공유 공간 멤버에게 노출되지 않도록 schedules/schedule_participants RLS 강화 | ⬜ **Supabase SQL Editor 실행 필요** |
+| `016_cron_recurring_expenses.sql` | 정기지출 발생분 materialize 크론 등록 | ⬜ 환경별 cron job 확인 필요 |
+| `017_ledger_entries.sql` | 개인 가계부 수입·지출 통합 원장과 반복 발생 기반 | ✅ 운영 기능 사용 중 |
+| `018_harden_backend_rls.sql` | 공간·알림·캠페인·푸시 관련 RLS/API 경계 하드닝 | ✅ 운영 적용 및 정책 확인 완료 |
+| `019_tighten_space_member_update_policies.sql` | 공간 멤버 UPDATE 중복 정책 제거와 컬럼 변경 guard | ✅ 운영 적용 및 authenticated 정책 확인 완료 |
+| `020_family_child_foundation.sql` | 가족 공간 종류, 자녀 사전등록, 보호자 관계/동의, 일회성 초대, 연령 전환과 RLS 기반 | ✅ 운영 적용 완료 |
+| `021_family_child_foundation_hardening.sql` | 가족 자녀 기반 외래키 인덱스와 RLS auth.uid initplan 최적화 | ✅ 운영 적용 완료 |
+| `022_guardian_email_consent_flow.sql` | 보호자 이메일 확인, 필수 동의 3종, 자녀 가입 후 최종 승인과 공간 접근 보류 | ✅ 운영 적용 완료 |
+| `20260716010715_explicit_family_child_data_api_grants.sql` | 가족·자녀 데이터 6개 테이블의 Data API 권한을 authenticated SELECT 전용으로 명시 | ✅ 2026-07-16 운영 적용·권한/RLS 검증 완료 |
+| `20260716024620_harden_security_advisor_functions.sql` | 유지보수 함수 공개 실행 차단 + 함수 3종 고정 search path | ✅ 2026-07-16 운영 적용·Security Advisor 재검증 완료 |
+| `20260716024933_restrict_public_ad_image_listing.sql` | public 광고 이미지 URL은 유지하고 Storage 버킷 목록 SELECT 정책 제거 | ✅ 2026-07-16 운영 적용·기존 URL 200/Advisor 검증 완료 |
+| `20260716025645_restrict_ad_event_direct_inserts.sql` | 광고 이벤트를 검증된 서버 API 전용으로 전환하고 anon/authenticated 직접 INSERT 차단 | ✅ 2026-07-16 API 선배포·운영 권한/Advisor 검증 완료 |
 
 > 📖 **SQL 전문 + 실행 순서 + 확인 쿼리** → `backoffice/docs/06-supabase-sql.md` 참조
 
@@ -148,4 +159,3 @@ ORDER BY tablename, policyname;
 ```
 
 위 4개 정책명이 모두 보이면 적용 완료입니다.
-

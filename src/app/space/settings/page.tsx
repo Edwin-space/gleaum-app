@@ -571,6 +571,14 @@ export default function SpaceSettingsPage() {
                       );
                     })}
                   </div>
+                  {isAdmin && purpose === 'family' && (
+                    <button
+                      onClick={() => router.push(`/space/children?sid=${encodeURIComponent(targetSpaceId ?? '')}`)}
+                      style={{ width: '100%', minHeight: '50px', marginTop: '18px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.24)', background: 'rgba(0,132,204,0.07)', color: '#0084CC', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
+                    >
+                      자녀 계정 연결 관리
+                    </button>
+                  )}
                 </div>
 
                 <div style={desktopCard}>
@@ -857,6 +865,14 @@ export default function SpaceSettingsPage() {
                 </button>
               ))}
             </div>
+            {isAdmin && purpose === 'family' && (
+              <button
+                onClick={() => router.push(`/space/children?sid=${encodeURIComponent(targetSpaceId ?? '')}`)}
+                style={{ width: '100%', minHeight: '48px', marginTop: '14px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.24)', background: 'rgba(0,132,204,0.07)', color: '#0084CC', cursor: 'pointer', fontSize: '14px', fontWeight: 850 }}
+              >
+                자녀 계정 연결 관리
+              </button>
+            )}
           </div>
 
           {/* ── 일정 유형 관리 ── */}

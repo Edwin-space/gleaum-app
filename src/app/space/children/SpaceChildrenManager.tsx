@@ -1,0 +1,344 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  MailCheck,
+  Plus,
+  Send,
+  ShieldCheck,
+  UserRoundCheck,
+  UsersRound,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import type { FamilyDependent, FamilyDependentStatus } from '@/types';
+
+type Props = {
+  desktop: boolean;
+  spaceId: string;
+};
+
+const STATUS_META: Record<FamilyDependentStatus, { label: string; description: string }> = {
+  consent_pending: { label: '보호자 확인 필요', description: '보호자 이메일 확인과 필수 동의를 진행해 주세요.' },
+  ready: { label: '초대 준비 완료', description: '자녀에게 보낼 일회성 초대 링크를 만들 수 있습니다.' },
+  invited: { label: '초대 전송 가능', description: '기존 링크를 잃어버렸다면 새 링크를 발급할 수 있습니다.' },
+  approval_pending: { label: '최종 승인 대기', description: '자녀가 가입했습니다. 계정과 이메일을 확인한 뒤 승인해 주세요.' },
+  linked: { label: '연결 완료', description: '가족 공간 멤버로 안전하게 연결되었습니다.' },
+  suspended: { label: '이용 중지', description: '자녀 계정 이용이 일시 중지되었습니다.' },
+  unlinked: { label: '연결 해제', description: '자녀 계정 연결이 해제되었습니다.' },
+};
+
+async function parseError(response: Response): Promise<string> {
+  const payload = await response.json().catch(() => ({})) as { error?: string };
+  return payload.error ?? 'unknown_error';
+}
+
+export function SpaceChildrenManager({ desktop, spaceId }: Props) {
+  const router = useRouter();
+  const [dependents, setDependents] = useState<FamilyDependent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    displayName: '',
+    birthDate: '',
+    expectedEmail: '',
+    relationshipType: 'parent',
+  });
+
+  const loadDependents = useCallback(async () => {
+    if (!spaceId) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/spaces/children?spaceId=${encodeURIComponent(spaceId)}`, {
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error(await parseError(response));
+      const payload = await response.json() as { dependents: FamilyDependent[] };
+      setDependents(payload.dependents);
+    } catch (error) {
+      console.error('[SpaceChildrenManager/load]', error);
+      toast.error('자녀 정보를 불러오지 못했습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, [spaceId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- route 진입 시 서버 목록 동기화
+    void loadDependents();
+  }, [loadDependents]);
+
+  const submitDependent = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.displayName.trim() || !form.birthDate || !form.expectedEmail.trim()) return;
+    setSaving(true);
+    try {
+      const response = await fetch('/api/spaces/children', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, spaceId }),
+      });
+      if (!response.ok) throw new Error(await parseError(response));
+      setForm({ displayName: '', birthDate: '', expectedEmail: '', relationshipType: 'parent' });
+      setShowForm(false);
+      toast.success('자녀 정보가 등록되었습니다');
+      await loadDependents();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      toast.error(message === 'expected_email_already_registered'
+        ? '이미 등록된 자녀 이메일입니다'
+        : '자녀 정보를 등록하지 못했습니다');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startVerification = async (dependent: FamilyDependent) => {
+    setBusyId(dependent.id);
+    try {
+      const response = await fetch(`/api/spaces/children/${dependent.id}/guardian-verification/start`, {
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error(await parseError(response));
+      const payload = await response.json() as { email: string };
+      toast.success(`${payload.email}로 확인 메일을 보냈습니다`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      toast.error(message === 'verification_rate_limited'
+        ? '1분 후 다시 요청해 주세요'
+        : '확인 메일을 보내지 못했습니다');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const createAndShareInvite = async (dependent: FamilyDependent) => {
+    setBusyId(dependent.id);
+    try {
+      const response = await fetch(`/api/spaces/children/${dependent.id}/invite`, { method: 'POST' });
+      if (!response.ok) throw new Error(await parseError(response));
+      const payload = await response.json() as { inviteUrl: string; expiresAt: string };
+      const shareText = [
+        `${dependent.displayName}님, 글리움 가족 공간 초대가 도착했습니다.`,
+        '등록된 Google 이메일로 로그인해 연결을 요청해 주세요.',
+        payload.inviteUrl,
+        '링크는 72시간 동안 한 번만 사용할 수 있습니다.',
+      ].join('\n\n');
+
+      if (navigator.share) {
+        await navigator.share({ title: '글리움 자녀 초대', text: shareText, url: payload.inviteUrl });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        toast.success('초대 내용을 복사했습니다');
+      }
+      await loadDependents();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      console.error('[SpaceChildrenManager/share]', error);
+      toast.error('초대 링크를 만들지 못했습니다');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const approveLink = async (dependent: FamilyDependent) => {
+    setBusyId(dependent.id);
+    try {
+      const response = await fetch(`/api/spaces/children/${dependent.id}/approve`, { method: 'POST' });
+      if (!response.ok) throw new Error(await parseError(response));
+      toast.success('자녀 계정 연결을 승인했습니다');
+      await loadDependents();
+    } catch (error) {
+      console.error('[SpaceChildrenManager/approve]', error);
+      toast.error('자녀 연결을 승인하지 못했습니다');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const pagePadding = desktop ? '48px 40px 72px' : '20px 16px 48px';
+  const contentWidth = desktop ? '1120px' : '640px';
+
+  return (
+    <main style={{ minHeight: '100dvh', background: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
+      <div style={{ maxWidth: contentWidth, margin: '0 auto', padding: pagePadding }}>
+        <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', marginBottom: '28px' }}>
+          <div>
+            <button
+              onClick={() => router.push(`/space/settings?sid=${encodeURIComponent(spaceId)}`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', minHeight: '44px', padding: '0 14px', borderRadius: '999px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', color: 'var(--theme-text-muted)', fontWeight: 800, cursor: 'pointer', marginBottom: '16px' }}
+            >
+              <ArrowLeft size={17} /> 공간 설정
+            </button>
+            <p style={{ margin: '0 0 7px', color: '#0CC9B5', fontSize: '12px', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              Family Access
+            </p>
+            <h1 style={{ margin: '0 0 10px', fontSize: desktop ? '34px' : '27px', lineHeight: 1.15, fontWeight: 950, letterSpacing: '-0.04em' }}>
+              자녀 계정 연결
+            </h1>
+            <p style={{ margin: 0, color: 'var(--theme-text-muted)', fontSize: '14px', lineHeight: 1.7, maxWidth: '650px' }}>
+              이메일이 일치해도 즉시 연결되지 않습니다. 보호자 확인과 자녀 가입 후 마지막 승인을 거쳐야 공간 접근이 열립니다.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowForm((value) => !value)}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '48px', padding: '0 20px', borderRadius: '999px', border: 0, background: '#0084CC', color: 'white', fontWeight: 900, cursor: 'pointer', flexShrink: 0 }}
+          >
+            <Plus size={18} /> {desktop ? '자녀 등록' : '등록'}
+          </button>
+        </header>
+
+        <section style={{ display: 'grid', gridTemplateColumns: desktop ? 'repeat(3, minmax(0, 1fr))' : '1fr', gap: '12px', marginBottom: '24px' }}>
+          {[
+            { icon: MailCheck, title: '1. 보호자 확인', text: '로그인 이메일로 본인 확인 후 필수 항목을 각각 동의합니다.' },
+            { icon: Send, title: '2. 직접 공유', text: '부모 휴대폰의 공유 기능으로 문자·카카오톡 등에 초대 링크를 보냅니다.' },
+            { icon: UserRoundCheck, title: '3. 최종 승인', text: '자녀가 가입해도 보호자가 승인하기 전에는 공간에 접근할 수 없습니다.' },
+          ].map(({ icon: Icon, title, text }) => (
+            <article key={title} style={{ padding: '20px', borderRadius: '24px', background: 'var(--theme-surface-muted)', border: '1px solid var(--theme-border)' }}>
+              <Icon size={22} color="#0084CC" />
+              <h2 style={{ margin: '13px 0 7px', fontSize: '15px', fontWeight: 900 }}>{title}</h2>
+              <p style={{ margin: 0, color: 'var(--theme-text-muted)', fontSize: '13px', lineHeight: 1.6 }}>{text}</p>
+            </article>
+          ))}
+        </section>
+
+        {showForm && (
+          <form onSubmit={submitDependent} style={{ padding: desktop ? '26px' : '20px', marginBottom: '24px', borderRadius: '24px', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px rgba(0,132,204,0.08)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: desktop ? '1fr 1fr' : '1fr', gap: '16px' }}>
+              <Field label="자녀 이름">
+                <input required maxLength={40} value={form.displayName} onChange={(event) => setForm((current) => ({ ...current, displayName: event.target.value }))} placeholder="서비스에서 구분할 이름" style={inputStyle} />
+              </Field>
+              <Field label="생년월일">
+                <input required type="date" max={new Date().toISOString().slice(0, 10)} value={form.birthDate} onChange={(event) => setForm((current) => ({ ...current, birthDate: event.target.value }))} style={inputStyle} />
+              </Field>
+              <Field label="자녀 Google 이메일">
+                <input required type="email" value={form.expectedEmail} onChange={(event) => setForm((current) => ({ ...current, expectedEmail: event.target.value }))} placeholder="child@gmail.com" style={inputStyle} />
+              </Field>
+              <Field label="보호자 관계">
+                <select value={form.relationshipType} onChange={(event) => setForm((current) => ({ ...current, relationshipType: event.target.value }))} style={inputStyle}>
+                  <option value="parent">부모</option>
+                  <option value="guardian">법정대리인</option>
+                </select>
+              </Field>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button type="button" onClick={() => setShowForm(false)} style={secondaryButtonStyle}>취소</button>
+              <button type="submit" disabled={saving} style={primaryButtonStyle}>{saving ? '등록 중...' : '등록하고 확인 시작'}</button>
+            </div>
+          </form>
+        )}
+
+        <section>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>등록된 자녀</h2>
+            <span style={{ color: 'var(--theme-text-subtle)', fontSize: '13px', fontWeight: 800 }}>{dependents.length}명</span>
+          </div>
+
+          {loading ? (
+            <div style={emptyStyle}>자녀 정보를 불러오는 중입니다.</div>
+          ) : dependents.length === 0 ? (
+            <div style={emptyStyle}>
+              <UsersRound size={30} color="#0084CC" />
+              <strong>등록된 자녀가 없습니다</strong>
+              <span>먼저 자녀의 이름, 생년월일, Google 이메일을 등록해 주세요.</span>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: desktop ? 'repeat(2, minmax(0, 1fr))' : '1fr', gap: '14px' }}>
+              {dependents.map((dependent) => {
+                const meta = STATUS_META[dependent.status];
+                const busy = busyId === dependent.id;
+                return (
+                  <article key={dependent.id} style={{ padding: '22px', borderRadius: '24px', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <h3 style={{ margin: '0 0 5px', fontSize: '18px', fontWeight: 900 }}>{dependent.displayName}</h3>
+                        <p style={{ margin: 0, color: 'var(--theme-text-subtle)', fontSize: '12px', overflowWrap: 'anywhere' }}>{dependent.expectedEmail}</p>
+                      </div>
+                      <span style={{ padding: '7px 10px', borderRadius: '999px', color: dependent.status === 'linked' ? '#0A8F69' : '#0084CC', background: dependent.status === 'linked' ? 'rgba(46,232,149,0.12)' : 'rgba(0,132,204,0.09)', fontSize: '11px', fontWeight: 900, whiteSpace: 'nowrap' }}>
+                        {meta.label}
+                      </span>
+                    </div>
+                    <p style={{ margin: '16px 0', minHeight: desktop ? '42px' : undefined, color: 'var(--theme-text-muted)', fontSize: '13px', lineHeight: 1.6 }}>{meta.description}</p>
+                    <DependentAction dependent={dependent} busy={busy} onVerify={startVerification} onInvite={createAndShareInvite} onApprove={approveLink} />
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <aside style={{ display: 'flex', gap: '12px', padding: '18px', marginTop: '22px', borderRadius: '20px', background: 'rgba(0,132,204,0.07)', color: 'var(--theme-text-muted)', fontSize: '12px', lineHeight: 1.65 }}>
+          <ShieldCheck size={22} color="#0084CC" style={{ flexShrink: 0 }} />
+          <span>현재 위치 수집·공유 동의는 이 절차에 포함되지 않으며 기능도 비활성 상태입니다. 위치 기능은 별도 동의와 본인확인 체계를 갖춘 뒤에만 제공합니다.</span>
+        </aside>
+      </div>
+    </main>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label style={{ display: 'grid', gap: '8px', color: 'var(--theme-text)', fontSize: '13px', fontWeight: 800 }}>
+      {label}
+      {children}
+    </label>
+  );
+}
+
+function DependentAction({
+  dependent,
+  busy,
+  onVerify,
+  onInvite,
+  onApprove,
+}: {
+  dependent: FamilyDependent;
+  busy: boolean;
+  onVerify: (dependent: FamilyDependent) => void;
+  onInvite: (dependent: FamilyDependent) => void;
+  onApprove: (dependent: FamilyDependent) => void;
+}) {
+  if (dependent.status === 'consent_pending') {
+    return <button disabled={busy} onClick={() => onVerify(dependent)} style={primaryButtonStyle}><MailCheck size={17} />{busy ? '발송 중...' : '내 이메일로 확인하기'}</button>;
+  }
+  if (dependent.status === 'ready' || dependent.status === 'invited') {
+    return <button disabled={busy} onClick={() => onInvite(dependent)} style={primaryButtonStyle}><Send size={17} />{busy ? '준비 중...' : '초대 링크 공유'}</button>;
+  }
+  if (dependent.status === 'approval_pending') {
+    return <button disabled={busy} onClick={() => onApprove(dependent)} style={{ ...primaryButtonStyle, background: '#0A8F69' }}><Check size={17} />{busy ? '승인 중...' : '자녀 연결 최종 승인'}</button>;
+  }
+  if (dependent.status === 'linked') {
+    return <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px', color: '#0A8F69', fontSize: '13px', fontWeight: 900 }}><CheckCircle2 size={19} /> 연결이 완료되었습니다</div>;
+  }
+  return null;
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', height: '50px', padding: '0 15px', boxSizing: 'border-box',
+  borderRadius: '16px', border: '1.5px solid var(--theme-border)',
+  background: 'var(--theme-surface-muted)', color: 'var(--theme-text)',
+  fontSize: '15px', fontWeight: 650, outline: 'none', colorScheme: 'light dark',
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+  minHeight: '44px', padding: '0 18px', borderRadius: '999px', border: 0,
+  background: '#0084CC', color: 'white', fontSize: '13px', fontWeight: 900, cursor: 'pointer',
+};
+
+const secondaryButtonStyle: React.CSSProperties = {
+  minHeight: '44px', padding: '0 18px', borderRadius: '999px',
+  border: '1px solid var(--theme-border)', background: 'var(--theme-surface-muted)',
+  color: 'var(--theme-text-muted)', fontSize: '13px', fontWeight: 850, cursor: 'pointer',
+};
+
+const emptyStyle: React.CSSProperties = {
+  minHeight: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+  gap: '10px', padding: '28px', borderRadius: '24px', border: '1px dashed var(--theme-border)',
+  background: 'var(--theme-surface-muted)', color: 'var(--theme-text-muted)', textAlign: 'center', fontSize: '13px',
+};

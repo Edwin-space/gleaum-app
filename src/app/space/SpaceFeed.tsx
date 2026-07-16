@@ -701,23 +701,7 @@ export function SpaceFeed({ spaceId, spaceName, members, currentUser, currentUse
       )}
 
       {/* ── 작성 버튼 (피드 하단) ── */}
-      {isMobile ? (
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('gleaum:openFabSheet'))}
-          aria-label="게시물·일정·지출 추가"
-          style={{
-            width: '52px', height: '52px', borderRadius: '50%',
-            margin: posts.length > 0 ? '16px auto 0' : '0 auto',
-            background: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '24px', color: 'white', fontWeight: 400,
-            boxShadow: '0 4px 16px rgba(0,132,204,0.35)',
-          }}
-        >
-          ＋
-        </button>
-      ) : (
+      {!isMobile && (
         <button
           onClick={() => setShowCreate(true)}
           style={{

@@ -24,6 +24,12 @@ import type {
   SpaceRole,
   SpaceMember,
   Space,
+  SpaceKind,
+  FamilyDependent,
+  FamilyDependentGender,
+  GuardianRelationshipType,
+  AccountMode,
+  AccountSessionContext,
   SpacePost,
   SpacePostType,
   SpaceDues,
@@ -36,7 +42,7 @@ import type {
   RecurFreq,
 } from '@/types';
 
-type RouteSupabaseClient = SupabaseClient<any, any, any>;
+type RouteSupabaseClient = SupabaseClient;
 
 // [전역 상태] 세션 내 무한 루프 방지용
 let hasTriedAutoCreateGroup = false;
@@ -73,8 +79,13 @@ export interface FamilyGroupRow {
   id: string;
   name: string;
   invite_code: string | null;
+  invite_code_expires_at?: string | null;
   created_by: string;
   created_at: string;
+  space_type?: SpaceKind | null;
+  cover_url?: string | null;
+  timezone?: string | null;
+  settings?: { purpose?: string; scheduleTypes?: string[] } | null;
 }
 export type SpaceRow = FamilyGroupRow; // alias
 
@@ -133,6 +144,35 @@ export interface NotificationRow {
   type: 'reminder' | 're_notify' | 'completion' | 'invite' | 'system';
   read: boolean;
   created_at: string;
+}
+
+export interface FamilyDependentRow {
+  id: string;
+  space_id: string;
+  display_name: string;
+  birth_date: string;
+  gender: FamilyDependentGender | null;
+  expected_email: string;
+  linked_user_id: string | null;
+  status: FamilyDependent['status'];
+  created_by: string | null;
+  linked_at: string | null;
+  created_at: string;
+}
+
+interface AccountAgeProfileRow {
+  user_id: string;
+  birth_date: string;
+  account_mode: Exclude<AccountMode, 'unknown'>;
+  next_transition_at: string | null;
+}
+
+interface FamilyRelationshipRow {
+  space_id: string;
+  dependent_id: string;
+  guardian_user_id: string;
+  child_user_id: string | null;
+  verification_status: string;
 }
 
 // ── 변환 함수 ──────────────────────────────────────────────
@@ -201,6 +241,22 @@ export function rowToSpaceMember(row: SpaceMemberRow): SpaceMember {
     joinedAt: new Date(row.joined_at),
     nickname: row.nickname ?? undefined,
     user:     row.profiles ? rowToUser(row.profiles) : undefined,
+  };
+}
+
+export function rowToFamilyDependent(row: FamilyDependentRow): FamilyDependent {
+  return {
+    id: row.id,
+    spaceId: row.space_id,
+    displayName: row.display_name,
+    birthDate: row.birth_date,
+    gender: row.gender ?? undefined,
+    expectedEmail: row.expected_email,
+    status: row.status,
+    linkedUserId: row.linked_user_id ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    linkedAt: row.linked_at ? new Date(row.linked_at) : undefined,
+    createdAt: new Date(row.created_at),
   };
 }
 
@@ -416,15 +472,16 @@ export async function getSpaceWithMembers(spaceId: string): Promise<Space | null
     id:             group.id,
     name:           group.name,
     inviteCode:     group.invite_code ?? undefined,
-    inviteCodeExpiresAt: (group as any).invite_code_expires_at
-      ? new Date((group as any).invite_code_expires_at)
+    inviteCodeExpiresAt: group.invite_code_expires_at
+      ? new Date(group.invite_code_expires_at)
       : undefined,
     createdBy:      group.created_by,
     createdAt:      new Date(group.created_at),
     members:        rowsWithProfiles.map(rowToSpaceMember),
     // cover_url 컬럼이 있을 때만 값이 채워짐 (DB 마이그레이션 후 활성화)
-    coverImageUrl:  (group as any).cover_url ?? undefined,
-    timezone:       (group as any).timezone ?? 'Asia/Seoul',
+    coverImageUrl:  group.cover_url ?? undefined,
+    timezone:       group.timezone ?? 'Asia/Seoul',
+    spaceKind:      group.space_type ?? undefined,
   };
 }
 
@@ -521,6 +578,7 @@ export async function getMySpaces(): Promise<Space[]> {
       createdBy:  group.created_by,
       createdAt:  new Date(group.created_at),
       timezone:   group.timezone ?? 'Asia/Seoul',
+      spaceKind:  group.space_type ?? undefined,
       members:    [],  // 필요 시 별도 조회
     }));
 }
@@ -636,7 +694,7 @@ export async function updateSpaceCoverImage(spaceId: string, file: File): Promis
   const url = urlData?.publicUrl ?? null;
   if (!url) return null;
 
-  await supabase.from('family_groups').update({ cover_url: url } as any).eq('id', spaceId);
+  await supabase.from('family_groups').update({ cover_url: url }).eq('id', spaceId);
   return url;
 }
 
@@ -648,9 +706,12 @@ export async function updateSpaceSettings(
   settings: { purpose?: string; scheduleTypes?: string[] },
 ): Promise<boolean> {
   const supabase = createClient();
+  const spaceKind: SpaceKind | undefined = settings.purpose
+    ? settings.purpose === 'family' ? 'family' : 'general'
+    : undefined;
   const { error } = await supabase
     .from('family_groups')
-    .update({ settings } as any)
+    .update({ settings, ...(spaceKind ? { space_type: spaceKind } : {}) })
     .eq('id', spaceId);
   if (error) console.error('[updateSpaceSettings]', error);
   return !error;
@@ -666,7 +727,7 @@ export async function getSpaceSettings(
     .select('settings, cover_url')
     .eq('id', spaceId)
     .single();
-  return (data as any)?.settings ?? {};
+  return (data as Pick<FamilyGroupRow, 'settings'> | null)?.settings ?? {};
 }
 
 /** 초대 코드로 공간 정보 조회 */
@@ -689,6 +750,7 @@ export const getFamilyByCode = getSpaceByCode;
 export async function joinSpaceByCode(inviteCode: string): Promise<{
   success: boolean;
   alreadyMember?: boolean;
+  spaceId?: string;
   spaceName?: string;
 }> {
   const supabase = createClient();
@@ -702,7 +764,7 @@ export async function joinSpaceByCode(inviteCode: string): Promise<{
   // 이미 멤버인지 확인
   const existingRole = await getMyRoleInSpace(space.id);
   if (existingRole) {
-    return { success: true, alreadyMember: true, spaceName: space.name };
+    return { success: true, alreadyMember: true, spaceId: space.id, spaceName: space.name };
   }
 
   // space_members INSERT (role: viewer — 초대로 참여한 사용자 기본 권한)
@@ -721,7 +783,7 @@ export async function joinSpaceByCode(inviteCode: string): Promise<{
     .update({ family_group_id: space.id })
     .eq('id', user.id);
 
-  return { success: true, spaceName: space.name };
+  return { success: true, spaceId: space.id, spaceName: space.name };
 }
 
 /**
@@ -787,7 +849,7 @@ export async function regenerateInviteCode(spaceId: string): Promise<string | nu
 /** 신규 공간 생성 → space_members admin 등록 + 필요 시 profiles.family_group_id 업데이트 */
 export async function createSpace(
   name: string,
-  options: { setAsCurrent?: boolean } = {},
+  options: { setAsCurrent?: boolean; spaceKind?: SpaceKind } = {},
 ): Promise<{ id: string; inviteCode: string; error?: never } | { id: null; inviteCode?: never; error: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -795,18 +857,19 @@ export async function createSpace(
 
   const inviteCode = generateInviteCode();
   const setAsCurrent = options.setAsCurrent ?? true;
+  const spaceKind = options.spaceKind ?? 'general';
 
   // 1. family_groups 생성
   const { data: group, error: groupError } = await supabase
     .from('family_groups')
-    .insert({ name, invite_code: inviteCode, created_by: user.id })
+    .insert({ name, invite_code: inviteCode, created_by: user.id, space_type: spaceKind })
     .select()
     .single();
 
   if (groupError || !group) {
     const msg = groupError?.message ?? '알 수 없는 오류';
     console.error('공간 생성 오류:', groupError);
-    return { id: null, error: `DB 오류: ${msg} (code: ${(groupError as any)?.code ?? '-'})` };
+    return { id: null, error: `DB 오류: ${msg} (code: ${groupError?.code ?? '-'})` };
   }
 
   // 2. space_members에 admin으로 등록
@@ -856,7 +919,10 @@ export async function createPersonalSpace(displayName: string): Promise<string |
 
   const currentSpaceId = currentProfile?.family_group_id ?? null;
   const spaceName = displayName?.trim() ? `${displayName.trim()}의 공간` : '나의 공간';
-  const result = await createSpace(spaceName, { setAsCurrent: !currentSpaceId });
+  const result = await createSpace(spaceName, {
+    setAsCurrent: !currentSpaceId,
+    spaceKind: 'personal',
+  });
   if (!result.id) return null;
   const spaceId = result.id;
 
@@ -868,6 +934,243 @@ export async function createPersonalSpace(displayName: string): Promise<string |
     .eq('id', user.id);
 
   return spaceId;
+}
+
+// ── 가족 공간·자녀 계정 ──────────────────────────────────
+
+export interface CreateFamilyDependentInput {
+  spaceId: string;
+  displayName: string;
+  birthDate: string;
+  expectedEmail: string;
+  gender?: FamilyDependentGender;
+  relationshipType?: GuardianRelationshipType;
+}
+
+/** 가족 공간에 접근 권한이 없는 자녀 프로필 초안을 만든다. */
+export async function createFamilyDependentDraft(
+  input: CreateFamilyDependentInput,
+  client?: RouteSupabaseClient,
+): Promise<string> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('create_family_dependent_draft', {
+    p_space_id: input.spaceId,
+    p_display_name: input.displayName.trim(),
+    p_birth_date: input.birthDate,
+    p_expected_email: input.expectedEmail.trim().toLowerCase(),
+    p_gender: input.gender ?? null,
+    p_relationship_type: input.relationshipType ?? 'guardian',
+  });
+
+  if (error || typeof data !== 'string') {
+    throw new Error(error?.message ?? '자녀 프로필을 생성하지 못했습니다.');
+  }
+  return data;
+}
+
+/** 현재 사용자가 조회 가능한 가족 공간 자녀 프로필 목록. */
+export async function getFamilyDependents(
+  spaceId: string,
+  client?: RouteSupabaseClient,
+): Promise<FamilyDependent[]> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase
+    .from('family_dependents')
+    .select('*')
+    .eq('space_id', spaceId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as FamilyDependentRow[]).map(rowToFamilyDependent);
+}
+
+/** 보호자 계정 이메일 확인용 일회성 도전을 만든다. 원문 토큰은 DB에 저장하지 않는다. */
+export async function createGuardianEmailVerification(
+  dependentId: string,
+  client?: RouteSupabaseClient,
+): Promise<{ token: string; expiresAt: string }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('create_guardian_email_verification', {
+    p_dependent_id: dependentId,
+  });
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row?.token || !row?.expires_at) {
+    throw new Error(error?.message ?? '보호자 이메일 확인을 시작하지 못했습니다.');
+  }
+  return { token: row.token as string, expiresAt: row.expires_at as string };
+}
+
+/** 이메일 발송 실패 시 아직 사용하지 않은 확인 도전을 폐기한다. */
+export async function revokeGuardianEmailVerification(
+  token: string,
+  client?: RouteSupabaseClient,
+): Promise<void> {
+  const supabase = client ?? createClient();
+  const { error } = await supabase.rpc('revoke_guardian_email_verification', {
+    p_token: token,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** 이메일 링크로 돌아온 보호자의 필수 동의를 원자적으로 증적화한다. */
+export async function completeGuardianEmailConsent(
+  token: string,
+  policyVersion: string,
+  consentTypes: string[],
+  client?: RouteSupabaseClient,
+): Promise<{ dependentId: string; spaceId: string; status: 'ready' }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('complete_guardian_email_consent', {
+    p_token: token,
+    p_policy_version: policyVersion,
+    p_consent_types: consentTypes,
+  });
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row?.dependent_id || !row?.space_id || row.status !== 'ready') {
+    throw new Error(error?.message ?? '보호자 동의를 완료하지 못했습니다.');
+  }
+  return {
+    dependentId: row.dependent_id as string,
+    spaceId: row.space_id as string,
+    status: 'ready',
+  };
+}
+
+/** 보호자 검증과 필수 동의가 끝난 자녀에게만 일회성 초대를 발급한다. */
+export async function createFamilyChildInvitation(
+  dependentId: string,
+  client?: RouteSupabaseClient,
+): Promise<{ token: string; expiresAt: string }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('create_family_child_invitation', {
+    p_dependent_id: dependentId,
+  });
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row?.token || !row?.expires_at) {
+    throw new Error(error?.message ?? '자녀 초대를 발급하지 못했습니다.');
+  }
+  return { token: row.token as string, expiresAt: row.expires_at as string };
+}
+
+/** 로그인한 Google 계정을 일회성 자녀 초대와 원자적으로 연결한다. */
+export async function claimFamilyChildInvitation(
+  token: string,
+  client?: RouteSupabaseClient,
+): Promise<{ dependentId: string; spaceId: string; accountMode: AccountMode }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('claim_family_child_invitation', {
+    p_token: token,
+  });
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row?.dependent_id || !row?.space_id || !row?.account_mode) {
+    throw new Error(error?.message ?? '자녀 계정을 연결하지 못했습니다.');
+  }
+  return {
+    dependentId: row.dependent_id as string,
+    spaceId: row.space_id as string,
+    accountMode: row.account_mode as AccountMode,
+  };
+}
+
+/** 자녀의 연결 요청을 보호자가 최종 승인한 뒤에만 공간 접근을 부여한다. */
+export async function approveFamilyChildLink(
+  dependentId: string,
+  client?: RouteSupabaseClient,
+): Promise<{ childUserId: string; spaceId: string; accountMode: AccountMode }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('approve_family_child_link', {
+    p_dependent_id: dependentId,
+  });
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row?.child_user_id || !row?.space_id || !row?.account_mode) {
+    throw new Error(error?.message ?? '자녀 연결을 승인하지 못했습니다.');
+  }
+  return {
+    childUserId: row.child_user_id as string,
+    spaceId: row.space_id as string,
+    accountMode: row.account_mode as AccountMode,
+  };
+}
+
+function capabilitiesForAccountMode(mode: AccountMode): AccountSessionContext['capabilities'] {
+  const isManaged = mode === 'child_managed'
+    || mode === 'pending_guardian_consent'
+    || mode === 'teen_consent_pending';
+  const isTeen = mode === 'teen';
+
+  return {
+    canManageSpaces: !isManaged && !isTeen,
+    canInviteMembers: !isManaged && !isTeen,
+    canViewHouseholdBudget: !isManaged && !isTeen,
+    canCompleteRoutine: true,
+    canUseCheckIn: mode === 'child_managed' || mode === 'teen',
+    // 위치 동의 모델과 OS 권한 UI가 연결될 때 별도 capability로 활성화한다.
+    canRequestLocationPermission: false,
+    // 연령 미확인·미성년 계정은 광고를 기본 차단한다.
+    canShowAds: mode === 'adult',
+  };
+}
+
+/** Web/Android/iOS가 공통으로 사용하는 서버 기준 계정·가족 권한 컨텍스트. */
+export async function getAccountSessionContext(
+  client?: RouteSupabaseClient,
+): Promise<AccountSessionContext | null> {
+  const supabase = client ?? createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: refreshedMode, error: refreshError } = await supabase
+    .rpc('refresh_my_account_age_state');
+  if (refreshError) throw new Error(refreshError.message);
+
+  const { data: ageProfile, error: ageError } = await supabase
+    .from('account_age_profiles')
+    .select('user_id, birth_date, account_mode, next_transition_at')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (ageError) throw new Error(ageError.message);
+
+  const { data: relationshipRows, error: relationshipError } = await supabase
+    .from('family_relationships')
+    .select('space_id, dependent_id, guardian_user_id, child_user_id, verification_status')
+    .eq('child_user_id', user.id)
+    .eq('verification_status', 'verified');
+  if (relationshipError) throw new Error(relationshipError.message);
+
+  const relationships = (relationshipRows ?? []) as FamilyRelationshipRow[];
+  const membershipMap = new Map<string, AccountSessionContext['familyMemberships'][number]>();
+  for (const relationship of relationships) {
+    const key = `${relationship.space_id}:${relationship.dependent_id}`;
+    const current = membershipMap.get(key) ?? {
+      spaceId: relationship.space_id,
+      dependentId: relationship.dependent_id,
+      relationship: 'child' as const,
+      guardianUserIds: [],
+    };
+    if (!current.guardianUserIds.includes(relationship.guardian_user_id)) {
+      current.guardianUserIds.push(relationship.guardian_user_id);
+    }
+    membershipMap.set(key, current);
+  }
+
+  const profile = ageProfile as AccountAgeProfileRow | null;
+  const accountMode = (
+    profile?.account_mode
+    ?? (relationships.length > 0 ? 'pending_guardian_consent' : refreshedMode)
+    ?? 'unknown'
+  ) as AccountMode;
+  return {
+    accountMode,
+    birthDate: profile?.birth_date,
+    nextTransitionAt: profile?.next_transition_at ?? undefined,
+    familyMemberships: [...membershipMap.values()],
+    capabilities: capabilitiesForAccountMode(accountMode),
+  };
 }
 
 /**
@@ -1578,6 +1881,17 @@ export interface NativeSpaceMemberItem {
   isMe: boolean;
 }
 
+export interface NativeSpacePostItem {
+  id: string;
+  type: string;
+  content: string;
+  pinned: boolean;
+  authorId: string;
+  authorName: string;
+  commentCount: number;
+  createdAt: string;
+}
+
 export interface NativeSpaceSummary {
   serverTime: string;
   personalSpaceId: string | null;
@@ -1585,6 +1899,8 @@ export interface NativeSpaceSummary {
   activeSpace: NativeSpaceListItem | null;
   spaces: NativeSpaceListItem[];
   members: NativeSpaceMemberItem[];
+  recentPosts: NativeSpacePostItem[];
+  upcomingSchedules: NativeScheduleItem[];
 }
 
 export interface NativeProfileSummary {
@@ -2281,6 +2597,8 @@ export async function getNativeSpaceSummary(
       activeSpace: null,
       spaces: [],
       members: [],
+      recentPosts: [],
+      upcomingSchedules: [],
     };
   }
 
@@ -2323,22 +2641,51 @@ export async function getNativeSpaceSummary(
 
   const activeSpace = spaces.find((space) => space.id === activeSpaceId) ?? spaces[0] ?? null;
   let members: NativeSpaceMemberItem[] = [];
+  let recentPosts: NativeSpacePostItem[] = [];
+  let upcomingSchedules: NativeScheduleItem[] = [];
 
   if (activeSpace) {
-    const { data: activeMemberRows, error: activeMembersError } = await supabase
-      .from('space_members')
-      .select('*')
-      .eq('space_id', activeSpace.id)
-      .order('joined_at', { ascending: true });
+    const [membersResult, postsResult, schedulesResult] = await Promise.all([
+      supabase
+        .from('space_members')
+        .select('*')
+        .eq('space_id', activeSpace.id)
+        .order('joined_at', { ascending: true }),
+      supabase
+        .from('space_posts')
+        .select('id,author_id,type,content,pinned,created_at,space_post_comments(count)')
+        .eq('space_id', activeSpace.id)
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(12),
+      supabase
+        .from('schedules')
+        .select('*, schedule_participants(user_id)')
+        .eq('family_group_id', activeSpace.id)
+        .neq('type', 'expense')
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
+        .limit(8),
+    ]);
+
+    const { data: activeMemberRows, error: activeMembersError } = membersResult;
 
     if (activeMembersError) throw new Error(activeMembersError.message);
+    if (postsResult.error) throw new Error(postsResult.error.message);
+    if (schedulesResult.error) throw new Error(schedulesResult.error.message);
 
     const rows = (activeMemberRows ?? []) as SpaceMemberRow[];
-    const userIds = [...new Set(rows.map((row) => row.user_id))];
+    const postRows = (postsResult.data ?? []) as Array<Record<string, unknown>>;
+    const userIds = [...new Set([
+      ...rows.map((row) => row.user_id),
+      ...postRows.map((row) => row.author_id as string),
+    ].filter(Boolean))];
     const { data: profiles } = userIds.length > 0
       ? await supabase.from('profiles').select('*').in('id', userIds)
       : { data: [] as ProfileRow[] };
-    const rowsWithProfiles = mergeMemberProfiles(rows, profiles as ProfileRow[]);
+    const profileRows = profiles as ProfileRow[];
+    const profileMap = new Map(profileRows.map((profile) => [profile.id, profile]));
+    const rowsWithProfiles = mergeMemberProfiles(rows, profileRows);
 
     members = rowsWithProfiles.map((row) => {
       const profile = row.profiles;
@@ -2353,6 +2700,24 @@ export async function getNativeSpaceSummary(
         isMe: row.user_id === userId,
       };
     });
+
+    recentPosts = postRows.map((row) => {
+      const authorId = row.author_id as string;
+      const author = profileMap.get(authorId);
+      const commentCountRows = row.space_post_comments as Array<{ count: number }> | null;
+      return {
+        id: row.id as string,
+        type: (row.type as string) ?? 'general',
+        content: (row.content as string | null) ?? '',
+        pinned: Boolean(row.pinned),
+        authorId,
+        authorName: author?.display_name ?? author?.name ?? '공간 멤버',
+        commentCount: commentCountRows?.[0]?.count ?? 0,
+        createdAt: row.created_at as string,
+      };
+    });
+
+    upcomingSchedules = ((schedulesResult.data ?? []) as ScheduleRow[]).map(nativeScheduleItemFromRow);
   }
 
   return {
@@ -2362,7 +2727,59 @@ export async function getNativeSpaceSummary(
     activeSpace,
     spaces,
     members,
+    recentPosts,
+    upcomingSchedules,
   };
+}
+
+/** 네이티브 공간 소식 작성. 공간 멤버십과 작성자 일치는 RLS에서도 재검증된다. */
+export async function createNativeSpacePost(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+  content: string,
+): Promise<NativeSpaceSummary> {
+  const normalizedContent = content.trim();
+  if (!normalizedContent) throw new Error('content_required');
+  if (normalizedContent.length > 2000) throw new Error('content_too_long');
+
+  const { error } = await supabase.from('space_posts').insert({
+    space_id: spaceId,
+    author_id: userId,
+    type: 'general',
+    content: normalizedContent,
+    pinned: false,
+  });
+  if (error) throw new Error(error.message);
+
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+/** Android/iOS 네이티브 공간 컨텍스트 전환. 멤버십이 확인된 공간만 활성화한다. */
+export async function activateNativeSpace(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+): Promise<NativeSpaceSummary> {
+  if (!spaceId) throw new Error('space_id_required');
+
+  const { data: membership, error: membershipError } = await supabase
+    .from('space_members')
+    .select('space_id')
+    .eq('space_id', spaceId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (membershipError) throw new Error(membershipError.message);
+  if (!membership) throw new Error('space_access_denied');
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ family_group_id: spaceId })
+    .eq('id', userId);
+
+  if (profileError) throw new Error(profileError.message);
+  return getNativeSpaceSummary(supabase, userId);
 }
 
 async function getNativeSharedSpaceCount(

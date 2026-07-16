@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useSchedules } from '@/hooks/useSchedules';
@@ -19,6 +19,8 @@ import type { Space, SpaceRole, Schedule } from '@/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
 import { sendSpaceNotification } from '@/lib/spaceNotify';
+import { SpaceSectionTabs, SpaceSwitcher, type SpaceSection } from './SpaceSwitcher';
+import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
 
 const FREE_MAX_SPACES  = 2;
 const FREE_MAX_MEMBERS = 10;
@@ -37,11 +39,13 @@ const ROLE_COLORS: Record<SpaceRole, { bg: string; text: string }> = {
 
 export function DesktopSpace() {
   const router  = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sidParam = searchParams.get('sid');
   const { spaceId, user, profile, refresh: refreshUser } = useCurrentUser();
 
   const [mySpaces,      setMySpaces]     = useState<Space[]>([]);
-  const [spaceIndex,    setSpaceIndex]   = useState(0);
-  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
+  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(sidParam ?? spaceId);
 
   const displaySpaceId = activeSpaceId ?? spaceId;
   const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
@@ -54,6 +58,7 @@ export function DesktopSpace() {
   // ── 인라인 모달 상태 ───────────────────────────────────────
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showExpenseModal,  setShowExpenseModal]  = useState(false);
+  const [activeSection,     setActiveSection]     = useState<SpaceSection>('feed');
 
   const personalSpaceId  = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
   const isPersonalSpace  = !!displaySpaceId && displaySpaceId === personalSpaceId;
@@ -93,10 +98,6 @@ export function DesktopSpace() {
   const [joinCode,      setJoinCode]      = useState('');
   const [joining,       setJoining]       = useState(false);
   const [joinError,     setJoinError]     = useState('');
-  const [joinSuccess,   setJoinSuccess]   = useState(false);
-
-  // ── 공간 관리 드롭다운 ──────────────────────────────────────
-  const [showSpaceMgmt, setShowSpaceMgmt] = useState(false);
 
   // ── 공간 관리 모달 ──────────────────────────────────────────
   const [showMgmtModal, setShowMgmtModal] = useState(false);
@@ -127,20 +128,25 @@ export function DesktopSpace() {
   useEffect(() => {
     getMySpaces().then(spaces => {
       setMySpaces(spaces);
-      const currentId = activeSpaceId ?? spaceId;
-      let idx = spaces.findIndex(s => s.id === currentId);
-      if (idx < 0 && spaceId) idx = spaces.findIndex(s => s.id === spaceId);
+      let storedSpaceId: string | null = null;
+      try { storedSpaceId = localStorage.getItem('gleaum_lastSpaceId'); } catch {}
+      const preferredIds = [sidParam, storedSpaceId, activeSpaceId, spaceId].filter(Boolean) as string[];
+      const idx = preferredIds
+        .map(id => spaces.findIndex(space => space.id === id))
+        .find(index => index >= 0) ?? -1;
       const finalIdx = idx >= 0 ? idx : 0;
-      setSpaceIndex(finalIdx);
-      if (spaces[finalIdx] && !activeSpaceId) setActiveSpaceId(spaces[finalIdx].id);
+      const selected = spaces[finalIdx];
+      if (selected && selected.id !== activeSpaceId) setActiveSpaceId(selected.id);
     });
-  }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (spaceId && !activeSpaceId) setActiveSpaceId(spaceId); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sidParam, spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setLiveInviteCode(undefined); }, [group?.inviteCode]); // eslint-disable-line react-hooks/set-state-in-effect
+
+  const selectSpace = (space: Space) => {
+    setActiveSpaceId(space.id);
+    try { localStorage.setItem('gleaum_lastSpaceId', space.id); } catch {}
+    router.replace(`${pathname}?sid=${encodeURIComponent(space.id)}`, { scroll: false });
+  };
 
   // ── 공유 메시지 빌더 ───────────────────────────────────────
   const buildShareMessage = (inviteCode: string) => {
@@ -237,11 +243,14 @@ export function DesktopSpace() {
     const result = await joinSpaceByCode(joinCode.trim().toUpperCase());
     setJoining(false);
     if (result.success) {
-      await refreshUser(); await refresh();
-      await getMySpaces().then(setMySpaces);
+      await refreshUser();
+      const spaces = await getMySpaces();
+      setMySpaces(spaces);
+      const joinedSpace = spaces.find(space => space.id === result.spaceId);
+      if (joinedSpace) selectSpace(joinedSpace);
+      await refresh();
       setShowJoinModal(false); setJoinCode('');
-      setJoinSuccess(true);
-      setTimeout(() => setJoinSuccess(false), 3000);
+      toast.success(result.alreadyMember ? '이미 참여 중인 공간으로 전환했습니다.' : '공간에 참여했습니다.');
     } else {
       setJoinError('유효하지 않은 공간 코드입니다.');
     }
@@ -288,289 +297,81 @@ export function DesktopSpace() {
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* ════════════════════════════════════════════
-          HERO — 공간 정체성 + 빠른 액션
-      ════════════════════════════════════════════ */}
-      <div style={{
-        position: 'relative', padding: '36px 44px 32px',
-        borderRadius: '32px', overflow: 'hidden', color: 'white',
-        background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 50%, #1E2A3A 100%)',
-        marginBottom: '20px',
-        boxShadow: '0 20px 60px rgba(26,27,46,0.30)',
+      {/* 공간 컨텍스트: 전환과 핵심 액션을 한 줄에서 처리 */}
+      <section style={{
+        padding: '18px 20px', marginBottom: '20px', borderRadius: '24px',
+        background: 'var(--theme-surface)', border: '1px solid var(--theme-border)',
+        boxShadow: '0 8px 28px rgba(15,23,42,0.06)',
       }}>
-        {/* Decorative blobs */}
-        <div style={{ position: 'absolute', top: '-60px', right: '-30px', width: '280px', height: '280px', background: 'rgba(0,132,204,0.15)', filter: 'blur(80px)', borderRadius: '50%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-40px', left: '-20px', width: '220px', height: '220px', background: 'rgba(12,201,181,0.10)', filter: 'blur(65px)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <SpaceSwitcher
+            spaces={mySpaces}
+            currentSpaceId={displaySpaceId}
+            personalSpaceId={personalSpaceId}
+            onSelect={selectSpace}
+            onJoin={() => setShowJoinModal(true)}
+            onCreate={() => router.push('/space/new')}
+            createDisabled={spaceAtLimit}
+          />
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ width: '1px', alignSelf: 'stretch', background: 'var(--theme-border)' }} />
 
-            {/* 공간 아이콘 */}
-            <div style={{
-              width: '76px', height: '76px', borderRadius: '26px', flexShrink: 0,
-              background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(12px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px',
-            }}>
-              {isPersonalSpace ? '🔒' : '🏠'}
-            </div>
-
-            {/* 공간 이름 + 멤버 아바타 */}
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', margin: 0 }}>
-                  {group?.name ?? '나의 공간'}
-                </h1>
-                {isAdmin && !isPersonalSpace && (
-                  <button
-                    onClick={() => { setRenamingTo(group?.name ?? ''); setShowRenameModal(true); }}
-                    style={{
-                      width: '30px', height: '30px', borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', fontSize: '14px', flexShrink: 0,
-                    }}
-                  >✏️</button>
-                )}
-                <span style={{
-                  fontSize: '11px', fontWeight: 800, letterSpacing: '0.04em',
-                  padding: '3px 10px', borderRadius: '999px',
-                  background: isPersonalSpace ? 'rgba(12,201,181,0.20)' : 'rgba(0,132,204,0.25)',
-                  border: `1px solid ${isPersonalSpace ? 'rgba(12,201,181,0.35)' : 'rgba(0,132,204,0.40)'}`,
-                  color: isPersonalSpace ? '#0CC9B5' : '#4DC3FF',
-                }}>
-                  {isPersonalSpace ? '🔒 개인 공간' : '✦ 공유 공간'}
-                </span>
-              </div>
-
-              {/* 멤버 아바타 cluster */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {!loading && members.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {members.slice(0, 6).map((m, i) => (
-                      <div key={m.id} title={m.user?.name} style={{ marginLeft: i > 0 ? '-10px' : 0, zIndex: 10 - i }}>
-                        <UserAvatar
-                          avatar={m.user?.avatar}
-                          name={m.user?.name}
-                          size={32}
-                          radius={999}
-                          fontSize={14}
-                          style={{
-                            border: '2px solid rgba(255,255,255,0.25)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.20)',
-                          }}
-                        />
-                      </div>
-                    ))}
-                    {members.length > 6 && (
-                      <div style={{
-                        marginLeft: '-10px', width: '32px', height: '32px', borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '11px', fontWeight: 800, color: 'white', zIndex: 4,
-                      }}>+{members.length - 6}</div>
-                    )}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {!loading && members.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                {members.slice(0, 4).map((member, index) => (
+                  <div key={member.id} title={member.user?.name} style={{ marginLeft: index ? '-8px' : 0, zIndex: 4 - index }}>
+                    <UserAvatar
+                      avatar={member.user?.avatar}
+                      name={member.user?.name}
+                      size={32}
+                      radius={999}
+                      fontSize={13}
+                      style={{ border: '2px solid var(--theme-surface)' }}
+                    />
                   </div>
-                )}
-                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
-                  {isPersonalSpace ? '나만의 개인 공간' : `${memberCount}명이 함께하는 커뮤니티`}
-                </span>
+                ))}
               </div>
+            )}
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, color: 'var(--theme-text)', fontSize: '13px', fontWeight: 800 }}>
+                {isPersonalSpace ? '나만 보는 개인 공간' : `${memberCount}명이 함께하는 공유 공간`}
+              </p>
+              <p style={{ margin: '3px 0 0', color: 'var(--theme-text-subtle)', fontSize: '11px', fontWeight: 600 }}>
+                {myRole ? ROLE_LABELS[myRole] : '권한 확인 중'} · 일정 {thisMonthSchedules.length}개 · 지출 {thisMonthTotal > 0 ? formatAmount(thisMonthTotal) : '없음'}
+              </p>
             </div>
+          </div>
 
-            {/* 빠른 액션 버튼 */}
-            <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {isAdmin && !isPersonalSpace && (
               <button
-                onClick={() => setShowScheduleModal(true)}
-                style={{
-                  padding: '12px 22px', borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #0084CC, #0CC9B5)',
-                  color: 'white', fontSize: '14px', fontWeight: 800, border: 'none',
-                  cursor: 'pointer', boxShadow: '0 8px 24px rgba(0,132,204,0.35)',
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                }}
+                type="button"
+                onClick={() => { setRenamingTo(group?.name ?? ''); setShowRenameModal(true); }}
+                style={{ minHeight: '44px', padding: '0 14px', borderRadius: '14px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
               >
-                <span style={{ fontSize: '16px' }}>＋</span> 일정 추가
+                공간 설정
               </button>
-              {!isPersonalSpace && !memberAtLimit && (
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  style={{
-                    padding: '12px 22px', borderRadius: '16px',
-                    background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.20)',
-                    color: 'white', fontSize: '14px', fontWeight: 800,
-                    cursor: 'pointer', backdropFilter: 'blur(8px)',
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                  }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
-                  멤버 초대
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* ── 내 공간 네비게이션 ── */}
-          <div style={{
-            marginTop: '20px', paddingTop: '16px',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-          }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 10px' }}>
-              내 공간
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              {mySpaces.map((s, i) => {
-                const isCurrent = s.id === (activeSpaceId ?? spaceId);
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => { if (!isCurrent) { setSpaceIndex(i); setActiveSpaceId(s.id); } }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '7px',
-                      padding: '7px 15px', borderRadius: '999px', fontSize: '13px', fontWeight: 800,
-                      background: isCurrent ? 'rgba(12,201,181,0.18)' : 'rgba(255,255,255,0.07)',
-                      border: `1.5px solid ${isCurrent ? 'rgba(12,201,181,0.50)' : 'rgba(255,255,255,0.10)'}`,
-                      color: isCurrent ? '#0CC9B5' : 'rgba(255,255,255,0.45)',
-                      cursor: isCurrent ? 'default' : 'pointer',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {isCurrent && (
-                      <span style={{
-                        width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
-                        background: '#0CC9B5', boxShadow: '0 0 8px rgba(12,201,181,0.7)',
-                      }} />
-                    )}
-                    {s.id === personalSpaceId ? '🔒 ' : ''}{s.name}
-                    {joinSuccess && s.id === activeSpaceId && (
-                      <span style={{ fontSize: '10px', color: '#0CC9B5' }}>✓</span>
-                    )}
-                  </button>
-                );
-              })}
-
-              {/* + 버튼 (공간 참여 / 새 공간) */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setShowSpaceMgmt(v => !v)}
-                  title="공간 참여 · 새 공간 만들기"
-                  style={{
-                    width: '32px', height: '32px', borderRadius: '50%',
-                    background: showSpaceMgmt ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.08)',
-                    border: '1.5px solid rgba(255,255,255,0.14)',
-                    color: 'rgba(255,255,255,0.55)', fontSize: '18px', fontWeight: 700,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'background 0.15s', lineHeight: 1,
-                  }}
-                >+</button>
-
-                {showSpaceMgmt && (
-                  <>
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 98 }} onClick={() => setShowSpaceMgmt(false)} />
-                    <div style={{
-                      position: 'absolute', top: '40px', left: 0, zIndex: 99,
-                      background: 'var(--theme-surface)', borderRadius: '18px', padding: '8px',
-                      boxShadow: '0 16px 48px rgba(0,0,0,0.20)', border: '1px solid rgba(0,0,0,0.06)',
-                      minWidth: '210px',
-                    }}>
-                      <button
-                        onClick={() => { setShowSpaceMgmt(false); setShowJoinModal(true); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '12px', width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--theme-surface-muted)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                      >
-                        <span style={{ fontSize: '18px' }}>🗝️</span>
-                        <div>
-                          <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>공간 참여하기</p>
-                          <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '1px 0 0' }}>초대 코드로 입장</p>
-                        </div>
-                      </button>
-                      <button
-                        disabled={spaceAtLimit}
-                        onClick={() => { if (!spaceAtLimit) { setShowSpaceMgmt(false); router.push('/space/new'); } }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '12px', width: '100%', background: 'none', border: 'none', cursor: spaceAtLimit ? 'not-allowed' : 'pointer', textAlign: 'left', opacity: spaceAtLimit ? 0.5 : 1 }}
-                        onMouseEnter={e => { if (!spaceAtLimit) e.currentTarget.style.background = 'var(--theme-surface-muted)'; }}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                      >
-                        <span style={{ fontSize: '18px' }}>{spaceAtLimit ? '🔒' : '🏡'}</span>
-                        <div>
-                          <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>새 공간 만들기</p>
-                          <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: '1px 0 0' }}>
-                            {spaceAtLimit ? `${FREE_MAX_SPACES}개 한도 (무료)` : `${sharedSpaceCount}/${FREE_MAX_SPACES} 사용 중`}
-                          </p>
-                        </div>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════
-          STATS ROW — 이번 달 요약
-      ════════════════════════════════════════════ */}
-      {!isPersonalSpace && (
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px',
-          marginBottom: '24px',
-        }}>
-          {[
-            {
-              icon: '📅',
-              label: '이번 달 공유 일정',
-              value: `${thisMonthSchedules.length}개`,
-              color: '#0084CC',
-              bg: 'rgba(0,132,204,0.06)',
-              border: 'rgba(0,132,204,0.12)',
-            },
-            {
-              icon: '💰',
-              label: '이번 달 공간 지출',
-              value: thisMonthTotal > 0 ? formatAmount(thisMonthTotal) : '—',
-              color: '#D97706',
-              bg: 'rgba(217,119,6,0.06)',
-              border: 'rgba(217,119,6,0.12)',
-            },
-            {
-              icon: '👥',
-              label: '공간 멤버',
-              value: `${memberCount}명`,
-              color: '#059669',
-              bg: 'rgba(5,150,105,0.06)',
-              border: 'rgba(5,150,105,0.12)',
-            },
-          ].map(stat => (
-            <div
-              key={stat.label}
-              style={{
-                padding: '20px 24px', borderRadius: '22px',
-                background: stat.bg, border: `1px solid ${stat.border}`,
-                display: 'flex', alignItems: 'center', gap: '16px',
-              }}
+            )}
+            {!isPersonalSpace && !memberAtLimit && (
+              <button
+                type="button"
+                onClick={() => setShowInviteModal(true)}
+                style={{ minHeight: '44px', padding: '0 14px', borderRadius: '14px', border: '1px solid rgba(0,132,204,0.22)', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                멤버 초대
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowScheduleModal(true)}
+              style={{ minHeight: '44px', padding: '0 16px', borderRadius: '14px', border: 'none', background: '#0084CC', color: 'white', fontSize: '13px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 6px 16px rgba(0,132,204,0.20)' }}
             >
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '16px',
-                background: `${stat.bg}`, border: `1.5px solid ${stat.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '24px', flexShrink: 0,
-              }}>
-                {stat.icon}
-              </div>
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: stat.color, margin: '0 0 4px', letterSpacing: '0.02em' }}>
-                  {stat.label}
-                </p>
-                <p style={{ fontSize: '22px', fontWeight: 900, color: 'var(--theme-text)', margin: 0, letterSpacing: '-0.5px' }}>
-                  {stat.value}
-                </p>
-              </div>
-            </div>
-          ))}
+              + 일정 추가
+            </button>
+          </div>
         </div>
-      )}
+      </section>
 
       {/* ════════════════════════════════════════════
           MAIN LAYOUT — 2 columns
@@ -579,22 +380,49 @@ export function DesktopSpace() {
 
         {/* ── 왼쪽 메인: 커뮤니티 피드 ────────── */}
         <div style={{ minWidth: 0 }}>
+          <div style={{ marginBottom: '16px' }}>
+            <SpaceSectionTabs value={activeSection} onChange={setActiveSection} />
+          </div>
 
-          {/* ── 카카오 광고 배너 (728×90) ── */}
-          <KakaoAdBanner
-            adUnit="DAN-UmNjtEgKug6zpii0"
-            width={728}
-            height={90}
-            style={{ marginBottom: '20px' }}
-          />
-
-          <SpaceFeed
-            spaceId={displaySpaceId}
-            spaceName={isPersonalSpace ? undefined : group?.name}
-            members={members}
-            currentUser={user ?? null}
-            currentUserRole={myRole}
-          />
+          {activeSection === 'feed' && (
+            <>
+              <KakaoAdBanner adUnit="DAN-UmNjtEgKug6zpii0" width={728} height={90} style={{ marginBottom: '20px' }} />
+              <SpaceFeed
+                spaceId={displaySpaceId}
+                spaceName={isPersonalSpace ? undefined : group?.name}
+                members={members}
+                currentUser={user ?? null}
+                currentUserRole={myRole}
+              />
+            </>
+          )}
+          {activeSection === 'schedule' && user && (
+            <SpaceScheduleTimeline spaceId={displaySpaceId} members={members} currentUserId={user.id} />
+          )}
+          {activeSection === 'members' && (
+            <section style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', borderRadius: '24px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 22px', borderBottom: '1px solid var(--theme-border)' }}>
+                <div>
+                  <h2 style={{ margin: 0, color: 'var(--theme-text)', fontSize: '17px', fontWeight: 850 }}>공간 멤버</h2>
+                  <p style={{ margin: '4px 0 0', color: 'var(--theme-text-subtle)', fontSize: '12px', fontWeight: 600 }}>역할과 참여 상태를 한눈에 확인합니다.</p>
+                </div>
+                {!isPersonalSpace && !memberAtLimit && (
+                  <button type="button" onClick={() => setShowInviteModal(true)} style={{ minHeight: '40px', padding: '0 14px', borderRadius: '13px', border: '1px solid rgba(0,132,204,0.20)', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}>멤버 초대</button>
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1px', background: 'var(--theme-border)' }}>
+                {members.map(member => (
+                  <div key={member.id} style={{ minHeight: '76px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--theme-surface)' }}>
+                    <UserAvatar avatar={member.user?.avatar} name={member.user?.name} size={44} radius={15} fontSize={16} />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--theme-text)', fontSize: '14px', fontWeight: 800 }}>{member.nickname || member.user?.displayName || member.user?.name || '사용자'}</p>
+                      <p style={{ margin: '3px 0 0', color: 'var(--theme-text-subtle)', fontSize: '11px', fontWeight: 650 }}>{ROLE_LABELS[member.role]}{member.userId === user?.id ? ' · 나' : ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* ── 오른쪽 사이드바 ───────────────────────────── */}
@@ -659,7 +487,7 @@ export function DesktopSpace() {
                       );
                     })}
                     <button
-                      onClick={() => router.push(`/space/schedule?spaceId=${displaySpaceId ?? ''}`)}
+                      onClick={() => setActiveSection('schedule')}
                       style={{ fontSize: '12px', fontWeight: 800, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', textAlign: 'center' }}
                     >
                       모든 일정 보기 →
