@@ -23,7 +23,6 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -46,13 +45,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeBudgetEntry
 import com.gleaum.app.NativeBudgetSummary
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumStateCard
+import com.gleaum.app.ui.components.StateKind
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -94,6 +95,7 @@ fun ComposeBudgetScreen(
                 item { BudgetHero(summary) }
                 item { BudgetStatGrid(summary) }
                 item { CashFlowCard(summary) }
+                item { CategoryAnalysisCard(summary) }
                 item { SectionHeader("반복 예정", summary.recurringEntries.size) }
                 if (summary.recurringEntries.isEmpty()) {
                     item { EmptyCard("등록된 정기 수입/지출이 없어요", "월세, 구독료, 급여처럼 반복되는 흐름을 추가해보세요.", onAddEntry) }
@@ -139,8 +141,8 @@ private fun BudgetHero(summary: NativeBudgetSummary) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, label = { Text("저축률 ${summary.savingsRate}%") })
-                    AssistChip(onClick = {}, label = { Text("개인 가계부") })
+                    GleaumLabelBadge("저축률 ${summary.savingsRate}%")
+                    GleaumLabelBadge("개인 가계부", containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
         }
@@ -175,6 +177,41 @@ private fun CashFlowCard(summary: NativeBudgetSummary) {
             MetricRow("변동 지출", money(summary.variableExpenseTotal), "완료 ${summary.completedExpenseCount}건")
             MetricRow("정기 수입", money(summary.recurringIncomeTotal), "예정 ${summary.pendingIncomeCount}건")
             MetricRow("일회 수입", money(summary.onceIncomeTotal), "수령 ${summary.completedIncomeCount}건")
+        }
+    }
+}
+
+@Composable
+private fun CategoryAnalysisCard(summary: NativeBudgetSummary) {
+    val expenses = summary.categoryTotals
+        .filter { it.kind == "expense" }
+        .sortedByDescending { it.amount }
+        .take(5)
+    if (expenses.isEmpty()) return
+
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("지출 카테고리", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+            val maxAmount = expenses.maxOf { it.amount }.coerceAtLeast(1L)
+            expenses.forEach { item ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(categoryLabel(item.category), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        Text(money(item.amount), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(999.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                    ) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth((item.amount.toFloat() / maxAmount).coerceIn(0.08f, 1f)),
+                            shape = RoundedCornerShape(999.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                        ) { Spacer(Modifier.size(width = 1.dp, height = 6.dp)) }
+                    }
+                }
+            }
         }
     }
 }
@@ -261,17 +298,32 @@ private fun EmptyCard(title: String, message: String, onAddEntry: () -> Unit) {
 
 @Composable
 private fun StateCard(title: String, message: String, actionLabel: String?, onAction: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (actionLabel != null) Button(onClick = onAction) { Text(actionLabel) }
-        }
-    }
+    GleaumStateCard(title, message, kind = if (actionLabel == null) StateKind.LOADING else StateKind.ERROR, actionLabel = actionLabel, onAction = onAction)
 }
 
 private fun money(value: Long): String = NumberFormat.getNumberInstance(Locale.KOREA).format(value) + "원"
+private fun categoryLabel(value: String): String = when (value) {
+    "food" -> "식비"
+    "daily" -> "생활/마트"
+    "fashion" -> "패션/잡화"
+    "transport" -> "교통/차량"
+    "culture" -> "문화/여가"
+    "medical" -> "의료/건강"
+    "social" -> "경조사/선물"
+    "housing" -> "주거"
+    "insurance" -> "보험"
+    "subscription" -> "구독"
+    "education" -> "교육"
+    "salary" -> "급여"
+    "business" -> "사업/부업"
+    "investment" -> "금융/투자"
+    "rental" -> "임대 수입"
+    "bonus" -> "상여/보너스"
+    "refund" -> "환급"
+    "pension" -> "연금/지원금"
+    "gift" -> "용돈/선물"
+    else -> "기타"
+}
 private fun recurLabel(value: String): String = when (value) { "weekly" -> "매주"; "monthly" -> "매월"; "yearly" -> "매년"; else -> "일회" }
 private fun dayText(iso: String): String = parseIso(iso)?.let { SimpleDateFormat("M월 d일", Locale.KOREA).format(it) } ?: iso.take(10)
 private fun parseIso(iso: String): Date? = runCatching { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(iso) }.getOrNull()

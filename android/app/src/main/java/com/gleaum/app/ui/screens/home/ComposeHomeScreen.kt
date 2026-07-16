@@ -26,7 +26,6 @@ import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -49,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +55,12 @@ import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeHomePortCalendarDay
 import com.gleaum.app.NativeHomePortSchedule
 import com.gleaum.app.NativeHomePortSummary
+import com.gleaum.app.ui.components.GleaumStatusBadge
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumStateCard
+import com.gleaum.app.ui.components.StateKind
+import com.gleaum.app.ui.theme.expense
+import com.gleaum.app.ui.theme.expenseContainer
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -83,38 +87,39 @@ fun ComposeHomeScreen(
             .filter { scheduleDateKey(it.startTime) == selected }
             .sortedBy { it.startTime }
     }
+    val contentPadding = PaddingValues(
+        start = 20.dp,
+        top = innerPadding.calculateTopPadding() + 12.dp,
+        end = 20.dp,
+        bottom = innerPadding.calculateBottomPadding() + 24.dp,
+    )
+
+    if (errorMessage != null || (loading && summary == null)) {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = contentPadding,
+        ) {
+            item {
+                StateCard(
+                    title = if (errorMessage != null) "홈을 불러오지 못했어요" else "홈을 정리하는 중이에요",
+                    message = errorMessage ?: "일정과 가계부 정보를 가져오고 있어요.",
+                    actionLabel = if (errorMessage != null) "다시 시도" else null,
+                    onAction = onRetry,
+                )
+            }
+        }
+        return
+    }
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(
-            start = 20.dp,
-            top = innerPadding.calculateTopPadding() + 12.dp,
-            end = 20.dp,
-            bottom = innerPadding.calculateBottomPadding() + 24.dp,
-        ),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        when {
-            errorMessage != null -> item {
-                StateCard(
-                    title = "홈을 불러오지 못했어요",
-                    message = errorMessage,
-                    actionLabel = "다시 시도",
-                    onAction = onRetry,
-                )
-            }
-            loading -> item {
-                StateCard(
-                    title = "홈을 정리하는 중이에요",
-                    message = "일정과 가계부 정보를 가져오고 있어요.",
-                    actionLabel = null,
-                    onAction = {},
-                )
-            }
-        }
-
         item {
             HeroCard(summary = summary)
         }
@@ -161,8 +166,6 @@ fun ComposeHomeScreen(
             }
         }
 
-        item { AdPlaceholder() }
-
         item {
             BudgetCard(summary = summary, onOpenBudget = onOpenBudget)
         }
@@ -200,21 +203,7 @@ fun ComposeHomeScreen(
 
 @Composable
 private fun StateCard(title: String, message: String, actionLabel: String?, onAction: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (actionLabel != null) {
-                Button(onClick = onAction, modifier = Modifier.padding(top = 4.dp)) {
-                    Text(actionLabel)
-                }
-            }
-        }
-    }
+    GleaumStateCard(title, message, kind = if (actionLabel == null) StateKind.LOADING else StateKind.ERROR, actionLabel = actionLabel, onAction = onAction)
 }
 
 @Composable
@@ -226,14 +215,6 @@ private fun HeroCard(summary: NativeHomePortSummary?) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.secondaryContainer,
-                        ),
-                    ),
-                )
                 .padding(22.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -272,15 +253,15 @@ private fun HeroCard(summary: NativeHomePortSummary?) {
 private fun HeroMetric(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.44f),
-        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = MaterialTheme.shapes.medium,
     ) {
         Column(
             modifier = Modifier.padding(vertical = 14.dp, horizontal = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(value, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-            Text(label, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f), style = MaterialTheme.typography.labelMedium)
+            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -299,7 +280,7 @@ private fun TodayCalendarToggle(selectedDate: String?, isToday: Boolean, expande
             headlineContent = { Text(formatDateTitle(selectedDate), fontWeight = FontWeight.Bold) },
             supportingContent = { Text(if (expanded) "캘린더 접기" else "캘린더 펼치기") },
             trailingContent = {
-                if (isToday) AssistChip(onClick = {}, label = { Text("TODAY") })
+                if (isToday) GleaumLabelBadge("TODAY")
             },
         )
     }
@@ -478,7 +459,7 @@ private fun ScheduleCard(schedule: NativeHomePortSchedule, onOpen: (String) -> U
             leadingContent = { TimeBlock(schedule) },
             headlineContent = { Text(schedule.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold) },
             supportingContent = { Text("${typeLabel(schedule.type)} · ${timeText(schedule.startTime)}") },
-            trailingContent = { AssistChip(onClick = {}, label = { Text(statusLabel(schedule.status)) }) },
+            trailingContent = { GleaumStatusBadge(schedule.status) },
         )
     }
 }
@@ -616,7 +597,7 @@ private fun statusLabel(status: String): String = when (status) {
 private fun typeColor(type: String): Color = when (type) {
     "shared" -> MaterialTheme.colorScheme.primary
     "child" -> MaterialTheme.colorScheme.tertiary
-    "expense" -> Color(0xFFF59E0B)
+    "expense" -> MaterialTheme.colorScheme.expense
     else -> MaterialTheme.colorScheme.secondary
 }
 
@@ -624,6 +605,6 @@ private fun typeColor(type: String): Color = when (type) {
 private fun typeContainer(type: String): Color = when (type) {
     "shared" -> MaterialTheme.colorScheme.primaryContainer
     "child" -> MaterialTheme.colorScheme.tertiaryContainer
-    "expense" -> Color(0xFFFFF7ED)
+    "expense" -> MaterialTheme.colorScheme.expenseContainer
     else -> MaterialTheme.colorScheme.secondaryContainer
 }

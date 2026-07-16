@@ -16,7 +16,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.screens.notifications.ComposeNotificationScreen
 import com.gleaum.app.ui.theme.GleaumTheme
 
@@ -85,19 +84,8 @@ class NativeNotificationActivity : AppCompatActivity() {
                     onMarkAllRead = { markAllRead() },
                     onNotificationClick = { openNotification(it) },
                     onBack = { finish() },
-                    onDestinationSelected = ::handleComposeDestination,
                 )
             }
-        }
-    }
-
-    private fun handleComposeDestination(destination: GleaumDestination) {
-        when (destination) {
-            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
-            GleaumDestination.SCHEDULES -> { startActivity(Intent(this, NativeScheduleListActivity::class.java)); finish() }
-            GleaumDestination.SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
-            GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
-            GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
         }
     }
 

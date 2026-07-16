@@ -12,6 +12,7 @@ import android.view.inputmethod.InputMethodManager
 import android.content.Context
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.OnBackPressedCallback
 import com.gleaum.app.databinding.ActivityLoginBinding
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -61,6 +62,16 @@ class LoginActivity : AppCompatActivity() {
         binding.btnToggleEmailMode.setOnClickListener { setEmailMode(!emailSignupMode) }
         binding.btnEmailSubmit.setOnClickListener { handleEmailSubmit() }
         setupConsentControls()
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.emailPanel.visibility == View.VISIBLE && !emailLoading) {
+                    showSocialPanel()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
     }
 
     /**
@@ -78,14 +89,6 @@ class LoginActivity : AppCompatActivity() {
                 goToMain()
             }
         }, 2500L)
-    }
-
-    override fun onBackPressed() {
-        if (binding.emailPanel.visibility == View.VISIBLE && !emailLoading) {
-            showSocialPanel()
-            return
-        }
-        super.onBackPressed()
     }
 
     // ── Google 로그인 — Chrome Custom Tab ──────────────────────────────────
@@ -384,12 +387,12 @@ class LoginActivity : AppCompatActivity() {
         val maxWidth = dp(520)
         binding.controlPanel.post {
             val params = binding.controlPanel.layoutParams
-            if (resources.displayMetrics.widthPixels > dp(700)) {
+            if (isTablet()) {
                 params.width = maxWidth
                 binding.controlPanel.layoutParams = params
             }
             val brandParams = binding.brandPanel.layoutParams
-            if (resources.displayMetrics.widthPixels > dp(700)) {
+            if (isTablet()) {
                 brandParams.height = dp(420)
                 binding.brandPanel.layoutParams = brandParams
             }

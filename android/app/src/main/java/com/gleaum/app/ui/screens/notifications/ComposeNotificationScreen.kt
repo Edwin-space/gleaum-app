@@ -20,7 +20,6 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.TaskAlt
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -31,8 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -49,7 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeNotificationItem
 import com.gleaum.app.NativeNotificationSummary
-import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumStateCard
+import com.gleaum.app.ui.components.StateKind
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +61,6 @@ fun ComposeNotificationScreen(
     onMarkAllRead: () -> Unit,
     onNotificationClick: (NativeNotificationItem) -> Unit,
     onBack: () -> Unit,
-    onDestinationSelected: (GleaumDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -87,28 +86,18 @@ fun ComposeNotificationScreen(
                 ),
             )
         },
-        bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                GleaumDestination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = { onDestinationSelected(destination) },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                    )
-                }
-            }
-        },
     ) { innerPadding ->
-        NotificationContent(
-            innerPadding = innerPadding,
-            summary = summary,
-            loading = loading,
-            message = message,
-            onRefresh = onRefresh,
-            onMarkAllRead = onMarkAllRead,
-            onNotificationClick = onNotificationClick,
-        )
+        GleaumAdaptiveContent {
+            NotificationContent(
+                innerPadding = innerPadding,
+                summary = summary,
+                loading = loading,
+                message = message,
+                onRefresh = onRefresh,
+                onMarkAllRead = onMarkAllRead,
+                onNotificationClick = onNotificationClick,
+            )
+        }
     }
 }
 
@@ -175,11 +164,7 @@ private fun NotificationHero(unreadCount: Int, loading: Boolean) {
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            AssistChip(
-                onClick = {},
-                label = { Text(if (loading) "동기화 중" else "Notification Center") },
-                leadingIcon = { Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            )
+            GleaumLabelBadge(if (loading) "동기화 중" else "알림 센터")
             Text(
                 text = if (unreadCount > 0) "읽지 않은 알림 ${unreadCount}개" else "모든 알림을 확인했어요",
                 style = MaterialTheme.typography.headlineSmall,
@@ -212,7 +197,7 @@ private fun NotificationSectionHeader(unreadCount: Int, onMarkAllRead: () -> Uni
                 Text("모두 읽음", modifier = Modifier.padding(start = 6.dp))
             }
         } else {
-            AssistChip(onClick = {}, label = { Text("정리됨") }, leadingIcon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null, modifier = Modifier.size(18.dp)) })
+            GleaumLabelBadge("정리됨", containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer)
         }
     }
 }
@@ -268,29 +253,13 @@ private fun StateCard(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = if (danger) Icons.Outlined.Refresh else Icons.Outlined.CheckCircle,
-                contentDescription = null,
-                tint = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp),
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (actionLabel != null && onAction != null) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                TextButton(onClick = onAction) { Text(actionLabel) }
-            }
-        }
-    }
+    GleaumStateCard(
+        title = if (danger) "알림을 불러오지 못했어요" else "알림 상태",
+        message = text,
+        kind = if (danger) StateKind.ERROR else StateKind.EMPTY,
+        actionLabel = actionLabel,
+        onAction = onAction ?: {},
+    )
 }
 
 private fun notificationIcon(type: String): ImageVector = when (type) {

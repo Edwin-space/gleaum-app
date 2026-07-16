@@ -23,6 +23,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 import com.gleaum.app.ui.screens.onboarding.ComposeOnboardingScreen
 import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
@@ -81,6 +82,11 @@ class NativeOnboardingActivity : AppCompatActivity() {
         render()
     }
 
+    override fun onResume() {
+        super.onResume()
+        NativeTheme.applySystemBars(window, this)
+    }
+
     private fun loadProfileName() {
         Thread {
             try {
@@ -121,7 +127,8 @@ class NativeOnboardingActivity : AppCompatActivity() {
     private fun renderComposeOnboarding() {
         setContent {
             GleaumTheme {
-                ComposeOnboardingScreen(
+                GleaumAdaptiveContent {
+                    ComposeOnboardingScreen(
                     step = step,
                     saving = saving,
                     displayName = displayName,
@@ -156,7 +163,8 @@ class NativeOnboardingActivity : AppCompatActivity() {
                     onBiometricLockChange = { biometricLock = it; render() },
                     onPrevious = { step -= 1; hideKeyboard(); render() },
                     onNext = { next() },
-                )
+                    )
+                }
             }
         }
     }

@@ -12,8 +12,8 @@ android {
         applicationId "com.gleaum.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 23
-        versionName "1.1.1"
+        versionCode 26
+        versionName "1.1.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         aaptOptions {
@@ -55,10 +55,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-    }
-    // DEX 병합 메모리 증가 (OutOfMemoryError 방지)
-    dexOptions {
-        javaMaxHeapSize "4g"
     }
 }
 
@@ -104,6 +100,11 @@ dependencies {
 
     // ── Google Mobile Ads SDK (App Open Ad 네이티브 구현) ─────────────
     implementation 'com.google.android.gms:play-services-ads:24.4.0'
+
+    // ── Kakao AdFit SDK (Android Native) ─────────────────────────────
+    // 광고 지면/단위 ID는 Kakao AdFit 매체 승인 후 별도 네이티브 뷰에 연결한다.
+    implementation 'com.kakao.adfit:ads-base:3.22.2'
+    implementation 'com.google.android.gms:play-services-ads-identifier:18.2.0'
 
     // ── Firebase BoM (버전 일괄 관리) ──────────────────────────────────
     implementation platform('com.google.firebase:firebase-bom:33.14.0')

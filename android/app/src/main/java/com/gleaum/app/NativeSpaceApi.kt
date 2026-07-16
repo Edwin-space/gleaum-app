@@ -63,12 +63,42 @@ data class NativeSpaceMember(
     }
 }
 
+data class NativeSpacePost(
+    val id: String,
+    val type: String,
+    val content: String,
+    val pinned: Boolean,
+    val authorName: String,
+    val commentCount: Int,
+    val createdAt: String,
+) {
+    companion object {
+        fun fromJson(json: JSONObject): NativeSpacePost = NativeSpacePost(
+            id = json.optString("id"),
+            type = json.optString("type", "general"),
+            content = json.optString("content"),
+            pinned = json.optBoolean("pinned", false),
+            authorName = json.optString("authorName", "공간 멤버"),
+            commentCount = json.optInt("commentCount", 0),
+            createdAt = json.optString("createdAt"),
+        )
+
+        fun listFrom(array: JSONArray): List<NativeSpacePost> = buildList {
+            for (index in 0 until array.length()) {
+                array.optJSONObject(index)?.let { add(fromJson(it)) }
+            }
+        }
+    }
+}
+
 data class NativeSpaceSummary(
     val personalSpaceId: String?,
     val activeSpaceId: String?,
     val activeSpace: NativeSpaceItem?,
     val spaces: List<NativeSpaceItem>,
     val members: List<NativeSpaceMember>,
+    val recentPosts: List<NativeSpacePost>,
+    val upcomingSchedules: List<NativeAppSchedule>,
 ) {
     companion object {
         fun fromJson(json: JSONObject): NativeSpaceSummary = NativeSpaceSummary(
@@ -77,6 +107,8 @@ data class NativeSpaceSummary(
             activeSpace = json.optJSONObject("activeSpace")?.let(NativeSpaceItem::fromJson),
             spaces = NativeSpaceItem.listFrom(json.optJSONArray("spaces") ?: JSONArray()),
             members = NativeSpaceMember.listFrom(json.optJSONArray("members") ?: JSONArray()),
+            recentPosts = NativeSpacePost.listFrom(json.optJSONArray("recentPosts") ?: JSONArray()),
+            upcomingSchedules = NativeAppSchedule.listFrom(json.optJSONArray("upcomingSchedules") ?: JSONArray()),
         )
     }
 }
@@ -91,6 +123,16 @@ object NativeSpaceApi {
 
     fun updateName(context: Context, spaceId: String, name: String): NativeSpaceSummary {
         return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId", JSONObject().put("name", name)))
+    }
+
+    fun activate(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/activate"))
+    }
+
+    fun createPost(context: Context, spaceId: String, content: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(
+            request(context, "POST", "$SPACE_URL/$spaceId/posts", JSONObject().put("content", content)),
+        )
     }
 
     fun create(context: Context, name: String): NativeSpaceSummary {

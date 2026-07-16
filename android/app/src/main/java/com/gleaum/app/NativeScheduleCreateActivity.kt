@@ -20,6 +20,7 @@ import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.ui.screens.schedules.ComposeScheduleFormScreen
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
 import java.util.Calendar
@@ -63,6 +64,11 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
         NativeTheme.applySystemBars(window, this)
     }
 
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
+    }
+
     private fun render() {
         if (NativePortFlags.ENABLE_COMPOSE_SCHEDULE_FORM) {
             renderComposeForm()
@@ -74,7 +80,8 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     private fun renderComposeForm() {
         setContent {
             GleaumTheme {
-                ComposeScheduleFormScreen(
+                GleaumAdaptiveContent {
+                    ComposeScheduleFormScreen(
                     isEdit = scheduleId != null,
                     selectedType = type,
                     title = draftTitle,
@@ -92,7 +99,8 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                     onPickStartTime = { pickTime(startCalendar) },
                     onPickEndTime = { pickTime(endCalendar) },
                     onSave = { saveSchedule(draftTitle, draftMemo) },
-                )
+                    )
+                }
             }
         }
     }
@@ -366,7 +374,8 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
             try {
                 val payload = buildPayload(title, memo)
                 val id = scheduleId
-                if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
+                val saved = if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
+                runCatching { NativeCalendarAutoSync.upsert(this, saved) }
                 runOnUiThread {
                     saving = false
                     startActivity(Intent(this, NativeScheduleListActivity::class.java))
@@ -403,8 +412,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     }
 
     private fun applyIsoToCalendar(calendar: Calendar, iso: String) {
-        val parsed = runCatching { java.time.Instant.parse(iso) }.getOrNull()
-        if (parsed != null) calendar.timeInMillis = parsed.toEpochMilli()
+        NativeDateTime.parseIsoMillis(iso)?.let { calendar.timeInMillis = it }
     }
 
     private fun dateText(): String = "${startCalendar.get(Calendar.MONTH) + 1}월 ${startCalendar.get(Calendar.DAY_OF_MONTH)}일"

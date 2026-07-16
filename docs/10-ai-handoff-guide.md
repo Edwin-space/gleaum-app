@@ -1,7 +1,9 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-06-23
+> **최종 업데이트**: 2026-07-16
+>
+> 현재 작업과 다음 우선순위는 `docs/24-project-work-tracker.md`가 단일 기준이다. 이 문서는 아키텍처와 인수인계 맥락을 설명하고, 작업 상태는 트래커에서 관리한다.
 
 ---
 
@@ -9,9 +11,8 @@
 
 1. **백엔드/DB 구조 절대 변경 금지** — `supabase/schema.sql`, `src/lib/db.ts`, `src/types/index.ts`의 핵심 구조는 건드리지 말 것.
 2. **단일 DB 진입점 유지** — 모든 Supabase 쿼리는 반드시 `src/lib/db.ts`에만 추가.
-3. **⚠️ 인라인 스타일 전용** — Tailwind CSS v4 신뢰성 문제로 **모든 컴포넌트는 100% 인라인 스타일**만 사용. `glass-card`, `animate-*`, `var()`, `bg-brand-gradient` 등 Tailwind 유틸리티 클래스 절대 사용 금지.  
-   _예외_: `src/app/onboarding/page.tsx`는 기존 Tailwind 클래스 혼용 중 — 수정 시 인라인으로 전환.
-4. **디자인 토큰 (인라인 스타일로 직접 사용)**:
+3. **디자인 시스템 필수 참조** — UI 작업 전 루트 `DESIGN.md`와 `design-system-ui.html`을 읽는다. 웹의 테마 대응 배경/텍스트/테두리는 `src/styles/tokens.css`의 `var(--theme-*)`를 사용하고 새 고정 `bg-white`, `text-black`, 임의 Hex를 추가하지 않는다. 기존 파일의 Tailwind/인라인 스타일 방식은 유지하되 토큰 규칙을 우선한다.
+4. **브랜드 컬러**:
    - Brand Blue: `#0084CC`
    - Teal: `#0CC9B5`
    - Green: `#2EE895`
@@ -21,7 +22,7 @@
 5. **RLS 보안** — 새 테이블 생성 시 반드시 RLS 활성화 + `my_space_ids()` 기반 정책 추가.
 6. **TypeScript 엄격 모드** — 타입 오류 없이 `npm run build` 통과해야 함.
 7. **배포** — `npx vercel --prod` 로 직접 배포. 또는 `git push origin main` → Vercel 자동 배포.
-8. **AI 간 작업 동기화** — 작업 완료 후 반드시 `docs/10-ai-handoff-guide.md` 업데이트 후 커밋.
+8. **AI 간 작업 동기화** — 작업 시작·진행·완료·차단 시 `docs/24-project-work-tracker.md`의 동일 ID와 작업 일지를 갱신한다. 아키텍처·운영 방식이 바뀐 경우에만 이 문서와 상세 문서도 함께 갱신한다.
 9. **제품 방향 유지** — 글리움은 **개인 중심 + Space 확장형 토털 라이프 관리 서비스**. 개인 단독 사용이 기본, 공간은 선택적 확장.
 10. **hooks 임포트 경로** — `useIsDesktop()`은 `@/hooks/useMediaQuery`에서 import (NOT `@/hooks/useIsDesktop`).
 11. **NAS 자동 동기화** — `git push` 후 `.git/hooks/post-push` 훅이 자동으로 NAS 동기화. 훅이 없는 경우: `bash scripts/install-hooks.sh` 실행.
@@ -29,22 +30,30 @@
 13. **Space 용어 통일** — 코드/문서에서 "가족(family)" → "공간(space)" 용어 사용. DB 테이블명(`family_groups`)은 하위 호환으로 유지.
 14. **개인 공간 / 공유 공간 구분** — 모든 사용자는 `preferences.personalSpaceId`로 개인 공간을 식별. 공유 공간은 `sharedSpaceId`/현재 `family_group_id`로 분리 판단. 자세한 내용은 아래 "공간 아키텍처" 섹션 참고.
 15. **공간 데이터 경계 절대 보장** — 개인 일정/지출은 반드시 개인 공간에만 저장하고, 공유 공간 화면은 `visibility='private'` 데이터를 절대 표시하지 않음.
-16. **Android Native Port는 Web UI 이식 작업** — Android 화면 네이티브화는 UI 개선/재디자인이 아니라 Mobile Web UI를 정답지로 한 Native Port 작업이다. 새 Android 스타일, iOS 스타일, 임의 하단 네비게이션 재해석 금지. 작업 전 `docs/17-android-native-port.md`를 반드시 읽을 것.
+16. **Android Native Port는 Web 정보 구조 + Material 3 구현** — Mobile Web의 기능·문구·정보 순서·데이터 계약을 유지하되, Android 컴포넌트는 공식 Compose Material 3와 `GleaumTheme` 공통 컴포넌트로 구현한다. 임의 그라데이션, iOS 스타일 복제, 화면별 별도 하단 네비게이션 금지. `docs/17-android-native-port.md`, `docs/19-android-material3-redesign-plan.md`, `docs/22-android-material3-ui-audit.md`를 먼저 읽는다.
 
 ---
 
-## 현재 앱 상태 (2026-05-28 기준)
+## 현재 앱 상태 (2026-07-14 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app` (main 브랜치)
 - **최신 배포**: GitHub `main` 자동 배포 기준. 작업 전 Vercel 상태 확인 권장
-- **Google Play**: 내부 테스트 버전 업로드 완료 (`com.gleaum.app`, versionCode: 1)
+- **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
+- **Git 기준점**: `main`, 커밋 `8fc41c6`. 이후 작업은 미커밋 파일을 포함하므로 외부 이동 시 Git clone만 사용하면 손실됨
+- **외부 작업 인수인계**: `docs/23-external-work-checkpoint.md`가 현재 작업 트리, 복사 방법, 외부 의존성의 단일 체크포인트
 
 ### 최근 변경 이력
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-14 | Android Material 3 UI 품질 기반 마감. light/dark ColorScheme·Typography·Shapes를 명시하고 공통 adaptive navigation, 상태 카드, 안내 배너, 비클릭 배지, 의미색 토큰을 적용했다. 홈·일정·가계부·공간·전체·알림·온보딩 Compose gate가 활성 상태이며 `assembleDebug`, `lintDebug` 오류 0건을 확인했다. 코드 감사 평균은 90.8/A, XML 로그인은 86/B다. 마지막 연결 단말은 잠금 상태라 최종 시각 QA는 미완료. 상세는 `docs/22-android-material3-ui-audit.md`. |
+| 2026-07-14 | 외장 저장장치 이동 체크포인트 추가. 현재 HEAD `8fc41c6` 이후의 다수 변경·신규 파일은 미커밋 상태라 Git clone만으로 복원되지 않는다. `.git`, `.env.local`, untracked 파일과 저장소 외부 `~/gleaum-release.keystore`를 구분해 옮겨야 하며, 복사·복구 절차는 `docs/23-external-work-checkpoint.md`를 따른다. |
+| 2026-07-13 | 가족 자녀 초기 운영 흐름 구현. SMS 비용을 쓰지 않고 보호자 로그인 이메일의 Supabase Auth 확인 링크로 계정 이메일을 재확인한 뒤 `service_registration`, `personal_data_processing`, `family_data_sharing`을 각각 동의받는다. 보호자는 OS 공유 시트로 자녀에게 초대를 직접 전달하며 자녀 claim은 `approval_pending`만 만들고 공간 멤버를 생성하지 않는다. 보호자 최종 승인 후에만 viewer 권한과 연령별 account mode를 적용한다. migration `022_guardian_email_consent_flow.sql` 운영 적용, 신규 테이블·함수·RLS 확인 완료. 위치·마케팅은 비활성. 활성 자녀 1,000명/월 연결 500건/분쟁 1건/위치·결제 도입 시 SMS OTP 또는 PASS/NICE/KCB로 반드시 전환한다. 약관·개인정보처리방침 개정 시행일은 2026-07-20이며 사전 고지 후 운영해야 한다. |
+| 2026-07-13 | 가족 공간 자녀 계정 백엔드 뼈대 추가. migration `020_family_child_foundation.sql`에 `family_groups.space_type`, 가입 전 자녀 프로필, 보호자 관계/검증, 항목별 동의, 일회성 초대, 계정 연령 상태와 RLS를 정의했다. 자녀 연결은 검증된 Google 이메일 + 일회성 초대 + 보호자 검증/동의를 DB 함수 한 트랜잭션으로 확인한다. 만 14세/19세 계정 모드 전환과 공통 `/api/session/context` capability 계약을 추가했다. `021`에서 신규 외래키 인덱스와 RLS initplan을 보강했다. 운영 Supabase 적용 및 Advisor 검증 완료, 운영 UI는 보호자 본인확인 사업자 연동 전까지 비노출한다. 상세 기준은 `docs/21-family-child-account-foundation.md`. `npm run build` 통과. |
+| 2026-07-13 | Android 기능 마감 보강. 기기 캘린더 설정 화면에 외부 일정 가져오기를 추가했다. 사용자가 선택한 기기 캘린더의 앞으로 30일 일정만 미리보기·선택 후 **개인 공간의 private 개인 일정**으로 생성하며, 글리움 표식(`gleaum:schedule:`) 이벤트와 제목·시작 시각이 같은 개인 일정은 재가져오기에서 제외한다. 공유 공간 일정에는 절대 쓰지 않는다. Native 전체 메뉴의 캘린더 설정에서 해당 가져오기 화면으로 진입할 수 있다. 가계부는 이미 `ledger_entries` 기반으로 수입/지출/반복 예정/월별 자동 발생을 지원하며, Android Compose 가계부에 서버 카테고리 집계 기반 지출 분석을 연결했다. 이미지·파일 첨부 및 가족/자녀(보호자 초대, 동의, 위치, 루틴)는 명시적으로 이번 범위에서 제외했다. |
+| 2026-07-13 | Android 운영 안정화 보강. Kakao AdFit은 홈 내부 배너가 아닌 SDK 제공 하단 전환형 팝업(`AdFitPopupAdLoader`)으로 수정했고, 광고 코드/스크립트가 UI에 텍스트로 노출되는 것을 차단. `light/dark/system` 모드가 Compose·WebView·Android 상태/내비게이션 바에 함께 반영되도록 브리지를 보강했으며, 설정 저장 후 Activity 재생성 및 주요 Native Activity `onResume` 재적용으로 라이트 모드 복귀 문제를 보정. Compose 공통 셸 및 폼/상세/온보딩 화면은 600dp 이상에서 760dp, 840dp 이상에서 960dp 최대 폭을 적용해 태블릿·폴더블에서 폰 UI가 과도하게 늘어나지 않게 함. Android 기기 캘린더는 글리움 표식 일정만 생성·수정·삭제하는 수동 30일 동기화와, 사용자가 전체 메뉴에서 명시적으로 켤 수 있는 네이티브 일정 자동 반영을 지원한다. Android Debug·Next.js production build 통과, 실기기 `R3CW803L3WH` 최신 debug APK 설치/실행 확인. |
 | 2026-06-19 | PC 웹 루트 랜딩 리다이렉트 보정. `RootPageRouter`에서 `useIsDesktop()` hydration 초기값 `false` 때문에 PC에서도 `/login`으로 먼저 이동할 수 있던 문제를 수정. 리다이렉트 effect 내부에서 `window.matchMedia('(min-width: 1024px)')`로 실제 브라우저 뷰포트를 재확인해 PC는 랜딩 페이지를 유지하고, 모바일 웹/네이티브 앱 로그인 이동 정책은 유지. `npm run build` 통과 |
 | 2026-06-18 | Android 이메일 로그인/회원가입 네이티브 전환. 기존 `LoginActivity`의 `이메일로 계속하기`는 `MainActivity start_path=/login?view=email`로 WebView 웹 로그인 폼을 호출했으나, 태블릿/앱 일관성 문제로 네이티브 폼으로 변경. `LoginActivity`에서 Supabase Auth REST API(`/auth/v1/token?grant_type=password`, `/auth/v1/signup`)를 직접 호출하고, 성공 시 `SessionManager`에 세션 저장 → 기존 `MainActivity` localStorage 주입 구조 사용. 회원가입은 이름/닉네임 + 필수 동의 체크 포함. 이후 동의 UX를 보강해 `[필수] 전체 동의`, 개별 동의 동기화, 이용약관/개인정보처리방침 보기 링크 추가. `보기`는 외부 브라우저 이탈 방지를 위해 `LegalWebViewActivity` 인앱 브라우저로 열고 하단 `닫기` 버튼으로 회원가입 화면 복귀. 태블릿에서는 웹 nav/footer/배경 블롭을 숨기고 본문 폭/패딩/텍스트 크기를 문서 뷰에 맞게 재조정. Android `:app:assembleDebug`, `npm run build` 통과 |
 | 2026-06-18 | Android 홈 Native Port 착수 전 스냅샷 문서 추가: `docs/18-android-home-port-snapshot.md`. `MobileHome.tsx`, `BottomNav.tsx`, `InlineFeedAd.tsx`, `ScheduleCard`, `CalendarView` 기준으로 섹션 순서/수치/문구/금지 사항을 고정. Android에는 비활성 골격 `NativeHomePortActivity`, `NativeHomePortModels` 추가. `NativePortFlags.ENABLE_NATIVE_HOME=false`라 운영 진입 흐름 영향 없음 |
@@ -57,7 +66,7 @@
 | 2026-06-15 | 웹 푸시(FCM)가 운영에서 전체 미작동하던 문제 수정. `src/proxy.ts` 미들웨어 matcher가 `.js/.json`을 제외하지 않아 `firebase-messaging-sw.js`·`sw.js`·`manifest.json`이 미들웨어를 통과 → `NextResponse.next()` 처리로 Content-Type이 `text/plain`이 되고 전역 `nosniff`와 겹쳐 서비스워커 등록이 "ServiceWorker script evaluation failed"로 실패. matcher 제외 확장자에 `js/mjs/json/css/woff/woff2/webmanifest` 추가. 운영 콘솔에서 `[FCM] 토큰 발급 성공` 검증 |
 | 2026-06-15 | Pretendard 폰트가 전 서비스에서 미적용되던 문제 수정. `layout.tsx`의 문자열 `onLoad="this.media='all'"` 핸들러를 React가 무시해 폰트 CSS가 `media="print"`로 영구 고착 → 일반 stylesheet 로드로 변경. CSP에 `www.gstatic.com`(FCM SW의 importScripts)·`cdn.jsdelivr.net`(Pretendard CSS/woff2)을 허용하고 `worker-src 'self'` 추가 (`next.config.ts`) |
 | 2026-06-15 | 데스크탑에서 레이아웃이 통째로 다시 그려지던 밀림현상(React #418 hydration) 수정. `useMediaQuery`가 SSR=false / 데스크탑 클라이언트=true를 반환해 서버는 Mobile, 클라이언트는 Desktop 레이아웃을 기대 → 전체 트리 hydration 불일치. `useSyncExternalStore`(getServerSnapshot=false)로 서버/첫 렌더 일치. 시간대 인사말은 `useTimeGreeting` 훅으로 분리, `new Date()` 기반 날짜 표시는 `suppressHydrationWarning` 적용 (`src/hooks/useMediaQuery.ts`, `src/hooks/useTimeGreeting.ts`, 홈 2종) |
-| 2026-06-15 | Supabase 크론 6종을 `www.gleaum.com` 도메인으로 통일(automations·reminders가 구 `gleaum-app.vercel.app`, cleanup이 apex `gleaum.com` 사용하던 것 정리). `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그(DO 블록 안 `format($$...$$)`가 "syntax error" 유발)를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성. CRON_SECRET은 `gleaum-cron-2026`으로 Vercel·로컬·크론 6종 모두 일치 확인 |
+| 2026-06-15 | Supabase 크론 6종을 `www.gleaum.com` 도메인으로 통일(automations·reminders가 구 `gleaum-app.vercel.app`, cleanup이 apex `gleaum.com` 사용하던 것 정리). `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그(DO 블록 안 `format($$...$$)`가 "syntax error" 유발)를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성. `CRON_SECRET`은 Vercel·로컬·크론 6종에서 동일하게 관리하며 실제 값은 문서에 기록하지 않음 |
 | 2026-06-02 | Android 기기 캘린더 연동 1차 구현. `NativeCalendarPlugin` 추가, READ/WRITE_CALENDAR 권한 연결, 설정 화면에서 권한 요청/캘린더 선택/앞으로 30일 일정 수동 내보내기 지원 |
 | 2026-06-02 | iOS 스플래시 후 웹 로그인 flash 보정. JS `hideSplash()`가 300ms에 스플래시를 강제 종료하던 문제를 3000ms로 맞추고, 네이티브 LoginViewController는 0.45초에 미리 올리도록 조정 |
 | 2026-06-02 | iOS 스플래시/로그인 전환 UX 보정. Capacitor SplashScreen 3초 적용, iOS LoginViewController 표시를 2.75초 지연시켜 스플래시 종료 직전 cross-dissolve로 부드럽게 전환 |
@@ -193,7 +202,7 @@ Claude가 진행한 뒤 문서 반영이 누락되어 있던 핵심 변경입니
 - `supabase/migrations/012_cron_overdue_and_digest.sql`, `016_cron_recurring_expenses.sql`: Supabase pg_cron 등록 SQL. **DO/format 없이 평문 `cron.schedule(name, schedule, '명령문')` 형태**(`$$` 중첩 금지). 실행 전 `<CRON_SECRET>` 치환 필수
 - 가계부 PC/모바일 D-day UI: D-N, 내일 결제, 오늘 결제일, N일 경과 표시
 - 모바일 홈 가계부 카드: 미결제 고정지출 건수 배지 표시
-- ⚠️ 등록된 Supabase 크론 6종은 모두 `https://www.gleaum.com` 도메인 기준. `CRON_SECRET`은 `gleaum-cron-2026`(Vercel 환경변수와 일치). 상세는 `docs/09-deployment.md` 참조
+- ⚠️ 등록된 Supabase 크론 6종은 모두 `https://www.gleaum.com` 도메인 기준. `CRON_SECRET`은 Vercel 환경변수와 크론 요청에서 동일해야 하며 실제 값은 비밀 저장소에서만 관리. 상세는 `docs/09-deployment.md` 참조
 
 ### Firebase/Android
 - `FirebaseServicesProvider`: App Check, Remote Config, Crashlytics 사용자 ID 초기화
@@ -1675,7 +1684,7 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 
 - Android Native UI는 더 이상 수작업 View 기반 Material 유사 UI로 유지하지 않음.
 - Google 공식 Material 3 컴포넌트를 기본 베이스로 삼는 Compose Material 3 전환 방향으로 확정.
-- 현재 Gradle은 Compose 미활성 상태이므로 Phase 0에서 Compose BOM/material3/activity-compose/navigation-compose/adaptive 의존성 추가 필요.
+- 당시 Gradle은 Compose 미활성 상태였으며, 바로 다음 Phase 0 작업에서 Compose BOM/material3/activity-compose/adaptive 의존성 추가를 완료했다.
 - M3 컴포넌트 도입 대상: Scaffold, TopAppBar, NavigationBar/Rail/Drawer, FAB, Card, ListItem, TextField, SegmentedButton, Chip, DatePicker, TimePicker, Dialog, BottomSheet, Snackbar, Badge 등.
 - Motion 도입 대상: AnimatedVisibility, animateContentSize, Crossfade, AnimatedContent, animateColorAsState, animateDpAsState, LazyColumn item animation.
 - 사용자 요청인 상위 메뉴 선택 시 하위 메뉴가 펼쳐지는 액션은 `AnimatedVisibility + animateContentSize + chevron rotation` 공통 패턴으로 도입 예정.
@@ -1866,3 +1875,62 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
   - `npm run build` 루트 통과.
   - `npm run build` 백오피스 통과.
   - `npx tsc --noEmit` 백오피스 통과.
+
+### 2026-07-14 추가 — 공간 전환 및 공간 화면 UX 개편
+
+- 변경 파일:
+  - `src/app/space/SpaceSwitcher.tsx`
+  - `src/app/space/MobileSpace.tsx`
+  - `src/app/space/DesktopSpace.tsx`
+  - `src/app/space/SpaceFeed.tsx`
+  - `src/lib/db.ts`
+- 활성 공간 결정 우선순위는 `URL sid → localStorage 최근 공간 → 현재 화면 공간 → profiles.family_group_id`이며, 반드시 `getMySpaces()` 결과에 포함된 공간만 선택한다.
+- 공간을 선택하면 `/space?sid={spaceId}`와 `gleaum_lastSpaceId`를 함께 갱신한다. 이후 공간 상세 기능을 추가할 때도 `profiles.family_group_id`만 현재 공간으로 간주하지 않는다.
+- `joinSpaceByCode()` 성공 결과에 `spaceId`를 포함하므로 참여 완료 직후 정확한 공간으로 전환할 수 있다.
+- PC는 대형 Hero를 제거하고 공간 선택·역할/월 요약·일정/초대 액션을 한 행으로 축소했다.
+- 모바일과 PC의 공간 본문은 `소식 / 일정 / 멤버` 탭을 공유한다. 일정은 `SpaceScheduleTimeline`을 현재 화면 안에서 사용한다.
+- 검증 완료: `npm run build`, 공간 TSX 대상 ESLint.
+
+### 2026-07-14 추가 — Android 네이티브 공간 전환 긴급 수정
+
+- 실제 Android 화면은 `NativePortFlags.ENABLE_COMPOSE_SPACE=true`이므로 `ComposeSpaceScreen` 경로가 운영 대상이다.
+- 기존 `NativeSpaceActivity`의 `onSpaceClick`은 비활성 공간을 눌러도 준비 중 토스트만 표시했다. 현재는 `NativeSpaceApi.activate()`를 호출한다.
+- 신규 운영 API:
+  - `POST /api/native/spaces/{spaceId}/activate`
+  - 로그인 사용자와 `space_members` 멤버십을 확인한 후에만 활성 공간을 변경한다.
+  - 별도 Supabase migration/SQL 실행은 필요 없다.
+- Android Material 3 공간 화면:
+  - 현재 공간 compact card
+  - 공간 전환 `ModalBottomSheet`
+  - `요약 / 멤버 / 관리` section chip
+  - 초대 코드, 일정 이동, 공간 참여/생성 액션
+- 운영 배포:
+  - Vercel deployment `dpl_4qcuBya9ZMZYX1Z3hGe2CdpVM6o9`
+  - `https://www.gleaum.com` alias 반영 완료
+- 검증:
+  - `npm run build` 통과
+  - Android `:app:assembleDebug` 통과
+  - 연결 기기 `SM_F731N` APK 설치 성공
+  - `NativeSpaceActivity` 실행 로그에 크래시 없음. 단말 화면이 꺼져 있어 시각 캡처 검증은 사용자가 화면을 켠 뒤 최종 확인 필요.
+
+### 2026-07-14 추가 — Android 공간 정보 구조를 커뮤니티 중심으로 재정렬
+
+- 직전 `요약 / 멤버 / 관리` 구조는 공간의 운영 정보가 콘텐츠보다 먼저 노출되는 문제가 있어 폐기했다.
+- 기본 진입 화면을 `소식`으로 변경하고 `소식 / 일정 / 멤버`를 공간의 3개 핵심 구간으로 확정했다.
+- 공간 화면에서 바로 일반 소식을 작성할 수 있는 네이티브 API와 작성 UI를 추가했다.
+  - `POST /api/native/spaces/{spaceId}/posts`
+  - `space_posts` 기존 테이블/RLS를 사용하므로 신규 Supabase SQL은 없다.
+- 공간 요약 API가 현재 공간의 최근 게시글 12개와 다가오는 일정 8개를 함께 반환한다.
+- 초대 코드, 역할, 공간 이름 변경 등 운영 정보는 우측 설정 버튼의 `ModalBottomSheet`로 이동했다.
+- 색상 체계에서 Material 3 미지정 fallback role이 보라/분홍 계열로 나타나지 않도록 light/dark `ColorScheme`의 container·inverse·error·surface 역할을 모두 글리움 Blue/Teal/Green 및 neutral로 명시했다.
+- 검증 완료: `npm run build`, Android `:app:assembleDebug`.
+
+### 2026-07-14 추가 — Android Material 3 UI A등급 기반 정리
+
+- Android UI 작업의 정량 기준은 `docs/22-android-material3-ui-audit.md`가 단일 기준이다.
+- 공통 UI는 `GleaumTheme`, `GleaumScaffold`, `GleaumAdaptiveContent`, `GleaumFeedbackBanner`, `GleaumStatusBadge`, `GleaumStateCard`를 우선 사용한다.
+- 카드 역할은 `Elevated=대표 요약`, `Filled=정보 그룹`, `Outlined=행동/목록`으로 고정한다.
+- 정적 상태/분류를 `AssistChip(onClick = {})`로 표시하거나 일반 안내에 `errorContainer`를 사용하는 패턴은 금지한다.
+- 공통 메뉴는 Material 3 Adaptive Navigation Suite이므로 화면별 별도 하단 메뉴를 만들지 않는다.
+- 코드 감사 평균은 90.8점(A)이며, 연결 단말은 잠금/화면 꺼짐 상태라 시각 QA 점수는 아직 확정하지 않았다.
+- Android debug 빌드 통과, lint 오류 0건.

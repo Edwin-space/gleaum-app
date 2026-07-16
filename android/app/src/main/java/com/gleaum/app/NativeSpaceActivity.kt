@@ -47,6 +47,11 @@ class NativeSpaceActivity : AppCompatActivity() {
         NativeTheme.applySystemBars(window, this)
     }
 
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
+    }
+
     private fun loadSummary() {
         loading = true
         errorMessage = null
@@ -82,7 +87,7 @@ class NativeSpaceActivity : AppCompatActivity() {
                     selectedDestination = GleaumDestination.SPACE,
                     onDestinationSelected = ::handleComposeDestination,
                     onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
-                    onFabClick = { showCreateSpaceDialog() },
+                    onFabClick = null,
                 ) { innerPadding ->
                     ComposeSpaceScreen(
                         innerPadding = innerPadding,
@@ -91,9 +96,14 @@ class NativeSpaceActivity : AppCompatActivity() {
                         errorMessage = errorMessage,
                         onRetry = { loadSummary() },
                         onCopyInviteCode = { code -> copyInviteCode(code) },
-                        onSpaceClick = { space -> if (space.isActive) toast("현재 사용 중인 공간이에요.") else toast("공간 전환 기능은 준비 중이에요.") },
+                        onSpaceClick = { space -> activateSpace(space) },
                         onMemberClick = { member -> showMemberActions(member) },
                         onManageAction = { action -> handleSpaceManageAction(action) },
+                        onCreatePost = { content -> createPost(content) },
+                        onCreateSchedule = { startActivity(Intent(this, NativeScheduleCreateActivity::class.java)) },
+                        onOpenSchedule = { scheduleId ->
+                            startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", scheduleId))
+                        },
                     )
                 }
             }
@@ -108,6 +118,48 @@ class NativeSpaceActivity : AppCompatActivity() {
             GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
             GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
         }
+    }
+
+    private fun activateSpace(space: NativeSpaceItem) {
+        if (space.isActive) return
+        loading = true
+        errorMessage = null
+        render()
+        Thread {
+            try {
+                val updated = NativeSpaceApi.activate(this, space.id)
+                runOnUiThread {
+                    summary = updated
+                    loading = false
+                    render()
+                    toast("${space.name} 공간으로 전환했습니다.")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    loading = false
+                    errorMessage = friendlyError(error.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun createPost(content: String) {
+        val activeSpaceId = summary?.activeSpace?.id ?: return
+        Thread {
+            try {
+                val updated = NativeSpaceApi.createPost(this, activeSpaceId, content)
+                runOnUiThread {
+                    summary = updated
+                    render()
+                    toast("공간에 소식을 공유했습니다.")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    toast(friendlyError(error.message))
+                }
+            }
+        }.start()
     }
 
     private fun handleSpaceManageAction(action: SpaceManageAction) {

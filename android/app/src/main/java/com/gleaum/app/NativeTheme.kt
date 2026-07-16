@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import android.view.View
 import android.view.Window
+import androidx.core.view.WindowCompat
 
 /** Android native equivalent of DESIGN.md theme tokens. */
 object NativeTheme {
@@ -63,11 +64,20 @@ object NativeTheme {
     fun onDarkMuted(alpha: Float = 0.62f): Int = alpha("#FFFFFF", alpha)
 
     fun applySystemBars(window: Window, context: Context, statusHex: String = "#FAFAFD", navHex: String = "#FAFAFD") {
+        val dark = isDark(context)
         window.statusBarColor = color(context, statusHex)
         window.navigationBarColor = color(context, navHex)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = !dark
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            controller.isAppearanceLightNavigationBars = !dark
+        }
+
+        @Suppress("DEPRECATION")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             var flags = 0
-            if (!isDark(context)) {
+            if (!dark) {
                 flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR

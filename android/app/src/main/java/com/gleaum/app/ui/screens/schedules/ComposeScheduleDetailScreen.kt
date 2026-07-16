@@ -26,7 +26,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,12 +49,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeAppSchedule
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumStatusBadge
+import com.gleaum.app.ui.components.GleaumStateCard
+import com.gleaum.app.ui.components.StateKind
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
+import com.gleaum.app.ui.theme.expenseContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -96,13 +100,14 @@ fun ComposeScheduleDetailScreen(
             )
         },
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(innerPadding),
-        ) {
-            when {
+        GleaumAdaptiveContent {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(innerPadding),
+            ) {
+                when {
                 loading -> DetailStateCard(
                     title = "일정을 불러오는 중이에요",
                     message = "일정 정보를 확인하고 있어요.",
@@ -117,12 +122,13 @@ fun ComposeScheduleDetailScreen(
                     onAction = onRetry,
                     modifier = Modifier.padding(20.dp),
                 )
-                else -> DetailContent(
-                    schedule = schedule,
-                    onEdit = onEdit,
-                    onToggleComplete = onToggleComplete,
-                    onDelete = onDelete,
-                )
+                    else -> DetailContent(
+                        schedule = schedule,
+                        onEdit = onEdit,
+                        onToggleComplete = onToggleComplete,
+                        onDelete = onDelete,
+                    )
+                }
             }
         }
     }
@@ -177,13 +183,12 @@ private fun DetailHero(schedule: NativeAppSchedule) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.linearGradient(listOf(typeContainer(schedule.type), MaterialTheme.colorScheme.primaryContainer)))
                 .padding(22.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, label = { Text(typeLabel(schedule.type)) })
-                    AssistChip(onClick = {}, label = { Text(statusLabel(schedule.status)) })
+                    GleaumLabelBadge(typeLabel(schedule.type))
+                    GleaumStatusBadge(schedule.status)
                 }
                 Text(
                     text = schedule.title,
@@ -264,17 +269,14 @@ private fun ActionCard(
 
 @Composable
 private fun DetailStateCard(title: String, message: String, actionLabel: String?, onAction: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (actionLabel != null) Button(onClick = onAction, modifier = Modifier.padding(top = 6.dp)) { Text(actionLabel) }
-        }
-    }
+    GleaumStateCard(
+        title = title,
+        message = message,
+        modifier = modifier,
+        kind = if (actionLabel == null) StateKind.LOADING else StateKind.ERROR,
+        actionLabel = actionLabel,
+        onAction = onAction,
+    )
 }
 
 private fun typeLabel(type: String): String = when (type) {
@@ -303,7 +305,7 @@ private fun repeatLabel(repeat: String): String = when (repeat) {
 private fun typeContainer(type: String): Color = when (type) {
     "shared" -> MaterialTheme.colorScheme.primaryContainer
     "child" -> MaterialTheme.colorScheme.tertiaryContainer
-    "expense" -> Color(0xFFFFF7ED)
+    "expense" -> MaterialTheme.colorScheme.expenseContainer
     else -> MaterialTheme.colorScheme.secondaryContainer
 }
 

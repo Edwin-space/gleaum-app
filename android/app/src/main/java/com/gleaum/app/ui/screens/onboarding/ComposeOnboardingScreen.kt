@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.SpaceDashboard
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeOnboardingActivity
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 
 @Composable
 fun ComposeOnboardingScreen(
@@ -78,14 +79,15 @@ fun ComposeOnboardingScreen(
     onNext: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
-        item { OnboardingHero(step = step) }
-        item {
-            when (step) {
+    GleaumAdaptiveContent(modifier = modifier) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            item { OnboardingHero(step = step) }
+            item {
+                when (step) {
                 0 -> NameStep(displayName, realName, nameMode, onDisplayNameChange, onRealNameChange, onNameModeChange)
                 1 -> OptionStep(options = goals, selected = primaryGoal, onSelect = onGoalSelected)
                 2 -> OptionStep(options = layouts, selected = homeLayout, onSelect = onLayoutSelected)
@@ -111,9 +113,10 @@ fun ComposeOnboardingScreen(
                     onSpaceUpdatesChange = onSpaceUpdatesChange,
                     onBiometricLockChange = onBiometricLockChange,
                 )
+                }
             }
+            item { Actions(step = step, saving = saving, onPrevious = onPrevious, onNext = onNext) }
         }
-        item { Actions(step = step, saving = saving, onPrevious = onPrevious, onNext = onNext) }
     }
 }
 
@@ -124,7 +127,7 @@ private fun OnboardingHero(step: Int) {
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            AssistChip(onClick = {}, label = { Text("GLEAUM SETUP ${step + 1}/5") })
+            GleaumLabelBadge("설정 ${step + 1}/5")
             LinearProgressIndicator(progress = { (step + 1) / 5f }, modifier = Modifier.fillMaxWidth())
             Text(
                 text = when (step) {

@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.gleaum.app.ui.components.GleaumLabelBadge
 import com.gleaum.app.ui.components.GleaumExpandableSection
 
 @Composable
@@ -30,7 +30,7 @@ fun Material3ShellPreviewScreen(padding: PaddingValues) {
                     "Scaffold, NavigationBar, Card, Expand motion을 Compose Material 3 기준으로 구성했습니다.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                AssistChip(onClick = {}, label = { Text("Phase 0") })
+                GleaumLabelBadge("Material 3")
             }
         }
 

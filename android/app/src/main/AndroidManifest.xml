@@ -3,7 +3,7 @@
 
     <application
         android:name=".GleaumApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -36,7 +36,7 @@
             android:noHistory="true">
 
             <!-- Deep Link: gleaum:// (OAuth 콜백) -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -99,7 +99,7 @@
         <!-- ── Material 3 Compose Shell Preview (전환 검증용) ─────────────── -->
         <activity
             android:name=".Material3ShellPreviewActivity"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <!-- ── 네이티브 홈 ──────────────────────────────────────────────── -->

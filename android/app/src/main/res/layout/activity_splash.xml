@@ -21,7 +21,7 @@
         android:src="@drawable/splash_icon"
         android:scaleType="fitCenter"
         android:rotation="12"
-        android:contentDescription="글리움 로고" />
+        android:contentDescription="@string/brand_logo_description" />
 
     <!-- ── 텍스트 + 하단 브랜드 전체 레이아웃 ── -->
     <LinearLayout
@@ -37,7 +37,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Making everyday life shine together"
+            android:text="@string/brand_tagline_en"
             android:textColor="#0CC9B5"
             android:textSize="12sp"
             android:letterSpacing="0.02" />
@@ -47,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="나, 그리고"
+            android:text="@string/brand_tagline_line_1"
             android:textColor="#FFFFFF"
             android:textSize="40sp"
             android:textStyle="bold"
@@ -57,7 +57,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="연인/가족의"
+            android:text="@string/brand_tagline_line_2"
             android:textColor="#FFFFFF"
             android:textSize="40sp"
             android:textStyle="bold"
@@ -68,7 +68,7 @@
             android:id="@+id/textGradient"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="일상 네트워크"
+            android:text="@string/brand_tagline_line_3"
             android:textColor="#0CC9B5"
             android:textSize="40sp"
             android:textStyle="bold" />
@@ -84,7 +84,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="gleaum"
+            android:text="@string/brand_wordmark"
             android:textColor="#FFFFFF"
             android:textSize="22sp"
             android:textStyle="bold"

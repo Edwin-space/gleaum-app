@@ -4,7 +4,7 @@
 >
 > 목적: 외장 저장장치 작업 폴더를 다른 Mac/AI에서 열어도 커밋·미커밋·외부 비밀 자산을 구분해 재개하기 위한 복구 체크포인트.
 
-> 이동 결과: 2026-07-16 `/Volumes/Portable SSD/AI/gleaum/`으로 전체 복사 완료. 원본·대상 Git 상태와 Next.js production build를 확인했다. Android 빌드 통과는 이동 당시 기록이며, 이후 체크포인트 분리 작업에서는 사용자 지시에 따라 Android 파일·검증을 제외했다.
+> 이동 결과: 2026-07-16 `/Volumes/Portable SSD/AI/gleaum/`으로 전체 복사 완료. 원본·대상 Git 상태와 Next.js production build를 확인했다. 체크포인트 분리 중 제외했던 Android 범위는 같은 날 사용자 지시로 재개해 빌드·release 패키징·실기기 로그인을 검증했다.
 
 ## 1. 현재 기준점
 
@@ -17,7 +17,7 @@
 | Android 패키지 | `com.gleaum.app` |
 | 웹 운영 주소 | `https://www.gleaum.com` |
 | 공식 관리자 | `https://admins.gleaum.com` |
-| 마지막 Android 검증 | 2026-07-14 기록: `:app:assembleDebug` 통과, `:app:lintDebug` 오류 0건. 현재 변경 재검증은 제외 상태 |
+| 마지막 Android 검증 | 2026-07-16: debug 빌드·단위 테스트·lint, release R8/package, `SM_F731N` 설치·로그인 진입·무크래시 통과. 최종 서명과 인증 이후 흐름은 차단 |
 | 마지막 단말 | `SM_F731N`, ADB serial `R3CW803L3WH` |
 
 **중요:** 운영 보안, 가족/자녀 Web/API/DB, 공간 Web/API, 웹 광고 변경은 위 체크포인트 커밋에 보존됐다. Android Material 3, 기기 캘린더/테마 네이티브 결합 코드와 관련 Android 문서는 여전히 미커밋 작업 트리에 있으므로 GitHub clone만으로 복원되지 않는다.
@@ -146,7 +146,7 @@ JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' \
 
 ## 7. 즉시 이어갈 체크리스트
 
-> 현재 Android 검증은 사용자 지시로 제외했다. 아래 항목은 Android 범위를 재개할 때 사용한다.
+> Android 검증은 2026-07-16 재개했다. 아래 항목 중 빌드·서명 전 release 패키징·로그인 진입은 완료했고, 인증 세션 또는 서명 비밀번호가 필요한 항목은 차단 상태로 관리한다.
 
 - [ ] 잠금 해제한 Android 단말에서 최신 debug APK 실행.
 - [ ] 홈·일정·가계부·공간·전체·알림·온보딩 light/dark/system 캡처.

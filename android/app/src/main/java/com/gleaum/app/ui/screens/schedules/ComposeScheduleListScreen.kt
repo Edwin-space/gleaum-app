@@ -21,7 +21,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -38,12 +37,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeAppSchedule
+import com.gleaum.app.ui.components.GleaumStatusBadge
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumStateCard
+import com.gleaum.app.ui.components.StateKind
+import com.gleaum.app.ui.theme.expense
+import com.gleaum.app.ui.theme.expenseContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -175,8 +179,8 @@ private fun ScheduleHeroCard(todayCount: Int, completedToday: Int) {
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, label = { Text("오늘 ${todayCount}개") })
-                    AssistChip(onClick = {}, label = { Text("완료 ${completedToday}개") })
+                    GleaumLabelBadge("오늘 ${todayCount}개")
+                    GleaumLabelBadge("완료 ${completedToday}개")
                 }
             }
         }
@@ -241,7 +245,7 @@ private fun ScheduleListCard(schedule: NativeAppSchedule, onOpenSchedule: (Strin
                 Text("${typeLabel(schedule.type)} · ${statusLabel(schedule.status)}")
             },
             trailingContent = {
-                AssistChip(onClick = {}, label = { Text(statusLabel(schedule.status)) })
+                GleaumStatusBadge(schedule.status)
             },
         )
     }
@@ -306,19 +310,7 @@ private fun EmptyScheduleCard(onAddSchedule: () -> Unit) {
 
 @Composable
 private fun StateCard(title: String, message: String, actionLabel: String?, onAction: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-            if (actionLabel != null) {
-                Button(onClick = onAction, modifier = Modifier.padding(top = 4.dp)) { Text(actionLabel) }
-            }
-        }
-    }
+    GleaumStateCard(title, message, kind = if (actionLabel == null) StateKind.LOADING else StateKind.ERROR, actionLabel = actionLabel, onAction = onAction)
 }
 
 private data class ScheduleFilter(val key: String, val label: String)
@@ -341,7 +333,7 @@ private fun statusLabel(status: String): String = when (status) {
 private fun typeColor(type: String): Color = when (type) {
     "shared" -> MaterialTheme.colorScheme.primary
     "child" -> MaterialTheme.colorScheme.tertiary
-    "expense" -> Color(0xFFF59E0B)
+    "expense" -> MaterialTheme.colorScheme.expense
     else -> MaterialTheme.colorScheme.secondary
 }
 
@@ -349,7 +341,7 @@ private fun typeColor(type: String): Color = when (type) {
 private fun typeContainer(type: String): Color = when (type) {
     "shared" -> MaterialTheme.colorScheme.primaryContainer
     "child" -> MaterialTheme.colorScheme.tertiaryContainer
-    "expense" -> Color(0xFFFFF7ED)
+    "expense" -> MaterialTheme.colorScheme.expenseContainer
     else -> MaterialTheme.colorScheme.secondaryContainer
 }
 

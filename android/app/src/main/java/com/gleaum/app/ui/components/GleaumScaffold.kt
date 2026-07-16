@@ -1,20 +1,30 @@
 package com.gleaum.app.ui.components
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import com.gleaum.app.R
+import com.gleaum.app.ui.theme.isDark
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Groups
@@ -31,48 +41,69 @@ fun GleaumScaffold(
     onDestinationSelected: (GleaumDestination) -> Unit,
     onNotificationClick: () -> Unit = {},
     onFabClick: (() -> Unit)? = null,
+    bottomContent: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                actions = {
-                    androidx.compose.material3.IconButton(onClick = onNotificationClick) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = "알림")
+    NavigationSuiteScaffold(
+        navigationItems = {
+            GleaumDestination.entries.forEach { destination ->
+                NavigationSuiteItem(
+                    selected = selectedDestination == destination,
+                    onClick = { onDestinationSelected(destination) },
+                    icon = { Icon(destination.icon, contentDescription = destination.label) },
+                    label = { Text(destination.label, style = MaterialTheme.typography.labelMedium) },
+                )
+            }
+        },
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        if (selectedDestination == GleaumDestination.HOME) {
+                            Image(
+                                painter = painterResource(R.drawable.gleaum_bi_native),
+                                contentDescription = "gleaum",
+                                modifier = Modifier.width(88.dp).height(22.dp),
+                                colorFilter = if (MaterialTheme.colorScheme.isDark) {
+                                    ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+                                } else {
+                                    null
+                                },
+                            )
+                        } else {
+                            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    actions = {
+                        androidx.compose.material3.IconButton(onClick = onNotificationClick) {
+                            Icon(Icons.Outlined.Notifications, contentDescription = "알림")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        actionIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    ),
+                )
+            },
+            bottomBar = {
+                if (bottomContent != null) {
+                    Column { bottomContent() }
+                }
+            },
+            floatingActionButton = {
+                if (onFabClick != null) {
+                    FloatingActionButton(onClick = onFabClick) {
+                        Icon(Icons.Outlined.Add, contentDescription = "추가")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    actionIconContentColor = MaterialTheme.colorScheme.onBackground,
-                ),
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ) {
-                GleaumDestination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = selectedDestination == destination,
-                        onClick = { onDestinationSelected(destination) },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                    )
                 }
-            }
-        },
-        floatingActionButton = {
-            if (onFabClick != null) {
-                FloatingActionButton(onClick = onFabClick) {
-                    Icon(Icons.Outlined.Add, contentDescription = "추가")
-                }
-            }
-        },
-        content = content,
-    )
+            },
+            content = { innerPadding ->
+                GleaumAdaptiveContent { content(innerPadding) }
+            },
+        )
+    }
 }
 
 enum class GleaumDestination(

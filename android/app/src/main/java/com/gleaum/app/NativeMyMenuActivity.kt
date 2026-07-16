@@ -33,6 +33,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import com.gleaum.app.ui.components.GleaumDestination
+import com.gleaum.app.ui.components.FeedbackKind
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.menu.CalendarChoice
 import com.gleaum.app.ui.screens.menu.ComposeMyMenuScreen
@@ -67,6 +68,11 @@ class NativeMyMenuActivity : AppCompatActivity() {
         applyLightSystemBars()
         render()
         loadSummary()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
     }
 
     private fun applyLightSystemBars() {
@@ -147,6 +153,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         summary = summary,
                         loading = loading,
                         message = message,
+                        messageKind = menuFeedbackKind(message),
                         themeModeSubtitle = themeModeSubtitle(),
                         themeModeBadge = themeModeBadge(),
                         homeLayoutSubtitle = homeLayoutSubtitle(),
@@ -167,6 +174,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         biometricRelockInterval = getBiometricRelockInterval(),
                         calendarPermissionGranted = hasCalendarPermission(),
                         calendarSyncEnabled = isCalendarSyncEnabled(),
+                        calendarSyncMode = calendarSyncMode(),
                         selectedCalendarId = selectedCalendarId(),
                         calendarChoices = calendarChoicesForSettings(),
                         profile = composeProfile,
@@ -180,7 +188,9 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         onOpenDeviceSecuritySettings = { openDeviceSecuritySettings() },
                         onRequestCalendarPermission = { requestCalendarPermissionFromCompose() },
                         onCalendarSelected = { setSelectedCalendar(it.toDeviceCalendarRow()) },
+                        onCalendarSyncModeChanged = { setCalendarAutomaticSync(it) },
                         onCalendarSyncDisabled = { disableCalendarSync() },
+                        onOpenCalendarImport = { openWebPath("/settings/calendar") },
                         onPasswordSave = { password, confirm -> validateAndUpdatePassword(password, confirm) },
                         onProfileSave = { displayName, realName, mode -> updateProfile(displayName, realName, mode) },
                         onAccountWithdraw = { reason -> withdrawAccount(reason) },
@@ -192,6 +202,13 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun menuFeedbackKind(value: String?): FeedbackKind = when {
+        value.isNullOrBlank() -> FeedbackKind.INFO
+        value.contains("완료") || value.contains("저장") || value.contains("허용") -> FeedbackKind.SUCCESS
+        value.contains("필요") || value.contains("확인") || value.contains("중") -> FeedbackKind.WARNING
+        else -> FeedbackKind.ERROR
     }
 
     private fun handleComposeDestination(destination: GleaumDestination) {
@@ -238,6 +255,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
     private fun themeModeValue(): String = nativePrefs().getString(THEME_MODE_KEY, "system") ?: "system"
 
+    private fun showToast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
     private fun saveThemeMode(value: String) {
         val label = when (value) {
             "light" -> "라이트"
@@ -246,9 +267,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
         }
         nativePrefs().edit().putString(THEME_MODE_KEY, value).apply()
         activeComposeSettingsDialog = null
-        message = "화면 모드를 ${label}로 저장했어요. 네이티브 화면부터 순차 적용됩니다."
+        message = null
+        showToast("화면 모드를 ${label}로 저장했어요.")
         applyLightSystemBars()
-        render()
+        recreate()
     }
 
     private fun saveHomeLayout(value: String) {
@@ -261,7 +283,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
         }
         nativePrefs().edit().putString(HOME_LAYOUT_KEY, value).apply()
         activeComposeSettingsDialog = null
-        message = "홈 레이아웃을 ${label}으로 저장했어요."
+        message = null
+        showToast("홈 레이아웃을 ${label}으로 저장했어요.")
         render()
     }
 
@@ -275,7 +298,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .putString(NOTIFY_BUDGET_KEY, budgetEnabled.toString())
             .apply()
         activeComposeSettingsDialog = null
-        message = "알림 설정을 저장했어요."
+        message = null
+        showToast("알림 설정을 저장했어요.")
         render()
     }
 
@@ -635,12 +659,14 @@ class NativeMyMenuActivity : AppCompatActivity() {
             try {
                 NativeProfileApi.updatePassword(this, password)
                 runOnUiThread {
-                    message = "비밀번호를 변경했어요. 다음 로그인부터 새 비밀번호를 사용할 수 있어요."
+                    message = null
+                    showToast("비밀번호를 변경했어요.")
                     render()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     message = friendlyPasswordError(e.message)
+                    showToast(message.orEmpty())
                     render()
                 }
             }
@@ -747,12 +773,14 @@ class NativeMyMenuActivity : AppCompatActivity() {
             try {
                 NativeProfileApi.update(this, displayName.trim(), realName.trim().ifBlank { null }, nameDisplayMode)
                 runOnUiThread {
-                    message = "프로필을 저장했어요."
+                    message = null
+                    showToast("프로필을 저장했어요.")
                     loadSummary()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     message = friendlyProfileError(e.message)
+                    showToast(message.orEmpty())
                     render()
                 }
             }
@@ -873,12 +901,14 @@ class NativeMyMenuActivity : AppCompatActivity() {
             try {
                 NativeAccountApi.restore(this)
                 runOnUiThread {
-                    message = "탈퇴 신청을 취소했어요. 계정을 계속 사용할 수 있습니다."
+                    message = null
+                    showToast("탈퇴 신청을 취소했어요.")
                     render()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     message = friendlyAccountError(e.message)
+                    showToast(message.orEmpty())
                     render()
                 }
             }
@@ -1087,7 +1117,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 nativePrefs().edit()
                     .putString(CALENDAR_ENABLED_KEY, "false")
                     .apply()
-                message = "기기 캘린더 동기화를 껐어요."
+                message = null
+                showToast("기기 캘린더 동기화를 껐어요.")
                 render()
             }
             .setNegativeButton("닫기", null)
@@ -1104,7 +1135,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
         nativePrefs().edit()
             .putString(CALENDAR_ENABLED_KEY, "false")
             .apply()
-        message = "기기 캘린더 동기화를 껐어요."
+        message = null
+        showToast("기기 캘린더 동기화를 껐어요.")
         render()
     }
 
@@ -1117,7 +1149,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
     private fun requestCalendarPermission() {
         if (hasCalendarPermission()) {
-            message = "캘린더 권한이 이미 허용되어 있어요."
+            message = null
+            showToast("캘린더 권한이 이미 허용되어 있어요.")
             render()
             return
         }
@@ -1128,6 +1161,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == CALENDAR_PERMISSION_REQUEST) {
             message = if (hasCalendarPermission()) "캘린더 권한이 허용되었어요." else "캘린더 권한이 필요해요."
+            showToast(message.orEmpty())
+            message = null
             render()
         }
     }
@@ -1153,7 +1188,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
             .putString(BIOMETRIC_LOCK_SCOPES_KEY, "[\"app\"]")
             .putString(BIOMETRIC_UNLOCKED_AT_KEY, System.currentTimeMillis().toString())
             .apply()
-        message = if (enabled) "생체인증 앱 잠금을 켰어요." else "생체인증 앱 잠금을 껐어요."
+        message = null
+        showToast(if (enabled) "생체인증 앱 잠금을 켰어요." else "생체인증 앱 잠금을 껐어요.")
         render()
     }
 
@@ -1163,7 +1199,8 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun setBiometricRelockInterval(interval: String) {
         activeComposeSettingsDialog = null
         nativePrefs().edit().putString(BIOMETRIC_RELOCK_INTERVAL_KEY, interval).apply()
-        message = "재잠금 기준을 ${relockIntervalLabel(interval)}로 변경했어요."
+        message = null
+        showToast("재잠금 기준을 ${relockIntervalLabel(interval)}로 변경했어요.")
         render()
     }
 
@@ -1223,14 +1260,24 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
     private fun isCalendarSyncEnabled(): Boolean = nativePrefs().getString(CALENDAR_ENABLED_KEY, "false") == "true"
 
+    private fun calendarSyncMode(): String = nativePrefs().getString(CALENDAR_SYNC_MODE_KEY, "manual") ?: "manual"
+
+    private fun setCalendarAutomaticSync(enabled: Boolean) {
+        nativePrefs().edit()
+            .putString(CALENDAR_SYNC_MODE_KEY, if (enabled) "automatic" else "manual")
+            .apply()
+        showToast(if (enabled) "일정 변경을 기기 캘린더에 자동 반영해요." else "수동 동기화로 전환했어요.")
+        render()
+    }
+
     private fun setSelectedCalendar(calendar: DeviceCalendarRow) {
         activeComposeSettingsDialog = null
         nativePrefs().edit()
             .putString(CALENDAR_ENABLED_KEY, "true")
             .putString(SELECTED_CALENDAR_KEY, calendar.id)
             .apply()
-        Toast.makeText(this, "${calendar.name} 캘린더를 선택했어요.", Toast.LENGTH_SHORT).show()
-        message = "기기 캘린더 동기화를 켰어요."
+        showToast("${calendar.name} 캘린더를 선택했어요.")
+        message = null
         render()
     }
 
@@ -1298,6 +1345,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
         private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
         private const val CALENDAR_ENABLED_KEY = "gleaum:calendar-sync-enabled"
         private const val SELECTED_CALENDAR_KEY = "gleaum:calendar-sync-calendar-id"
+        private const val CALENDAR_SYNC_MODE_KEY = "gleaum:calendar-sync-mode"
         private const val BIOMETRIC_LOCK_ENABLED_KEY = "gleaum:biometric-lock-enabled"
         private const val BIOMETRIC_PROMPT_SEEN_KEY = "gleaum:biometric-lock-prompt-seen"
         private const val BIOMETRIC_UNLOCKED_AT_KEY = "gleaum:biometric-unlocked-at"

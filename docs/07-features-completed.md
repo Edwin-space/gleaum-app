@@ -1,5 +1,37 @@
 # 07. 완료된 기능
 
+### 2026-07-13 — 보호자 이메일 확인·자녀 최종 승인 흐름
+
+- 초기 비용을 줄이기 위해 외부 SMS 발송 없이 보호자 로그인 이메일 확인을 사용
+- 필수 동의 3종을 각각 확인하고 정책 버전·확인 방법·증적 식별자를 DB에 기록
+- 보호자 휴대폰의 OS 공유 시트로 문자·카카오톡 등에 자녀 초대 링크를 직접 전달
+- 자녀 Google 이메일과 72시간 일회성 토큰이 일치해도 `approval_pending`만 생성
+- 보호자 최종 승인 전에는 `space_members`를 만들지 않아 가족 공간 데이터 접근 차단
+- `/space/children`, `/family/guardian/verify`, `/invite/child/[token]` PC/Mobile 화면 구현
+- 위치 수집·공유 및 마케팅 동의는 제외하고 계속 비활성
+
+전환 조건:
+- 활성 자녀 계정 1,000명, 월 연결 500건, 관계 분쟁 1건, 위치/결제 도입 또는 정책 강화 시 SMS OTP/PASS/NICE/KCB 본인확인으로 전환
+
+검증:
+- Supabase migration `022_guardian_email_consent_flow.sql` 운영 적용 완료
+- 신규 증적 테이블, 함수 3종, RLS 정책 확인
+- `npm run build`, 변경 경로 ESLint 통과
+
+### 2026-07-13 — 가족 공간 자녀 계정 백엔드 뼈대
+
+- `family_groups.space_type`으로 개인/일반/가족 공간 저장 기준 추가
+- 가입 전 자녀 프로필, 보호자 관계, 항목별 동의, 일회성 초대, 연령 상태 테이블 설계
+- 이메일 일치만으로 연결하지 않고 검증된 Google 이메일 + 일회성 초대를 함께 확인하는 DB 트랜잭션 추가
+- 만 14세/19세 전환을 서버 생년월일 기준으로 갱신하는 계정 모드 기반 추가
+- Web/Android/iOS 공통 `/api/session/context` capability 계약 추가
+- 가족 자녀 기능은 후속 이메일 확인·최종 승인 흐름으로 운영 UI 연결
+
+검증:
+- `npm run build` 통과
+- Supabase migration `020_family_child_foundation.sql`, `021_family_child_foundation_hardening.sql` 운영 적용 완료
+- 신규 테이블 5개·함수 4개·RLS 정책 확인, 신규 외래키 인덱스/auth.uid initplan Advisor 경고 0건
+
 ### 2026-06-19 — PC 웹 루트 랜딩 리다이렉트 보정
 
 - `www.gleaum.com` 접속 시 PC에서도 `/login`으로 이동할 수 있던 문제 수정
@@ -901,7 +933,7 @@ npm run cap:open:android # Android Studio 열기
 
 - [x] 크론 6종 타깃을 `https://www.gleaum.com`으로 통일 (automations·reminders의 구 `gleaum-app.vercel.app`, cleanup의 apex `gleaum.com` 정리)
 - [x] `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성
-- [x] CRON_SECRET=`gleaum-cron-2026` — Vercel·로컬·크론 6종 일치 확인 (overdue-expenses 200 응답 검증)
+- [x] `CRON_SECRET` — Vercel·로컬·크론 6종 일치 확인 (실제 값은 비밀 저장소에서만 관리)
 
 ## iOS 네이티브 홈/일정 전환 API 기반 (완료 — 2026-06-18)
 
@@ -1089,3 +1121,52 @@ npm run cap:open:android # Android Studio 열기
 - Material3ShellPreviewActivity 추가
 - 상위 메뉴 선택 시 하위 메뉴가 펼쳐지는 M3 motion 샘플 구현
 - Android debug 빌드 및 실기기 Preview 실행 확인
+
+## Web 공간 전환·정보 구조 개편 (완료 — 2026-07-14)
+
+- 모바일의 도트/스와이프 중심 공간 전환을 명시적인 공간 선택 바텀시트로 교체
+- PC의 대형 공간 Hero와 공간 칩 목록을 1행 공간 컨텍스트 툴바로 축소
+- 공간 선택 시 화면 상태, `gleaum_lastSpaceId`, `/space?sid=`를 함께 갱신
+- URL/최근 선택/프로필 기본 공간을 실제 멤버십 목록으로 검증한 뒤 활성 공간 결정
+- 초대 코드 참여 완료 직후 참여한 공간으로 자동 전환
+- 모바일/PC 공간 내부를 `소식 / 일정 / 멤버` 탭으로 통일
+- 존재하지 않는 `/space/schedule` 이동을 현재 공간의 일정 탭 전환으로 수정
+- 모바일 피드 하단과 화면 고정 FAB가 중복 노출되던 추가 버튼 제거
+- `npm run build`, 공간 관련 ESLint 검사 통과
+
+## Android 네이티브 공간 전환·Material 3 UI 개편 (완료 — 2026-07-14)
+
+- `NativeSpaceActivity`의 임시 `공간 전환 기능은 준비 중` 처리를 실제 전환 API로 교체
+- 공간 멤버십 확인 후 `profiles.family_group_id`를 변경하는 `/api/native/spaces/[id]/activate` 추가
+- 현재 공간 카드를 누르면 Material 3 `ModalBottomSheet` 공간 선택기 노출
+- 대형 Hero와 전체 공간 목록 상시 노출을 제거하고 현재 공간 컨텍스트를 compact card로 축소
+- 공간 내부를 `요약 / 멤버 / 관리` 구간으로 분리
+- 요약에서 멤버 수, 역할, 초대 코드, 일정·참여·생성 빠른 이동 제공
+- 공간 생성용 전역 FAB 제거하고 기능 문맥 안으로 이동
+- Android debug APK 빌드 및 연결 기기 설치 성공
+- Vercel 운영 배포 완료, `/api/native/spaces/[id]/activate` 인증 경계 401 응답 확인
+
+## Android 공간 커뮤니티 홈 전환 (완료 — 2026-07-14)
+
+- 공간 기본 화면을 운영 요약에서 멤버 커뮤니티 소식으로 변경
+- `소식 / 일정 / 멤버` 정보 구조로 Android와 웹의 공간 개념 통일
+- 공간 소식 목록, 소식 작성, 고정 소식 및 댓글 수 표시 구현
+- 현재 공간의 다가오는 일정 목록, 일정 상세 이동, 일정 추가 진입 구현
+- 초대 코드·역할·공간 관리는 설정 바텀시트로 후순위 이동
+- Material 3 전체 색상 role을 글리움 브랜드/neutral token으로 명시해 fallback 보라·분홍 제거
+- 별도 Supabase migration 없이 기존 `space_posts` RLS를 재사용
+- `npm run build`, Android debug 빌드 통과
+
+## Android Material 3 UI 품질 기준 A 개편 (코드 감사 완료 — 2026-07-14)
+
+- light/dark 전체 ColorScheme, Typography, Shapes를 명시적으로 정의했다.
+- 임의 그라데이션과 고정 지출 배경색을 제거하고 Material surface/container 및 의미색 토큰으로 교체했다.
+- `GleaumFeedbackBanner`, `GleaumStatusBadge`, `GleaumLabelBadge`, `GleaumStateCard`로 안내·상태 UI를 통일했다.
+- 일반 안내가 errorContainer로 표시되거나 비클릭 상태가 AssistChip으로 보이던 문제를 제거했다.
+- 공통 하단 메뉴를 Material 3 `NavigationSuiteScaffold`로 교체해 폰 NavigationBar와 태블릿 NavigationRail 전환을 공식 컴포넌트에 맡겼다.
+- 홈 로딩/오류 시 빈 데이터 본문이 함께 노출되던 문제와 알림 화면의 선택 상태 없는 중복 하단 메뉴를 수정했다.
+- 독립 Scaffold 화면(일정 상세/폼, 가계부 폼, 알림)과 온보딩에도 적응형 콘텐츠 폭 제한을 적용했다.
+- 로그인/스플래시 XML의 사용자 문자열을 string resource로 이동하고 predictive back lint 오류를 수정했다.
+- API 24에서 동작하지 않던 `java.time.Instant` 직접 사용을 호환 ISO 파서로 교체했다.
+- 검증: Android `:app:assembleDebug` 통과, `:app:lintDebug` 오류 0건.
+- 평가 기준과 화면별 임시 점수는 `docs/22-android-material3-ui-audit.md`에서 관리한다.

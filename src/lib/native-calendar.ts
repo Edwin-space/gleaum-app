@@ -8,6 +8,9 @@ import { getNativePlatform, isNativeApp, secureStorage } from '@/lib/native';
 
 const CALENDAR_ENABLED_KEY = 'gleaum:calendar-sync-enabled';
 const SELECTED_CALENDAR_KEY = 'gleaum:calendar-sync-calendar-id';
+const CALENDAR_SYNC_MODE_KEY = 'gleaum:calendar-sync-mode';
+
+export type CalendarSyncMode = 'manual' | 'automatic';
 
 export type CalendarPermissionState = 'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'unknown';
 
@@ -36,6 +39,10 @@ export interface NativeCalendarEventInput {
   description?: string;
 }
 
+export interface NativeCalendarEventUpdateInput extends NativeCalendarEventInput {
+  eventId: string;
+}
+
 export interface NativeCalendarEvent {
   eventId: string;
   calendarId: string;
@@ -52,6 +59,8 @@ export interface NativeCalendarPlugin {
   requestPermissions(): Promise<NativeCalendarPermissionStatus>;
   listCalendars(): Promise<{ calendars: NativeDeviceCalendar[] }>;
   createEvent(options: NativeCalendarEventInput): Promise<{ eventId: string }>;
+  updateEvent(options: NativeCalendarEventUpdateInput): Promise<{ eventId: string }>;
+  deleteEvent(options: { eventId: string }): Promise<{ deleted: boolean }>;
   listEvents(options: { startMillis: number; endMillis: number }): Promise<{ events: NativeCalendarEvent[] }>;
 }
 
@@ -61,6 +70,8 @@ export const NativeCalendar = registerPlugin<NativeCalendarPlugin>('NativeCalend
     async requestPermissions() { return { calendar: 'denied' as const }; },
     async listCalendars() { return { calendars: [] }; },
     async createEvent() { throw new Error('native_calendar_unavailable'); },
+    async updateEvent() { throw new Error('native_calendar_unavailable'); },
+    async deleteEvent() { return { deleted: false }; },
     async listEvents() { return { events: [] }; },
   }),
 });
@@ -99,6 +110,18 @@ export async function createDeviceCalendarEvent(input: NativeCalendarEventInput)
   return eventId;
 }
 
+export async function updateDeviceCalendarEvent(input: NativeCalendarEventUpdateInput): Promise<string | null> {
+  if (!isNativeCalendarSupported()) return null;
+  const { eventId } = await NativeCalendar.updateEvent(input);
+  return eventId;
+}
+
+export async function deleteDeviceCalendarEvent(eventId: string): Promise<boolean> {
+  if (!isNativeCalendarSupported()) return false;
+  const { deleted } = await NativeCalendar.deleteEvent({ eventId });
+  return deleted;
+}
+
 export async function listDeviceCalendarEvents(startMillis: number, endMillis: number): Promise<NativeCalendarEvent[]> {
   if (!isNativeCalendarSupported()) return [];
   const { events } = await NativeCalendar.listEvents({ startMillis, endMillis });
@@ -119,4 +142,12 @@ export async function getSelectedCalendarId(): Promise<string | null> {
 
 export async function setSelectedCalendarId(calendarId: string): Promise<void> {
   await secureStorage.set(SELECTED_CALENDAR_KEY, calendarId);
+}
+
+export async function getCalendarSyncMode(): Promise<CalendarSyncMode> {
+  return (await secureStorage.get(CALENDAR_SYNC_MODE_KEY)) === 'automatic' ? 'automatic' : 'manual';
+}
+
+export async function setCalendarSyncMode(mode: CalendarSyncMode): Promise<void> {
+  await secureStorage.set(CALENDAR_SYNC_MODE_KEY, mode);
 }

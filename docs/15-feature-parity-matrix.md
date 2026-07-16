@@ -1,6 +1,6 @@
 # 15. 기능 싱크 매트릭스
 
-> 최종 업데이트: 2026-06-02
+> 최종 업데이트: 2026-07-14
 >
 > 목적: PC Web / Mobile Web / Android App / iOS 예정 앱 사이의 기능 상태와 노출 정책을 통일해, 다른 AI가 중복 판단 없이 같은 기준으로 작업하도록 한다.
 
@@ -23,8 +23,8 @@
 |---|---|---|
 | PC Web | 데스크톱 브라우저에서 사용하는 웹 | 운영 중 |
 | Mobile Web | 모바일 브라우저에서 사용하는 웹 | 운영 중 |
-| Android App | Capacitor 기반 Android 앱 | Google Play 내부 테스트/출시 준비 |
-| iOS App | Capacitor 기반 iOS 앱 | 준비 중 |
+| Android App | Compose Material 3 + Capacitor bridge/fallback Android 앱 | Google Play 프로덕션 배포 이력, 핵심 화면 네이티브 활성 |
+| iOS App | UIKit/Capacitor 기반 iOS 앱 | 개발 중, Android 안정화 후 본격 확장 |
 
 ---
 
@@ -32,21 +32,21 @@
 
 | 기능 | PC Web | Mobile Web | Android App | iOS App | 싱크 기준 |
 |---|---|---|---|---|---|
-| Google 로그인 | 지원 | 지원 | 지원 | 예정 | 로그인 후 항상 앱/웹의 원래 세션으로 복귀해야 함 |
+| Google 로그인 | 지원 | 지원 | 네이티브 지원 | 네이티브 기반 있음·재검증 필요 | 로그인 후 항상 앱/웹의 원래 세션으로 복귀해야 함 |
 | 로그아웃 | 지원 | 지원 | 지원 | 예정 | 웹 세션 + 네이티브 세션 정리 정책 통일 |
-| 온보딩 | 지원 | 지원 | 지원 | 예정 | 신규 사용자는 개인화/보안 설정 흐름을 동일한 의미로 거쳐야 함 |
-| 홈 화면 구성 | 지원 | 지원 | 지원 | 예정 | 사용자 선호 기반 홈 구성 정책 통일 |
+| 온보딩 | 지원 | 지원 | Compose 지원 | 예정 | 신규 사용자는 개인화/보안 설정 흐름을 동일한 의미로 거쳐야 함 |
+| 홈 화면 구성 | 지원 | 지원 | Compose 지원 | 일부 네이티브 | 사용자 선호 기반 홈 구성 정책 통일 |
 | 테마 설정 | 지원 | 지원 | 지원 | 예정 | `light/dark/system` 3모드 동일 적용 |
-| 개인 가계부 | 지원 | 지원 | 지원 | 예정 | 개인 공간 데이터만 사용. 공유 공간 지출 자동 혼입 금지 |
+| 개인 가계부 | 지원 | 지원 | Compose 지원 | 예정 | 개인 공간 데이터만 사용. 공유 공간 지출 자동 혼입 금지 |
 | 공간 지출 | 지원 | 지원 | 지원 | 예정 | 공유 공간 내부 전용. 개인 가계부 반영은 명시 액션으로만 처리 |
 | 개인 일정 | 지원 | 지원 | 지원 | 예정 | 개인 공간/개인 visibility 데이터만 사용 |
-| 공간 일정 | 지원 | 지원 | 지원 | 예정 | 공간 멤버/역할 기준으로 생성·조회·수정 제한 |
+| 공간 일정 | 지원 | 지원 | Compose 지원 | 예정 | 공간 멤버/역할 기준으로 생성·조회·수정 제한 |
 | 공간 초대 | 지원 | 지원 | 지원 | 예정 | 초대 코드/링크 유효성 검증 및 재발급 정책 통일 |
-| 공간 멤버/역할 | 지원 | 지원 | 지원 | 예정 | 공간 지기/공간 운영자/공간 멤버 명칭 통일 |
-| 알림 목록 | 지원 | 지원 | 지원 | 예정 | in-app 알림 조회 정책 통일 |
+| 공간 멤버/역할 | 지원 | 지원 | Compose 지원 | 예정 | 공간 지기/공간 운영자/공간 멤버 명칭 통일 |
+| 알림 목록 | 지원 | 지원 | Compose 지원 | 예정 | in-app 알림 조회 정책 통일 |
 | 푸시 알림 | 웹 FCM | 웹 FCM | 네이티브 FCM | 예정 | 권한 요청 타이밍과 실패 안내 통일 |
-| 마이페이지 | 지원 | 지원 | 지원 | 예정 | 프로필, 설정, 계정 관리 항목 노출 정책 통일 |
-| 광고 | Web AdSense/자체 광고 | Web AdSense/자체 광고 | AdMob/자체 광고 | 예정 | 광고 슬롯/플랫폼 타겟 정책 통일 |
+| 마이페이지 | 지원 | 지원 | Compose 전체 메뉴 지원 | 예정 | 프로필, 설정, 계정 관리 항목 노출 정책 통일 |
+| 광고 | Web AdSense/자체 광고 | Web AdSense/자체 광고 | AdMob 기반 + Kakao AdFit SDK 팝업 | 예정 | 광고 슬롯/플랫폼 타겟 정책 통일 |
 
 ---
 
@@ -55,7 +55,7 @@
 | 기능 | 적용 플랫폼 | 다른 플랫폼 노출 정책 | 현재 판단 |
 |---|---|---|---|
 | 생체인증 앱 잠금 | Android App, iOS App 예정 | Web에서는 숨김 또는 `앱 전용` 안내 | Android/iOS 네이티브 플러그인 기반 추가 완료. 웹 기능으로 오해시키면 안 됨 |
-| 기기 캘린더 연동 | Android App 1차 지원, iOS 예정 | Web에서는 `Android 앱 우선 지원` 안내 | Android 권한 요청/캘린더 선택/30일 수동 내보내기 완료. 자동 동기화/import/iOS는 후속 |
+| 기기 캘린더 연동 | Android App 지원, iOS 예정 | Web에서는 `Android 앱 우선 지원` 안내 | Android 30일 내보내기·자동 반영·선택 가져오기 완료. iOS EventKit은 후속 |
 | 앱 버전/스토어 업데이트 | Native App | Web에서는 숨김 | 앱 내부 마이페이지/설정에서만 노출하는 것이 적절 |
 | Universal Link / App Link | Native App + Web 라우트 | Web에서는 일반 링크로 동작 | 초대 링크, OAuth callback, logout callback은 회귀 테스트 필요 |
 | iOS 앱 다운로드 | iOS App | `/download`에서 `준비 중` 표시 | App Store 등록 전까지 동일 문구 유지 |
@@ -70,10 +70,10 @@
 | P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity`, iOS `LoginViewController`, `AppDelegate` | Android/iOS OAuth callback 보정 완료. 실제 기기 회귀 테스트 필요 |
 | P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql` | 단일 조회 private 필터 + RLS 강화 SQL 추가. Supabase 실행 후 회귀 테스트 필요 |
 | P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
-| P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, `src/lib/native-calendar.ts`, Android `NativeCalendarPlugin` | Android 1차 완료. 자동 반영/import/iOS EventKit 확장 필요 |
+| P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, `src/lib/native-calendar.ts`, Android `NativeCalendarPlugin` | Android 내보내기·자동 반영·가져오기 완료. iOS EventKit 확장 필요 |
 | P1 | 생체인증 설정 노출 | `src/app/mypage/*`, `src/components/NativeBiometricGate.tsx` | Web에서는 앱 전용으로 오해되지 않게 숨김/안내 기준 필요 |
-| P1 | 광고 플랫폼 타겟 | `src/components/AdSlot.tsx`, `src/lib/admob.ts`, `/admin/ads` | 웹/Android/iOS 타겟 값과 실제 노출 로직 검증 필요 |
-| P1 | 관리자/백오피스 경계 | `src/app/admin/ads/page.tsx`, `backoffice/*` | 사용자 앱 내부 관리자 페이지와 별도 백오피스 역할 재정리 필요 |
+| P1 | 광고 플랫폼 타겟 | `src/components/AdSlot.tsx`, Android AdFit/AdMob 코드, `backoffice/*` | 웹/Android 타겟과 AdFit 실패 fallback 실기기 검증 필요 |
+| 완료 | 관리자/백오피스 경계 | `backoffice/*`, `next.config.ts` | 공식 콘솔은 `admins.gleaum.com` 단일화, 메인 `/admin`은 리다이렉트 |
 | P2 | 지도 API 안내 | 일정 상세 화면 | 지도 미연동 상태 문구를 PC/Mobile 동일하게 정리 필요 |
 | P2 | 이미지 첨부 | 일정 생성/수정 화면 | UI만 있는 경우 모든 플랫폼에서 같은 `준비 중` 또는 비활성 처리 필요 |
 

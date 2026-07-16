@@ -17,6 +17,7 @@ import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.ui.screens.schedules.ComposeScheduleDetailScreen
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 import com.gleaum.app.ui.theme.GleaumTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -87,7 +88,8 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     private fun renderComposeDetail() {
         setContent {
             GleaumTheme {
-                ComposeScheduleDetailScreen(
+                GleaumAdaptiveContent {
+                    ComposeScheduleDetailScreen(
                     schedule = schedule,
                     loading = loading,
                     errorMessage = errorMessage,
@@ -96,7 +98,8 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
                     onToggleComplete = { status -> patchStatus(status) },
                     onDelete = { deleteSchedule() },
                     onRetry = { loadSchedule() },
-                )
+                    )
+                }
             }
         }
     }
@@ -226,7 +229,8 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     private fun patchStatus(status: String) {
         Thread {
             try {
-                NativeScheduleApi.update(this, scheduleId, org.json.JSONObject().put("status", status))
+                val updated = NativeScheduleApi.update(this, scheduleId, org.json.JSONObject().put("status", status))
+                runCatching { NativeCalendarAutoSync.upsert(this, updated) }
                 runOnUiThread { loadSchedule() }
             } catch (e: Exception) {
                 runOnUiThread { errorMessage = friendlyError(e.message); render() }
@@ -246,7 +250,9 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     private fun deleteSchedule() {
         Thread {
             try {
+                val deleting = schedule
                 NativeScheduleApi.delete(this, scheduleId)
+                runCatching { NativeCalendarAutoSync.delete(this, deleting) }
                 runOnUiThread { finish() }
             } catch (e: Exception) {
                 runOnUiThread { errorMessage = friendlyError(e.message); render() }

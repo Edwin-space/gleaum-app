@@ -13,6 +13,9 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -23,6 +26,10 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.kakao.adfit.ads.popup.AdFitPopupAd
+import com.kakao.adfit.ads.popup.AdFitPopupAdDialogFragment
+import com.kakao.adfit.ads.popup.AdFitPopupAdLoader
+import com.kakao.adfit.ads.popup.AdFitPopupAdRequest
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.home.ComposeHomeScreen
@@ -52,6 +59,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     private var previewDisabled = false
     private var calendarExpanded = true
     private var calendarMode = CalendarMode.WEEK
+    private var popupAdLoader: AdFitPopupAdLoader? = null
+    private var popupAdRequested = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +83,11 @@ class NativeHomePortActivity : AppCompatActivity() {
 
     private fun applyLightSystemBars() {
         NativeTheme.applySystemBars(window, this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
     }
 
     private fun loadHomeSummary() {
@@ -105,6 +119,7 @@ class NativeHomePortActivity : AppCompatActivity() {
                     loading = false
                     errorMessage = null
                     render()
+                    maybeShowLaunchBottomAd()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -217,6 +232,61 @@ class NativeHomePortActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun maybeShowLaunchBottomAd() {
+        if (popupAdRequested || isFinishing || isDestroyed) return
+        popupAdRequested = true
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (isFinishing || isDestroyed) return@postDelayed
+
+            val loader = AdFitPopupAdLoader.create(this, HOME_BOTTOM_ADFIT_CLIENT_ID)
+            popupAdLoader = loader
+
+            if (loader.isBlockedByRequestPolicy) {
+                Log.d(TAG, "AdFit launch popup blocked by request policy")
+                return@postDelayed
+            }
+
+            val request = AdFitPopupAdRequest.Builder(AdFitPopupAd.Type.Transition)
+                .setTestModeEnabled(BuildConfig.DEBUG)
+                .build()
+
+            val requested = loader.loadAd(
+                request,
+                object : AdFitPopupAdLoader.OnAdLoadListener {
+                    override fun onAdLoaded(ad: AdFitPopupAd) {
+                        if (isFinishing || isDestroyed) return
+                        Log.d(TAG, "AdFit launch popup loaded")
+                        runOnUiThread {
+                            runCatching {
+                                AdFitPopupAdDialogFragment.Builder(ad)
+                                    .setNavigationBarColor(NativeTheme.background(this@NativeHomePortActivity), !NativeTheme.isDark(this@NativeHomePortActivity))
+                                    .build()
+                                    .show(supportFragmentManager, AdFitPopupAdDialogFragment.TAG)
+                            }.onFailure {
+                                Log.w(TAG, "AdFit launch popup show failed", it)
+                            }
+                        }
+                    }
+
+                    override fun onAdLoadError(errorCode: Int) {
+                        Log.w(TAG, "AdFit launch popup failed: $errorCode")
+                    }
+                },
+            )
+
+            if (!requested) {
+                Log.w(TAG, "AdFit launch popup request rejected")
+            }
+        }, 500L)
+    }
+
+    override fun onDestroy() {
+        popupAdLoader?.destroy()
+        popupAdLoader = null
+        super.onDestroy()
     }
 
     private fun handleComposeDestination(destination: GleaumDestination) {
@@ -1327,6 +1397,8 @@ class NativeHomePortActivity : AppCompatActivity() {
 
     companion object {
         private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
+        private const val HOME_BOTTOM_ADFIT_CLIENT_ID = "DAN-Brd0FQAE3ByDWwJu"
+        private const val TAG = "GleaumHomeAdFit"
         private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
         private const val HOME_LAYOUT_KEY = "gleaum:home-layout"
     }

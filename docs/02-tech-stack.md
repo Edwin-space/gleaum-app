@@ -26,6 +26,26 @@
 }
 ```
 
+## Android 네이티브 스택
+
+| 항목 | 현재 기준 | 용도 |
+|---|---|---|
+| Android Gradle Plugin | 9.2.1 | Android 빌드 |
+| Kotlin | 2.2.10 | 네이티브 코드·Compose |
+| Java | 21 | Gradle/JVM 타깃 |
+| Jetpack Compose | BOM 2026.06.00 | 네이티브 UI |
+| Material 3 | Compose Material 3 | 화면·컴포넌트·테마 |
+| Adaptive Navigation Suite | Material 3 | 폰 NavigationBar / 태블릿 NavigationRail 자동 전환 |
+| Capacitor | 프로젝트 잠금파일 기준 | 웹·네이티브 브리지와 fallback |
+| Firebase | BoM 33.14.0 | Analytics, Crashlytics, FCM, Remote Config, App Check |
+| Kakao AdFit | 3.22.2 | Android 앱 실행 후 SDK 팝업 광고 |
+| Google Mobile Ads | 24.4.0 | AdMob 네이티브 광고 기반 |
+
+- 현재 앱 버전: `versionCode 26`, `versionName 1.1.5`.
+- Compose 활성 feature gate는 `android/app/src/main/java/com/gleaum/app/NativePortFlags.kt`를 기준으로 확인한다.
+- 공통 UI는 `GleaumTheme`, `GleaumScaffold`, `GleaumAdaptiveContent`, `GleaumFeedbackBanner`, `GleaumStateCard`, `GleaumStatusBadge`를 사용한다.
+- Android 릴리즈 서명키 기본 위치는 저장소 밖의 `~/gleaum-release.keystore`이다. 외장 저장장치로 소스만 복사하면 키는 따라가지 않는다.
+
 ---
 
 ## Supabase 설정
@@ -33,7 +53,7 @@
 | 항목 | 값 |
 |------|-----|
 | **프로젝트 ID** | `tyvjdsescukaeorcuaga` |
-| **리전** | ap-northeast-1 (서울 근처) |
+| **리전** | ap-southeast-2 |
 | **URL** | `https://tyvjdsescukaeorcuaga.supabase.co` |
 | **환경변수** | Vercel에 자동 주입됨 (Supabase 연동) |
 
@@ -45,7 +65,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://tyvjdsescukaeorcuaga.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 # 수동으로 추가한 변수
-NEXT_PUBLIC_APP_URL=https://gleaum-app.vercel.app
+NEXT_PUBLIC_APP_URL=https://www.gleaum.com
 ```
 
 ---
@@ -73,13 +93,14 @@ https://tyvjdsescukaeorcuaga.supabase.co/auth/v1/callback
 | 항목 | 내용 |
 |------|------|
 | **OS** | macOS |
-| **프로젝트 경로** | `/Volumes/WD_BLACK/Ai Works/gleaum/` |
+| **기본 프로젝트 경로** | `/Volumes/Portable SSD/AI/gleaum/` (2026-07-16 이동 완료) |
+| **이전 원본 백업** | `/Volumes/WD_BLACK/Ai Works/gleaum/` — 새 위치 검증 완료 전 삭제 금지 |
 | **Node.js** | 18+ |
 | **패키지 매니저** | npm |
 
 ### 개발 서버 실행
 ```bash
-cd "/Volumes/WD_BLACK/Ai Works/gleaum"
+cd "/Volumes/Portable SSD/AI/gleaum"
 npm run dev       # http://localhost:3000
 npm run build     # 프로덕션 빌드 (배포 전 필수 확인)
 ```

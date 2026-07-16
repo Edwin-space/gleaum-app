@@ -20,7 +20,6 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
   hideSplash,
-  setStatusBarDark,
   onAndroidBackButton,
   closeBrowser,
   isNativeApp,
@@ -165,10 +164,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       await hideSplash();
     }, 3000);
 
-    // ── 2. 상태바 설정 ───────────────────────────────────────────────
-    setStatusBarDark();
-
-    // ── 3. 딥링크 처리 ───────────────────────────────────────────────
+    // ── 2. 딥링크 처리 ───────────────────────────────────────────────
     let removeUrlListener: (() => void) | undefined;
     let lastProcessedUrl: string | null = null;
 
