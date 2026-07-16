@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
+import { canEditSpace, resolveScheduleTargetSpace } from '@/lib/data-boundaries';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Schedule,
@@ -3173,7 +3174,7 @@ async function assertNativeScheduleWritable(
     .eq('user_id', userId)
     .maybeSingle();
   const role = (member as { role?: SpaceRole } | null)?.role;
-  if (role !== 'admin' && role !== 'editor') throw new Error('space_editor_required');
+  if (!canEditSpace(role)) throw new Error('space_editor_required');
 }
 
 export async function createNativeSchedule(
@@ -3202,12 +3203,14 @@ export async function createNativeSchedule(
   const preferences = (profile.preferences ?? {}) as Partial<OnboardingPreferences>;
   const personalSpaceId = preferences.personalSpaceId ?? null;
   const activeSpaceId = profile.family_group_id ?? null;
-  const sharedSpaceId = activeSpaceId && activeSpaceId !== personalSpaceId ? activeSpaceId : null;
   const visibility = input.visibility ?? inferVisibility(type);
-  const isPrivateTarget = type === 'personal' || visibility === 'private';
-  const targetSpaceId = isPrivateTarget
-    ? (personalSpaceId ?? (sharedSpaceId ? null : activeSpaceId))
-    : (input.spaceId ?? sharedSpaceId);
+  const targetSpaceId = resolveScheduleTargetSpace({
+    type,
+    visibility,
+    requestedSpaceId: input.spaceId,
+    personalSpaceId,
+    activeSpaceId,
+  });
 
   if (!targetSpaceId) throw new Error('space_required');
 
@@ -3219,7 +3222,7 @@ export async function createNativeSchedule(
       .eq('user_id', userId)
       .maybeSingle();
     const role = (member as { role?: SpaceRole } | null)?.role;
-    if (role !== 'admin' && role !== 'editor') throw new Error('space_editor_required');
+    if (!canEditSpace(role)) throw new Error('space_editor_required');
   }
 
   const repeat = input.repeat ?? 'none';
