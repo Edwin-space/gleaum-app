@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { getAdminPageSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,6 +79,7 @@ function ctr(sent: number, clicks: number) {
 
 /* ── 페이지 ───────────────────────────────────────────────── */
 export default async function CampaignHistoryPage() {
+  const supabase = await getAdminPageSupabase();
   // campaign_logs + 클릭 집계를 한 번에 조회
   const { data: logs, error } = await supabase
     .from("campaign_logs")

@@ -337,10 +337,8 @@ Supabase 대시보드 → Storage → New Bucket
 버킷 생성 후 Storage 정책을 SQL로 추가:
 
 ```sql
--- ad-images 버킷: 공개 읽기 + 관리자만 업로드
-CREATE POLICY "ad-images: 공개 읽기"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'ad-images');
+-- ad-images 버킷은 Public 설정만으로 알려진 object URL을 읽을 수 있습니다.
+-- storage.objects SELECT 정책을 추가하면 버킷 전체 목록도 노출되므로 만들지 않습니다.
 
 CREATE POLICY "ad-images: 관리자 업로드"
   ON storage.objects FOR INSERT

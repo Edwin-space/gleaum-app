@@ -38,7 +38,9 @@ UI 작업 전 반드시 아래 두 파일을 읽으세요:
 
 ## 최신 상태 확인
 - 작업 시작 시 `git log --oneline -5`와 `git status -sb`로 실제 최신 커밋/미커밋 변경을 먼저 확인하세요. 아래 커밋 해시는 작성 시점 스냅샷이며 곧 낡은 정보가 되니 항상 직접 확인하세요.
-- 2026-06-08 기준 최신 커밋: `cbc41c4` — fix(schedule): guard shared creation permissions
+- 이어서 **`docs/24-project-work-tracker.md`를 반드시 확인**하세요. 이 문서가 현재 우선순위·진행·차단·완료일·검증 근거의 단일 기준입니다.
+- 작업을 시작하면 해당 ID를 `🟠 진행 중`과 시작일로 갱신하고, 종료 시 완료일·검증 근거 또는 차단 사유와 다음 행동을 기록하세요. 완료 항목을 삭제하거나 근거 없이 체크하지 마세요.
+- 2026-07-16 확인 기준 최신 커밋: `8fc41c6` — feat(admin): consolidate backoffice operations. 이후 변경은 미커밋 작업 트리에 포함됨
 
 ## 2026-06-01 주요 변경 사항 (메인 앱)
 
@@ -92,6 +94,6 @@ UI 작업 전 반드시 아래 두 파일을 읽으세요:
 - `supabase/migrations/014_ad_platforms.sql` — platforms 컬럼 (**Supabase에서 실행 완료**)
 
 ## 상세 문서 위치
-- `docs/` (레포 내부) — 특히 `docs/10-ai-handoff-guide.md`를 먼저 읽으세요.
+- `docs/` (레포 내부) — `docs/24-project-work-tracker.md`에서 현재 작업을 확인한 뒤 `docs/10-ai-handoff-guide.md`와 연결된 상세 문서를 읽으세요.
 - ⚠️ `/Users/edwin/Sync-NAS/.../Gleaum/docs/`는 과거 백업 사본으로 레포 내부 `docs/`보다 오래되어 있을 수 있으니 참조하지 마세요. 항상 레포 내부 `docs/`를 기준으로 삼으세요.
 <!-- END:architecture-rules -->

@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { requireAdminApi } from '@/lib/admin-auth';
+import { getAdminSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
+  const supabase = getAdminSupabase();
   const { data, error } = await supabase
     .from('family_groups')
     .select('id, name, invite_code, created_at')

@@ -4,9 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { requireAdminApi } from '@/lib/admin-auth';
+import { getAdminSupabase } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
+  const supabase = getAdminSupabase();
   const { searchParams } = new URL(req.url);
   const segment = searchParams.get('segment') ?? 'all';
   const spaceId = searchParams.get('spaceId');

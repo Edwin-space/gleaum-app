@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import {
   ArrowLeft, Calendar, CreditCard, Users, KeyRound, Clock, MessageSquare,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { getAdminPageSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +48,7 @@ async function safeCount(query: PromiseLike<{ count: number | null }>) {
 }
 
 export default async function SpaceDetailPage({ params }: PageProps) {
+  const supabase = await getAdminPageSupabase();
   const { id } = await params;
 
   const { data: space, error } = await supabase

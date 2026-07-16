@@ -2,11 +2,12 @@ export const dynamic = "force-dynamic";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { getAdminPageSupabase } from "@/lib/supabase";
 import { fetchGA4Summary, GA4_PROPERTY_ID } from "@/lib/ga4";
 import { ExternalLink, Activity, Users, Eye, TrendingUp } from "lucide-react";
 
 async function getKpiData() {
+  const supabase = await getAdminPageSupabase();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

@@ -32,6 +32,7 @@
 NEXT_PUBLIC_SUPABASE_URL=https://tyvjdsescukaeorcuaga.supabase.co  # ✅ Vercel에 입력됨
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJh...  # ✅ Vercel에 입력됨
 SUPABASE_SERVICE_ROLE_KEY=eyJh...      # ✅ Vercel에 입력됨 (서버사이드 전용, 클라이언트 노출 금지)
+ADMIN_EMAILS=admin@example.com         # 필수, 쉼표 구분 서버 전용 관리자 허용 목록
 
 # ⏳ Phase 5 이후 필요 — Firebase Admin (CRM 푸시 발송)
 FIREBASE_SERVICE_ACCOUNT_BASE64=     # Firebase 서비스 계정 JSON을 base64 인코딩한 값
@@ -47,7 +48,7 @@ GA_PROPERTY_ID=
 ## 로컬 개발 서버 실행
 
 ```bash
-cd "/Volumes/WD_BLACK/Ai Works/gleaum/backoffice"
+cd "/Volumes/Portable SSD/AI/gleaum/backoffice"
 npm install        # 최초 1회 실행
 npm run dev        # http://localhost:3001 에서 확인
 ```
@@ -78,4 +79,5 @@ Vercel 자동 배포 시작 (대시보드에서 확인)
 
 - `backoffice/` 폴더 내에서만 작업. 루트의 `src/`, `package.json` 등 절대 수정 금지
 - `next.config.ts`의 `ignoreDuringBuilds: true` 설정은 ESLint 충돌 방지용. 임의로 제거하지 말 것
-- `supabase.ts`의 URL 유효성 검사 로직(`!envUrl.startsWith("http")`) 임의로 제거하지 말 것 — 환경변수 미입력 시 빌드 에러 방지 코드
+- `ADMIN_EMAILS` 또는 Service Role 환경변수가 없으면 관리자 기능은 의도적으로 실패합니다. 로컬과 Vercel 운영 환경 모두에 서버 전용 값으로 설정할 것
+- `SUPABASE_SERVICE_ROLE_KEY`를 `NEXT_PUBLIC_*` 변수로 복제하거나 클라이언트 코드에서 import하지 말 것

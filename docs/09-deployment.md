@@ -117,7 +117,9 @@ Vercel Hobby 플랜에서는 Vercel Cron 사용이 제한되므로, **모든 정
 | `gleaum-automations` | `*/5 * * * *` → 5분마다 | `/api/cron/automations` (자동화 상태전환) |
 | `cleanup-withdrawals-daily` | `0 18 * * *` → 매일 03:00 KST | `/api/cron/cleanup-withdrawals` (탈퇴 데이터 정리) |
 
-각 잡의 요청 헤더는 `Authorization: Bearer <CRON_SECRET>`이며, **Vercel 환경변수 `CRON_SECRET`과 반드시 일치**해야 함. 현재 값은 `gleaum-cron-2026` (Vercel·로컬 `.env.local`·크론 6종 모두 동일).
+각 잡의 요청 헤더는 `Authorization: Bearer <CRON_SECRET>`이며, **Vercel 환경변수 `CRON_SECRET`과 반드시 일치**해야 합니다. 실제 값은 Vercel sensitive 환경변수와 Supabase Vault의 `cron_secret`에서만 관리하고 문서나 Git에 기록하지 않습니다.
+
+> 보안 조치 완료(2026-07-16): 노출된 운영 키를 교체하고 메인 앱 Production을 재배포했다. Supabase 크론 6종은 Bearer 값을 명령문에 직접 저장하지 않고 `vault.decrypted_secrets`의 `cron_secret`을 참조한다.
 
 ```sql
 -- 전체 등록 상태 + 타깃 도메인 확인
@@ -129,6 +131,8 @@ FROM cron.job ORDER BY jobname;
 > ⚠️ **등록 SQL 작성 주의**: `DO $$ ... format($$ ... $$) ... $$` 처럼 같은 `$$` 도크쿼트 태그를 중첩하면 "syntax error at or near SELECT"가 발생한다. 반드시 `cron.schedule(name, schedule, '명령문 평문')` 형태로 작성하고, 명령문 내부 작은따옴표는 `''`로 이스케이프한다. (`supabase/migrations/012`, `016` 참조)
 >
 > ⚠️ **도메인 일관성**: 모든 크론은 `https://www.gleaum.com`을 가리킨다. 과거엔 `gleaum-app.vercel.app`(automations·reminders), apex `gleaum.com`(cleanup)이 혼재했으나 2026-06-15에 www로 통일함. 구 도메인 제거 시 재확인 불필요.
+>
+> 🔐 **키 회전 순서**: Cron 6종 일시정지 → Vercel `CRON_SECRET` 교체 → 기존 메인 Production 재배포 → Vault `cron_secret` 갱신·Cron 명령 재활성화 → Vault 참조/평문 제거/운영 200 검증. 한쪽만 먼저 바꾼 상태로 작업을 종료하지 않는다.
 
 ---
 
@@ -238,7 +242,9 @@ KEYSTORE_PASSWORD='비밀번호' KEY_PASSWORD='비밀번호' ./gradlew bundleRel
 android/app/build/outputs/bundle/release/app-release.aab
 ```
 
-### Google Play Console 현재 상태 (2026-05-14)
+### Google Play Console 상태
+
+> 아래 2026-05-14 표는 최초 내부 테스트 당시의 이력이다. 이후 프로덕션 승인·배포 이력이 있으며 현재 로컬 빌드 버전은 `versionCode 26`, `versionName 1.1.5`다. 실제 심사/배포 상태는 Play Console을 최종 기준으로 확인한다.
 
 | 항목 | 상태 |
 |------|------|
@@ -249,7 +255,7 @@ android/app/build/outputs/bundle/release/app-release.aab
 | 스토어 등록정보 | ❌ 미완료 |
 | 데이터 안전 섹션 | ❌ 미완료 |
 | 콘텐츠 등급 | ❌ 미완료 |
-| 정식 출시 | ❌ 미완료 |
+| 정식 출시 | ✅ 프로덕션 승인·배포 이력 있음 |
 
 ---
 

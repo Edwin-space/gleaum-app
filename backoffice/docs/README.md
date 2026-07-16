@@ -1,8 +1,10 @@
 # 📚 글리움 백오피스(Admin Backoffice) 문서 센터
 
-> **모든 AI 어시스턴트에게**: 백오피스와 관련된 모든 작업은 **이 `backoffice/docs/` 폴더의 문서를 기준**으로 합니다.
-> 루트의 `docs/` 폴더(사용자 앱 문서)를 참조하지 마세요. 두 시스템은 독립적으로 운영됩니다.
-> 작업 시작 전 반드시 **`01-overview.md` → `02-design-guide.md` → `03-current-status.md`** 순으로 읽으세요.
+> 프로젝트 전체 우선순위·진행 상태·완료일은 `../../docs/24-project-work-tracker.md`를 단일 기준으로 사용합니다. 이 폴더는 백오피스 상세 설계와 운영 기록을 보관합니다.
+
+> **모든 AI 어시스턴트에게**: 백오피스 상세 설계는 이 `backoffice/docs/` 폴더를 기준으로 합니다.
+> 단, 전체 프로젝트의 작업 순서와 상태는 루트의 `docs/24-project-work-tracker.md`를 먼저 확인합니다.
+> 백오피스 작업 시작 전 **통합 트래커 → `01-overview.md` → `02-design-guide.md` → `03-current-status.md`** 순으로 읽으세요.
 
 ---
 
