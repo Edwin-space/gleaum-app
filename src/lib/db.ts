@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { canEditSpace, resolveScheduleTargetSpace } from '@/lib/data-boundaries';
+import { capabilitiesForAccountMode } from '@/lib/account-capabilities';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Schedule,
@@ -1095,25 +1096,6 @@ export async function approveFamilyChildLink(
     childUserId: row.child_user_id as string,
     spaceId: row.space_id as string,
     accountMode: row.account_mode as AccountMode,
-  };
-}
-
-function capabilitiesForAccountMode(mode: AccountMode): AccountSessionContext['capabilities'] {
-  const isManaged = mode === 'child_managed'
-    || mode === 'pending_guardian_consent'
-    || mode === 'teen_consent_pending';
-  const isTeen = mode === 'teen';
-
-  return {
-    canManageSpaces: !isManaged && !isTeen,
-    canInviteMembers: !isManaged && !isTeen,
-    canViewHouseholdBudget: !isManaged && !isTeen,
-    canCompleteRoutine: true,
-    canUseCheckIn: mode === 'child_managed' || mode === 'teen',
-    // 위치 동의 모델과 OS 권한 UI가 연결될 때 별도 capability로 활성화한다.
-    canRequestLocationPermission: false,
-    // 연령 미확인·미성년 계정은 광고를 기본 차단한다.
-    canShowAds: mode === 'adult',
   };
 }
 

@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import { getAccountSessionContext } from '@/lib/db';
 
 // 10분간 최대 10회 시도
 const RATE_LIMIT_MAX = 10;
@@ -105,6 +106,11 @@ export async function POST(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  const sessionContext = await getAccountSessionContext(supabase);
+  if (!sessionContext?.capabilities.canInviteMembers) {
+    return NextResponse.json({ error: 'capability_canInviteMembers_required' }, { status: 403 });
   }
 
   // ── 5. 이미 멤버 확인 ────────────────────────────────────

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { removeNativeSpaceMember, updateNativeSpaceMemberRole } from '@/lib/db';
-import { createNativeRouteAuth } from '@/lib/supabase/native-route';
+import { authorizeAccountCapability } from '@/lib/supabase/capability-auth';
 import type { SpaceRole } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -14,8 +14,9 @@ function errorStatus(message: string) {
 }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canManageSpaces');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
 
   let input: { role?: SpaceRole };
   try {
@@ -35,8 +36,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canManageSpaces');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
   const { id, userId } = await context.params;
 
   try {

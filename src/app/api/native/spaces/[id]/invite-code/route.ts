@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { regenerateNativeSpaceInviteCode } from '@/lib/db';
-import { createNativeRouteAuth } from '@/lib/supabase/native-route';
+import { authorizeAccountCapability } from '@/lib/supabase/capability-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +13,9 @@ function errorStatus(message: string) {
 }
 
 export async function POST(req: NextRequest, context: RouteContext) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canInviteMembers');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
   const { id } = await context.params;
 
   try {

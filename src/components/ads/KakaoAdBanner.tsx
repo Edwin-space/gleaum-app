@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useAccountCapability } from '@/components/AccountSessionProvider';
 
 interface KakaoAdBannerProps {
   adUnit: string;
@@ -26,6 +27,7 @@ interface KakaoAdBannerProps {
 export function KakaoAdBanner({ adUnit, width, height, className, style }: KakaoAdBannerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const canShowAds = useAccountCapability('canShowAds');
   const safeStyle = style ? { ...style } : undefined;
 
   if (safeStyle) {
@@ -44,6 +46,7 @@ export function KakaoAdBanner({ adUnit, width, height, className, style }: Kakao
   }
 
   useEffect(() => {
+    if (!canShowAds) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -61,7 +64,9 @@ export function KakaoAdBanner({ adUnit, width, height, className, style }: Kakao
     return () => {
       try { script.remove(); } catch { /* 이미 제거됨 */ }
     };
-  }, [adUnit, width, height]);
+  }, [adUnit, width, height, canShowAds]);
+
+  if (!canShowAds) return null;
 
   return (
     <div

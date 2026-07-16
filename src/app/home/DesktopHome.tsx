@@ -10,6 +10,7 @@ import { useTimeGreeting } from '@/hooks/useTimeGreeting';
 import type { Schedule, HomeLayoutPreference, OnboardingPreferences } from '@/types';
 import type { ProfileRow } from '@/lib/db';
 import type { User } from '@/types';
+import { useAccountCapability } from '@/components/AccountSessionProvider';
 
 interface DesktopHomeProps {
   user: User | null;
@@ -21,6 +22,7 @@ interface DesktopHomeProps {
 
 export default function DesktopHome({ user, profile, schedules, personalExpenses, loading }: DesktopHomeProps) {
   const router = useRouter();
+  const canViewBudget = useAccountCapability('canViewHouseholdBudget');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 
@@ -247,7 +249,7 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
             </div>
           )}
 
-          {!loading && homeLayout === 'expense_first' && budgetSummaryCard}
+          {!loading && canViewBudget && homeLayout === 'expense_first' && budgetSummaryCard}
 
           {/* 자녀 일정 요약 */}
           {!loading && totalChild > 0 && (
@@ -330,7 +332,7 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
             </div>
           )}
 
-          {!loading && homeLayout !== 'expense_first' && budgetSummaryCard}
+          {!loading && canViewBudget && homeLayout !== 'expense_first' && budgetSummaryCard}
         </div>
       </div>
     </div>

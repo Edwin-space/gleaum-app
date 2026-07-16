@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { AccountCapabilityGate } from '@/components/AccountCapabilityGate';
 import {
   getSpaceSettings, updateSpaceSettings, updateSpaceName,
   getSpaceWithMembers, removeSpaceMember, deleteSpace, regenerateInviteCode,
@@ -148,6 +149,18 @@ function CloseSpaceModal({
 
 // ── 메인 페이지 ──────────────────────────────────────────────
 export default function SpaceSettingsPage() {
+  return (
+    <AccountCapabilityGate
+      capability="canManageSpaces"
+      title="공간 설정 권한이 없습니다"
+      description="보호자 관리 또는 미성년 계정에서는 공간 설정과 멤버 권한을 변경할 수 없습니다."
+    >
+      <SpaceSettingsContent />
+    </AccountCapabilityGate>
+  );
+}
+
+function SpaceSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isDesktop = useIsDesktop();

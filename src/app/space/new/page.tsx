@@ -8,6 +8,7 @@ import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { toast } from 'sonner';
 import { trackEvent } from '@/lib/analytics';
 import type { SpacePurpose } from '@/types';
+import { AccountCapabilityGate } from '@/components/AccountCapabilityGate';
 
 // ── 공간 목적 옵션 ─────────────────────────────────────────
 const PURPOSES: Array<{ key: SpacePurpose; label: string; desc: string; emoji: string; color: string; bg: string }> = [
@@ -38,6 +39,18 @@ type KakaoShareWindow = Window & {
 };
 
 export default function SpaceNewPage() {
+  return (
+    <AccountCapabilityGate
+      capability="canManageSpaces"
+      title="새 공간을 만들 수 없습니다"
+      description="보호자 관리 또는 미성년 계정에서는 기존 가족 공간만 이용할 수 있습니다."
+    >
+      <SpaceNewContent />
+    </AccountCapabilityGate>
+  );
+}
+
+function SpaceNewContent() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const { refresh } = useCurrentUser();

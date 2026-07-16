@@ -18,6 +18,7 @@ const AD_HEIGHT = 60;
 import { isNativeApp } from '@/lib/native';
 import { AdSlot } from '@/components/AdSlot';
 import type { NativeAdData } from '@/lib/native-ad';
+import { useAccountCapability } from '@/components/AccountSessionProvider';
 
 // ── 네이티브 광고 카드 (피드 카드 형태) ────────────────────────────────────
 function NativeAdCard({ ad }: { ad: NativeAdData }) {
@@ -123,6 +124,8 @@ function WebInlineAd() {
 }
 
 export function InlineFeedAd() {
+  const canShowAds = useAccountCapability('canShowAds');
+  if (!canShowAds) return null;
   if (isNativeApp()) return <NativeInlineAd />;
   return <WebInlineAd />;
 }

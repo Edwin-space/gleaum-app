@@ -21,6 +21,7 @@ import { usePushSubscription } from '@/hooks/usePushSubscription';
 import { sendSpaceNotification } from '@/lib/spaceNotify';
 import { SpaceSectionTabs, SpaceSwitcher, type SpaceSection } from './SpaceSwitcher';
 import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
+import { useAccountSession } from '@/components/AccountSessionProvider';
 
 const FREE_MAX_SPACES  = 2;
 const FREE_MAX_MEMBERS = 10;
@@ -43,6 +44,7 @@ export function DesktopSpace() {
   const searchParams = useSearchParams();
   const sidParam = searchParams.get('sid');
   const { spaceId, user, profile, refresh: refreshUser } = useCurrentUser();
+  const { capabilities } = useAccountSession();
 
   const [mySpaces,      setMySpaces]     = useState<Space[]>([]);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(sidParam ?? spaceId);
@@ -50,7 +52,7 @@ export function DesktopSpace() {
   const displaySpaceId = activeSpaceId ?? spaceId;
   const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
   const { schedules, refresh: refreshSchedules } = useSchedules(displaySpaceId);
-  const isAdmin = myRole === 'admin';
+  const isAdmin = myRole === 'admin' && capabilities.canManageSpaces;
 
   // 푸시 알림 구독 (자동 등록)
   usePushSubscription();
@@ -353,7 +355,7 @@ export function DesktopSpace() {
                 공간 설정
               </button>
             )}
-            {!isPersonalSpace && !memberAtLimit && (
+            {capabilities.canInviteMembers && !isPersonalSpace && !memberAtLimit && (
               <button
                 type="button"
                 onClick={() => setShowInviteModal(true)}
@@ -558,7 +560,7 @@ export function DesktopSpace() {
                 )}
 
                 {/* 멤버 초대 (admin/editor) */}
-                {(isAdmin || myRole === 'editor') && !memberAtLimit && (
+                {capabilities.canInviteMembers && (isAdmin || myRole === 'editor') && !memberAtLimit && (
                   <button
                     onClick={() => setShowInviteModal(true)}
                     style={{
@@ -605,7 +607,7 @@ export function DesktopSpace() {
           )}
 
           {/* ── 공간 지출 요약 (공유 공간만) ── */}
-          {!isPersonalSpace && (
+          {capabilities.canViewHouseholdBudget && !isPersonalSpace && (
             <div style={{
               background: 'var(--theme-surface)', borderRadius: '24px', padding: '24px',
               boxShadow: '0 2px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.04)',
@@ -790,7 +792,7 @@ export function DesktopSpace() {
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                   <h4 style={{ fontSize: '13px', fontWeight: 900, color: 'var(--theme-text-subtle)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>멤버 {memberCount}명</h4>
-                  {isAdmin && !memberAtLimit && (
+                  {capabilities.canInviteMembers && isAdmin && !memberAtLimit && (
                     <button
                       onClick={() => { setShowMgmtModal(false); setShowInviteModal(true); }}
                       style={{ fontSize: '12px', fontWeight: 800, color: '#0084CC', background: 'rgba(0,132,204,0.08)', border: '1px solid rgba(0,132,204,0.15)', padding: '5px 14px', borderRadius: '999px', cursor: 'pointer' }}

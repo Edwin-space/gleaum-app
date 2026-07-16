@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Outfit } from 'next/font/google';
-import Script from 'next/script';
 import PwaRegistry from '@/components/PwaRegistry';
 import './globals.css';
 
@@ -26,6 +25,8 @@ import { NativeBiometricGate } from '@/components/NativeBiometricGate';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AppFooter } from '@/components/layout/AppFooter';
 import { FirebaseServicesProvider } from '@/components/FirebaseServicesProvider';
+import { AccountSessionProvider } from '@/components/AccountSessionProvider';
+import { AccountAdSenseScript } from '@/components/AccountAdSenseScript';
 
 const themeInitScript = `
 (function(){
@@ -215,60 +216,55 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`h-full ${outfit.variable}`}>
         <ThemeProvider>
-          {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
-          <div className="mesh-bg">
-            <div className="mesh-blob mesh-blob-1" />
-            <div className="mesh-blob mesh-blob-2" />
-            <div className="mesh-blob mesh-blob-3" />
-          </div>
-          <NativeAppProvider>
-            <FirebaseServicesProvider>
-              <div id="app-shell">
-                <DesktopSidebar />
-                <div className="pc-content-area w-full">
-                  <PWARegister />
-                  <LazyPWABanner />
-                  <FCMProvider>
-                    {children}
-                  </FCMProvider>
+          <AccountSessionProvider>
+            {/* 전역 프리미엄 메쉬 그라디언트 배경 */}
+            <div className="mesh-bg">
+              <div className="mesh-blob mesh-blob-1" />
+              <div className="mesh-blob mesh-blob-2" />
+              <div className="mesh-blob mesh-blob-3" />
+            </div>
+            <NativeAppProvider>
+              <FirebaseServicesProvider>
+                <div id="app-shell">
+                  <DesktopSidebar />
+                  <div className="pc-content-area w-full">
+                    <PWARegister />
+                    <LazyPWABanner />
+                    <FCMProvider>
+                      {children}
+                    </FCMProvider>
+                  </div>
                 </div>
-              </div>
-            </FirebaseServicesProvider>
-          </NativeAppProvider>
-          <NativeBiometricGate />
-          {/* 최상위 루트 네비게이션 (z-index: 9999) */}
-          <BottomNav />
-          <Toaster
-            position="bottom-center"
-            toastOptions={{
-              style: {
-                borderRadius: '16px',
-                fontFamily: 'var(--font-body)',
-                fontSize: '14px',
-                fontWeight: '600',
-                background: 'var(--theme-surface)',
-                color: 'var(--theme-text)',
-                boxShadow: 'var(--theme-shadow-modal)',
-                border: '1px solid var(--theme-border)',
-              },
-            }}
-            offset={96}
-            richColors
-          />
-          <AppFooter />
-          <PwaRegistry />
-          <Analytics />
-          <SpeedInsights />
-          <GoogleAnalytics />
-          {/* ── Google AdSense (자체 광고 없을 때 폴백) ── */}
-          {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-            <Script
-              async
-              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-              crossOrigin="anonymous"
-              strategy="afterInteractive"
+              </FirebaseServicesProvider>
+            </NativeAppProvider>
+            <NativeBiometricGate />
+            {/* 최상위 루트 네비게이션 (z-index: 9999) */}
+            <BottomNav />
+            <Toaster
+              position="bottom-center"
+              toastOptions={{
+                style: {
+                  borderRadius: '16px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  background: 'var(--theme-surface)',
+                  color: 'var(--theme-text)',
+                  boxShadow: 'var(--theme-shadow-modal)',
+                  border: '1px solid var(--theme-border)',
+                },
+              }}
+              offset={96}
+              richColors
             />
-          )}
+            <AppFooter />
+            <PwaRegistry />
+            <Analytics />
+            <SpeedInsights />
+            <GoogleAnalytics />
+            {/* ── Google AdSense (자체 광고 없을 때 폴백) ── */}
+            <AccountAdSenseScript clientId={process.env.NEXT_PUBLIC_ADSENSE_CLIENT} />
+          </AccountSessionProvider>
         </ThemeProvider>
       </body>
     </html>

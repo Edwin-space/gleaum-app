@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { isNativeApp } from '@/lib/native';
 import type { ActiveAd } from '@/types/ads';
+import { useAccountCapability } from '@/components/AccountSessionProvider';
 
 interface AdSlotProps {
   slotId:         string;
@@ -70,9 +71,11 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
   const [ad, setAd]    = useState<ActiveAd | null | 'loading'>('loading');
   const trackedRef     = useRef(false);
   const native         = isNativeApp();
+  const canShowAds     = useAccountCapability('canShowAds');
 
   // ── 1. 하우스 광고 조회 (웹/앱 공통) ─────────────────────────
   useEffect(() => {
+    if (!canShowAds) return;
     const platform = native ? 'android' : 'web'; // 앱이면 android로 필터링
     fetch(`/api/ads?slot=${encodeURIComponent(slotId)}&platform=${platform}`)
       .then(async (res) => {
@@ -86,27 +89,31 @@ export function AdSlot({ slotId, width = 320, height = 60, adsenseSlotId, classN
         }
       })
       .catch(() => setAd(null));
-  }, [slotId, native]);
+  }, [slotId, native, canShowAds]);
 
   // ── 2. AdSense 폴백 초기화 — 웹 전용 ─────────────────────────
   useEffect(() => {
+    if (!canShowAds) return;
     if (native) return;                          // 앱에서는 AdSense 사용 안 함
     if (ad !== null || !adsenseSlotId || !ADSENSE_CLIENT) return;
     try {
       const w = window as unknown as { adsbygoogle?: unknown[] };
       if (Array.isArray(w.adsbygoogle)) w.adsbygoogle.push({});
     } catch { /* silent */ }
-  }, [ad, adsenseSlotId, native]);
+  }, [ad, adsenseSlotId, native, canShowAds]);
 
   // ── 3. 하우스 광고 노출 이벤트 ───────────────────────────────
   useEffect(() => {
+    if (!canShowAds) return;
     if (!ad || ad === 'loading' || trackedRef.current) return;
     trackedRef.current = true;
     navigator.sendBeacon('/api/ads/events', JSON.stringify({
       adId: ad.id, event: 'impression',
       platform: native ? 'android' : 'web',
     }));
-  }, [ad, native]);
+  }, [ad, native, canShowAds]);
+
+  if (!canShowAds) return null;
 
   // ── 로딩 중 ──────────────────────────────────────────────────
   if (ad === 'loading') {

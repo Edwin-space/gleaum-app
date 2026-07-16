@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:data-boundaries": "node --import tsx --test tests/data-boundaries.test.ts",
+    "test:account-capabilities": "node --import tsx --test tests/account-capabilities.test.ts",
     "postinstall": "patch-package",
     "cap:sync": "npx cap sync",
     "cap:sync:ios": "npx cap sync ios",

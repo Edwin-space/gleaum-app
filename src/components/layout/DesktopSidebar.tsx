@@ -4,8 +4,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { useAccountSession } from '@/components/AccountSessionProvider';
+import type { AccountCapability } from '@/lib/account-capabilities';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{
+  label: string;
+  href: string;
+  capability?: AccountCapability;
+  icon: (active: boolean) => React.ReactNode;
+}> = [
   {
     label: '홈', href: '/home',
     icon: (active: boolean) => (
@@ -25,7 +32,7 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: '가계부', href: '/budget',
+    label: '가계부', href: '/budget', capability: 'canViewHouseholdBudget',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2" strokeLinecap="round">
         <rect x="2" y="5" width="20" height="14" rx="2"/>
@@ -67,6 +74,7 @@ const NAV_ITEMS = [
 export function DesktopSidebar() {
   const pathname = usePathname();
   const isDesktop = useIsDesktop();
+  const { capabilities } = useAccountSession();
 
   if (!isDesktop) return null;
 
@@ -103,7 +111,7 @@ export function DesktopSidebar() {
 
       {/* ── 네비게이션 ── */}
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {NAV_ITEMS.map(item => {
+        {NAV_ITEMS.filter(item => !item.capability || capabilities[item.capability]).map(item => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link

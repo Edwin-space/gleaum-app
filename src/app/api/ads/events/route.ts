@@ -5,6 +5,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAccountSessionContext } from '@/lib/db';
 
 const AD_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALLOWED_EVENTS = new Set(['impression', 'click']);
@@ -44,6 +45,12 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const sessionContext = await getAccountSessionContext(supabase);
+    if (!sessionContext?.capabilities.canShowAds) {
+      return new NextResponse(null, { status: 204 });
+    }
+  }
 
   const admin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -6,6 +6,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import type { ActiveAd } from '@/types/ads';
+import { getAccountSessionContext } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   const slotId   = req.nextUrl.searchParams.get('slot');
@@ -15,6 +16,16 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const sessionContext = await getAccountSessionContext(supabase);
+    if (!sessionContext?.capabilities.canShowAds) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
+    }
+  }
   const { data, error } = await supabase
     .rpc('get_active_ad', { p_slot_id: slotId, p_platform: platform });
 
@@ -32,6 +43,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(ad, {
     headers: {
       'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      ...(user ? { 'Cache-Control': 'private, no-store' } : {}),
     },
   });
 }

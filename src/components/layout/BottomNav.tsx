@@ -4,8 +4,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { trackEvent } from '@/lib/analytics';
+import { useAccountSession } from '@/components/AccountSessionProvider';
+import type { AccountCapability } from '@/lib/account-capabilities';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{
+  href: string;
+  label: string;
+  capability?: AccountCapability;
+  icon: (active: boolean) => React.ReactNode;
+}> = [
   {
     href: '/home',
     label: '홈',
@@ -49,6 +56,7 @@ const NAV_ITEMS = [
   {
     href: '/budget',
     label: '가계부',
+    capability: 'canViewHouseholdBudget',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke={active ? 'var(--color-primary)' : 'var(--theme-text-subtle)'} strokeWidth="2.2"
@@ -76,6 +84,7 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const pathname = usePathname();
   const isDesktop = useIsDesktop();
+  const { capabilities } = useAccountSession();
 
   const hideOnPaths = ['/', '/login', '/onboarding', '/auth/callback', '/invite', '/legal'];
   const shouldHide = hideOnPaths.some(
@@ -109,7 +118,7 @@ export function BottomNav() {
             height: '48px',  /* 56 → 48px 슬림화 */
           }}
         >
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter(item => !item.capability || capabilities[item.capability]).map((item) => {
             const active =
               pathname === item.href ||
               (item.href !== '/home' && pathname.startsWith(item.href + '/'));

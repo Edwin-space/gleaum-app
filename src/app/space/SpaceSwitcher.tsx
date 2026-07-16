@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Space } from '@/types';
+import { useAccountSession } from '@/components/AccountSessionProvider';
 
 interface SpaceSwitcherProps {
   spaces: Space[];
@@ -83,6 +84,8 @@ export function SpaceSwitcher({
   const containerRef = useRef<HTMLDivElement>(null);
   const currentSpace = spaces.find(space => space.id === currentSpaceId);
   const currentIsPersonal = currentSpaceId === personalSpaceId;
+  const { capabilities } = useAccountSession();
+  const showSpaceActions = capabilities.canInviteMembers || capabilities.canManageSpaces;
 
   useEffect(() => {
     if (!open || mobile) return;
@@ -170,15 +173,23 @@ export function SpaceSwitcher({
         })}
       </div>
 
-      <div style={{ height: '1px', background: 'var(--theme-border)', margin: '10px 4px' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-        <button type="button" onClick={() => { setOpen(false); onJoin(); }} style={{ minHeight: '44px', borderRadius: '14px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}>
-          코드로 참여
-        </button>
-        <button type="button" disabled={createDisabled} onClick={() => { if (!createDisabled) { setOpen(false); onCreate(); } }} style={{ minHeight: '44px', borderRadius: '14px', border: '1px solid rgba(0,132,204,0.20)', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '13px', fontWeight: 800, cursor: createDisabled ? 'not-allowed' : 'pointer', opacity: createDisabled ? 0.48 : 1 }}>
-          새 공간 만들기
-        </button>
-      </div>
+      {showSpaceActions && (
+        <>
+          <div style={{ height: '1px', background: 'var(--theme-border)', margin: '10px 4px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: capabilities.canInviteMembers && capabilities.canManageSpaces ? '1fr 1fr' : '1fr', gap: '8px' }}>
+            {capabilities.canInviteMembers && (
+              <button type="button" onClick={() => { setOpen(false); onJoin(); }} style={{ minHeight: '44px', borderRadius: '14px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}>
+                코드로 참여
+              </button>
+            )}
+            {capabilities.canManageSpaces && (
+              <button type="button" disabled={createDisabled} onClick={() => { if (!createDisabled) { setOpen(false); onCreate(); } }} style={{ minHeight: '44px', borderRadius: '14px', border: '1px solid rgba(0,132,204,0.20)', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '13px', fontWeight: 800, cursor: createDisabled ? 'not-allowed' : 'pointer', opacity: createDisabled ? 0.48 : 1 }}>
+                새 공간 만들기
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 

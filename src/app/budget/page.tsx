@@ -11,6 +11,7 @@ import type { LedgerEntry, LedgerKind, LedgerStatus, LedgerCategory, RecurFreq }
 import { MobileBudget } from './MobileBudget';
 import { DesktopBudget } from './DesktopBudget';
 import { useSaveAdSheet } from '@/components/SaveAdSheet';
+import { AccountCapabilityGate } from '@/components/AccountCapabilityGate';
 
 /** 수입/지출 추가 입력값 (원장 공용) */
 export interface LedgerFormInput {
@@ -36,6 +37,18 @@ export interface LedgerEditInput {
 let materializedKey: string | null = null;
 
 export default function BudgetPage() {
+  return (
+    <AccountCapabilityGate
+      capability="canViewHouseholdBudget"
+      title="가계부 이용이 제한되어 있습니다"
+      description="보호자 관리 또는 미성년 계정에서는 가계부 정보를 조회하거나 변경할 수 없습니다."
+    >
+      <BudgetContent />
+    </AccountCapabilityGate>
+  );
+}
+
+function BudgetContent() {
   const isDesktop = useIsDesktop();
   const today = new Date();
 

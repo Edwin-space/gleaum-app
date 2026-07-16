@@ -1,16 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAccountSessionContext } from '@/lib/db';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
-export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: NextRequest) {
+  const auth = await createNativeRouteAuth(req);
+  if (!auth) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   try {
-    const context = await getAccountSessionContext(supabase);
+    const context = await getAccountSessionContext(auth.supabase);
     return NextResponse.json(context, {
-      headers: { 'Cache-Control': 'private, no-store' },
+      headers: {
+        'Cache-Control': 'private, no-store',
+        'X-Gleaum-Auth-Mode': auth.mode,
+      },
     });
   } catch (error) {
     console.error('[session/context]', error);

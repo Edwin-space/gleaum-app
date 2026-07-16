@@ -14,6 +14,7 @@ import { useTimeGreeting } from '@/hooks/useTimeGreeting';
 import type { Schedule } from '@/types';
 import type { ProfileRow } from '@/lib/db';
 import type { HomeLayoutPreference, OnboardingPreferences, User } from '@/types';
+import { useAccountCapability } from '@/components/AccountSessionProvider';
 
 interface MobileHomeProps {
   user: User | null;
@@ -25,6 +26,7 @@ interface MobileHomeProps {
 
 export default function MobileHome({ user, profile, schedules, personalExpenses, loading }: MobileHomeProps) {
   const router = useRouter();
+  const canViewBudget = useAccountCapability('canViewHouseholdBudget');
   const { resolvedTheme } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -530,7 +532,7 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
         <InlineFeedAd />
 
         {/* ── 가계부 ── */}
-        {budgetSummaryCard}
+        {canViewBudget && budgetSummaryCard}
 
         {/* ── 다가오는 일정 ── */}
         {!loading && upcoming.length > 0 && (
