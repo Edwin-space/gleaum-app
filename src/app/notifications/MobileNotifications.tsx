@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { formatRelativeTime } from '@/lib/utils';
@@ -38,6 +39,7 @@ function groupNotifications(notifs: Notification[]) {
 }
 
 export function MobileNotifications() {
+  const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,11 @@ export function MobileNotifications() {
   const handleMarkRead = async (id: string) => {
     await markNotificationRead(id);
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.read) await handleMarkRead(notification.id);
+    if (notification.scheduleId) router.push(`/schedules/${notification.scheduleId}`);
   };
 
   const handleMarkAllRead = async () => {
@@ -162,7 +169,7 @@ export function MobileNotifications() {
       ) : (
         <div style={{ padding: '20px 16px 0' }}>
           {notifications.length > 0 ? (
-            Object.entries(grouped).map(([title, items], groupIdx) => {
+            Object.entries(grouped).map(([title, items]) => {
               if (items.length === 0) return null;
               return (
                 <div key={title} style={{ marginBottom: '32px' }}>
@@ -186,10 +193,13 @@ export function MobileNotifications() {
                     {items.map((n) => {
                       const cfg = typeConfig[n.type] ?? typeConfig.system;
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={n.id}
-                          onClick={() => !n.read && handleMarkRead(n.id)}
+                          onClick={() => void handleNotificationClick(n)}
+                          disabled={n.read && !n.scheduleId}
                           style={{
+                            width: '100%', textAlign: 'left', font: 'inherit',
                             position: 'relative',
                             background: 'var(--theme-surface)',
                             borderRadius: '20px',
@@ -197,7 +207,7 @@ export function MobileNotifications() {
                             border: '1px solid rgba(0,0,0,0.04)',
                             padding: '16px',
                             opacity: n.read ? 0.52 : 1,
-                            cursor: n.read ? 'default' : 'pointer',
+                            cursor: n.scheduleId || !n.read ? 'pointer' : 'default',
                             overflow: 'hidden',
                             borderLeft: n.read ? '1px solid rgba(0,0,0,0.04)' : `3px solid ${cfg.color}`,
                           }}
@@ -232,7 +242,7 @@ export function MobileNotifications() {
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>

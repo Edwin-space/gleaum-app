@@ -9,6 +9,18 @@ import type { User } from '@/types';
 let cachedProfile: ProfileRow | null = null;
 let isFirstLoad = true;
 
+async function getCookieSessionProfile(): Promise<ProfileRow | null> {
+  const response = await fetch('/api/session/profile', {
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`session_profile_${response.status}`);
+
+  const payload = await response.json() as { profile?: ProfileRow | null };
+  return payload.profile ?? null;
+}
+
 export interface CurrentUserState {
   user: User | null;
   profile: ProfileRow | null;
@@ -57,14 +69,11 @@ export function useCurrentUser(): CurrentUserState {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session) {
-        cachedProfile = null;
-        setProfile(null);
-        return;
-      }
-
-      // 실제 데이터 싱크 (서버 통신)
-      const p = await ensureUserSetup();
+      // SSR OAuth 직후에는 서버 Cookie 세션이 유효해도 브라우저 SDK의
+      // 세션 또는 Data API 프로필 복원이 늦을 수 있다. 둘 중 하나라도
+      // 비어 있으면 Cookie 세션 API로 폴백한다.
+      const browserProfile = session ? await ensureUserSetup() : null;
+      const p = browserProfile ?? await getCookieSessionProfile();
       cachedProfile = p;
       setProfile(p);
     } catch (e) {
@@ -77,7 +86,7 @@ export function useCurrentUser(): CurrentUserState {
 
   useEffect(() => {
     // 초기 로드
-    void load();
+    const initialLoad = window.setTimeout(() => void load(), 0);
 
     // 세션 변경 시(로그인/로그아웃) 캐시 무효화 및 재로드
     const supabase = createClient();
@@ -92,7 +101,10 @@ export function useCurrentUser(): CurrentUserState {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.clearTimeout(initialLoad);
+      subscription.unsubscribe();
+    };
   }, [load]);
 
   const user: User | null = useMemo(() => (

@@ -20,7 +20,9 @@ import androidx.compose.material.icons.outlined.AddHome
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FamilyRestroom
 import androidx.compose.material.icons.outlined.GroupAdd
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Home
@@ -68,7 +70,7 @@ import com.gleaum.app.ui.components.GleaumLabelBadge
 import com.gleaum.app.ui.components.GleaumStateCard
 import com.gleaum.app.ui.components.StateKind
 
-enum class SpaceManageAction { JOIN, CREATE, RENAME, REGENERATE_INVITE, ADVANCED }
+enum class SpaceManageAction { JOIN, CREATE, RENAME, REGENERATE_INVITE, CONVERT_TO_FAMILY, DELETE, ADVANCED }
 
 private enum class SpaceSection(val label: String) {
     FEED("소식"),
@@ -258,7 +260,11 @@ private fun CurrentSpaceCard(active: NativeSpaceItem?, onSwitch: () -> Unit, onS
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(active?.name ?: "공간 선택", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        if (active?.isPersonal == true) "나만의 공간" else "함께하는 공간",
+                        when {
+                            active?.isPersonal == true -> "나만의 공간"
+                            active?.spaceKind == "family" -> "가족 공간"
+                            else -> "함께하는 공간"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -396,7 +402,12 @@ private fun SpacePickerRow(space: NativeSpaceItem, onClick: () -> Unit) {
     OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         ListItem(
             headlineContent = { Text(space.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            supportingContent = { Text(if (space.isPersonal) "개인 공간" else "${space.memberCount}명 · ${roleLabel(space.role)}") },
+            supportingContent = {
+                Text(
+                    if (space.isPersonal) "개인 공간"
+                    else "${if (space.spaceKind == "family") "가족 공간 · " else ""}${space.memberCount}명 · ${roleLabel(space.role)}",
+                )
+            },
             leadingContent = { SpaceIcon(space.isPersonal) },
             trailingContent = { if (space.isActive) Icon(Icons.Outlined.Check, contentDescription = "현재 공간", tint = MaterialTheme.colorScheme.primary) },
         )
@@ -422,6 +433,7 @@ private fun MemberItemCard(member: NativeSpaceMember, canManage: Boolean, onClic
 @Composable
 private fun ManageCard(active: NativeSpaceItem?, canManageSpaces: Boolean, canInviteMembers: Boolean, onManageAction: (SpaceManageAction) -> Unit) {
     val canManage = active?.role == "admin"
+    val isShared = active?.isPersonal == false
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         if (canInviteMembers) {
         ManageRow(Icons.Outlined.GroupAdd, "공간 참여하기", "초대 코드로 다른 공간에 입장합니다") { onManageAction(SpaceManageAction.JOIN) }
@@ -438,18 +450,44 @@ private fun ManageCard(active: NativeSpaceItem?, canManageSpaces: Boolean, canIn
         if (canManageSpaces) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
         if (canManageSpaces) {
+        if (canManage && isShared && active?.spaceKind != "family") {
+            ManageRow(Icons.Outlined.FamilyRestroom, "가족 공간으로 전환", "현재 멤버·일정·소식을 유지하고 가족 기능을 활성화합니다") { onManageAction(SpaceManageAction.CONVERT_TO_FAMILY) }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
         ManageRow(Icons.Outlined.Settings, "고급 설정", "공간 관리 상태를 확인합니다") { onManageAction(SpaceManageAction.ADVANCED) }
+        if (canManage && isShared) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ManageRow(
+                Icons.Outlined.DeleteOutline,
+                "공간 삭제",
+                if ((active?.memberCount ?: 0) > 1) "다른 멤버를 모두 내보낸 뒤 삭제할 수 있어요" else "일정·소식·공간 데이터가 영구 삭제됩니다",
+                enabled = (active?.memberCount ?: 0) <= 1,
+                danger = true,
+            ) { onManageAction(SpaceManageAction.DELETE) }
+        }
         }
     }
 }
 
 @Composable
-private fun ManageRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+private fun ManageRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    enabled: Boolean = true,
+    danger: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val contentColor = when {
+        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.48f)
+        danger -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.primary
+    }
     ListItem(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        headlineContent = { Text(title, fontWeight = FontWeight.SemiBold) },
-        supportingContent = { Text(subtitle) },
-        leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        modifier = Modifier.fillMaxWidth().then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
+        headlineContent = { Text(title, fontWeight = FontWeight.SemiBold, color = contentColor) },
+        supportingContent = { Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.48f)) },
+        leadingContent = { Icon(icon, contentDescription = null, tint = contentColor) },
     )
 }
 

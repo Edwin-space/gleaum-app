@@ -17,6 +17,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.ui.screens.schedules.ComposeScheduleFormScreen
@@ -112,6 +113,11 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
             try {
                 val loaded = NativeScheduleApi.detail(this, scheduleId ?: return@Thread)
                 runOnUiThread {
+                    if (!loaded.permissions.canEdit) {
+                        Toast.makeText(this, "이 일정을 수정할 권한이 없어요.", Toast.LENGTH_SHORT).show()
+                        finish()
+                        return@runOnUiThread
+                    }
                     editingSchedule = loaded
                     type = loaded.type
                     draftTitle = loaded.title
@@ -360,6 +366,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
     }
 
     private fun saveSchedule(rawTitle: String, rawMemo: String) {
+        if (scheduleId != null && editingSchedule?.permissions?.canEdit != true) return
         val title = rawTitle.trim()
         val memo = rawMemo.trim()
         if (title.isBlank()) {

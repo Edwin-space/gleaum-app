@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useSchedules } from '@/hooks/useSchedules';
+import { useFamilyDependents } from '@/hooks/useFamilyDependents';
 import { formatTime, formatDateShort } from '@/lib/utils';
 import type { Schedule, ScheduleStatus } from '@/types';
 
@@ -45,9 +46,18 @@ export function DesktopChildren() {
   const { spaceId } = useCurrentUser();
   const { members, loading: spaceLoading } = useSpace(spaceId);
   const { schedules, loading: schedulesLoading, updateStatus } = useSchedules(spaceId);
+  const { dependents, loading: dependentsLoading } = useFamilyDependents(spaceId);
 
-  const loading = spaceLoading || schedulesLoading;
-  const children = members.filter(u => u.role === 'editor');
+  const loading = spaceLoading || schedulesLoading || dependentsLoading;
+  const children = dependents.flatMap((dependent) => {
+    if (!dependent.linkedUserId) return [];
+    const member = members.find((item) => item.userId === dependent.linkedUserId);
+    return [{
+      id: dependent.linkedUserId,
+      name: member?.user?.name ?? dependent.displayName,
+      avatar: member?.user?.avatar ?? '🧒',
+    }];
+  });
   const today = new Date();
 
   const childSchedules = schedules.filter(s => {
@@ -202,8 +212,8 @@ export function DesktopChildren() {
                     fontSize: '14px', transition: 'all 0.15s', textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontSize: '18px' }}>{child.user?.avatar}</span>
-                  <span style={{ flex: 1 }}>{child.user?.name}</span>
+                  <span style={{ fontSize: '18px' }}>{child.avatar}</span>
+                  <span style={{ flex: 1 }}>{child.name}</span>
                   <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{cnt}</span>
                 </button>
               );
@@ -219,7 +229,7 @@ export function DesktopChildren() {
         <div style={{ overflowY: 'auto', padding: '28px 36px', background: '#F7F7FA' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--theme-text)', margin: 0 }}>
-              {activeChild === 'all' ? '전체 자녀 일정' : `${selectedChild?.user?.name}의 일정`}
+              {activeChild === 'all' ? '전체 자녀 일정' : `${selectedChild?.name}의 일정`}
             </h2>
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>{childSchedules.length}개</span>
           </div>
@@ -261,7 +271,7 @@ export function DesktopChildren() {
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
                           {participantChildren.map(c => (
                             <span key={c.id} style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, background: 'rgba(46,232,149,0.1)', color: '#059669' }}>
-                              {c.user?.avatar} {c.user?.name}
+                              {c.avatar} {c.name}
                             </span>
                           ))}
                         </div>
@@ -324,7 +334,7 @@ export function DesktopChildren() {
                           disabled={reNotifyingId === schedule.id}
                           onClick={async () => {
                             setReNotifyingId(schedule.id);
-                            const ok = await sendReNotify(schedule, participantChildren.map(c => c.user?.name).join(', '));
+                            const ok = await sendReNotify(schedule, participantChildren.map(c => c.name).join(', '));
                             setReNotifyingId(null);
                             alert(ok ? '✅ 재알림 발송 완료' : '❌ 발송 실패');
                           }}

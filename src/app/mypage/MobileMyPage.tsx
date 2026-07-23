@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { GleaumBI } from '@/components/ui/GleaumLogo';
-import { getAppVersionInfo, isNativeApp, getNativePlatform } from '@/lib/native';
+import { getAppVersionInfo, isNativeApp } from '@/lib/native';
 import { ThemeModeSelector } from '@/components/ui/ThemeModeSelector';
+import { useAccountSession } from '@/components/AccountSessionProvider';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { NotificationSettings } from '@/types';
 
 // ── 최신 앱 버전 (새 버전 출시 시 이 값만 업데이트) ──
@@ -30,8 +31,8 @@ function isOutdated(installed: string, latest: string): boolean {
 }
 
 interface MobileMyPageProps {
-  user: any;
-  insights: any;
+  user: { name?: string; email?: string; avatar?: string } | null;
+  insights: { memberCount?: number; totalExpense?: number; upcomingCount?: number; spaceCount?: number } | null;
   notifSettings: NotificationSettings;
   handleToggle: (key: keyof NotificationSettings) => void;
   signOut: () => void;
@@ -162,7 +163,7 @@ export function MobileMyPage({
   setShowPasswordModal,
   setShowDeleteModal,
 }: MobileMyPageProps) {
-  const router = useRouter();
+  const { capabilities } = useAccountSession();
 
   // ── 앱 버전 감지 ──────────────────────────────────────────
   const [installedVersion, setInstalledVersion] = useState<string | null>(null);
@@ -215,22 +216,21 @@ export function MobileMyPage({
             onClick={() => setShowAvatarEditor ? setShowAvatarEditor(true) : setShowEditModal(true)}
             style={{
               width: '64px', height: '64px', borderRadius: '22px',
-              background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '30px', flexShrink: 0,
-              border: '2px solid rgba(0,132,204,0.20)',
-              position: 'relative', overflow: 'hidden',
+              flexShrink: 0, position: 'relative',
             }}
           >
-            {(user?.avatar?.startsWith('http') || user?.avatar?.startsWith('data:')) ? (
-              <img
-                src={user.avatar}
-                alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '20px' }}
-              />
-            ) : (
-              <span>{user?.avatar ?? '👤'}</span>
-            )}
+            <UserAvatar
+              avatar={user?.avatar}
+              name={user?.name}
+              size={64}
+              radius={22}
+              fontSize={30}
+              style={{
+                background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)',
+                border: '2px solid rgba(0,132,204,0.20)',
+              }}
+            />
             {/* Camera badge */}
             <div style={{
               position: 'absolute', bottom: -1, right: -1,
@@ -277,18 +277,20 @@ export function MobileMyPage({
 
         {/* 통계 바 */}
         <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+          display: 'grid', gridTemplateColumns: capabilities.canViewHouseholdBudget ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
           borderTop: '1px solid #F2F2F7',
         }}>
           {[
             { label: '공간 멤버', value: insights?.memberCount ?? 0, unit: '명' },
-            { label: '이번달 지출', value: `${((insights?.totalExpense ?? 0) / 10000).toFixed(0)}만`, unit: '원' },
+            ...(capabilities.canViewHouseholdBudget
+              ? [{ label: '이번달 지출', value: `${((insights?.totalExpense ?? 0) / 10000).toFixed(0)}만`, unit: '원' }]
+              : []),
             { label: '예정 일정', value: insights?.upcomingCount ?? 0, unit: '개' },
           ].map((s, i) => (
             <div key={s.label} style={{
               padding: '14px 0',
               textAlign: 'center',
-              borderLeft: i > 0 ? '1px solid #F2F2F7' : 'none',
+              borderLeft: i > 0 ? '1px solid var(--theme-border)' : 'none',
             }}>
               <p style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>
                 {s.value}
@@ -307,7 +309,7 @@ export function MobileMyPage({
           overflow: 'hidden',
           boxShadow: 'var(--theme-shadow-card)',
           border: '1px solid var(--theme-border)',
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+          display: 'grid', gridTemplateColumns: capabilities.canViewHouseholdBudget ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
         }}>
           {[
             {
@@ -353,7 +355,7 @@ export function MobileMyPage({
                 </svg>
               ),
             },
-          ].map((item) => (
+          ].filter((item) => item.href !== '/budget' || capabilities.canViewHouseholdBudget).map((item) => (
             <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
               <div style={{
                 display: 'flex', flexDirection: 'column',
@@ -400,7 +402,7 @@ export function MobileMyPage({
             {/* 공간 */}
             <div style={{ marginBottom: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>내 공간</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>공유 공간</span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: (insights?.spaceCount ?? 0) >= 2 ? '#EF4444' : 'var(--theme-text)' }}>
                   {insights?.spaceCount ?? 0}/2
                 </span>
@@ -420,13 +422,6 @@ export function MobileMyPage({
               <div style={{ height: '6px', borderRadius: '999px', background: 'var(--theme-surface-muted)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.min(((insights?.memberCount ?? 0) / 10) * 100, 100)}%`, borderRadius: '999px', background: (insights?.memberCount ?? 0) >= 10 ? 'linear-gradient(90deg,#EF4444,#F97316)' : 'linear-gradient(90deg,#0CC9B5,#0084CC)', transition: 'width 0.4s' }} />
               </div>
-            </div>
-            {/* 업그레이드 힌트 */}
-            <div style={{ padding: '10px 14px', borderRadius: '12px', background: 'linear-gradient(135deg,rgba(0,132,204,0.06),rgba(12,201,181,0.06))', border: '1px solid rgba(0,132,204,0.10)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '18px' }}>🎁</span>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.5 }}>
-                광고 시청 또는 인앱결제 포인트로 공간·멤버 슬롯 확장 가능 <span style={{ color: '#0084CC', fontWeight: 800 }}>준비 중</span>
-              </p>
             </div>
           </div>
 
@@ -568,22 +563,26 @@ export function MobileMyPage({
                 </IconBox>
               }
             />
-            <MenuDivider />
-            <MenuItem
-              href="/settings/calendar"
-              label="캘린더 설정"
-              sub="주 시작일, 시간대 등"
-              icon={
-                <IconBox bg="rgba(12,201,181,0.09)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0CC9B5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2"/>
-                    <line x1="16" x2="16" y1="2" y2="6"/>
-                    <line x1="8" x2="8" y1="2" y2="6"/>
-                    <line x1="3" x2="21" y1="10" y2="10"/>
-                  </svg>
-                </IconBox>
-              }
-            />
+            {appPlatform !== 'web' && (
+              <>
+                <MenuDivider />
+                <MenuItem
+                  href="/settings/calendar"
+                  label="기기 캘린더"
+                  sub="스마트폰 캘린더 동기화"
+                  icon={
+                    <IconBox bg="rgba(12,201,181,0.09)">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0CC9B5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2"/>
+                        <line x1="16" x2="16" y1="2" y2="6"/>
+                        <line x1="8" x2="8" y1="2" y2="6"/>
+                        <line x1="3" x2="21" y1="10" y2="10"/>
+                      </svg>
+                    </IconBox>
+                  }
+                />
+              </>
+            )}
           </MenuCard>
         </div>
 
@@ -603,63 +602,30 @@ export function MobileMyPage({
                 </IconBox>
               }
             />
-            <MenuDivider />
-            <MenuItem
-              href="/settings/security"
-              label="보안 설정"
-              sub="생체인증 잠금과 보호 구간 관리"
-              icon={
-                <IconBox bg="rgba(0,132,204,0.09)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    <path d="M9 12l2 2 4-4"/>
-                  </svg>
-                </IconBox>
-              }
-            />
-            <MenuDivider />
-            <MenuItem
-              label="Apple 로그인"
-              sub="준비 중"
-              icon={
-                <IconBox bg="rgba(0,0,0,0.06)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20.94c1.5 0 2.75-.6 3.95-1.56 1.2-.96 1.55-2.34 1.55-3.88 0-2.06-1.25-3.56-3.1-3.56-.55 0-1.1.15-1.4.3-.3-.15-.85-.3-1.4-.3C9.75 12 8.5 13.5 8.5 15.5c0 1.54.35 2.92 1.55 3.88C11.25 20.34 12.5 20.94 12 20.94z"/>
-                    <path d="M12 8.5a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0 5z"/>
-                  </svg>
-                </IconBox>
-              }
-              right={<span style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600 }}>준비 중</span>}
-            />
-          </MenuCard>
-        </div>
-
-        {/* 4. 서비스 */}
-        <div>
-          <SectionTitle title="서비스" />
-          <MenuCard>
-            <MenuItem
-              href="/settings/calendar"
-              label="기기 캘린더 연동"
-              sub="스마트폰 캘린더와 동기화"
-              icon={
-                <IconBox bg="rgba(12,201,181,0.09)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0CC9B5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </IconBox>
-              }
-              right={<span style={{ fontSize: '12px', fontWeight: 700, color: '#0CC9B5', background: 'rgba(12,201,181,0.10)', padding: '3px 8px', borderRadius: '6px' }}>준비 중</span>}
-            />
+            {appPlatform !== 'web' && (
+              <>
+                <MenuDivider />
+                <MenuItem
+                  href="/settings/security"
+                  label="생체인증 보안"
+                  sub="앱 잠금과 보호 구간 관리"
+                  icon={
+                    <IconBox bg="rgba(0,132,204,0.09)">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0084CC" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                      </svg>
+                    </IconBox>
+                  }
+                />
+              </>
+            )}
           </MenuCard>
         </div>
 
         {/* 5. 앱 정보 */}
         <div>
-          <SectionTitle title="앱 정보" />
+          <SectionTitle title={appPlatform === 'web' ? '서비스' : '앱 정보'} />
           <MenuCard>
             {/* 업데이트 필요 배너 */}
             {needsUpdate && storeUrl && (
@@ -688,7 +654,7 @@ export function MobileMyPage({
                 </div>
               </a>
             )}
-            <MenuItem
+            {appPlatform !== 'web' && <MenuItem
               label="앱 버전"
               icon={
                 <IconBox bg="rgba(142,142,147,0.10)">
@@ -715,8 +681,8 @@ export function MobileMyPage({
                   </span>
                 )
               }
-            />
-            <MenuDivider />
+            />}
+            {appPlatform !== 'web' && <MenuDivider />}
             <MenuItem
               href="/legal/terms"
               label="이용약관"

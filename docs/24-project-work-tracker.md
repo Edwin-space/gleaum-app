@@ -3,7 +3,7 @@
 > **단일 기준 문서(SSOT)**: 현재 무엇을 해야 하는지, 무엇이 진행 중인지, 무엇이 언제 어떤 근거로 완료됐는지는 이 문서를 기준으로 판단한다.
 >
 > 최초 작성: 2026-07-16
-> 최종 업데이트: 2026-07-16
+> 최종 업데이트: 2026-07-23
 > 현재 기능 기준점: `bf69e1e`, `5ad7ba0` (`main`, Android 적응형 실기기 QA·Play 권한/개인정보 정합성 체크포인트)
 
 ## 1. 운영 규칙
@@ -30,26 +30,31 @@
 
 ## 2. 현재 실행 큐
 
-위에서부터 순서대로 처리한다. P0 운영 보안이 끝나기 전에는 기능 개발을 먼저 배포하지 않는다.
+위에서부터 순서대로 처리한다. 현재 큐는 **즉시 코드 구현 → production build → Web/API 운영 반영이 가능한 범위**를 우선한다. iOS와 Google Play 제출·Console·최종 AAB 작업은 이 큐에서 제외하고 Android/Web 기능 안정화 뒤 재개한다.
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `OPS-001` | 백오피스 운영 관리자 환경변수 확인 | `✅ 완료` | 2026-07-16 필수 변수 범위 확인 및 공개 legacy 변수 제거 |
-| 2 | `OPS-002` | 노출된 운영 CRON 키 원자적 회전 | `✅ 완료` | 2026-07-16 Vercel 교체·메인 앱 재배포·Vault 전환·운영 200 검증 |
-| 3 | `DB-001` | 가족·자녀 Data API 최소 권한 운영 적용 | `✅ 완료` | 2026-07-16 migration·grants·RLS 검증 |
-| 4 | `SEC-005` | Supabase 함수 권한·실행 환경 하드닝 | `✅ 완료` | 2026-07-16 migration 적용·Advisor 제거 확인 |
-| 5 | `SEC-006` | 공개 광고 이미지 버킷 목록 노출 차단 | `✅ 완료` | 2026-07-16 broad SELECT 제거·public URL 200 확인 |
-| 6 | `SEC-007` | 광고 이벤트 무제한 Data API INSERT 차단 | `✅ 완료` | 2026-07-16 API 선배포·DB 직접 INSERT 차단·Advisor 확인 |
-| 7 | `AUTH-001` | Supabase 유출 비밀번호 차단 활성화 | `🔴 차단` | Pro 이상 확인 및 Dashboard Auth 설정 권한 필요 |
-| 8 | `OPS-003` | 백오피스 보안 변경 배포·스모크 테스트 | `🔴 차단` | 배포·미인증 검증 완료, 관리자/비관리자 로그인 세션 필요 |
-| 9 | `REPO-001` | 현재 대규모 미커밋 작업 안전한 체크포인트 | `✅ 완료` | 2026-07-16 Android 제외 범위 7개 체크포인트 커밋 완료 |
-| 10 | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `🔴 차단` | 1차 8개 완료. Docker daemon 실행·Supabase CLI/config 준비 후 로컬 RLS 통합 테스트 |
-| 11 | `FAM-001` | 가족·자녀 공통 capability 적용 | `✅ 완료` | 2026-07-16 Cookie/Bearer 공통 계약, Web/UI·API·RLS 우회 차단·운영 검증 |
-| 12 | `FAM-002` | 자녀 전용 홈·메뉴 제한 | `✅ 완료` | 2026-07-16 Web·Android 홈·메뉴·딥링크·광고 진입점을 공통 capability로 동기화 |
-| 13 | `AND-001` | Android 실기기 핵심·시각 QA | `🔴 차단` | debug 설치·스플래시→로그인·시각·무크래시 통과. 인증 계정 세션 확보 후 핵심 화면 회귀 |
-| 14 | `AND-002` | Android Release AAB 출시 검증 | `🔴 차단` | R8·manifest·서명 전 package 통과. 저장소 밖 release 서명 비밀번호 환경 주입 후 최종 AAB 생성 |
-| 15 | `AND-006` | Play Console 출시 자료·정책 점검 | `🔴 차단` | 로컬 정책 정합성·운영 URL 확인 완료. Console의 Data safety/IARC/App access/서명 인증서·스토어 자료 확인 필요 |
-| 16 | `IOS-005` | iOS 가족·자녀 capability 동등화 | `⏸ 보류` | Android 기능·실기기·릴리즈·Console 검증이 모두 정상 완료된 뒤 Android 기준으로 재구현 |
+| 1 | `FAM-008` | 기존 공간 승격·안전 삭제 운영 마감 | `🔴 차단` | Vercel Preview/Production 배포 승인과 로그인 실기기 재검증 |
+| 2 | `OPS-004` | 메인 Web/API 최신 변경 운영 회귀 | `🟠 진행 중` | `FAM-008` API를 포함한 Preview 검증 후 Production 승격·공간/가계부 쓰기 회귀 |
+| 3 | `PAR-001` | Android·PC Web·Mobile Web 3플랫폼 핵심 기능 파리티 | `🟠 진행 중` | 공통 계약 확정 → Android 기준 구현 → PC Web → Mobile Web → 통합 회귀 순서로 마감 |
+| 4 | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `🟠 진행 중` | Android와 공통인 설정은 유지하고 네이티브 전용·미구현·허위 플랜 진입점은 플랫폼별 정리 |
+| 5 | `WEB-006` | 마이페이지 Desktop/Mobile 기능 일치 | `🟠 진행 중` | Android 전체 메뉴 기준으로 빠른 동작·알림·계정·약관 기능을 PC/Mobile Web에서 일치 |
+| 6 | `WEB-010` | 알림 설정을 실제 서버 발송에 강제 | `🟠 진행 중` | 코드·단위 테스트·production build 완료. 운영 배포 후 설정별 실제 수신/비수신 검증 |
+| 7 | `WEB-003` | 일정 이미지·파일 첨부 완성 | `⬜ 대기` | 현재 로컬 미리보기 UI를 Storage 업로드·일정 연결·삭제·RLS·실패 UX까지 완성 |
+| 8 | `WEB-002` | 이메일 가입 운영화 | `⬜ 대기` | Confirm email·Redirect·커스텀 SMTP·만료/재발송 실제 계정 검증 |
+| 9 | `FAM-003` | 일정 assignee/observer 모델·RLS | `⬜ 대기` | Web/API 우선 구현 후 Android production build에 동일 계약 반영 |
+| 10 | `FAM-004` | 만 14세 재동의·만 19세 전환 | `⬜ 대기` | Web UI·알림·Cron·동의 이력 보존 구현 |
+| 11 | `WEB-005` | 일정 단건 외부 공유 | `⬜ 대기` | 만료·취소 가능한 읽기 전용 공유 링크와 개인정보 경계 구현 |
+| 12 | `WEB-009` | 일정 장소·지도 기능 완성 | `🟠 진행 중` | 외부 지도 열기는 연결 완료. 주소 검색·좌표 저장·내장 지도 도입 여부 결정 후 마감 |
+| 13 | `WEB-001` | 실제 RLS 통합 회귀 테스트 | `🔴 차단` | Docker Desktop·로컬 Supabase 준비 후 역할별 CRUD 자동화 |
+| 14 | `SEC-004` | 백오피스 전체 source lint 정상화 | `⬜ 대기` | 기존 React effect/타입 lint 부채 제거 |
+
+### 명시적 후순위
+
+- Google Play 출시 절차: `AND-002`, `AND-006`은 기능 안정화와 production build 검증이 끝난 뒤 재개한다.
+- iOS: `IOS-001`~`IOS-006`은 Android/Web 기능과 정책이 확정된 뒤 Android 동작을 기준으로 재구현한다.
+- Remote Config: `WEB-007`, `AND-009`는 3플랫폼 핵심 기능 파리티와 운영 회귀가 끝난 뒤 재개한다.
+- 장기 후보·외부 본인확인·위치·CRM 채널은 각 항목의 기존 재개 조건을 유지한다.
 
 ## 3. P0 보안·운영
 
@@ -78,7 +83,8 @@
 | [x] | `DOC-001` | 프로젝트 통합 작업 트래커 도입 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 전체 도메인 작업에 ID·상태·날짜·완료 기준을 부여하고 `AGENTS.md` 시작/종료 규칙에 연결 |
 | [x] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 비Android 7개 체크포인트 후 Android·캘린더/테마·문서를 `da2384e`로 보존. Android debug/test/lint/release package, 웹 lint/build, 실기기 로그인 검증 근거 포함 |
 | [ ] | `REPO-002` | 비밀·환경·릴리즈 키 백업 상태 확인 | `⬜ 대기` | — | — | `.env.local`, Android release keystore, 서명 비밀번호의 저장소 외 백업 확인 |
-| [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `⬜ 대기` | — | — | 루트 build 통과, Vercel 배포 성공, 로그인/홈/공간/가계부 핵심 흐름 확인 |
+| [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `🟠 진행 중` | 2026-07-16 | — | 최신 `084676b`를 Production `dpl_FrrVDVeUjCRWyPjbKvP6x8wqrEX3`로 승격. Android 인증 session context 200·홈 capability 복구·runtime error 0 확인. 공간·가계부 쓰기 포함 핵심 회귀 후 완료 전환 |
+| [x] | `ARCH-001` | CodePush형 빠른 업데이트 전달 구조 검토 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 현재 `server.url`로 Web/API는 이미 즉시 반영되며 Compose는 OTA 대상이 아님을 확인. `docs/26-live-update-delivery-strategy.md`에 Remote Config·Web fallback·Play 업데이트 3단계 전략과 정책 경계 기록 |
 
 상세 이동·복구 절차: `docs/23-external-work-checkpoint.md`
 
@@ -87,14 +93,30 @@
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
-| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🔴 차단` | 2026-07-16 | — | `SM_F731N`에 debug `1.1.5 (26)` 설치, 스플래시→로그인, UI 계층·1080×2640 캡처, 무크래시 통과. 인증 계정 세션이 없어 홈·CRUD·공간·알림·생체인증 실사용 회귀 차단 |
-| [ ] | `AND-002` | Release AAB 검증 | `🔴 차단` | 2026-07-16 | — | R8·lintVital·manifest·Crashlytics mapping upload·`packageReleaseBundle` 통과. intermediary AAB 약 96MB, mapping 약 84MB. release keystore password 환경변수 미설정으로 최종 서명만 차단 |
+| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🔴 차단` | 2026-07-16 | — | `SM_F731N`에 공간 수명주기·오류 UX 수정 debug APK 설치 완료. 로그인 세션 재확보와 `FAM-008` 운영 API 배포 후 공간 전환·삭제를 포함한 핵심 화면 회귀 재개 |
+| [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | 2026-07-16 | — | 사용자 결정으로 Google Play 출시 구간 후순위. 기능 production build와 핵심 회귀가 끝난 뒤 서명 비밀번호를 확보해 최종 AAB 검증 |
 | [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🔴 차단` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과, 단말 설정 복원. 실제 TalkBack 음성 탐색과 인증 이후 화면 수동 QA 필요 |
 | [x] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 브랜드 고정 다크 XML 예외 승인. 1080×2640·글꼴 1.3배에서 잘림/겹침 없음. 기능·정보 구조 대폭 변경 시 Compose 재평가 |
 | [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🔴 차단` | 2026-07-14 | — | Web/네이티브 경계·자동 동기화 정적 감사와 build 통과, 네이티브에서도 글리움 표식·캘린더 일치 강제. 인증 세션 확보 후 권한 거부·생성·수정·삭제·가져오기·중복 실기기 검증 |
-| [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `🔴 차단` | 2026-07-16 | — | targetSdk 36·권한·운영 privacy/assetlinks/app-ads·Data safety 초안 확인. `docs/25-google-play-release-readiness.md` 기준 Console의 최신 versionCode·IARC·App access·Play 서명 인증서·스토어 이미지·최종 산출물 확인 필요 |
+| [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `⏸ 보류` | 2026-07-16 | — | 사용자 결정으로 후순위. 기능 안정화 뒤 `docs/25-google-play-release-readiness.md` 기준 Console 최신 versionCode·IARC·App access·서명·스토어 자료 확인 |
 | [x] | `AND-007` | Android 백업·컴포넌트·R8·캘린더 변경 경계 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `allowBackup=false`, preview Activity 비공개, 광범위 ProGuard keep 제거, 캘린더 표식/대상 검증. debug/test/lint/release package 재통과 |
 | [x] | `AND-008` | Android 권한·개인정보·Data safety 정합성 보완 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 미사용 CAMERA/feature 제거, 캘린더·Firebase·AdMob/AdFit 개인정보처리방침 반영, Play 입력 초안 문서화. release package manifest의 카메라·미디어·외부 저장소 권한 0건·Android debug/test/lint·웹 lint/build 통과 |
+| [ ] | `AND-009` | Remote Config 긴급 차단·필수 업데이트 기반 | `⏸ 보류` | — | — | 사용자 결정으로 3플랫폼 핵심 기능 파리티 이후 재개. 주요 기능 차단·필수 업데이트·API 버전 계약 범위 유지 |
+
+### `AND-009` 세부 체크리스트
+
+- [ ] Remote Config 키 계약과 앱 내 안전 기본값 정의
+- [ ] 앱 시작 fetch/activate 및 foreground 실시간 변경 수신 구현
+- [ ] 공간 삭제·가족 전환·일정 쓰기·가계부 등 주요 기능별 kill switch 연결
+- [ ] 기능 중지 사유·점검 안내·재시도 UX 구현
+- [ ] `latest_version`, `minimum_supported_version`, `update_mode`, 스토어 URL·안내 문구 적용
+- [ ] Google Play Immediate/Flexible In-App Update와 스토어 이동 fallback 구현
+- [ ] 모든 네이티브 API 요청에 앱 버전·빌드 번호 헤더 추가
+- [ ] 서버 최소 지원 버전 검사와 `426 upgrade_required` 공통 응답 적용
+- [ ] Remote Config 실패·오프라인·오래된 캐시에서의 fail-safe 정책 구현
+- [ ] 권한 판정은 Remote Config가 아닌 API/DB에서 계속 강제하는지 검증
+- [ ] Crashlytics 지표·단계적 rollout·긴급 rollback 운영 절차 문서화
+- [ ] 단위 테스트·Android build/lint·구버전/최신버전 실기기 시나리오 검증
 
 상세 QA: `docs/20-android-native-release-qa.md`, `docs/22-android-material3-ui-audit.md`
 
@@ -110,6 +132,7 @@
 | [ ] | `FAM-005` | 약관·개인정보처리방침 개정 운영 | `⬜ 대기` | — | — | 사전 고지일·시행일·버전 기록과 법률 검토 완료 |
 | [ ] | `FAM-006` | 외부 본인확인 전환 | `⏸ 보류` | — | — | 자녀 1,000명/월 500건/분쟁 1건/위치·결제 도입/정책 요구 중 하나 발생 시 재개 |
 | [ ] | `FAM-007` | 수동 위치 체크인 MVP | `⏸ 보류` | — | — | 별도 법률 검토·본인확인·위치 동의 완료 후에만 재개 |
+| [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🔴 차단` | 2026-07-16 | — | DB migration 운영 적용·rollback 검증, Web/API·Android 구현, build/TypeScript/ESLint/테스트 및 APK 설치 완료. Vercel 소스 업로드 명시 승인 후 API 배포하고 로그인 실기기에서 전환·삭제 재검증 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -122,20 +145,160 @@
 | [ ] | `WEB-003` | 이미지 첨부 실제 업로드 | `⬜ 대기` | — | — | Storage/RLS/용량·확장자 제한/삭제·실패 UX 구현 |
 | [ ] | `WEB-004` | 통계·분석 확장 | `⬜ 대기` | — | — | 지표 정의 후 웹/백오피스 소유 경계를 확정하고 구현 |
 | [ ] | `WEB-005` | 일정 단건 외부 공유 | `⬜ 대기` | — | — | 만료·취소 가능한 읽기 전용 링크와 개인정보 노출 검토 |
-| [ ] | `WEB-006` | 마이페이지 Desktop UI 최적화 | `⬜ 대기` | — | — | Desktop/Mobile 분리와 디자인 시스템·다크모드 검증 |
-| [ ] | `PAR-001` | 플랫폼 P0 기능 파리티 회귀 | `⬜ 대기` | — | — | 로그인/세션, 초대, 공간 데이터 경계, 멤버 역할, 가계부 분리를 Web/Android/iOS에서 확인 |
+| [ ] | `WEB-006` | 마이페이지 Desktop/Mobile 기능 일치 | `🟠 진행 중` | 2026-07-16 | — | Android 전체 메뉴를 기준으로 빠른 동작·알림 목록/설정·프로필·계정·약관을 양쪽 Web 레이아웃에서 제공하고 권한별 가계부 노출·다크모드 회귀 검증 |
+| [ ] | `WEB-007` | Remote Config 운영 안전장치·버전 gate | `⏸ 보류` | — | — | 사용자 결정으로 플랫폼 기능 파리티 이후 재개. 현재 `initRemoteConfig()`와 백오피스 편집기는 존재하지만 실제 소비처가 없음 |
+| [ ] | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `🟠 진행 중` | 2026-07-16 | — | PC/Mobile Web에서 네이티브 전용 캘린더·생체인증과 보류된 Apple 로그인·포인트/프리미엄 문구를 제거하거나 실제 지원 플랫폼에만 노출하고 죽은 진입점 제거 |
+| [ ] | `WEB-009` | 일정 장소·지도 기능 완성 | `🟠 진행 중` | 2026-07-16 | — | PC/Mobile의 가짜 지도 준비 영역을 실제 외부 지도 검색 동작으로 교체. 주소 검색·좌표 저장·내장 지도 범위는 아직 미구현 |
+| [ ] | `WEB-010` | 알림 설정 서버 발송 경계 적용 | `🟠 진행 중` | 2026-07-16 | — | 일정 리마인더·재알림·자녀 미완료·결제 초과·주간 소비 요약에서 opt-in을 강제하고 명시적 false 사용자의 FCM/인앱 기록을 차단. 운영 배포 후 실제 수신/비수신 회귀 필요 |
+| [ ] | `PAR-001` | PC Web·Mobile Web·Android 3플랫폼 핵심 기능 파리티 회귀 | `🟠 진행 중` | 2026-07-16 | — | 기능별 공통 API·DB·권한 계약 아래 PC Web·Mobile Web·Android 구현과 검증을 각각 관리. 세 플랫폼이 모두 완료되거나 명시적 `N/A` 사유가 있어야 상위 기능을 완료한다. iOS는 현재 완료 조건에서 제외 |
+
+### `PAR-001` 3플랫폼 운영 규칙
+
+- 현재 지원 플랫폼은 `PC Web`, `Mobile Web`, `Android App` 3개로 고정한다.
+- API·DB·RLS·capability·오류 코드는 Web 플랫폼 작업이 아닌 **공통 코어 계약**으로 관리한다.
+- 기본 실행 순서는 **공통 코어 영향 확인·계약 확정 → Android App 구현·검증 → PC Web 구현·검증 → Mobile Web 구현·검증 → 3플랫폼 통합 회귀**로 고정한다.
+- Android App을 기준 동작과 최우선 구현 대상으로 삼되, Android 전용 제약을 공통 API·DB 계약으로 확대하지 않는다.
+- 긴급한 운영 오류·보안·데이터 손실 위험은 플랫폼 순서보다 우선하며, 예외 순서와 사유를 작업 일지에 남긴다.
+- 플랫폼 하나의 구현이 완료돼도 상위 기능은 계속 `🟠 진행 중`으로 두고, 나머지 플랫폼을 완료하거나 `N/A — 사유`를 기록한 뒤 닫는다.
+- Android 또는 Web 작업을 시작할 때 아래 **플랫폼 영향 확인**을 먼저 수행하고 해당 기능 체크리스트에 반영한다.
+- iOS는 현재 지원 플랫폼과 `PAR-001` 완료 조건에서 제외하고 8절의 후순위로 관리한다.
+
+#### 플랫폼 영향 확인 체크리스트
+
+> 아래는 일회성 완료 항목이 아니라 **변경 작업마다 해당 기능 아래에 복사해 사용하는 템플릿**이다. 영향이 없는 플랫폼도 비워두지 말고 `N/A — 사유`를 기록한다.
+
+- [ ] 공통 API 요청·응답·오류 코드가 변경되는가?
+- [ ] DB·RLS·capability·개인/공간 데이터 경계가 변경되는가?
+- [ ] Android에 같은 기능·권한·실패 UX가 필요한가?
+- [ ] PC Web에 같은 기능·권한·실패 UX가 필요한가?
+- [ ] Mobile Web에 같은 기능·권한·실패 UX가 필요한가?
+- [ ] 네이티브 전용 기능이면 Web에서 숨김·앱 전용 안내·`N/A` 중 어느 처리가 필요한가?
+- [ ] 알림·딥링크·오류 메시지가 세 플랫폼에서 같은 의미를 갖는가?
+- [ ] 적용하지 않는 플랫폼에 `N/A` 사유를 기록했는가?
+
+#### 3플랫폼 싱크 보드
+
+| 기능 | 공통 코어 계약 | Android App | PC Web | Mobile Web | 상위 상태·다음 행동 |
+|---|---|---|---|---|---|
+| 핵심 내비게이션 | capability 기준 메뉴 노출 | `✅` | `✅` | `✅` | `✅ 완료` |
+| 마이페이지·설정 | 계정 capability·플랫폼 지원 범위 | `✅` | `🟠` | `🟠` | PC/Mobile 시각·제한 계정 회귀 |
+| 홈 | 계정 모드·홈 구성·개인 원장·빈/오류 상태 | `⬜` | `✅` | `✅` | Android 동일 계정 집계·자녀 계정 비교 |
+| 일정 목록 | 개인/공간 경계·역할·필터 | `⬜` | `⬜` | `⬜` | 공간 전환·권한·빈/오류 상태 비교 |
+| 일정 생성·수정 | 저장 필드·참여자·알림·반복 계약 | `⬜` | `⬜` | `⬜` | 플랫폼별 지원 필드 감사 |
+| 일정 상세 | 소속 공간·private 생성자·admin/editor/viewer 권한 | `🟠` | `🟠` | `🟠` | Android 구현 완료·SDK 36 빌드 대기, 후 PC·Mobile 역할별 회귀 |
+| 공간 | 선택·초대·역할·가족 전환·안전 삭제 | `🟠` | `🟠` | `🟠` | Preview/Production 배포 후 동일 계정 검증 |
+| 가계부 | 개인/공간 원장·권한·반복 지출 | `⬜` | `⬜` | `⬜` | CRUD·개인/공간 경계 비교 |
+| 알림 | 설정·발송 경계·읽음·이동 대상 | `🟠` | `🟠` | `🟠` | Android 서버 설정 동기화·딥링크 구현 완료, SDK 36 빌드·실기기 회귀 대기 |
+| 로그인·세션 | Cookie/Bearer·OAuth 복귀·capability | `🟠` | `✅` | `✅` | Android 재로그인·세션 복귀 실기기 검증 |
+| 초대·딥링크 | 동일 초대 코드·권한·만료 계약 | `⬜` | `⬜` | `⬜` | Web link·App Link·custom scheme 회귀 |
+
+#### 기능별 세부 체크리스트
+
+##### 마이페이지·설정
+
+- 공통 코어
+  - [x] 가계부·공간 진입을 계정 capability로 제한
+  - [x] 생체인증·기기 캘린더를 네이티브 전용으로 분류
+- Android App
+  - [x] 빠른 실행·알림·계정·약관·네이티브 전용 설정 분리
+  - [ ] 재로그인 후 capability·메뉴 노출 실기기 회귀
+- PC Web
+  - [x] 빠른 실행·알림 목록/설정·약관 동선·권한별 노출 1차
+  - [ ] 라이트/다크·성인/제한 계정·키보드 시각 회귀
+- Mobile Web
+  - [x] 미구현 Apple 로그인·포인트·프리미엄·Web 미지원 네이티브 진입점 정리
+  - [x] 개인 공간을 무료 공유 공간 한도에서 제외하고 `공유 공간 n/2`로 표시
+  - [ ] 라이트/다크·성인/제한 계정·터치 영역·뒤로가기 회귀
+
+##### 홈
+
+- 공통 코어
+  - [x] PC/Mobile Web이 동일한 개인 공간 원장과 월간 지출 집계 계약 사용
+  - [x] 로딩 중 Mobile Web이 `0원`을 확정값처럼 노출하지 않도록 PC와 표시 시점 통일
+- Android App
+  - [ ] 동일 계정에서 오늘 일정·개인 가계부 월간 합계·빈/오류 상태 실기기 회귀
+- PC Web
+  - [x] 인증 계정 이름·오늘 일정·월간 개인 가계부 `320,000원` 표시 확인
+- Mobile Web
+  - [x] 인증 계정 이름·오늘 일정·월간 개인 가계부 `320,000원` 표시 확인
+
+##### 일정 상세
+
+- 공통 코어
+  - [x] 일정 소속 공간 기준 멤버·역할 조회
+  - [x] private 생성자/admin/editor만 변경 허용, viewer 직접 편집 차단
+  - [x] 참여자를 멤버십 ID가 아닌 사용자 ID로 연결
+  - [x] 자녀 일정·재알림 대상을 `family_dependents.linked_user_id`로 계산
+- Android App
+  - [x] 서버 계산 `permissions`로 수정·삭제·상태 변경·재알림 노출 제어
+  - [x] viewer의 직접 편집 딥링크 진입·저장 차단
+  - [x] 참여자 ID 응답 파싱·인원 표시, 장소 표시·외부 지도 열기, Bearer 재알림 연결
+  - [x] MacBook CLI 환경에 Android SDK Platform 36·Build-Tools 36.0.0·Platform-Tools 설치 후 `compileDebugKotlin`·unit test·lint·assemble 통과
+  - [ ] admin/editor/viewer/private 생성자 실기기 회귀
+- PC Web
+  - [x] Android과 동일한 `canWriteScheduleBoundary` 공통 권한 함수로 판정 통합
+  - [x] 권한별 변경 동작 노출·재알림 API·외부 지도 열기 구현
+  - [ ] editor/viewer/private 생성자 계정별 수정·삭제·상태 전환·재알림 회귀
+- Mobile Web
+  - [x] PC와 공유하는 상세 컨트롤러에 동일 공통 권한 함수 반영
+  - [x] 권한별 변경 동작 노출·재알림 API·외부 지도 열기 구현
+  - [ ] editor/viewer/private 생성자 계정별 터치·뒤로가기·오류 UX 회귀
+
+##### 공간
+
+- 공통 코어
+  - [x] 개인 공간 가족 전환·삭제 차단
+  - [x] 멤버 잔존·자녀 이력·관리자 권한·미존재 오류 계약 구분
+  - [x] 안전 삭제 후 fallback 공간·사용자 컨텍스트 갱신 계약 구현
+- Android App
+  - [x] 가족 전환·안전 삭제·mutation 오류 복구 UX 구현
+  - [ ] 운영 API 배포·재로그인 후 공간 전환·삭제 실기기 회귀
+- PC Web
+  - [x] 관리자 공유 공간의 `/space/settings?sid=...` 진입·가족 전환·삭제 UX
+  - [ ] Preview/Production에서 가족 전환·삭제·fallback 회귀
+- Mobile Web
+  - [x] 고급 설정 진입·가족 전환·삭제·오류별 안내
+  - [ ] Preview/Production에서 터치·뒤로가기·fallback 회귀
+
+##### 알림
+
+- 공통 코어
+  - [x] 일정·자녀·가계부 알림의 명시적 `false` 설정을 서버 발송·인앱 기록에서 강제
+  - [x] 설정이 없는 기존 사용자는 호환을 위해 활성으로 처리
+- Android App
+  - [x] 알림 목록·개별/전체 읽음·일정 딥링크 동작 코드 감사
+  - [x] 일정·루틴·가계부 알림 설정을 Android 로컬에서 서버 `profiles.notification_settings`로 전환·동기화
+  - [x] Cookie/Bearer 공통 인증으로 재알림 API 연결, 구버전 API 응답은 저장 성공으로 오인하지 않게 차단
+  - [x] MacBook CLI 환경에 Android SDK Platform 36·Build-Tools 36.0.0·Platform-Tools 설치 후 `compileDebugKotlin`·unit test·lint·assemble 통과
+  - [ ] Web과 동일 계정으로 설정별 FCM 수신/비수신 실기기 회귀
+- PC Web
+  - [x] 알림 카드 키보드 접근·읽음 처리·연결 일정 상세 이동
+  - [ ] 설정별 실제 수신/비수신·키보드·오류 UX 회귀
+- Mobile Web
+  - [x] 알림 카드 터치·읽음 처리·연결 일정 상세 이동
+  - [ ] 설정별 실제 수신/비수신·터치·뒤로가기 회귀
+
+##### 나머지 기능 확장 대기
+
+- [x] 홈: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
+- [ ] 일정 목록: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
+- [ ] 일정 생성·수정: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
+- [ ] 가계부: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
+- [ ] 로그인·세션: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
+- [ ] 초대·딥링크: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
+- [ ] 공통 회귀: Web production build, Android production build, 동일 테스트 계정의 PC/Mobile 브라우저·Android 실기기 검증
 
 ## 8. iOS·Apple 플랫폼
 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `IOS-000` | iOS 네이티브 셸·홈·일정 등록 1차 기반 | `✅ 완료` | 2026-06-18 | 2026-06-18 | Swift 네이티브 API client, 홈, 일정 Sheet, 라우팅 기반 |
-| [ ] | `IOS-001` | 운영 API 배포 후 실제 계정 회귀 | `⬜ 대기` | — | — | 홈 요약·일정 등록·WebView 왕복·세션 유지 검증 |
-| [ ] | `IOS-002` | EventKit 캘린더 UX | `⬜ 대기` | — | — | 캘린더 선택·내보내기·가져오기·중복 정책 구현 |
-| [ ] | `IOS-003` | APNs·알림 운영 설정 | `🔴 차단` | — | — | 유료 Apple Developer, APNs Auth Key, Firebase, Xcode Capabilities 필요 |
-| [ ] | `IOS-004` | Universal Links 재활성화 | `🔴 차단` | — | — | 유료 Apple Developer 전환 후 Associated Domains와 운영 링크 검증 |
+| [ ] | `IOS-001` | 운영 API 배포 후 실제 계정 회귀 | `⏸ 보류` | — | — | Android/Web 기능 안정화 뒤 홈 요약·일정 등록·WebView 왕복·세션 유지 검증 |
+| [ ] | `IOS-002` | EventKit 캘린더 UX | `⏸ 보류` | — | — | Android/Web 기능 안정화 뒤 캘린더 선택·내보내기·가져오기·중복 정책 구현 |
+| [ ] | `IOS-003` | APNs·알림 운영 설정 | `⏸ 보류` | — | — | iOS 재개 결정과 유료 Apple Developer·APNs Auth Key·Firebase·Xcode Capabilities 확보 후 진행 |
+| [ ] | `IOS-004` | Universal Links 재활성화 | `⏸ 보류` | — | — | iOS 재개 결정과 유료 Apple Developer 전환 후 Associated Domains·운영 링크 검증 |
 | [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `⏸ 보류` | — | — | Android 관련 기능·실기기·릴리즈·Play Console 검증이 모두 정상 완료된 뒤 확정된 Android 동작을 기준으로 iOS에 재구현 |
-| [ ] | `IOS-006` | TestFlight/App Store 출시 | `🔴 차단` | — | — | 유료 계정, 스크린샷·메타데이터·정책·실기기 QA 필요 |
+| [ ] | `IOS-006` | TestFlight/App Store 출시 | `⏸ 보류` | — | — | iOS 기능 재구현·실기기 QA 완료 뒤 유료 계정·스크린샷·메타데이터·정책을 준비해 진행 |
 
 상세 계획: `docs/16-ios-native-roadmap.md`
 
@@ -176,6 +339,28 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `REPO-001`, `PAR-001`, `OPS-004` | GitHub 최신 작업 체크포인트 준비 | 원격 `main` 이후 누적된 보안·가족/자녀·Android 적응형/권한 변경 18개 로컬 커밋과 플랫폼 파리티·공간 수명주기·알림 설정·Web 세션 폴백 미커밋 작업을 `codex/platform-parity-sync-20260723` 브랜치로 통합 보존 | TypeScript, 데이터 경계 9/9, capability 4/4, 알림 설정 2/2, Next production build 54/54, Android SDK 36 `compileDebugKotlin`·unit test·lint·assemble(840 tasks) 통과. 로컬 IDE 기기 선택 파일은 체크포인트에서 제외하고 GitHub Draft PR로 게시 |
+| 2026-07-17 | `PAR-001`, `WEB-006`, `OPS-004` | 인증 PC·Mobile Web 회귀 및 세션 폴백 보완 | Google 로그인 완료 세션으로 PC/Mobile 홈·일정·알림·마이페이지·공간을 검증. SSR Cookie 세션은 유효하지만 브라우저 Data API 프로필 복원이 늦거나 비는 경우 `/api/session/profile`로 본인 프로필을 복구하도록 보완하고, 무료 플랜 공간 수에서 개인 공간을 제외. Mobile 홈은 원장 로딩 중 임시 `0원` 카드 노출을 차단. 탈퇴 상태 조회는 불필요한 Service Role 의존성을 제거하고 본인 세션/RLS 조회로 전환 | 대상 ESLint 0 error(기존 `<img>` warning 1), TypeScript·diff check, Next production build 54/54 통과. PC/Mobile 실제 이름 `Edwin`, 공유 공간 `2/2`, 월간 개인 지출 `320,000원`, `/api/account/status` 200, 핵심 화면 새 console error 0 확인. 다음은 Android 동일 계정 홈 회귀와 역할별 일정 상세·알림 쓰기 검증 |
+| 2026-07-16 | `PAR-001`, `WEB-006`, `OPS-004` | MacBook 로컬 Google OAuth 환경 복구 | `.env.local`의 Supabase URL·anon key가 `your-project`/`your-anon-key` 템플릿 값으로 남아 OAuth가 DNS 단계에서 중단된 원인 확인. Android·iOS·배포 문서의 운영 프로젝트 `tyvjdsescukaeorcuaga`와 Android 공개 anon key로 통일하고 `layout.tsx`의 과거 프로젝트 preconnect도 정리 | Auth settings 200·Google provider 활성 확인, production build 54/54, 실제 Google 계정 선택 화면 진입 및 redirect URI가 `https://tyvjdsescukaeorcuaga.supabase.co/auth/v1/callback`인 것 확인. 사용자가 Google 계정 인증 완료 후 PC Web 인증 회귀 계속 |
+| 2026-07-16 | `PAR-001`, `WEB-006`, `WEB-008` | PC·Mobile Web production 공개 화면 회귀·인증 대기 | PC 1280px 랜딩과 Mobile 390px 로그인·보호 라우트 리다이렉트를 production build로 검증. 공통 로고의 비정방형 PNG를 정사각형 `next/image`로 크롭하며 발생하던 비율 경고를 접근 가능한 배경 크롭 컴포넌트로 정리 | 대상 ESLint·TypeScript·diff check, production build 54/54, 양쪽 viewport 가로 overflow 없음·로고 경고 제거. App Check 키 미설정과 Remote Config 네트워크 실패는 로컬 기본값 폴백 확인. 인증 후 PC 일정 상세·알림·마이페이지 → Mobile Web 순으로 역할별 회귀 |
+| 2026-07-16 | `PAR-001`, `AND-001`, `WEB-010` | MacBook Android CLI 환경 복구·빌드 통과 | 공식 Android command-line tools `14742923`을 체크섬 검증 후 `/Users/edwin/Library/Android/sdk`에 설치하고 Platform 36·Build-Tools 36.0.0·Platform-Tools와 SDK 라이선스를 구성 | Android Studio JBR 21로 `compileDebugKotlin`·`testDebugUnitTest`·`lintDebug`·`assembleDebug` 전체 성공(738 tasks, 3m 54s). debug APK 생성. 다음은 admin/editor/viewer/private 생성자와 알림 설정별 실기기 회귀 |
+| 2026-07-16 | `PAR-001`, `AND-001`, `WEB-010` | Android 일정 상세·알림 1차 구현 완료·빌드 차단 | 일정 상세 응답에 서버 계산 쓰기 권한·장소·참여자 ID를 추가하고 Android의 수정·삭제·상태·재알림·지도 UX에 적용. viewer 직접 편집을 차단. Android 알림 설정은 로컬 저장에서 서버 프로필 저장·동기화로 전환하고 재알림에 Cookie/Bearer 공통 인증 적용 | 권한 단위 테스트 9/9, 알림 테스트 2/2, capability 4/4, 대상 ESLint·TypeScript, Next production build 54/54 통과. Android Studio JBR 21은 있으나 `/Users/edwin/Library/Android/sdk` 미존재로 compileSdk 36 빌드 차단. Android Studio를 열어 SDK 설치 후 재검증 |
+| 2026-07-16 | `PAR-001`, `AND-001` | Android 우선 파리티 작업 시작 | 3플랫폼 싱크 보드의 Android 미완료 항목 중 일정 상세와 알림을 1차 범위로 선정. 공통 API·권한·딥링크 계약을 먼저 대조한 뒤 Android 구현·검증 진행 | 기존 `FAM-008` 공간 수명주기 미커밋 변경을 보존. 일정 상세 권한·참여자·장소·재알림, 알림 목록·읽음·일정 딥링크·설정 저장을 순서대로 감사 |
+| 2026-07-16 | `PAR-001` | 플랫폼 실행 우선순위 확정 | 공통 코어 계약을 먼저 확정한 뒤 Android App을 기준 동작·최우선 구현으로 처리하고 PC Web, Mobile Web 순으로 후속 반영하기로 결정 | 싱크 보드 열과 다음 행동을 Android 우선 순서로 재배치. 보안·운영 오류·데이터 손실 위험만 예외로 우선 처리 |
+| 2026-07-16 | `PAR-001` | 트래커 구조 개편 | 현재 지원 대상을 PC Web·Mobile Web·Android 3개로 고정하고, 기능별 공통 코어 계약 아래 플랫폼별 구현·검증·`N/A` 사유를 각각 관리하도록 싱크 보드와 영향 확인 체크리스트를 도입. iOS는 현재 완료 조건에서 제외 | 기존 마이페이지·일정 상세·공간·알림 완료/대기 상태를 플랫폼별로 이관. 이후 Android/Web 변경 시 공통 계약과 나머지 플랫폼 후속 작업을 동일 기능 아래 등록 |
+| 2026-07-16 | `WEB-010`, `PAR-001` | 알림 설정 서버 강제 구현·운영 대기 | 일정 리마인더·일정/자녀 재알림·자녀 미완료·결제 기한 초과·주간 소비 요약이 `notification_settings`를 확인하도록 통합 helper를 적용. 명시적 false 사용자는 FCM과 인앱 알림 기록에서 제외하고 설정이 없는 기존 사용자는 호환 유지 | helper 단위 테스트 2/2, 대상 ESLint·TypeScript, 데이터 경계 8/8·capability 4/4, Next production build 54/54 통과. Preview/Production 배포 후 카테고리별 실제 수신/비수신 검증 필요 |
+| 2026-07-16 | `PAR-001`, `WEB-009`, `WEB-010` | Web 전체 파리티 2차 수정·계속 진행 | 공간 지기 자기 이탈 노출을 차단하고, 알림 클릭의 일정 상세 이동, 일정 소속 공간 기준 수정 권한, viewer 직접 편집 차단, 상세 재알림 실제 API 발송, PC/Mobile 외부 지도 열기를 구현. 자녀 일정은 잘못된 editor/멤버십 ID 추정을 제거하고 `family_dependents.linked_user_id`로 탭·참여자·재알림 대상을 연결 | 대상 ESLint·TypeScript·diff check 통과. production build와 브라우저 역할별 회귀 후 일정 상세 체크를 닫고, 알림 설정 서버 강제(`WEB-010`)·첨부 저장 계약(`WEB-003`) 순으로 진행 |
+| 2026-07-16 | `PAR-001`, `FAM-008`, `OPS-004` | 공간 파리티 오류 수정·운영 대기 | Web 공간 화면의 “공간 설정”이 이름 변경만 열고 Mobile Web에는 고급 설정 진입점이 없어 Android의 가족 전환·삭제 기능과 불일치한 원인 수정. PC/Mobile 모두 실제 설정 페이지로 연결하고 삭제 RPC fallback ID·사용자 컨텍스트를 갱신하며 오류 코드별 안내와 개인 공간 보호 조건을 일치시킴 | 대상 ESLint·TypeScript·diff check, 데이터 경계 8/8·capability 4/4, Next production build 54/54 통과. 실제 서비스 반영은 Preview/Production 배포 후 동일 계정 Web/Android 재검증 필요 |
+| 2026-07-16 | `PAR-001`, `WEB-006`, `WEB-008` | 1차 구현 완료·계속 진행 | Web 마이페이지의 권한 무시 가계부 통계/빠른 메뉴를 계정 capability로 제한. Desktop에 Android 기준 빠른 실행·알림 목록/설정·약관 동선을 추가하고 허위 프리미엄 문구 제거. Mobile Web에서 미구현 Apple 로그인·포인트 확장과 Web에서 동작하지 않는 생체인증·기기 캘린더 진입점 제거 | 대상 ESLint 0 error/0 warning, TypeScript·diff check 통과, Next production build 54/54 route 성공. 다음은 일정 생성/수정·상세 파리티 비교 및 브라우저 시각 회귀 |
+| 2026-07-16 | `PAR-001`, `WEB-006`, `WEB-008`, `WEB-007`, `AND-009` | 우선순위 변경·시작 | Remote Config를 후순위로 옮기고 Web ↔ Android 기능 파리티를 최우선으로 전환. 1차 매트릭스에서 핵심 내비게이션은 일치하지만 Web 마이페이지의 권한 무시 가계부 노출, 네이티브 전용/준비 중 진입점, Desktop 기능 누락과 허위 프리미엄 문구를 확인 | 마이페이지·설정 노출 정합화부터 수정 후 Web lint/type/build, 다음으로 일정 생성·상세와 공간 관리 기능 비교 |
+| 2026-07-16 | `WEB-007`~`WEB-010`, `AND-002`, `AND-006`, `IOS-001`~`IOS-006` | 우선순위 재편 | iOS와 Google Play 출시 구간을 후순위로 분리하고 즉시 구현·production build·Web/API 반영 가능한 작업을 실행 큐 전면에 배치 | Remote Config 실제 소비, 알림 설정 발송 강제, 첨부 완성, 설정 노출, 지도 미완을 Web 누락 항목으로 추가. `FAM-008` 운영 마감 후 `WEB-007`부터 순차 진행 |
+| 2026-07-16 | `AND-009`, `ARCH-001` | 작업 등록·의사결정 | 다음 Android 마켓 버전에 Remote Config 기반 기능별 긴급 차단과 최소 지원 버전 기반 필수 업데이트를 운영 안전장치로 탑재하기로 결정 | 12개 세부 체크를 등록. `FAM-008` 운영 검증 이후 Android 기준으로 구현하고 iOS는 Android 전체 안정화 뒤 동일 계약으로 적용 |
+| 2026-07-16 | `ARCH-001` | 완료·의사결정 | CodePush형 OTA와 현재 `server.url`·Compose 구조 및 최신 마켓 정책을 비교 | Web/API는 Vercel 즉시 배포, 사전 탑재 기능은 Remote Config, Compose/네이티브는 Play 업데이트로 분리. 상세 전략 `docs/26-live-update-delivery-strategy.md` |
+| 2026-07-16 | `FAM-008`, `AND-001` | 부분 완료·차단 | 사용자 실기기 삭제 테스트가 실패 후 전체 로드 오류로 전환되고 실제 공간도 유지되는 현상 확인. 운영 API 미배포가 삭제 실패 원인이며 Android가 mutation 오류를 전체 조회 오류로 표시한 UX 결함도 수정 | 운영 migration 적용·승격/삭제 transaction rollback 통과, Web build·대상 ESLint·테스트·Android assemble 및 수정 APK 설치. Vercel 소스 외부 업로드 명시 승인과 실기기 재로그인 후 운영 삭제 재검증 |
+| 2026-07-16 | `FAM-008`, `AND-001` | 발견·시작 | 신규 가족 공간 생성 중심 구현으로 기존 사용자의 일반 공간 승격과 불필요 공유 공간 삭제 수명주기가 누락됨을 확인 | 운영 집계상 목적 미지정 일반 공간 7개 중 6개가 단독 멤버 공간. 기존 ID·데이터를 유지하는 가족 승격과 트랜잭션 삭제/활성 공간 복구를 우선 구현 |
+| 2026-07-16 | `AND-001`, `OPS-004`, `FAM-001`, `FAM-002` | 실기기 오류 수정·운영 배포 | 최신 Android APK에서 운영 session context 404 때문에 `unknown + capability 전체 false`가 캐시되어 성인/일반 계정의 가계부 메뉴가 숨는 연동 오류 재현. 앱의 fail-closed를 완화하지 않고 최신 커밋 API를 Preview 빌드 후 Production 승격 | Preview `dpl_BtZJhDekxZQyfwWkRjJY8PSQnxZv` READY, Production `dpl_FrrVDVeUjCRWyPjbKvP6x8wqrEX3` READY. 실기기 캐시가 `canManageSpaces/canInviteMembers/canViewHouseholdBudget/canCompleteRoutine=true`로 갱신되고 하단 가계부 복구, 운영 context 200·최근 runtime error 0. ADB 승인 시스템 크레딧 해제 후 공간 전체 UI/기능 순회 계속 |
+| 2026-07-16 | `AND-001` | 재개 | 연결된 Android 실기기에서 최신 소스 기준 공간 기능·UI 전체 회귀와 즉시 수정 시작 | 최신 debug APK 업데이트 설치 후 공간 선택·소식·일정·멤버·관리 흐름을 순회하고 발견 사항별 수정·재검증 |
+| 2026-07-16 | `AND-001`, `WEB-001`, `FAM-001` | 부분 완료·계속 진행 | Android 실기기에서 운영 공간 summary와 개인/공유 선택기, 공유 공간 소식·일정·멤버 읽기, 관리자 진입점을 검증. 최초 로드 1회는 일반 오류로 끝났지만 정확한 재시도 후 정상 복구됐고 동일 시각 서버·Supabase 조회는 200 | Vercel `/api/native/spaces/summary` 200, Supabase 공간 관련 조회 200·핵심 5개 테이블 RLS/정책 존재, Android compile/test/lint/assemble, 데이터 경계 8/8·capability 4/4·production build 통과. 쓰기/파괴 경로는 운영 데이터에 실행하지 않았으며 격리 계정 준비 후 검증. Android 클라이언트에 상태 코드·오류 코드 관측성 추가 필요 |
 | 2026-07-16 | `IOS-005`, `AND-001`, `AND-002`, `AND-006` | 순서 변경 | iOS 착수를 중단하고 Android 전체 정상화·출시 검증을 선행하기로 결정 | iOS 코드 변경 0건. Android 기능·실기기·릴리즈 AAB·Play Console 검증 완료 후 `IOS-005` 재개 |
 | 2026-07-16 | `FAM-002` | 시작 | 자녀 전용 홈·메뉴 제한을 Web·Android에 적용 시작 | 현재 홈 요약·메뉴·딥링크·AdMob 진입점과 session context 소비 구조를 먼저 감사 |
 | 2026-07-16 | `FAM-002` | 완료 | Web·Android가 동일 account capability를 소비하도록 홈 정보 구조, 메뉴, 딥링크, 공간 관리 액션, 가계부 액티비티와 네이티브 광고를 동기화 | capability 4/4·데이터 경계 8/8, 변경 대상 ESLint·tsc·production build, Android `compileDebugKotlin`·`testDebugUnitTest`·`lintDebug`·`assembleDebug` 통과. 전체 `npm run lint` 기존 산출물/소스 부채는 `SEC-004`; 다음은 Android 전체 QA·릴리즈 마감 |

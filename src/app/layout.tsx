@@ -139,8 +139,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {/* ── Supabase 연결 사전 설정 ── */}
-        <link rel="preconnect" href="https://lbzroynnmcvjnpqopagg.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://lbzroynnmcvjnpqopagg.supabase.co" />
+        <link rel="preconnect" href="https://tyvjdsescukaeorcuaga.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://tyvjdsescukaeorcuaga.supabase.co" />
         <link rel="preconnect" href="https://play.google.com" />
         <link rel="alternate" href={`android-app://${ANDROID_PACKAGE}/https/gleaum.com`} />
         <link rel="alternate" href={`android-app://${ANDROID_PACKAGE}/https/www.gleaum.com`} />
@@ -158,7 +158,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* React는 문자열 onLoad 핸들러를 무시하므로 media="print" 트릭이 동작하지 않아
             폰트가 영구히 미적용되는 버그가 있었음. 위 preload 덕분에 일반 stylesheet로
             로드해도 렌더 차단 시간은 미미함. */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
           rel="stylesheet"

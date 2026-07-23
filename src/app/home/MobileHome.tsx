@@ -538,7 +538,7 @@ export default function MobileHome({ user, profile, schedules, personalExpenses,
         <InlineFeedAd />
 
         {/* ── 가계부 ── */}
-        {canViewBudget && budgetSummaryCard}
+        {!loading && canViewBudget && budgetSummaryCard}
 
         {/* ── 다가오는 일정 ── */}
         {!loading && upcoming.length > 0 && (

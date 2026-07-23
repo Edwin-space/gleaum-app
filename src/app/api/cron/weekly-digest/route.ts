@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
+import { isNotificationEnabled } from '@/lib/notification-settings';
 
 export async function POST(req: NextRequest) { return GET(req); }
 
@@ -95,21 +96,21 @@ export async function GET(req: NextRequest) {
   const userIds = Array.from(userMap.keys());
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, fcm_token')
+    .select('id, fcm_token, notification_settings')
     .in('id', userIds)
     .not('fcm_token', 'is', null);
 
-  const profileMap = new Map((profiles ?? []).map((p: { id: string; fcm_token: string }) => [p.id, p]));
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   // ── 이번 달 현재까지 일수 계산 (월별 예상 지출용) ──
   // 크론 실행 시각 기준 이번 달 경과 일수
   const kstNow = new Date(now.getTime() + KST_OFFSET);
-  const dayOfMonth = kstNow.getUTCDate(); // KST 기준 오늘이 몇 일인지
 
   let sent = 0;
 
   for (const [userId, data] of userMap) {
     const profile = profileMap.get(userId);
+    if (!profile || !isNotificationEnabled(profile.notification_settings, 'expenseReminders')) continue;
     const thisTotal  = data.thisWeek.reduce((s, e) => s + (e.amount ?? 0), 0);
     const prevTotal  = data.prevWeek.reduce((s, e) => s + (e.amount ?? 0), 0);
 

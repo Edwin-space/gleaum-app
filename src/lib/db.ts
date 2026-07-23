@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
-import { canEditSpace, resolveScheduleTargetSpace } from '@/lib/data-boundaries';
+import { canEditSpace, canWriteScheduleBoundary, resolveScheduleTargetSpace } from '@/lib/data-boundaries';
 import { capabilitiesForAccountMode } from '@/lib/account-capabilities';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
@@ -27,6 +27,7 @@ import type {
   SpaceMember,
   Space,
   SpaceKind,
+  SpacePurpose,
   FamilyDependent,
   FamilyDependentGender,
   GuardianRelationshipType,
@@ -74,6 +75,21 @@ export interface ProfileRow {
   preferences?: Partial<OnboardingPreferences> | null;
   notification_settings?: Partial<NotificationSettings> | null;
   updated_at: string;
+}
+
+/** Cookie/Bearer 세션으로 인증된 사용자의 전체 Web 프로필을 조회한다. */
+export async function getSessionProfile(
+  supabase: RouteSupabaseClient,
+  userId: string,
+): Promise<ProfileRow> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,role,family_group_id,google_id,onboarding_completed_at,timezone,locale,preferences,notification_settings,updated_at')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'profile_not_found');
+  return data as ProfileRow;
 }
 
 /** family_groups 테이블 Row (내부명 유지, UI에서는 Space 로 표시) */
@@ -611,23 +627,29 @@ export async function removeSpaceMember(spaceId: string, userId: string): Promis
   return !error;
 }
 
-/** 공간 폐쇄 (admin 전용) — 관련 데이터 즉시 삭제
- *  삭제 순서: space_settings → schedules → space_members → family_groups
+/** 공간 폐쇄 (admin 전용).
+ *  DB RPC가 개인 공간·다른 멤버·가족 자녀 이력을 검사하고 활성 공간 복구와
+ *  관련 데이터 삭제를 하나의 트랜잭션으로 처리한다.
  */
-export async function deleteSpace(spaceId: string): Promise<boolean> {
+export type DeleteSpaceResult =
+  | { ok: true; fallbackSpaceId: string | null }
+  | { ok: false; error: string };
+
+export async function deleteSpace(spaceId: string): Promise<DeleteSpaceResult> {
   const supabase = createClient();
+  const { data, error } = await supabase.rpc('delete_space_safely', { p_space_id: spaceId });
+  if (error) {
+    console.error('[deleteSpace]', error);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true, fallbackSpaceId: typeof data === 'string' ? data : null };
+}
 
-  // 1. space_settings
-  await supabase.from('space_settings').delete().eq('space_id', spaceId);
-
-  // 2. schedules (현재 스키마는 family_group_id 기준)
-  await supabase.from('schedules').delete().eq('family_group_id', spaceId);
-
-  // 3. space_members
-  await supabase.from('space_members').delete().eq('space_id', spaceId);
-
-  // 4. family_groups (공간 본체)
-  const { error } = await supabase.from('family_groups').delete().eq('id', spaceId);
+/** 기존 공유 공간의 ID·멤버·일정·소식을 유지한 채 가족 공간으로 승격한다. */
+export async function convertSpaceToFamily(spaceId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc('convert_space_to_family', { p_space_id: spaceId });
+  if (error) console.error('[convertSpaceToFamily]', error);
   return !error;
 }
 
@@ -708,12 +730,26 @@ export async function updateSpaceSettings(
   settings: { purpose?: string; scheduleTypes?: string[] },
 ): Promise<boolean> {
   const supabase = createClient();
-  const spaceKind: SpaceKind | undefined = settings.purpose
-    ? settings.purpose === 'family' ? 'family' : 'general'
-    : undefined;
+  const { data: current, error: readError } = await supabase
+    .from('family_groups')
+    .select('settings,space_type')
+    .eq('id', spaceId)
+    .single();
+  if (readError) {
+    console.error('[updateSpaceSettings:read]', readError);
+    return false;
+  }
+
+  const currentSettings = (current.settings ?? {}) as Record<string, unknown>;
+  const isFamilySpace = current.space_type === 'family';
+  const nextSettings = {
+    ...currentSettings,
+    ...settings,
+    ...(isFamilySpace ? { purpose: 'family' } : {}),
+  };
   const { error } = await supabase
     .from('family_groups')
-    .update({ settings, ...(spaceKind ? { space_type: spaceKind } : {}) })
+    .update({ settings: nextSettings })
     .eq('id', spaceId);
   if (error) console.error('[updateSpaceSettings]', error);
   return !error;
@@ -1804,9 +1840,21 @@ export interface NativeScheduleItem {
   repeat: RepeatType;
   reminder: number;
   memo?: string;
+  locationAddress?: string;
+  locationLat?: number;
+  locationLng?: number;
+  referenceUrl?: string;
   spaceId: string;
   createdBy: string;
   participantIds: string[];
+  permissions?: NativeSchedulePermissions;
+}
+
+export interface NativeSchedulePermissions {
+  canEdit: boolean;
+  canDelete: boolean;
+  canChangeStatus: boolean;
+  canRenotify: boolean;
 }
 
 export interface NativeLedgerItem {
@@ -1850,6 +1898,8 @@ export interface NativeSpaceListItem {
   role: SpaceRole;
   memberCount: number;
   inviteCode?: string;
+  spaceKind: SpaceKind;
+  purpose?: SpacePurpose;
   isPersonal: boolean;
   isActive: boolean;
 }
@@ -1897,12 +1947,14 @@ export interface NativeProfileSummary {
   timezone: string;
   locale: string;
   onboardingCompleted: boolean;
+  notificationSettings: NotificationSettings;
 }
 
 export interface NativeProfileUpdateInput {
   displayName?: string;
   realName?: string | null;
   nameDisplayMode?: NameDisplayMode;
+  notificationSettings?: Partial<NotificationSettings>;
 }
 
 export interface NativeCreateLedgerInput {
@@ -2013,6 +2065,10 @@ function nativeScheduleItemFromRow(row: ScheduleRow): NativeScheduleItem {
     repeat: row.repeat,
     reminder: row.reminder,
     memo: row.memo ?? undefined,
+    locationAddress: row.location_address ?? undefined,
+    locationLat: row.location_lat ?? undefined,
+    locationLng: row.location_lng ?? undefined,
+    referenceUrl: row.reference_url ?? undefined,
     spaceId: row.family_group_id,
     createdBy: row.created_by,
     participantIds: row.schedule_participants?.map((p) => p.user_id) ?? [],
@@ -2047,6 +2103,12 @@ function nativeProfileSummaryFromRow(row: ProfileRow): NativeProfileSummary {
     timezone: row.timezone ?? 'Asia/Seoul',
     locale: row.locale ?? 'ko-KR',
     onboardingCompleted: !!row.onboarding_completed_at,
+    notificationSettings: {
+      scheduleReminders: row.notification_settings?.scheduleReminders !== false,
+      routineReminders: row.notification_settings?.routineReminders !== false,
+      expenseReminders: row.notification_settings?.expenseReminders !== false,
+      spaceUpdates: row.notification_settings?.spaceUpdates !== false,
+    },
   };
 }
 
@@ -2056,7 +2118,7 @@ export async function getNativeProfileSummary(
 ): Promise<NativeProfileSummary> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at,notification_settings')
     .eq('id', userId)
     .single();
 
@@ -2091,11 +2153,40 @@ export async function updateNativeProfile(
     updates.name_display_mode = input.nameDisplayMode;
   }
 
+  if (input.notificationSettings !== undefined) {
+    const allowedKeys: Array<keyof NotificationSettings> = [
+      'scheduleReminders',
+      'routineReminders',
+      'expenseReminders',
+      'spaceUpdates',
+    ];
+    const sanitizedSettings: Partial<NotificationSettings> = {};
+    for (const key of allowedKeys) {
+      const value = input.notificationSettings[key];
+      if (value !== undefined && typeof value !== 'boolean') {
+        throw new Error('invalid_notification_settings');
+      }
+      if (value !== undefined) {
+        sanitizedSettings[key] = value;
+      }
+    }
+    const { data: currentProfile, error: currentProfileError } = await supabase
+      .from('profiles')
+      .select('notification_settings')
+      .eq('id', userId)
+      .single();
+    if (currentProfileError) throw new Error(currentProfileError.message);
+    updates.notification_settings = {
+      ...((currentProfile as Pick<ProfileRow, 'notification_settings'> | null)?.notification_settings ?? {}),
+      ...sanitizedSettings,
+    };
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
     .eq('id', userId)
-    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at,notification_settings')
     .single();
 
   if (error || !data) throw new Error(error?.message ?? 'profile_update_failed');
@@ -2145,7 +2236,7 @@ export async function completeNativeOnboarding(
       updated_at: new Date().toISOString(),
     })
     .eq('id', userId)
-    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at')
+    .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at,notification_settings')
     .single();
 
   if (error || !data) throw new Error(error?.message ?? 'onboarding_update_failed');
@@ -2588,7 +2679,7 @@ export async function getNativeSpaceSummary(
   const [{ data: groupRows, error: groupsError }, { data: memberCountRows, error: countsError }] = await Promise.all([
     supabase
       .from('family_groups')
-      .select('id,name,invite_code,created_by,created_at')
+      .select('id,name,invite_code,created_by,created_at,space_type,settings')
       .in('id', requestedSpaceIds),
     supabase
       .from('space_members')
@@ -2611,12 +2702,18 @@ export async function getNativeSpaceSummary(
     .map((group): NativeSpaceListItem => {
       const isPersonal = group.id === personalSpaceId;
       const fallbackRole: SpaceRole = group.created_by === userId ? 'admin' : 'viewer';
+      const rawPurpose = group.settings?.purpose;
+      const purpose = ['family', 'couple', 'friends', 'work', 'other'].includes(rawPurpose ?? '')
+        ? rawPurpose as SpacePurpose
+        : undefined;
       return {
         id: group.id,
         name: group.name,
         role: roleMap.get(group.id) ?? fallbackRole,
         memberCount: countMap.get(group.id) ?? (isPersonal ? 1 : 0),
         inviteCode: isPersonal ? undefined : group.invite_code ?? undefined,
+        spaceKind: isPersonal ? 'personal' : group.space_type === 'family' ? 'family' : 'general',
+        purpose,
         isPersonal,
         isActive: group.id === activeSpaceId,
       };
@@ -2796,7 +2893,13 @@ export async function createNativeSpace(
   const inviteCode = generateInviteCode();
   const { data: group, error: groupError } = await supabase
     .from('family_groups')
-    .insert({ name: nextName, invite_code: inviteCode, created_by: userId })
+    .insert({
+      name: nextName,
+      invite_code: inviteCode,
+      created_by: userId,
+      space_type: 'general',
+      settings: { purpose: 'other' },
+    })
     .select('id')
     .single();
 
@@ -2978,6 +3081,34 @@ export async function removeNativeSpaceMember(
   return getNativeSpaceSummary(supabase, userId);
 }
 
+/** 기존 공유 공간을 가족 공간으로 승격한다. 공간 ID와 모든 연결 데이터는 유지된다. */
+export async function convertNativeSpaceToFamily(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  await assertNativeSpaceIsNotPersonal(supabase, userId, spaceId);
+
+  const { error } = await supabase.rpc('convert_space_to_family', { p_space_id: spaceId });
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+/** 단독 관리자 공유 공간을 삭제하고 개인 공간 또는 다른 멤버십으로 복귀한다. */
+export async function deleteNativeSpace(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  await assertNativeSpaceIsNotPersonal(supabase, userId, spaceId);
+
+  const { error } = await supabase.rpc('delete_space_safely', { p_space_id: spaceId });
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
 export async function getNativeHomeSummary(
   supabase: RouteSupabaseClient,
   userId: string,
@@ -3148,15 +3279,42 @@ async function assertNativeScheduleWritable(
   userId: string,
   schedule: Pick<ScheduleRow, 'created_by' | 'family_group_id' | 'visibility'>,
 ) {
-  if (schedule.created_by === userId && schedule.visibility === 'private') return;
-  const { data: member } = await supabase
+  const { data: member, error } = await supabase
     .from('space_members')
     .select('role')
     .eq('space_id', schedule.family_group_id)
     .eq('user_id', userId)
     .maybeSingle();
+  if (error) throw new Error(error.message);
   const role = (member as { role?: SpaceRole } | null)?.role;
-  if (!canEditSpace(role)) throw new Error('space_editor_required');
+  if (!canWriteScheduleBoundary(userId, {
+    createdBy: schedule.created_by,
+    visibility: schedule.visibility,
+  }, role)) throw new Error('space_editor_required');
+}
+
+async function nativeSchedulePermissions(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  schedule: Pick<ScheduleRow, 'created_by' | 'family_group_id' | 'visibility'>,
+): Promise<NativeSchedulePermissions> {
+  const { data: member, error } = await supabase
+    .from('space_members')
+    .select('role')
+    .eq('space_id', schedule.family_group_id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const canWrite = canWriteScheduleBoundary(userId, {
+    createdBy: schedule.created_by,
+    visibility: schedule.visibility,
+  }, (member as { role?: SpaceRole } | null)?.role);
+  return {
+    canEdit: canWrite,
+    canDelete: canWrite,
+    canChangeStatus: canWrite,
+    canRenotify: canWrite,
+  };
 }
 
 export async function createNativeSchedule(
@@ -3303,7 +3461,11 @@ export async function getNativeScheduleById(
 
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return nativeScheduleItemFromRow(data as ScheduleRow);
+  const row = data as ScheduleRow;
+  return {
+    ...nativeScheduleItemFromRow(row),
+    permissions: await nativeSchedulePermissions(supabase, userId, row),
+  };
 }
 
 export async function updateNativeSchedule(
@@ -3680,7 +3842,10 @@ export async function uploadScheduleAttachment(file: File): Promise<string | nul
 }
 
 /** 마이페이지 대시보드용 인사이트 데이터 추출 */
-export async function getMyPageInsights(spaceId: string | undefined) {
+export async function getMyPageInsights(
+  spaceId: string | undefined,
+  personalSpaceId?: string | null,
+) {
   const familyGroupId = spaceId; // 하위 호환
   if (!familyGroupId) return null;
   const supabase = createClient();
@@ -3723,10 +3888,14 @@ export async function getMyPageInsights(spaceId: string | undefined) {
 
   // ── [공간 수] 사용자가 속한 공간 수 ──
   const { data: { user: authUser } } = await supabase.auth.getUser();
-  const { count: spaceCount } = await supabase
+  let spaceCountQuery = supabase
     .from('space_members')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', authUser?.id ?? '');
+  if (personalSpaceId) {
+    spaceCountQuery = spaceCountQuery.neq('space_id', personalSpaceId);
+  }
+  const { count: spaceCount } = await spaceCountQuery;
 
   return {
     totalExpense,

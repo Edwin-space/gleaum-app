@@ -2,6 +2,7 @@ package com.gleaum.app
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -14,6 +15,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.ui.screens.schedules.ComposeScheduleDetailScreen
@@ -28,6 +30,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     private var scheduleId: String = ""
     private var schedule: NativeAppSchedule? = null
     private var loading = true
+    private var renotifying = false
     private var errorMessage: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,6 +99,9 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
                     onBack = { finish() },
                     onEdit = { id -> openEdit(id) },
                     onToggleComplete = { status -> patchStatus(status) },
+                    onRenotify = { renotifySchedule() },
+                    renotifying = renotifying,
+                    onOpenLocation = { address -> openLocation(address) },
                     onDelete = { deleteSchedule() },
                     onRetry = { loadSchedule() },
                     )
@@ -138,15 +144,17 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
             }, LinearLayout.LayoutParams(0, dp(40), 1f))
-            addView(TextView(context).apply {
-                text = "수정"
-                textSize = 13f
-                typeface = bold()
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                background = round("#33FFFFFF", 999)
-                setOnClickListener { openEdit(s.id) }
-            }, LinearLayout.LayoutParams(dp(64), dp(36)))
+            if (s.permissions.canEdit) {
+                addView(TextView(context).apply {
+                    text = "수정"
+                    textSize = 13f
+                    typeface = bold()
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    background = round("#33FFFFFF", 999)
+                    setOnClickListener { openEdit(s.id) }
+                }, LinearLayout.LayoutParams(dp(64), dp(36)))
+            }
         })
         addView(TextView(context).apply {
             text = typeLabel(s.type)
@@ -185,6 +193,8 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
         addInfo("상태", statusLabel(s.status))
         addInfo("반복", repeatLabel(s.repeat))
         addInfo("알림", if (s.reminder > 0) "${s.reminder}분 전" else "없음")
+        if (!s.locationAddress.isNullOrBlank()) addInfo("장소", s.locationAddress)
+        addInfo("참여자", "${s.participantIds.size}명")
         addInfo("메모", s.memo ?: "등록된 메모가 없어요")
     }
 
@@ -206,10 +216,21 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
 
     private fun buildActions(s: NativeAppSchedule): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        if (s.status != "completed") addView(primaryButton("완료 처리") { patchStatus("completed") }, matchWrap())
-        else addView(primaryButton("예정으로 되돌리기") { patchStatus("pending") }, matchWrap())
+        if (!s.permissions.canEdit) {
+            addView(messageCard("이 일정은 읽기 전용이에요."), matchWrap())
+            return@apply
+        }
+        if (s.permissions.canChangeStatus) {
+            if (s.status != "completed") addView(primaryButton("완료 처리") { patchStatus("completed") }, matchWrap())
+            else addView(primaryButton("예정으로 되돌리기") { patchStatus("pending") }, matchWrap())
+        }
         addView(secondaryButton("수정하기") { openEdit(s.id) }, matchWrap().apply { topMargin = dp(10) })
-        addView(dangerButton("삭제하기") { confirmDelete() }, matchWrap().apply { topMargin = dp(10) })
+        if (s.permissions.canRenotify) {
+            addView(secondaryButton("재알림 보내기") { renotifySchedule() }, matchWrap().apply { topMargin = dp(10) })
+        }
+        if (s.permissions.canDelete) {
+            addView(dangerButton("삭제하기") { confirmDelete() }, matchWrap().apply { topMargin = dp(10) })
+        }
     }
 
     private fun primaryButton(label: String, action: () -> Unit): TextView = button(label, Color.WHITE, gradient("#0CC9B5", "#0084CC", 999), action)
@@ -227,6 +248,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     }
 
     private fun patchStatus(status: String) {
+        if (schedule?.permissions?.canChangeStatus != true) return
         Thread {
             try {
                 val updated = NativeScheduleApi.update(this, scheduleId, org.json.JSONObject().put("status", status))
@@ -248,6 +270,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     }
 
     private fun deleteSchedule() {
+        if (schedule?.permissions?.canDelete != true) return
         Thread {
             try {
                 val deleting = schedule
@@ -261,7 +284,37 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     }
 
     private fun openEdit(id: String) {
+        if (schedule?.permissions?.canEdit != true) return
         startActivity(Intent(this, NativeScheduleCreateActivity::class.java).putExtra("schedule_id", id))
+    }
+
+    private fun renotifySchedule() {
+        val current = schedule ?: return
+        if (!current.permissions.canRenotify || renotifying) return
+        renotifying = true
+        render()
+        Thread {
+            try {
+                NativeScheduleApi.renotify(this, current)
+                runOnUiThread {
+                    renotifying = false
+                    Toast.makeText(this, "재알림을 보냈어요.", Toast.LENGTH_SHORT).show()
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    renotifying = false
+                    Toast.makeText(this, friendlyError(e.message), Toast.LENGTH_SHORT).show()
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun openLocation(address: String) {
+        val uri = Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            .onFailure { Toast.makeText(this, "지도를 열 수 없어요.", Toast.LENGTH_SHORT).show() }
     }
 
     private fun messageCard(textValue: String): TextView = TextView(this).apply {
@@ -277,6 +330,8 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
     private fun friendlyError(code: String?): String = when (code) {
         "schedule_not_found" -> "일정을 찾을 수 없어요."
         "space_editor_required" -> "공유 일정은 공간 운영자 이상만 수정할 수 있어요."
+        "Forbidden" -> "이 일정을 변경할 권한이 없어요."
+        "FCM 토큰 없음 (알림 미허용)", "발송 대상 없음" -> "재알림을 받을 사용자가 없어요."
         "session_required" -> "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요."
         else -> "일정 요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
     }

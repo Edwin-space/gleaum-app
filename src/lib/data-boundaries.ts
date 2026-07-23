@@ -11,6 +11,15 @@ export function canEditSpace(role: BoundarySpaceRole | null | undefined): boolea
   return role === 'admin' || role === 'editor';
 }
 
+export function canWriteScheduleBoundary(
+  userId: string,
+  schedule: { createdBy: string; visibility: BoundaryVisibility },
+  role: BoundarySpaceRole | null | undefined,
+): boolean {
+  if (schedule.visibility === 'private') return schedule.createdBy === userId;
+  return canEditSpace(role);
+}
+
 export function canReadScheduleBoundary(
   actor: BoundaryActor,
   schedule: { spaceId: string; createdBy: string; visibility: BoundaryVisibility },

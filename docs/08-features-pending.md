@@ -2,19 +2,20 @@
 
 > 최종 업데이트: 2026-07-16
 >
-> **작업 상태의 단일 기준은 `docs/24-project-work-tracker.md`다.** 이 문서는 기능별 상세 후보와 배경을 보관한다. 현재 우선순위는 운영 보안 적용 → 미커밋 체크포인트 → Android 실기기/릴리즈 QA → 가족/자녀 capability → iOS 확장이다.
+> **작업 상태의 단일 기준은 `docs/24-project-work-tracker.md`다.** 이 문서는 기능별 상세 후보와 배경을 보관한다. 현재 우선순위는 공간 수명주기 운영 마감 → 공통 코어 계약 확정 → Android → PC Web → Mobile Web 순의 3플랫폼 핵심 기능 파리티 → 통합 회귀다. Remote Config, Google Play 출시 절차와 iOS는 후순위다.
 
 ## 지금 바로 남은 작업
 
 | 우선순위 | 작업 | 완료 기준 |
 |---|---|---|
-| 🔴 | Android 실기기 최종 시각 QA | 잠금 해제 단말에서 홈·일정·가계부·공간·전체·알림·온보딩을 light/dark/system으로 확인하고 `docs/22-android-material3-ui-audit.md` 최종 점수 확정 |
-| 🔴 | Android 핵심 회귀 QA | Google/이메일 로그인, 일정 CRUD, 수입·지출 CRUD, 공간 전환·소식·일정·멤버, 푸시 딥링크, 생체인증, 캘린더를 실제 계정으로 검증 |
-| 🔴 | Release AAB 검증 | `bundleRelease`, R8 mapping, native symbols, Firebase Crashlytics/Analytics/FCM, AdFit 실패 fallback 확인 |
-| 🟡 | 로그인/가입 UI A등급 판단 | 현재 XML 기반 86/B. Compose Material 3 전환 또는 브랜드 예외 승인 후 태블릿·큰 글꼴 QA |
-| 🟡 | 태블릿·폴더블·접근성 | NavigationRail 전환, 1.3배 글꼴, TalkBack, 폰 가로/expanded 폭 검증 |
-| ✅ | Web·Android 가족/자녀 capability 적용 | `/api/session/context` 기반 메뉴·가계부·광고·공간 권한과 자녀 홈 제한 구현 완료 (`FAM-001`, `FAM-002`) |
-| 🟡 | iOS 기능 동등화 | Android 안정화 후 EventKit, APNs, 앱 링크, 자녀 capability 및 주요 화면 네이티브화 |
+| 🔴 | 기존 공간 승격·삭제 운영 마감 | Preview/Production API 배포 후 Android/Web에서 가족 전환·안전 삭제·fallback을 실제 계정으로 검증 |
+| 🔴 | Android·PC Web·Mobile Web 3플랫폼 핵심 기능 파리티 | 공통 API·DB·권한 계약 확정 후 Android 기준 구현, PC Web, Mobile Web, 통합 회귀 순으로 마감 |
+| 🔴 | 알림 설정 발송 경계 | 사용자의 일정·가계부 알림 선택을 Cron/FCM이 실제로 준수하도록 서버에서 강제 |
+| 🟡 | 일정 첨부 완성 | 현재 로컬 미리보기를 Storage 업로드·일정 연결·삭제·RLS까지 완성 |
+| 🟡 | Web 설정·기능 노출 정합화 | PC/Mobile에서 네이티브 전용·보류·준비 중 기능의 문구와 진입 정책 통일 |
+| 🟡 | Android production build 기능 반영 | 위 공통 계약을 Compose에 연결하고 debug/release production build와 실기기 회귀 |
+| ⏸ | Remote Config 운영 안전장치 | 핵심 기능 파리티와 운영 회귀가 끝난 뒤 기존 초기화·백오피스 편집기를 실제 차단 계약에 연결 |
+| ⏸ | Google Play 출시·iOS | 현재 기능 안정화와 Web/API 운영 반영이 끝난 뒤 재개 |
 
 ## 우선순위 기준
 

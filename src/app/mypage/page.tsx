@@ -31,13 +31,12 @@ const DEFAULT_NOTIF: NotificationSettings = {
 
 export default function MyPage() {
   const isDesktop = useIsDesktop();
-  const { user, profile, loading, familyGroupId } = useCurrentUser();
+  const { user, profile, loading, familyGroupId, personalSpaceId } = useCurrentUser();
   const { signOut, updatePassword } = useAuth();
   const router = useRouter();
 
   const [insights, setInsights] = useState<{ totalExpense: number; upcomingCount: number; memberCount: number; month: number } | null>(null);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIF);
-  const [savingNotif, setSavingNotif] = useState(false);
   const [biometricAvailability, setBiometricAvailability] = useState<NativeBiometricAvailability>({
     available: false,
     biometryType: 'none',
@@ -78,16 +77,19 @@ export default function MyPage() {
 
   useEffect(() => {
     if (!profile?.id) return;
-    const ns = (profile as any).notification_settings;
-    if (ns) setNotifSettings({ ...DEFAULT_NOTIF, ...ns });
-    setEditName(user?.name ?? '');
-    setEditAvatar(user?.avatar ?? '👤');
-    fetchWithdrawalStatus();
-
-    if (familyGroupId) {
-      getMyPageInsights(familyGroupId).then(setInsights);
-    }
-  }, [profile?.id, user?.id, familyGroupId, fetchWithdrawalStatus]);
+    const initialProfileSync = window.setTimeout(() => {
+      if (profile.notification_settings) {
+        setNotifSettings({ ...DEFAULT_NOTIF, ...profile.notification_settings });
+      }
+      setEditName(user?.name ?? '');
+      setEditAvatar(user?.avatar ?? '👤');
+      void fetchWithdrawalStatus();
+      if (familyGroupId) {
+        void getMyPageInsights(familyGroupId, personalSpaceId).then(setInsights);
+      }
+    }, 0);
+    return () => window.clearTimeout(initialProfileSync);
+  }, [profile, user?.name, user?.avatar, familyGroupId, personalSpaceId, fetchWithdrawalStatus]);
 
   useEffect(() => {
     if (!isNativeApp()) return;
@@ -110,9 +112,7 @@ export default function MyPage() {
   const handleToggle = async (key: keyof NotificationSettings) => {
     const updated = { ...notifSettings, [key]: !notifSettings[key] };
     setNotifSettings(updated);
-    setSavingNotif(true);
     await updateNotificationSettings(updated);
-    setSavingNotif(false);
   };
 
   const handleBiometricToggle = async () => {

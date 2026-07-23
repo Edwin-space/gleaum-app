@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/db';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { formatRelativeTime } from '@/lib/utils';
@@ -35,6 +36,7 @@ const filterItems = [
 ];
 
 export function DesktopNotifications() {
+  const router = useRouter();
   const { user, loading: userLoading } = useCurrentUser();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,11 @@ export function DesktopNotifications() {
   const handleMarkRead = async (id: string) => {
     await markNotificationRead(id);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.read) await handleMarkRead(notification.id);
+    if (notification.scheduleId) router.push(`/schedules/${notification.scheduleId}`);
   };
 
   const handleMarkAllRead = async () => {
@@ -178,15 +185,18 @@ export function DesktopNotifications() {
                       {items.map(n => {
                         const cfg = typeConfig[n.type] ?? typeConfig.system;
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={n.id}
-                            onClick={() => !n.read && handleMarkRead(n.id)}
+                            onClick={() => void handleNotificationClick(n)}
+                            disabled={n.read && !n.scheduleId}
                             style={{
+                              width: '100%', textAlign: 'left', font: 'inherit',
                               display: 'flex', gap: '16px', padding: '20px 24px',
                               borderRadius: '20px', background: 'var(--theme-surface)',
                               boxShadow: '0 1px 8px rgba(0,0,0,0.04)',
                               border: `1px solid ${n.read ? 'rgba(0,0,0,0.04)' : cfg.color + '22'}`,
-                              cursor: n.read ? 'default' : 'pointer',
+                              cursor: n.scheduleId || !n.read ? 'pointer' : 'default',
                               opacity: n.read ? 0.65 : 1,
                               transition: 'all 0.15s',
                               borderLeft: n.read ? '1px solid rgba(0,0,0,0.04)' : `3px solid ${cfg.color}`,
@@ -205,7 +215,7 @@ export function DesktopNotifications() {
                               <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</p>
                               <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>{n.body}</p>
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>

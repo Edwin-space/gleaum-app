@@ -13,6 +13,8 @@ data class NativeSpaceItem(
     val role: String,
     val memberCount: Int,
     val inviteCode: String?,
+    val spaceKind: String,
+    val purpose: String?,
     val isPersonal: Boolean,
     val isActive: Boolean,
 ) {
@@ -23,6 +25,8 @@ data class NativeSpaceItem(
             role = json.optString("role", "viewer"),
             memberCount = json.optInt("memberCount", 0),
             inviteCode = json.optString("inviteCode").takeIf { it.isNotBlank() },
+            spaceKind = json.optString("spaceKind", if (json.optBoolean("isPersonal", false)) "personal" else "general"),
+            purpose = json.optString("purpose").takeIf { it.isNotBlank() && it != "null" },
             isPersonal = json.optBoolean("isPersonal", false),
             isActive = json.optBoolean("isActive", false),
         )
@@ -145,6 +149,14 @@ object NativeSpaceApi {
 
     fun regenerateInviteCode(context: Context, spaceId: String): NativeSpaceSummary {
         return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/invite-code"))
+    }
+
+    fun convertToFamily(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/family"))
+    }
+
+    fun delete(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "DELETE", "$SPACE_URL/$spaceId"))
     }
 
     fun updateMemberRole(context: Context, spaceId: String, userId: String, role: String): NativeSpaceSummary {

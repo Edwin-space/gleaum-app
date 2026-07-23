@@ -349,7 +349,7 @@ export function DesktopSpace() {
             {isAdmin && !isPersonalSpace && (
               <button
                 type="button"
-                onClick={() => { setRenamingTo(group?.name ?? ''); setShowRenameModal(true); }}
+                onClick={() => router.push(`/space/settings?sid=${encodeURIComponent(displaySpaceId ?? '')}`)}
                 style={{ minHeight: '44px', padding: '0 14px', borderRadius: '14px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface-muted)', color: 'var(--theme-text)', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
               >
                 공간 설정

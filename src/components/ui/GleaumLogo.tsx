@@ -5,8 +5,6 @@
 // Source: gleaum_design_system.html
 // ============================================================
 
-import Image from 'next/image';
-
 /**
  * 공식 BI(Brand Identity) 워드마크 컴포넌트
  * img/gleaum_bi.svg 기반 — 다크/라이트 배경 대응
@@ -61,13 +59,20 @@ interface GleaumLogoImgProps {
 }
 export function GleaumLogoImg({ size = 40, className = '' }: GleaumLogoImgProps) {
   return (
-    <Image
-      src="/logo.png"
-      alt="글리움 로고"
-      width={size}
-      height={size}
+    <span
+      role="img"
+      aria-label="글리움 로고"
       className={className}
-      style={{ borderRadius: Math.round(size * 0.22), objectFit: 'cover' }}
+      style={{
+        display: 'inline-flex',
+        width: size,
+        height: size,
+        flexShrink: 0,
+        borderRadius: Math.round(size * 0.22),
+        backgroundImage: "url('/logo.png')",
+        backgroundPosition: 'center',
+        backgroundSize: 'cover',
+      }}
     />
   );
 }

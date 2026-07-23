@@ -5,6 +5,7 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useSchedules } from '@/hooks/useSchedules';
+import { useFamilyDependents } from '@/hooks/useFamilyDependents';
 import { formatTime, formatDateShort } from '@/lib/utils';
 import type { Schedule, ScheduleStatus } from '@/types';
 
@@ -41,13 +42,22 @@ export function MobileChildren() {
   const { spaceId }                                       = useCurrentUser();
   const { members, loading: spaceLoading }                = useSpace(spaceId);
   const { schedules, loading: schedulesLoading, updateStatus } = useSchedules(spaceId);
+  const { dependents, loading: dependentsLoading } = useFamilyDependents(spaceId);
 
-  const loading = spaceLoading || schedulesLoading;
+  const loading = spaceLoading || schedulesLoading || dependentsLoading;
 
-  const children = members.filter((u) => u.role === 'editor');
+  const children = dependents.flatMap((dependent) => {
+    if (!dependent.linkedUserId) return [];
+    const member = members.find((item) => item.userId === dependent.linkedUserId);
+    return [{
+      id: dependent.linkedUserId,
+      name: member?.user?.name ?? dependent.displayName,
+      avatar: member?.user?.avatar ?? '🧒',
+    }];
+  });
   const tabs = [
     { id: 'all', label: '전체' },
-    ...children.map((c) => ({ id: c.id, label: c.user?.name })),
+    ...children.map((c) => ({ id: c.id, label: c.name })),
   ];
 
   const childSchedules = schedules.filter((s) => {
@@ -380,7 +390,7 @@ export function MobileChildren() {
                             color: '#059669',
                           }}
                         >
-                          {c.user?.avatar} {c.user?.name}
+                          {c.avatar} {c.name}
                         </span>
                       ))}
                     </div>
@@ -491,7 +501,7 @@ export function MobileChildren() {
                         disabled={reNotifyingId === schedule.id}
                         onClick={async () => {
                           setReNotifyingId(schedule.id);
-                          const memberNames = participantChildren.map((c) => c.user?.name).join(', ');
+                          const memberNames = participantChildren.map((c) => c.name).join(', ');
                           const ok = await sendReNotify(schedule, memberNames);
                           setReNotifyingId(null);
                           alert(ok

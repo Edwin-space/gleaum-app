@@ -17,6 +17,7 @@ data class NativeProfile(
     val timezone: String,
     val locale: String,
     val onboardingCompleted: Boolean,
+    val notificationSettings: NativeNotificationSettings?,
 ) {
     companion object {
         fun fromJson(json: JSONObject): NativeProfile = NativeProfile(
@@ -30,6 +31,21 @@ data class NativeProfile(
             timezone = json.optString("timezone", "Asia/Seoul"),
             locale = json.optString("locale", "ko-KR"),
             onboardingCompleted = json.optBoolean("onboardingCompleted", false),
+            notificationSettings = json.optJSONObject("notificationSettings")?.let { NativeNotificationSettings.fromJson(it) },
+        )
+    }
+}
+
+data class NativeNotificationSettings(
+    val scheduleReminders: Boolean,
+    val routineReminders: Boolean,
+    val expenseReminders: Boolean,
+) {
+    companion object {
+        fun fromJson(json: JSONObject): NativeNotificationSettings = NativeNotificationSettings(
+            scheduleReminders = json.optBoolean("scheduleReminders", true),
+            routineReminders = json.optBoolean("routineReminders", true),
+            expenseReminders = json.optBoolean("expenseReminders", true),
         )
     }
 }
@@ -55,6 +71,28 @@ object NativeProfileApi {
     fun updatePassword(context: Context, password: String) {
         val body = JSONObject().put("password", password)
         request(context, "PATCH", PASSWORD_URL, body)
+    }
+
+    fun updateNotificationSettings(
+        context: Context,
+        scheduleEnabled: Boolean,
+        budgetEnabled: Boolean,
+    ): NativeProfile {
+        val settings = JSONObject()
+            .put("scheduleReminders", scheduleEnabled)
+            .put("routineReminders", scheduleEnabled)
+            .put("expenseReminders", budgetEnabled)
+        val json = request(
+            context,
+            "PATCH",
+            PROFILE_URL,
+            JSONObject().put("notificationSettings", settings),
+        )
+        val profileJson = json.optJSONObject("profile") ?: throw IllegalStateException("profile_update_failed")
+        if (!profileJson.has("notificationSettings")) {
+            throw IllegalStateException("notification_settings_not_supported")
+        }
+        return NativeProfile.fromJson(profileJson)
     }
 
     private fun request(context: Context, method: String, url: String, body: JSONObject? = null): JSONObject {

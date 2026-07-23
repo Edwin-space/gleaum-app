@@ -4,6 +4,7 @@ import {
   canEditSpace,
   canReadLedgerBoundary,
   canReadScheduleBoundary,
+  canWriteScheduleBoundary,
   resolveScheduleTargetSpace,
 } from '../src/lib/data-boundaries';
 
@@ -48,6 +49,17 @@ test('only admin and editor roles can mutate shared space content', () => {
   assert.equal(canEditSpace('editor'), true);
   assert.equal(canEditSpace('viewer'), false);
   assert.equal(canEditSpace(null), false);
+});
+
+test('schedule write access matches the shared contract used by every platform', () => {
+  const privateSchedule = { createdBy: 'owner', visibility: 'private' } as const;
+  const sharedSchedule = { createdBy: 'owner', visibility: 'space' } as const;
+
+  assert.equal(canWriteScheduleBoundary('owner', privateSchedule, null), true);
+  assert.equal(canWriteScheduleBoundary('member', privateSchedule, 'admin'), false);
+  assert.equal(canWriteScheduleBoundary('owner', sharedSchedule, 'viewer'), false);
+  assert.equal(canWriteScheduleBoundary('editor', sharedSchedule, 'editor'), true);
+  assert.equal(canWriteScheduleBoundary('admin', sharedSchedule, 'admin'), true);
 });
 
 test('personal schedules always target the personal space', () => {

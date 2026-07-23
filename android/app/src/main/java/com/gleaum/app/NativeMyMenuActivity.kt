@@ -93,10 +93,15 @@ class NativeMyMenuActivity : AppCompatActivity() {
         Thread {
             try {
                 val loaded = requestHomeSummary(token)
+                val profile = runCatching { NativeProfileApi.fetch(this) }.getOrNull()
                 runOnUiThread {
                     NativeAccountContextStore.save(this, loaded.account)
                     (application as? GleaumApp)?.syncAdvertisingEligibility()
                     summary = loaded
+                    if (profile != null) {
+                        composeProfile = profile
+                        profile.notificationSettings?.let(::syncNotificationSettings)
+                    }
                     loading = false
                     message = null
                     render()
@@ -298,14 +303,34 @@ class NativeMyMenuActivity : AppCompatActivity() {
     private fun isBudgetNotificationEnabled(): Boolean = nativePrefs().getString(NOTIFY_BUDGET_KEY, "true") == "true"
 
     private fun saveNotificationSettings(scheduleEnabled: Boolean, budgetEnabled: Boolean) {
-        nativePrefs().edit()
-            .putString(NOTIFY_SCHEDULE_KEY, scheduleEnabled.toString())
-            .putString(NOTIFY_BUDGET_KEY, budgetEnabled.toString())
-            .apply()
         activeComposeSettingsDialog = null
-        message = null
-        showToast("알림 설정을 저장했어요.")
+        message = "알림 설정을 저장하는 중이에요."
         render()
+        Thread {
+            try {
+                val profile = NativeProfileApi.updateNotificationSettings(this, scheduleEnabled, budgetEnabled)
+                runOnUiThread {
+                    composeProfile = profile
+                    profile.notificationSettings?.let(::syncNotificationSettings)
+                    message = null
+                    showToast("알림 설정을 저장했어요.")
+                    render()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    message = friendlyProfileError(e.message)
+                    showToast(message.orEmpty())
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun syncNotificationSettings(settings: NativeNotificationSettings) {
+        nativePrefs().edit()
+            .putString(NOTIFY_SCHEDULE_KEY, settings.scheduleReminders.toString())
+            .putString(NOTIFY_BUDGET_KEY, settings.expenseReminders.toString())
+            .apply()
     }
 
     private fun buildScreen(): FrameLayout {

@@ -977,6 +977,28 @@ export function MobileSpace() {
                     </div>
                     {!spaceAtLimit && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>}
                   </button>}
+
+                  {isAdmin && !isPersonalSpace && displaySpaceId && (
+                    <button
+                      onClick={() => {
+                        setShowManageSheet(false);
+                        router.push(`/space/settings?sid=${encodeURIComponent(displaySpaceId)}`);
+                      }}
+                      style={{
+                        width: '100%', padding: '14px 16px', borderRadius: '16px',
+                        border: '1.5px solid var(--theme-border)', background: 'var(--theme-surface-muted)',
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ fontSize: '20px' }}>⚙️</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>공간 설정</p>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>이름·멤버·가족 전환·공간 삭제 관리</p>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  )}
                 </div>
               </div>
               )}

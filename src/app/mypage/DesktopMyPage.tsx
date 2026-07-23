@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ThemeModeSelector } from '@/components/ui/ThemeModeSelector';
+import { useAccountSession } from '@/components/AccountSessionProvider';
 import type { NotificationSettings } from '@/types';
 
 // ── 아이콘 헬퍼 ──
@@ -46,7 +47,7 @@ function SettingRow({ icon, label, description, value, isToggle, toggled, onTogg
         {icon}
       </div>
       <div style={{ flex: 1 }}>
-        <h4 style={{ fontSize: '15px', fontWeight: 800, color: danger ? '#EF4444' : '#1A1B2E', margin: '0 0 2px' }}>{label}</h4>
+        <h4 style={{ fontSize: '15px', fontWeight: 800, color: danger ? '#EF4444' : 'var(--theme-text)', margin: '0 0 2px' }}>{label}</h4>
         {description && <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{description}</p>}
       </div>
       {isToggle ? (
@@ -67,8 +68,8 @@ function SettingRow({ icon, label, description, value, isToggle, toggled, onTogg
 }
 
 interface DesktopMyPageProps {
-  user: any;
-  insights: any;
+  user: { name?: string; email?: string; avatar?: string } | null;
+  insights: { memberCount?: number; totalExpense?: number; upcomingCount?: number } | null;
   notifSettings: NotificationSettings;
   handleToggle: (key: keyof NotificationSettings) => void;
   signOut: () => void;
@@ -87,6 +88,8 @@ export function DesktopMyPage({
   setShowPasswordModal,
   setShowDeleteModal,
 }: DesktopMyPageProps) {
+  const { capabilities } = useAccountSession();
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
@@ -163,10 +166,12 @@ export function DesktopMyPage({
                 <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, margin: 0 }}>{user?.email}</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: capabilities.canViewHouseholdBudget ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: '10px', marginTop: '24px' }}>
                 {[
                   { label: '멤버', value: insights?.memberCount ?? 0 },
-                  { label: '지출', value: (insights?.totalExpense ?? 0).toLocaleString() },
+                  ...(capabilities.canViewHouseholdBudget
+                    ? [{ label: '지출', value: (insights?.totalExpense ?? 0).toLocaleString() }]
+                    : []),
                   { label: '일정', value: insights?.upcomingCount ?? 0 },
                 ].map(item => (
                   <div key={item.label} style={{
@@ -182,18 +187,33 @@ export function DesktopMyPage({
             </div>
           </div>
 
-          {/* 프리미엄 혜택 카드 */}
+          {/* Android 전체 메뉴와 동일한 핵심 빠른 동작 */}
           <div style={{
             background: 'var(--theme-surface)', borderRadius: '24px', padding: '22px',
             boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-              <span style={{ fontSize: '20px' }}>💎</span>
-              <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: 0 }}>프리미엄 혜택</p>
+            <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 14px' }}>빠른 실행</p>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {[
+                { href: '/schedules/new', label: '일정 추가' },
+                { href: '/space', label: '공간 관리' },
+                ...(capabilities.canViewHouseholdBudget ? [{ href: '/budget', label: '가계부' }] : []),
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  style={{
+                    minHeight: '44px', borderRadius: '999px', padding: '0 18px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: 'var(--theme-surface-muted)', color: 'var(--theme-text)',
+                    textDecoration: 'none', fontSize: '14px', fontWeight: 800,
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <span aria-hidden="true" style={{ color: 'var(--color-primary)' }}>→</span>
+                </Link>
+              ))}
             </div>
-            <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, lineHeight: 1.65, margin: 0 }}>
-              글리움 프리미엄 사용 중입니다. 무제한 공간 생성과 고화질 파일 첨부 기능을 이용할 수 있습니다.
-            </p>
           </div>
         </div>
 
@@ -230,13 +250,6 @@ export function DesktopMyPage({
               description="홈 화면의 구성과 우선 표시 항목을 선택합니다."
               href="/settings/home-layout"
             />
-            <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
-            <SettingRow
-              icon={<Icon d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M16 2v4 M8 2v4 M3 10h18" stroke="#0084CC" />}
-              label="캘린더 설정"
-              description="기기 캘린더 연동 및 표시 옵션을 설정합니다."
-              href="/settings/calendar"
-            />
           </div>
 
           {/* 계정 및 보안 */}
@@ -244,19 +257,12 @@ export function DesktopMyPage({
             <div style={{ padding: '18px 24px', background: 'var(--theme-surface-muted)', borderBottom: '1px solid var(--theme-border)' }}>
               <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>계정 및 보안</p>
             </div>
-            <div style={{ divideY: '1px solid #F7F7FA' } as any}>
+            <div>
               <SettingRow
                 icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#0084CC" />}
                 label="비밀번호 재설정"
                 description="이메일 로그인을 위한 보안 비밀번호를 설정하거나 변경합니다."
                 onClick={() => setShowPasswordModal(true)}
-              />
-              <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
-              <SettingRow
-                icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4" stroke="#0084CC" />}
-                label="보안 설정"
-                description="생체인증 앱 잠금, 보호 구간, 재인증 주기를 관리합니다."
-                href="/settings/security"
               />
               <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
               <SettingRow
@@ -274,21 +280,51 @@ export function DesktopMyPage({
               <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>서비스 연동 및 알림</p>
             </div>
             <SettingRow
-              icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" stroke="#1A1B2E" />}
-              label="푸시 알림 리마인더"
-              description="일정 시작 전 및 결제일 도래 시 알림을 받습니다."
+              icon={<Icon d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" stroke="#0084CC" />}
+              label="알림 목록"
+              description="받은 알림과 확인하지 않은 소식을 확인합니다."
+              href="/notifications"
+            />
+            <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
+            <SettingRow
+              icon={<Icon d="M12 6v6l4 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z" stroke="#0084CC" />}
+              label="일정 리마인더"
+              description="일정 시작 전에 알림을 받습니다."
               isToggle
               toggled={notifSettings.scheduleReminders}
               onToggle={() => handleToggle('scheduleReminders')}
             />
+            {capabilities.canViewHouseholdBudget && (
+              <>
+                <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
+                <SettingRow
+                  icon={<Icon d="M2 5h20v14H2z M2 10h20" stroke="#0084CC" />}
+                  label="가계부 결제 알림"
+                  description="정기 지출 결제일 전에 알림을 받습니다."
+                  isToggle
+                  toggled={notifSettings.expenseReminders}
+                  onToggle={() => handleToggle('expenseReminders')}
+                />
+              </>
+            )}
+          </div>
+
+          <div style={{ background: 'var(--theme-surface)', borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--theme-shadow-card)', border: '1px solid var(--theme-border)' }}>
+            <div style={{ padding: '18px 24px', background: 'var(--theme-surface-muted)', borderBottom: '1px solid var(--theme-border)' }}>
+              <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>서비스</p>
+            </div>
+            <SettingRow
+              icon={<Icon d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6" stroke="#0084CC" />}
+              label="이용약관"
+              description="글리움 서비스 이용 기준을 확인합니다."
+              href="/legal/terms"
+            />
             <div style={{ height: '1px', background: 'var(--theme-surface-muted)', margin: '0 24px' }} />
             <SettingRow
-              icon={<Icon d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z M21 21l-4.35-4.35" stroke="#1A1B2E" />}
-              label="가계부 스마트 리포트"
-              description="매월 말 지출 내역 요약 리포트를 푸시로 전송합니다."
-              isToggle
-              toggled={notifSettings.expenseReminders}
-              onToggle={() => handleToggle('expenseReminders')}
+              icon={<Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#0084CC" />}
+              label="개인정보처리방침"
+              description="개인정보 수집·이용 및 보호 기준을 확인합니다."
+              href="/legal/privacy"
             />
           </div>
 

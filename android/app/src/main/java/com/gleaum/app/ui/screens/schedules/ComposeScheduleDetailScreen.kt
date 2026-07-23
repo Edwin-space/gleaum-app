@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
@@ -74,6 +75,9 @@ fun ComposeScheduleDetailScreen(
     onBack: () -> Unit,
     onEdit: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
+    onRenotify: () -> Unit,
+    renotifying: Boolean,
+    onOpenLocation: (String) -> Unit,
     onDelete: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -87,7 +91,7 @@ fun ComposeScheduleDetailScreen(
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "뒤로") }
                 },
                 actions = {
-                    if (schedule != null) {
+                    if (schedule?.permissions?.canEdit == true) {
                         IconButton(onClick = { onEdit(schedule.id) }) { Icon(Icons.Outlined.Edit, contentDescription = "수정") }
                     }
                 },
@@ -126,6 +130,9 @@ fun ComposeScheduleDetailScreen(
                         schedule = schedule,
                         onEdit = onEdit,
                         onToggleComplete = onToggleComplete,
+                        onRenotify = onRenotify,
+                        renotifying = renotifying,
+                        onOpenLocation = onOpenLocation,
                         onDelete = onDelete,
                     )
                 }
@@ -139,6 +146,9 @@ private fun DetailContent(
     schedule: NativeAppSchedule,
     onEdit: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
+    onRenotify: () -> Unit,
+    renotifying: Boolean,
+    onOpenLocation: (String) -> Unit,
     onDelete: () -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
@@ -150,11 +160,13 @@ private fun DetailContent(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         DetailHero(schedule)
-        DetailInfoCard(schedule)
+        DetailInfoCard(schedule, onOpenLocation)
         ActionCard(
             schedule = schedule,
             onEdit = onEdit,
             onToggleComplete = onToggleComplete,
+            onRenotify = onRenotify,
+            renotifying = renotifying,
             onAskDelete = { confirmDelete = true },
         )
     }
@@ -209,7 +221,7 @@ private fun DetailHero(schedule: NativeAppSchedule) {
 }
 
 @Composable
-private fun DetailInfoCard(schedule: NativeAppSchedule) {
+private fun DetailInfoCard(schedule: NativeAppSchedule, onOpenLocation: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -218,14 +230,24 @@ private fun DetailInfoCard(schedule: NativeAppSchedule) {
             DetailRow(Icons.Outlined.Event, "상태", statusLabel(schedule.status))
             DetailRow(Icons.Outlined.Repeat, "반복", repeatLabel(schedule.repeat))
             DetailRow(Icons.Outlined.Notifications, "알림", if (schedule.reminder > 0) "${schedule.reminder}분 전" else "없음")
+            schedule.locationAddress?.takeIf { it.isNotBlank() }?.let { address ->
+                DetailRow(Icons.Outlined.LocationOn, "장소", address, onClick = { onOpenLocation(address) })
+            }
+            DetailRow(Icons.Outlined.Event, "참여자", "${schedule.participantIds.size}명")
             DetailRow(Icons.Outlined.Schedule, "메모", schedule.memo?.takeIf { it.isNotBlank() } ?: "등록된 메모가 없어요")
         }
     }
 }
 
 @Composable
-private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+private fun DetailRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    onClick: (() -> Unit)? = null,
+) {
     ListItem(
+        modifier = Modifier.fillMaxWidth(),
         leadingContent = {
             Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape, modifier = Modifier.size(42.dp)) {
                 Box(contentAlignment = Alignment.Center) { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp)) }
@@ -233,6 +255,9 @@ private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, lab
         },
         headlineContent = { Text(label, fontWeight = FontWeight.Bold) },
         supportingContent = { Text(value) },
+        trailingContent = if (onClick != null) {
+            { TextButton(onClick = onClick) { Text("지도 열기") } }
+        } else null,
     )
 }
 
@@ -241,6 +266,8 @@ private fun ActionCard(
     schedule: NativeAppSchedule,
     onEdit: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
+    onRenotify: () -> Unit,
+    renotifying: Boolean,
     onAskDelete: () -> Unit,
 ) {
     Card(
@@ -248,20 +275,35 @@ private fun ActionCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { onToggleComplete(if (schedule.status == "completed") "pending" else "completed") }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(if (schedule.status == "completed") "예정으로 되돌리기" else "완료 처리")
+            if (!schedule.permissions.canEdit) {
+                Text("이 일정은 읽기 전용이에요.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                return@Column
+            }
+            if (schedule.permissions.canChangeStatus) {
+                Button(onClick = { onToggleComplete(if (schedule.status == "completed") "pending" else "completed") }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(if (schedule.status == "completed") "예정으로 되돌리기" else "완료 처리")
+                }
             }
             FilledTonalButton(onClick = { onEdit(schedule.id) }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
                 Text("수정하기")
             }
-            OutlinedButton(onClick = onAskDelete, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text("삭제하기", color = MaterialTheme.colorScheme.error)
+            if (schedule.permissions.canRenotify) {
+                FilledTonalButton(onClick = onRenotify, enabled = !renotifying, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(if (renotifying) "발송 중..." else "재알림 보내기")
+                }
+            }
+            if (schedule.permissions.canDelete) {
+                OutlinedButton(onClick = onAskDelete, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text("삭제하기", color = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }

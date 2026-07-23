@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
+import { isNotificationEnabled } from '@/lib/notification-settings';
 
 export async function POST(req: NextRequest) { return GET(req); }
 
@@ -94,11 +95,13 @@ export async function GET(req: NextRequest) {
     // ── FCM 발송 ──
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, fcm_token')
+      .select('id, fcm_token, notification_settings')
       .eq('id', expense.created_by)
       .single();
 
-    if (profile?.fcm_token) {
+    if (!profile || !isNotificationEnabled(profile.notification_settings, 'expenseReminders')) continue;
+
+    if (profile.fcm_token) {
       await sendFCMToMultiple([profile.fcm_token], title, body, url);
     }
 
