@@ -33,7 +33,7 @@ family   = 가족 관계·자녀 계정 기능 활성 공간
 ```text
 보호자가 가족 공간에 자녀 기본 정보 등록
 → family_dependents.status = consent_pending
-→ 보호자 로그인 이메일로 6자리 일회성 확인 코드 발송
+→ 보호자 로그인 이메일로 8자리 일회성 확인 코드 발송
 → 보호자가 앱에서 OTP 확인
 → OTP 확인 증적이 있는 상태에서 필수 항목 3종을 각각 동의
 → 관계 verification_status = verified
@@ -98,7 +98,7 @@ adult                    만 19세 이상
 |---|---|---|
 | `GET /api/spaces/children?spaceId=` | 기반 완료 | 조회 권한이 있는 자녀 프로필 목록 |
 | `POST /api/spaces/children` | 기반 완료 | 가족 공간 자녀 대기 프로필 생성 |
-| `POST /api/spaces/children/[id]/guardian-verification/start` | 구현 완료 | 보호자 로그인 이메일로 6자리 OTP 발송 |
+| `POST /api/spaces/children/[id]/guardian-verification/start` | 구현 완료 | 보호자 로그인 이메일로 8자리 OTP 발송 |
 | `POST /api/spaces/children/guardian-verification/verify-otp` | 구현 완료 | Supabase Auth OTP 확인 후 DB 도전을 확인 완료로 기록 |
 | `POST /api/spaces/children/guardian-verification/complete` | 구현 완료 | 필수 동의 3종과 이메일 확인 증적 기록 |
 | `POST /api/spaces/children/[id]/invite` | 기반 완료 | 검증·동의 완료 후 일회성 초대 발급 |
@@ -174,7 +174,7 @@ Custom SMTP(`helper@gleaum.com`)를 통해 발송된다. 일반 이메일/비밀
 
 현재 방식은 초기 이용자 규모에서 SMS 발송비를 줄이기 위한 임시 모델이다.
 
-- Supabase Auth와 연결된 보호자 로그인 이메일로 6자리 일회성 OTP를 보낸다.
+- Supabase Auth와 연결된 보호자 로그인 이메일로 운영 설정과 일치하는 8자리 일회성 OTP를 보낸다.
 - OTP 성공 후 DB 확인 도전의 `verified_at`을 기록하고, 이 증적 없이는 필수 동의를 저장할 수 없다.
 - 필수 동의는 `service_registration`, `personal_data_processing`, `family_data_sharing` 3종만 각각 받는다.
 - 위치 수집·위치 공유·마케팅 동의는 묶지 않으며 기본 비활성이다.

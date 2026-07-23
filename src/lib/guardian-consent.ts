@@ -1,5 +1,6 @@
 export const GUARDIAN_POLICY_VERSION = '2026-07-23-email-otp-v2';
 export const GUARDIAN_EMAIL_OTP_REDIRECT_PATH = '/auth/email-purpose/guardian-verification';
+export const GUARDIAN_EMAIL_OTP_LENGTH = 8;
 
 export const REQUIRED_GUARDIAN_CONSENTS = [
   'service_registration',

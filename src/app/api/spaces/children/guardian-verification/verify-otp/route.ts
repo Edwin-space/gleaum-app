@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { confirmGuardianEmailVerification } from '@/lib/db';
+import { GUARDIAN_EMAIL_OTP_LENGTH } from '@/lib/guardian-consent';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
@@ -19,7 +20,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
   }
 
-  if (!/^\d{6}$/.test(code) || !/^gev_[a-f0-9]{64}$/.test(challengeToken)) {
+  const hasValidCodeFormat = (
+    code.length === GUARDIAN_EMAIL_OTP_LENGTH
+    && /^\d+$/.test(code)
+  );
+  if (!hasValidCodeFormat || !/^gev_[a-f0-9]{64}$/.test(challengeToken)) {
     return NextResponse.json({ error: 'invalid_verification_code' }, { status: 400 });
   }
 

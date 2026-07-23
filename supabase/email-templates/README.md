@@ -15,7 +15,7 @@ Authentication → Emails → Templates → Magic link or OTP
   `https://www.gleaum.com/auth/email-purpose/guardian-verification`
 - 보호자 요청은 위 URL을 `signInWithOtp.options.emailRedirectTo`로 전달한다.
 - 템플릿은 `{{ .RedirectTo }}` 조건문으로 보호자 안내와 일반 안내를 구분한다.
-- 사용 금지: `{{ .ConfirmationURL }}` — 현재 앱은 링크가 아니라 6자리 OTP 입력 방식이다.
+- 사용 금지: `{{ .ConfirmationURL }}` — 현재 앱은 링크가 아니라 운영 Auth가 발급하는 8자리 OTP 입력 방식이다.
 
 이 설정은 SQL migration 대상이 아니므로 운영 프로젝트 Dashboard에서 별도로 반영해야 한다.
 

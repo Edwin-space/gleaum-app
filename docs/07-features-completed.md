@@ -19,7 +19,7 @@
 ### 2026-07-23 — 보호자 이메일 OTP·필수 동의 흐름 정합화
 
 - Supabase 메일 템플릿은 OTP를 발송하지만 앱은 Magic Link를 기다리던 프로토콜 불일치 수정
-- 자녀 관리 화면에 6자리 OTP 입력·재발송 UI 추가
+- 자녀 관리 화면에 운영 메일과 일치하는 8자리 OTP 입력·재발송 UI 추가
 - OTP 성공 후에만 `guardian_email_verifications.verified_at`을 기록하는 서버 함수 추가
 - 확인 증적이 없는 필수 동의 요청은 DB에서 차단
 - 보호자 관계와 동의 증빙 방법을 `email_otp`, 정책 버전을 `2026-07-23-email-otp-v2`로 명시

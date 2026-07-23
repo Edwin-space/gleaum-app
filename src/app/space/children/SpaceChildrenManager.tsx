@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { GUARDIAN_EMAIL_OTP_LENGTH } from '@/lib/guardian-consent';
 import type { FamilyDependent, FamilyDependentStatus } from '@/types';
 
 type Props = {
@@ -25,7 +26,7 @@ type Props = {
 };
 
 const STATUS_META: Record<FamilyDependentStatus, { label: string; description: string }> = {
-  consent_pending: { label: '보호자 확인 필요', description: '보호자 이메일로 받은 6자리 코드 확인과 필수 동의를 진행해 주세요.' },
+  consent_pending: { label: '보호자 확인 필요', description: `보호자 이메일로 받은 ${GUARDIAN_EMAIL_OTP_LENGTH}자리 코드 확인과 필수 동의를 진행해 주세요.` },
   ready: { label: '초대 준비 완료', description: '자녀에게 보낼 일회성 초대 링크를 만들 수 있습니다.' },
   invited: { label: '초대 전송 가능', description: '기존 링크를 잃어버렸다면 새 링크를 발급할 수 있습니다.' },
   approval_pending: { label: '최종 승인 대기', description: '자녀가 가입했습니다. 계정과 이메일을 확인한 뒤 승인해 주세요.' },
@@ -130,7 +131,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
         expiresAt: payload.expiresAt,
       });
       setVerificationCode('');
-      toast.success(`${payload.email}로 6자리 확인 코드를 보냈습니다`);
+      toast.success(`${payload.email}로 ${GUARDIAN_EMAIL_OTP_LENGTH}자리 확인 코드를 보냈습니다`);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
       toast.error(message === 'verification_rate_limited'
@@ -143,7 +144,11 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
 
   const verifyGuardianCode = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!otpChallenge || verificationCode.length !== 6 || verifyingCode) return;
+    if (
+      !otpChallenge
+      || verificationCode.length !== GUARDIAN_EMAIL_OTP_LENGTH
+      || verifyingCode
+    ) return;
     setVerifyingCode(true);
     try {
       const response = await fetch('/api/spaces/children/guardian-verification/verify-otp', {
@@ -248,7 +253,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
 
         <section style={{ display: 'grid', gridTemplateColumns: desktop ? 'repeat(3, minmax(0, 1fr))' : '1fr', gap: '12px', marginBottom: '24px' }}>
           {[
-            { icon: MailCheck, title: '1. 보호자 확인', text: '로그인 이메일로 받은 6자리 코드 확인 후 필수 항목을 각각 동의합니다.' },
+            { icon: MailCheck, title: '1. 보호자 확인', text: `로그인 이메일로 받은 ${GUARDIAN_EMAIL_OTP_LENGTH}자리 코드 확인 후 필수 항목을 각각 동의합니다.` },
             { icon: Send, title: '2. 직접 공유', text: '부모 휴대폰의 공유 기능으로 문자·카카오톡 등에 초대 링크를 보냅니다.' },
             { icon: UserRoundCheck, title: '3. 최종 승인', text: '자녀가 가입해도 보호자가 승인하기 전에는 공간에 접근할 수 없습니다.' },
           ].map(({ icon: Icon, title, text }) => (
@@ -281,7 +286,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
                   {otpChallenge.displayName}님의 확인 코드를 입력해 주세요
                 </h2>
                 <p style={{ margin: 0, color: 'var(--theme-text-muted)', fontSize: '13px', lineHeight: 1.6, overflowWrap: 'anywhere' }}>
-                  {otpChallenge.email}로 발송된 6자리 코드이며 30분 동안 유효합니다.
+                  {otpChallenge.email}로 발송된 {GUARDIAN_EMAIL_OTP_LENGTH}자리 코드이며 30분 동안 유효합니다.
                 </p>
               </div>
               <button
@@ -305,11 +310,13 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  aria-label="이메일로 받은 6자리 확인 코드"
-                  maxLength={6}
+                  aria-label={`이메일로 받은 ${GUARDIAN_EMAIL_OTP_LENGTH}자리 확인 코드`}
+                  maxLength={GUARDIAN_EMAIL_OTP_LENGTH}
                   value={verificationCode}
-                  onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="000000"
+                  onChange={(event) => setVerificationCode(
+                    event.target.value.replace(/\D/g, '').slice(0, GUARDIAN_EMAIL_OTP_LENGTH),
+                  )}
+                  placeholder="00000000"
                   style={{
                     ...inputStyle,
                     minWidth: desktop ? '260px' : undefined,
@@ -323,12 +330,12 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
               </Field>
               <button
                 type="submit"
-                disabled={verificationCode.length !== 6 || verifyingCode}
+                disabled={verificationCode.length !== GUARDIAN_EMAIL_OTP_LENGTH || verifyingCode}
                 style={{
                   ...primaryButtonStyle,
                   minHeight: '50px',
-                  opacity: verificationCode.length === 6 && !verifyingCode ? 1 : 0.45,
-                  cursor: verificationCode.length === 6 && !verifyingCode ? 'pointer' : 'not-allowed',
+                  opacity: verificationCode.length === GUARDIAN_EMAIL_OTP_LENGTH && !verifyingCode ? 1 : 0.45,
+                  cursor: verificationCode.length === GUARDIAN_EMAIL_OTP_LENGTH && !verifyingCode ? 'pointer' : 'not-allowed',
                 }}
               >
                 <ShieldCheck size={17} /> {verifyingCode ? '확인 중...' : '코드 확인'}
