@@ -20,7 +20,9 @@ export function RootPageRouter() {
   const nativeRuntime = useSyncExternalStore(
     subscribeRuntime,
     isNativeApp,
-    () => true,
+    // 검색엔진과 일반 웹의 최초 HTML에는 소개 콘텐츠를 제공한다.
+    // 앱 런타임은 hydration 직후 실제 snapshot으로 전환된다.
+    () => false,
   );
 
   useEffect(() => {

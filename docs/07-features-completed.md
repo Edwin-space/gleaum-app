@@ -1284,7 +1284,7 @@ npm run cap:open:android # Android Studio 열기
 - Vercel Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU` 배포 및 `SM_F731N` debug APK 설치 완료
 - 생체인증 해제 후 실기기 시각·조작 회귀만 남아 있으므로 기능 완료가 아닌 검증 대기 상태로 추적
 
-## Android 자녀 연결 Compose·공개 랜딩·Google 로그인 (코드 완료 — 2026-07-23)
+## Android 자녀 연결 Compose·공개 랜딩·Google 로그인 (구현·배포 완료 — 2026-07-23)
 
 - Android 자녀 계정 연결을 WebView에서 Compose Material 3로 전환했다.
 - 보호자 자녀 목록/등록, 8자리 OTP, 필수 동의, 초대 공유, 후보 승인/거절, 자녀 claim을 네이티브 Activity에서 처리한다.
@@ -1292,3 +1292,7 @@ npm run cap:open:android # Android Studio 열기
 - Android Google 로그인은 Credential Manager 계정 선택과 Supabase ID token 교환 방식으로 구현했다.
 - 웹 `/`은 PC 전용 랜딩과 모바일 로그인 강제 구조를 제거하고 PC·태블릿·모바일 공통 반응형 서비스 소개로 재구성했다.
 - 랜딩 화면은 실제 Android 정보 구조를 개인정보 없이 재구성하고 홈·일정·공간·개인 가계부와 현재 지원 플랫폼을 명확히 안내한다.
+- 검색엔진이 첫 HTML에서 소개 문구를 읽을 수 있도록 웹 SSR은 랜딩을 렌더링하고, 앱 WebView만 hydration 뒤 네이티브 세션 분기로 전환한다.
+- 검증: Next production build 55/55, Android compile/unit test/assemble/lint 통과, lint 오류 0건.
+- `SM_F731N`에 최신 APK를 설치해 스플래시 → 네이티브 홈, 가족 공간 → 자녀 계정 연결 Activity 진입을 확인했다.
+- Production 배포 후 네이티브 Bearer 인증으로 기존 자녀 2명 목록을 정상 조회했다. 데이터 변경 동작은 운영 데이터 보호를 위해 별도 실계정 회귀로 남긴다.

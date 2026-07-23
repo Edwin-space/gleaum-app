@@ -1945,3 +1945,12 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 운영: 커밋 `996b891`, Vercel Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU`, 공개 루트·초대 경로 200, `SM_F731N` debug APK 설치 완료.
 - 실기기 생체인증 해제 후 상·하단 버튼 조작 회귀가 남아 있다.
 - 다음 `FAM-013`은 보호자 자녀 목록/등록/OTP/동의/공유/승인·거절과 자녀 claim을 Compose Material 3로 전환한다. 외부 Google OAuth와 법적 원문만 시스템 인증·`LegalWebViewActivity`로 유지한다.
+
+### 2026-07-23 추가 — 자녀 Compose 전환·공개 랜딩·Android 네이티브 Google
+
+- `FAM-013` 네이티브 코드는 완료했다. `NativeChildAccountActivity`에서 자녀 목록/등록, 8자리 OTP, 필수 동의, 초대 공유, 승인·거절, 자녀 claim을 처리한다.
+- 관련 자녀 API는 Cookie와 Android Bearer access token을 모두 검증한다. Production 배포 후 `SM_F731N`에서 기존 자녀 2명 조회를 확인했다.
+- 공개 `/`은 PC·태블릿·모바일 공통 반응형 랜딩이며 SSR HTML에도 서비스 소개를 제공한다. 앱 런타임만 hydration 후 네이티브 세션 라우팅으로 전환한다.
+- Android Google 로그인은 Credential Manager 계정 선택 → Google ID token → Supabase `grant_type=id_token` 교환 방식이다.
+- 외부 설정 잔여: Firebase Android 앱 `com.gleaum.app`에 debug SHA-1 `9D:9E:3B:4F:AB:1C:B3:46:C7:9F:D0:70:F4:A1:07:49:17:7B:64:E2`, release 및 Play App Signing SHA-1을 모두 등록하고 최신 `google-services.json`을 내려받아야 한다.
+- iOS 재개 기준과 P0/P1 순서는 `docs/27-ios-resumption-readiness.md`가 최신 단일 보고서다.
