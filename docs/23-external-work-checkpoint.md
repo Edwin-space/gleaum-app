@@ -4,23 +4,24 @@
 >
 > 목적: 외장 저장장치 작업 폴더를 다른 Mac/AI에서 열어도 커밋·미커밋·외부 비밀 자산을 구분해 재개하기 위한 복구 체크포인트.
 
-> 이동 결과: 2026-07-16 `/Volumes/Portable SSD/AI/gleaum/`으로 전체 복사 완료. 원본·대상 Git 상태와 Next.js production build를 확인했다. 체크포인트 분리 중 제외했던 Android 범위는 같은 날 사용자 지시로 재개해 빌드·release 패키징·실기기 로그인을 검증했다.
+> 최신 이동 결과: 2026-07-23 맥북 작업을 GitHub 브랜치로 보존한 뒤 맥미니 `/Volumes/WD_BLACK/Ai Works/gleaum/`에 동기화했다. 로컬·원격 HEAD, Node 의존성, Web/backoffice/Android 빌드를 확인했다.
 
 ## 1. 현재 기준점
 
 | 항목 | 값 |
 |---|---|
 | 저장소 | `https://github.com/Edwin-space/gleaum-app` |
-| 브랜치 | `main` |
-| Git 기준점 | `8b15af7` 운영 보안 → `ff43799` 가족·자녀·공간 → `a60d187` 웹 광고 → `459a2aa` 작업 트래커 → `d8393d8` 제품/DB 문서 |
+| 브랜치 | `codex/platform-parity-sync-20260723` |
+| Git 기준점 | `42b53b0` 플랫폼 파리티·공간 수명주기 → `564b923` Google Play 등록정보 애셋 |
+| 현재 작업 경로 | `/Volumes/WD_BLACK/Ai Works/gleaum` |
 | Android 버전 | `versionCode 26`, `versionName 1.1.5` |
 | Android 패키지 | `com.gleaum.app` |
 | 웹 운영 주소 | `https://www.gleaum.com` |
 | 공식 관리자 | `https://admins.gleaum.com` |
-| 마지막 Android 검증 | 2026-07-16: debug 빌드·단위 테스트·lint, release R8/package, `SM_F731N` 설치·로그인 진입·무크래시 통과. 최종 서명과 인증 이후 흐름은 차단 |
+| 마지막 Android 검증 | 2026-07-23 맥미니: debug compile·unit test·lint·assemble 738 tasks 통과. 최종 서명과 인증 이후 실기기 흐름은 미완료 |
 | 마지막 단말 | `SM_F731N`, ADB serial `R3CW803L3WH` |
 
-**중요:** 운영 보안, 가족/자녀 Web/API/DB, 공간 Web/API, 웹 광고 변경은 위 체크포인트 커밋에 보존됐다. Android Material 3, 기기 캘린더/테마 네이티브 결합 코드와 관련 Android 문서는 여전히 미커밋 작업 트리에 있으므로 GitHub clone만으로 복원되지 않는다.
+**중요:** 운영 보안, 가족/자녀 Web/API/DB, Android Material 3·캘린더/테마, 플랫폼 파리티, 공간 수명주기와 공개 스토어 애셋은 모두 브랜치에 커밋됐다. Git clone으로 소스는 복원되지만 `.env.local`, Android release keystore·비밀번호, 콘솔 설정과 로컬 stash는 복원되지 않는다.
 
 `android/.idea/deploymentTargetSelector.xml`은 Android Studio의 최근 실행 대상 로컬 상태이며 제품 코드가 아니다. 복사에는 포함해도 되지만 향후 커밋에는 제외하는 것이 기본이다. 정확한 파일 수는 계속 바뀌므로 `git status -sb`를 직접 확인한다.
 
@@ -42,7 +43,7 @@
 - 웹 공간의 `소식 / 일정 / 멤버`, 네이티브 공간 활성화·소식 API, session context, 가족 보호자/자녀 초대 흐름은 `ff43799`에 커밋됐다.
 - 가족/자녀 migration `020`, `021`, `022`는 운영 적용과 RLS·권한·RPC 재검증을 완료했다.
 - 하우스 광고 URL 검증과 Kakao 다중 슬롯 간섭 제거는 `a60d187`에 커밋됐다.
-- 캘린더 설정·테마 Web 브리지는 Android 네이티브 구현과 결합되어 미커밋 상태로 함께 보존한다.
+- 캘린더 설정·테마 Web 브리지와 Android 네이티브 구현은 `da2384e` 이후 커밋에 보존됐다.
 
 ### 문서
 
@@ -59,7 +60,7 @@
 ```bash
 mkdir -p "/Volumes/<USB_NAME>/gleaum"
 rsync -a --progress --stats --extended-attributes \
-  "/Volumes/Portable SSD/AI/gleaum/" \
+  "/Volumes/WD_BLACK/Ai Works/gleaum/" \
   "/Volumes/<USB_NAME>/gleaum/"
 ```
 
@@ -83,7 +84,7 @@ rsync -a --progress --stats --extended-attributes \
   --exclude 'android/build/' \
   --exclude 'android/app/build/' \
   --exclude 'ios/App/Pods/' \
-  "/Volumes/Portable SSD/AI/gleaum/" \
+  "/Volumes/WD_BLACK/Ai Works/gleaum/" \
   "/Volumes/<USB_NAME>/gleaum/"
 ```
 
@@ -113,7 +114,7 @@ git status -sb
 git log --oneline -5
 ```
 
-- 브랜치가 `main`, HEAD가 최소 `d8393d8`인지 확인한다.
+- 브랜치가 `codex/platform-parity-sync-20260723`, HEAD가 최소 `564b923`인지 확인한다.
 - 원본과 동일한 modified/untracked 목록이 보이는지 확인한다.
 - 원본 폴더에서 복사 후 변경을 추가했다면 다시 `rsync`해야 한다.
 

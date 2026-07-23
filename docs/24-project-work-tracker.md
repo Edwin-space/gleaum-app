@@ -4,7 +4,7 @@
 >
 > 최초 작성: 2026-07-16
 > 최종 업데이트: 2026-07-23
-> 현재 기능 기준점: `bf69e1e`, `5ad7ba0` (`main`, Android 적응형 실기기 QA·Play 권한/개인정보 정합성 체크포인트)
+> 현재 기능 기준점: `42b53b0` (플랫폼 파리티·공간 수명주기), 최신 문서/스토어 애셋 `564b923`, 작업 브랜치 `codex/platform-parity-sync-20260723`
 
 ## 1. 운영 규칙
 
@@ -30,11 +30,11 @@
 
 ## 2. 현재 실행 큐
 
-위에서부터 순서대로 처리한다. 현재 큐는 **즉시 코드 구현 → production build → Web/API 운영 반영이 가능한 범위**를 우선한다. iOS와 Google Play 제출·Console·최종 AAB 작업은 이 큐에서 제외하고 Android/Web 기능 안정화 뒤 재개한다.
+위에서부터 순서대로 처리한다. 현재 큐는 **즉시 코드 구현 → production build → Web/API 운영 반영이 가능한 범위**를 우선한다. iOS와 Google Play Console 제출·최종 AAB 작업은 이 큐에서 제외하고 Android/Web 기능 안정화 뒤 재개한다. 등록정보 카피·공개 애셋 제작은 별도로 진행할 수 있다.
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-008` | 기존 공간 승격·안전 삭제 운영 마감 | `🔴 차단` | Vercel Preview/Production 배포 승인과 로그인 실기기 재검증 |
+| 1 | `FAM-008` | 기존 공간 승격·안전 삭제 운영 마감 | `🟠 진행 중` | GitHub 반영 완료. Preview 검증 → Production 배포 → 로그인 계정 Web/Android 전환·삭제 재검증 |
 | 2 | `OPS-004` | 메인 Web/API 최신 변경 운영 회귀 | `🟠 진행 중` | `FAM-008` API를 포함한 Preview 검증 후 Production 승격·공간/가계부 쓰기 회귀 |
 | 3 | `PAR-001` | Android·PC Web·Mobile Web 3플랫폼 핵심 기능 파리티 | `🟠 진행 중` | 공통 계약 확정 → Android 기준 구현 → PC Web → Mobile Web → 통합 회귀 순서로 마감 |
 | 4 | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `🟠 진행 중` | Android와 공통인 설정은 유지하고 네이티브 전용·미구현·허위 플랜 진입점은 플랫폼별 정리 |
@@ -49,9 +49,21 @@
 | 13 | `WEB-001` | 실제 RLS 통합 회귀 테스트 | `🔴 차단` | Docker Desktop·로컬 Supabase 준비 후 역할별 CRUD 자동화 |
 | 14 | `SEC-004` | 백오피스 전체 source lint 정상화 | `⬜ 대기` | 기존 React effect/타입 lint 부채 제거 |
 
+### 2026-07-23 맥북 작업 대조 결과
+
+| 범위 | 판정 | 확인 근거 | 남은 완료 조건 |
+|---|---|---|---|
+| 보안·DB·백오피스 경계 | 구현·운영 기록 완료 | `8b15af7`, 운영 migration·Advisor·백오피스 build 기록 | 비관리자 403·관리자 2xx 실제 세션은 `OPS-003` |
+| 가족/자녀 기반·account capability | 구현 완료 | `ff43799`, `a30cf60`, `2176a5d`; capability 4/4·데이터 경계 9/9 | assignee/observer, 연령 전환, 약관 운영은 `FAM-003`~`FAM-005` |
+| Android Material 3·캘린더·권한 | 코드·로컬 빌드 완료 | `da2384e`, `bf69e1e`, `5ad7ba0`; 맥미니 debug compile/unit/lint/assemble 성공 | 인증 이후 실기기·TalkBack·캘린더 CRUD는 `AND-001`, `AND-003`, `AND-005` |
+| 공간 수명주기·일정 상세·알림 파리티 | 코드·자동 검증 완료 | `42b53b0`; root production build 54/54, 데이터 경계 9/9, 알림 설정 2/2 | Production 배포와 역할별 Web/Android 실제 계정 회귀 |
+| PC/Mobile Web 마이페이지·설정 | 1차 구현·인증 회귀 완료 | 2026-07-17 동일 계정 홈·일정·알림·마이페이지·공간 확인 | 제한 계정·라이트/다크·키보드/터치 회귀 |
+| Google Play 등록정보 | 카피·폰 이미지 제작 완료 | `564b923`; 1080×1920 RGB PNG 6장과 글자 수 검증 | 1024×500 기능 그래픽, Console 업로드·정책·서명 확인 |
+| 작업 환경 동기화 | 완료 | 맥미니 HEAD와 원격 `564b923` 일치, 최신 lockfile 의존성 복원, root/backoffice/Android 빌드 성공 | 오래된 로컬 `stash@{0}`는 최신 코드에 자동 적용하지 않고 안전 백업으로만 유지 |
+
 ### 명시적 후순위
 
-- Google Play 출시 절차: `AND-002`, `AND-006`은 기능 안정화와 production build 검증이 끝난 뒤 재개한다.
+- Google Play 출시 절차: `AND-006`의 등록정보 제작은 진행 중이지만 Console 제출·정책·서명 확인과 `AND-002` 최종 AAB는 기능 안정화 뒤 재개한다.
 - iOS: `IOS-001`~`IOS-006`은 Android/Web 기능과 정책이 확정된 뒤 Android 동작을 기준으로 재구현한다.
 - Remote Config: `WEB-007`, `AND-009`는 3플랫폼 핵심 기능 파리티와 운영 회귀가 끝난 뒤 재개한다.
 - 장기 후보·외부 본인확인·위치·CRM 채널은 각 항목의 기존 재개 조건을 유지한다.
@@ -79,11 +91,12 @@
 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
-| [x] | `REPO-000` | 프로젝트를 외장 SSD 작업 경로로 이전 | `✅ 완료` | 2026-07-14 | 2026-07-16 | 현재 경로 `/Volumes/Portable SSD/AI/gleaum`, `.git`과 untracked 파일 확인 |
+| [x] | `REPO-000` | 프로젝트를 외장 SSD 작업 경로로 이전 | `✅ 완료` | 2026-07-14 | 2026-07-16 | 외부 작업 이동·복구 절차 검증 완료. 현재 기준 작업 경로는 `/Volumes/WD_BLACK/Ai Works/gleaum` |
 | [x] | `DOC-001` | 프로젝트 통합 작업 트래커 도입 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 전체 도메인 작업에 ID·상태·날짜·완료 기준을 부여하고 `AGENTS.md` 시작/종료 규칙에 연결 |
 | [x] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 비Android 7개 체크포인트 후 Android·캘린더/테마·문서를 `da2384e`로 보존. Android debug/test/lint/release package, 웹 lint/build, 실기기 로그인 검증 근거 포함 |
 | [ ] | `REPO-002` | 비밀·환경·릴리즈 키 백업 상태 확인 | `⬜ 대기` | — | — | `.env.local`, Android release keystore, 서명 비밀번호의 저장소 외 백업 확인 |
-| [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `🟠 진행 중` | 2026-07-16 | — | 최신 `084676b`를 Production `dpl_FrrVDVeUjCRWyPjbKvP6x8wqrEX3`로 승격. Android 인증 session context 200·홈 capability 복구·runtime error 0 확인. 공간·가계부 쓰기 포함 핵심 회귀 후 완료 전환 |
+| [x] | `REPO-003` | 맥북 최신 작업을 맥미니 작업공간에 동기화 | `✅ 완료` | 2026-07-23 | 2026-07-23 | `codex/platform-parity-sync-20260723` 로컬·원격 `564b923` 일치, lockfile 기준 의존성 복원. root 테스트 9/9·4/4·2/2와 production build 54/54, backoffice build, Android debug compile/unit/lint/assemble 통과 |
+| [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `🟠 진행 중` | 2026-07-16 | — | 기존 Production은 `084676b` 계열까지 검증. 최신 기능 기준 `42b53b0`은 GitHub 브랜치와 로컬 build까지 완료됐으나 Production 반영 전. Preview → Production 승격 후 공간·가계부 쓰기와 알림 설정 회귀 필요 |
 | [x] | `ARCH-001` | CodePush형 빠른 업데이트 전달 구조 검토 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 현재 `server.url`로 Web/API는 이미 즉시 반영되며 Compose는 OTA 대상이 아님을 확인. `docs/26-live-update-delivery-strategy.md`에 Remote Config·Web fallback·Play 업데이트 3단계 전략과 정책 경계 기록 |
 
 상세 이동·복구 절차: `docs/23-external-work-checkpoint.md`
@@ -132,7 +145,7 @@
 | [ ] | `FAM-005` | 약관·개인정보처리방침 개정 운영 | `⬜ 대기` | — | — | 사전 고지일·시행일·버전 기록과 법률 검토 완료 |
 | [ ] | `FAM-006` | 외부 본인확인 전환 | `⏸ 보류` | — | — | 자녀 1,000명/월 500건/분쟁 1건/위치·결제 도입/정책 요구 중 하나 발생 시 재개 |
 | [ ] | `FAM-007` | 수동 위치 체크인 MVP | `⏸ 보류` | — | — | 별도 법률 검토·본인확인·위치 동의 완료 후에만 재개 |
-| [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🔴 차단` | 2026-07-16 | — | DB migration 운영 적용·rollback 검증, Web/API·Android 구현, build/TypeScript/ESLint/테스트 및 APK 설치 완료. Vercel 소스 업로드 명시 승인 후 API 배포하고 로그인 실기기에서 전환·삭제 재검증 |
+| [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🟠 진행 중` | 2026-07-16 | — | DB migration 운영 적용·rollback 검증, Web/API·Android 구현과 GitHub 반영, root/Android build 완료. 최신 브랜치 Preview·Production 배포 후 로그인 계정에서 가족 전환·안전 삭제·fallback을 Web/Android로 재검증 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -185,10 +198,10 @@
 | 홈 | 계정 모드·홈 구성·개인 원장·빈/오류 상태 | `⬜` | `✅` | `✅` | Android 동일 계정 집계·자녀 계정 비교 |
 | 일정 목록 | 개인/공간 경계·역할·필터 | `⬜` | `⬜` | `⬜` | 공간 전환·권한·빈/오류 상태 비교 |
 | 일정 생성·수정 | 저장 필드·참여자·알림·반복 계약 | `⬜` | `⬜` | `⬜` | 플랫폼별 지원 필드 감사 |
-| 일정 상세 | 소속 공간·private 생성자·admin/editor/viewer 권한 | `🟠` | `🟠` | `🟠` | Android 구현 완료·SDK 36 빌드 대기, 후 PC·Mobile 역할별 회귀 |
+| 일정 상세 | 소속 공간·private 생성자·admin/editor/viewer 권한 | `🟠` | `🟠` | `🟠` | 3플랫폼 구현과 SDK 36 빌드 완료. admin/editor/viewer/private 생성자 실제 계정 회귀 후 완료 |
 | 공간 | 선택·초대·역할·가족 전환·안전 삭제 | `🟠` | `🟠` | `🟠` | Preview/Production 배포 후 동일 계정 검증 |
 | 가계부 | 개인/공간 원장·권한·반복 지출 | `⬜` | `⬜` | `⬜` | CRUD·개인/공간 경계 비교 |
-| 알림 | 설정·발송 경계·읽음·이동 대상 | `🟠` | `🟠` | `🟠` | Android 서버 설정 동기화·딥링크 구현 완료, SDK 36 빌드·실기기 회귀 대기 |
+| 알림 | 설정·발송 경계·읽음·이동 대상 | `🟠` | `🟠` | `🟠` | Android 서버 설정 동기화·딥링크와 SDK 36 빌드 완료. 설정별 FCM·Web 읽음/이동 실계정 회귀 대기 |
 | 로그인·세션 | Cookie/Bearer·OAuth 복귀·capability | `🟠` | `✅` | `✅` | Android 재로그인·세션 복귀 실기기 검증 |
 | 초대·딥링크 | 동일 초대 코드·권한·만료 계약 | `⬜` | `⬜` | `⬜` | Web link·App Link·custom scheme 회귀 |
 
@@ -339,6 +352,7 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `REPO-003`, `PAR-001`, `FAM-008`, `OPS-004` | 맥북 작업·체크리스트 재대조 | 맥북에서 게시한 `codex/platform-parity-sync-20260723`을 맥미니 `/Volumes/WD_BLACK/Ai Works/gleaum`에 동기화하고 19개 기능/문서 커밋을 현재 트래커 완료 기준과 대조. 코드 존재만으로 운영 완료 처리하지 않고 배포·실기기·역할별 검증을 별도 유지 | 오래된 `node_modules`에서 `tsx` 누락을 발견해 lockfile 기준 복원. 데이터 경계 9/9·capability 4/4·알림 설정 2/2, root production build 54/54, backoffice build, Android 738 tasks compile/unit/lint/assemble 성공. 다음은 `FAM-008` 포함 Preview/Production 배포와 동일 계정 회귀 |
 | 2026-07-23 | `AND-006` | Google Play 등록정보 애셋 준비 | Android 1.1.5 실기기 UI를 기준으로 한국어 앱 이름·설명·출시 노트와 휴대전화 스크린샷 6장을 제작하고 공개용 예시 데이터로 익명화. 개인정보가 포함될 수 있는 원본 캡처는 Git에서 제외 | 이미지 6장 모두 1080×1920 RGB·알파 없음, 앱 이름 15/30자·간단한 설명 37/80자·자세한 설명 1032/4000자·출시 노트 151/500자 확인. 다음은 1024×500 기능 그래픽 제작과 Play Console 업로드·최종 확인 |
 | 2026-07-23 | `REPO-001`, `PAR-001`, `OPS-004` | GitHub 최신 작업 체크포인트 준비 | 원격 `main` 이후 누적된 보안·가족/자녀·Android 적응형/권한 변경 18개 로컬 커밋과 플랫폼 파리티·공간 수명주기·알림 설정·Web 세션 폴백 미커밋 작업을 `codex/platform-parity-sync-20260723` 브랜치로 통합 보존 | TypeScript, 데이터 경계 9/9, capability 4/4, 알림 설정 2/2, Next production build 54/54, Android SDK 36 `compileDebugKotlin`·unit test·lint·assemble(840 tasks) 통과. 로컬 IDE 기기 선택 파일은 체크포인트에서 제외하고 GitHub Draft PR로 게시 |
 | 2026-07-17 | `PAR-001`, `WEB-006`, `OPS-004` | 인증 PC·Mobile Web 회귀 및 세션 폴백 보완 | Google 로그인 완료 세션으로 PC/Mobile 홈·일정·알림·마이페이지·공간을 검증. SSR Cookie 세션은 유효하지만 브라우저 Data API 프로필 복원이 늦거나 비는 경우 `/api/session/profile`로 본인 프로필을 복구하도록 보완하고, 무료 플랜 공간 수에서 개인 공간을 제외. Mobile 홈은 원장 로딩 중 임시 `0원` 카드 노출을 차단. 탈퇴 상태 조회는 불필요한 Service Role 의존성을 제거하고 본인 세션/RLS 조회로 전환 | 대상 ESLint 0 error(기존 `<img>` warning 1), TypeScript·diff check, Next production build 54/54 통과. PC/Mobile 실제 이름 `Edwin`, 공유 공간 `2/2`, 월간 개인 지출 `320,000원`, `/api/account/status` 200, 핵심 화면 새 console error 0 확인. 다음은 Android 동일 계정 홈 회귀와 역할별 일정 상세·알림 쓰기 검증 |

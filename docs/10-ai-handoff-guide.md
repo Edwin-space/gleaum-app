@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-07-16
+> **최종 업데이트**: 2026-07-23
 >
 > 현재 작업과 다음 우선순위는 `docs/24-project-work-tracker.md`가 단일 기준이다. 이 문서는 아키텍처와 인수인계 맥락을 설명하고, 작업 상태는 트래커에서 관리한다.
 
@@ -34,20 +34,22 @@
 
 ---
 
-## 현재 앱 상태 (2026-07-14 기준)
+## 현재 앱 상태 (2026-07-23 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
-- **GitHub**: `Edwin-space/gleaum-app` (main 브랜치)
+- **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
 - **최신 배포**: GitHub `main` 자동 배포 기준. 작업 전 Vercel 상태 확인 권장
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
-- **Git 기준점**: `main`, 커밋 `8fc41c6`. 이후 작업은 미커밋 파일을 포함하므로 외부 이동 시 Git clone만 사용하면 손실됨
-- **외부 작업 인수인계**: `docs/23-external-work-checkpoint.md`가 현재 작업 트리, 복사 방법, 외부 의존성의 단일 체크포인트
+- **Git 기준점**: `codex/platform-parity-sync-20260723`, 커밋 `564b923`. 기능 기준점은 `42b53b0`이며 현재 로컬과 원격 브랜치가 일치한다.
+- **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
+- **외부 작업 인수인계**: `docs/23-external-work-checkpoint.md`가 복사 방법과 외부 의존성의 단일 체크포인트다. 맥미니의 `stash@{0}`는 동기화 전 오래된 로컬 작업 백업이므로 최신 브랜치에 자동 적용하지 않는다.
 
 ### 최근 변경 이력
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-23 | 맥북 최신 브랜치 `codex/platform-parity-sync-20260723`을 맥미니 작업공간에 동기화하고 체크리스트를 재대조했다. 플랫폼 파리티·공간 수명주기·알림 설정·Web 세션 폴백 기능은 `42b53b0`, Google Play 한국어 등록정보와 익명화 폰 스크린샷 6장은 `564b923`에 보존됐다. 맥미니 lockfile 의존성을 복원한 뒤 데이터 경계 9/9, capability 4/4, 알림 설정 2/2, root production build 54/54, backoffice build, Android debug compile/unit/lint/assemble 738 tasks를 통과했다. 운영 완료가 아닌 항목은 `FAM-008`, `OPS-004`, `PAR-001`, `AND-001`에 배포·실기기 검증으로 유지한다. |
 | 2026-07-14 | Android Material 3 UI 품질 기반 마감. light/dark ColorScheme·Typography·Shapes를 명시하고 공통 adaptive navigation, 상태 카드, 안내 배너, 비클릭 배지, 의미색 토큰을 적용했다. 홈·일정·가계부·공간·전체·알림·온보딩 Compose gate가 활성 상태이며 `assembleDebug`, `lintDebug` 오류 0건을 확인했다. 코드 감사 평균은 90.8/A, XML 로그인은 86/B다. 마지막 연결 단말은 잠금 상태라 최종 시각 QA는 미완료. 상세는 `docs/22-android-material3-ui-audit.md`. |
 | 2026-07-14 | 외장 저장장치 이동 체크포인트 추가. 현재 HEAD `8fc41c6` 이후의 다수 변경·신규 파일은 미커밋 상태라 Git clone만으로 복원되지 않는다. `.git`, `.env.local`, untracked 파일과 저장소 외부 `~/gleaum-release.keystore`를 구분해 옮겨야 하며, 복사·복구 절차는 `docs/23-external-work-checkpoint.md`를 따른다. |
 | 2026-07-13 | 가족 자녀 초기 운영 흐름 구현. SMS 비용을 쓰지 않고 보호자 로그인 이메일의 Supabase Auth 확인 링크로 계정 이메일을 재확인한 뒤 `service_registration`, `personal_data_processing`, `family_data_sharing`을 각각 동의받는다. 보호자는 OS 공유 시트로 자녀에게 초대를 직접 전달하며 자녀 claim은 `approval_pending`만 만들고 공간 멤버를 생성하지 않는다. 보호자 최종 승인 후에만 viewer 권한과 연령별 account mode를 적용한다. migration `022_guardian_email_consent_flow.sql` 운영 적용, 신규 테이블·함수·RLS 확인 완료. 위치·마케팅은 비활성. 활성 자녀 1,000명/월 연결 500건/분쟁 1건/위치·결제 도입 시 SMS OTP 또는 PASS/NICE/KCB로 반드시 전환한다. 약관·개인정보처리방침 개정 시행일은 2026-07-20이며 사전 고지 후 운영해야 한다. |
@@ -761,23 +763,13 @@ git add [파일들] && git commit -m "feat: ..." && git push origin main
 
 ### 4. 현재 작업트리 주의사항
 
-아래 Android 관련 파일 4개가 아직 미커밋 변경으로 남아 있음. Codex가 만든 변경은 아니며, Android Studio/Capacitor sync 또는 Firebase 네이티브 연동 과정에서 생긴 변경으로 보임.
-
-- `android/app/build.gradle`
-  - `versionCode 8 → 9`
-  - `versionName 1.0.8 → 1.0.9`
-- `android/app/capacitor.build.gradle`
-  - `@capacitor-firebase/app-check`, `crashlytics`, `performance`, `remote-config` Android dependency 추가
-- `android/capacitor.settings.gradle`
-  - 위 Capacitor Firebase plugin project include 추가
-- `android/release-notes.txt`
-  - 기존 문구가 `릴리즈 노트` 한 줄로 변경됨. 임시 입력값일 가능성이 높음.
+위 과거 Android 미커밋 항목은 이후 체크포인트에 모두 정리됐다. 2026-07-23 현재 제품 코드 워크트리는 동기화·검증 시점에 깨끗하며 Android 버전은 `versionCode 26`, `versionName 1.1.5`다.
 
 **다음 AI에게 권장**
-- Android 변경 4개는 사용자가 의도한 릴리즈 준비 변경인지 먼저 확인할 것.
-- `android/release-notes.txt`는 임시 문구라면 정리 필요.
-- 초대 링크 문제는 새 배포 반영 후 새 초대문을 다시 복사/발송해야 기존에 발송된 죽은 코드 문제를 피할 수 있음.
-- Firebase App Distribution 릴리즈가 백오피스에 0개로 보이는 것은 현재 Firebase API 기준 릴리즈가 0개였기 때문. 새 APK를 `scripts/distribute-android.sh`로 배포한 뒤 `/releases`에서 다시 확인할 것.
+- 먼저 `git status -sb`와 `docs/24-project-work-tracker.md`를 확인한다.
+- 최신 기능은 아직 `main`이 아니라 `codex/platform-parity-sync-20260723`에 있으므로 임의로 과거 `main`으로 전환하지 않는다.
+- 맥미니 `stash@{0}`는 동기화 전 오래된 WD_BLACK 작업 백업이다. 최신 코드와 충돌 가능성이 있으므로 사용자 확인 없이 `stash pop/apply`하지 않는다.
+- 공간 수명주기·알림 파리티는 코드와 빌드만 완료된 상태다. Preview/Production 배포와 실제 계정 회귀 전에는 완료로 닫지 않는다.
 
 ---
 
