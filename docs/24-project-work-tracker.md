@@ -89,11 +89,12 @@
 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
-| [x] | `REPO-000` | 프로젝트를 외장 SSD 작업 경로로 이전 | `✅ 완료` | 2026-07-14 | 2026-07-16 | 외부 작업 이동·복구 절차 검증 완료. 현재 기준 작업 경로는 `/Volumes/WD_BLACK/Ai Works/gleaum` |
+| [x] | `REPO-000` | 프로젝트를 외장 SSD 작업 경로로 이전 | `✅ 완료` | 2026-07-14 | 2026-07-16 | 외부 작업 이동·복구 절차 검증 완료 |
 | [x] | `DOC-001` | 프로젝트 통합 작업 트래커 도입 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 전체 도메인 작업에 ID·상태·날짜·완료 기준을 부여하고 `AGENTS.md` 시작/종료 규칙에 연결 |
 | [x] | `REPO-001` | 기존 미커밋 변경 검토·안전한 커밋 분리 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 비Android 7개 체크포인트 후 Android·캘린더/테마·문서를 `da2384e`로 보존. Android debug/test/lint/release package, 웹 lint/build, 실기기 로그인 검증 근거 포함 |
 | [ ] | `REPO-002` | 비밀·환경·릴리즈 키 백업 상태 확인 | `⬜ 대기` | — | — | `.env.local`, Android release keystore, 서명 비밀번호의 저장소 외 백업 확인 |
 | [x] | `REPO-003` | 맥북 최신 작업을 맥미니 작업공간에 동기화 | `✅ 완료` | 2026-07-23 | 2026-07-23 | `codex/platform-parity-sync-20260723` 로컬·원격 `564b923` 일치, lockfile 기준 의존성 복원. root 테스트 9/9·4/4·2/2와 production build 54/54, backoffice build, Android debug compile/unit/lint/assemble 통과 |
+| [x] | `REPO-004` | Portable SSD를 정식 작업공간으로 재동기화 | `✅ 완료` | 2026-07-23 | 2026-07-23 | `/Volumes/Portable SSD/AI/gleaum`에 전체 미러링. 원본 대비 rsync 차이 0건, HEAD `142b1da`, 추적 파일 723개, `.env.local`·Vercel 연결·lockfile 체크섬 일치. 기존 SSD 작업본은 `gleaum-pre-sync-backup-20260723-1800`에 보존 |
 | [ ] | `OPS-004` | 메인 웹 최신 변경 배포·운영 회귀 | `🟠 진행 중` | 2026-07-16 | — | 기존 Production은 `084676b` 계열까지 검증. 최신 기능 기준 `42b53b0`은 GitHub 브랜치와 로컬 build까지 완료됐으나 Production 반영 전. Preview → Production 승격 후 공간·가계부 쓰기와 알림 설정 회귀 필요 |
 | [x] | `ARCH-001` | CodePush형 빠른 업데이트 전달 구조 검토 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 현재 `server.url`로 Web/API는 이미 즉시 반영되며 Compose는 OTA 대상이 아님을 확인. `docs/26-live-update-delivery-strategy.md`에 Remote Config·Web fallback·Play 업데이트 3단계 전략과 정책 경계 기록 |
 

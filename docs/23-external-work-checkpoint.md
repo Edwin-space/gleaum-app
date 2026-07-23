@@ -4,7 +4,7 @@
 >
 > 목적: 외장 저장장치 작업 폴더를 다른 Mac/AI에서 열어도 커밋·미커밋·외부 비밀 자산을 구분해 재개하기 위한 복구 체크포인트.
 
-> 최신 이동 결과: 2026-07-23 맥북 작업을 GitHub 브랜치로 보존한 뒤 맥미니 `/Volumes/WD_BLACK/Ai Works/gleaum/`에 동기화했다. 로컬·원격 HEAD, Node 의존성, Web/backoffice/Android 빌드를 확인했다.
+> 최신 이동 결과: 2026-07-23 맥미니의 최신 작업본을 `/Volumes/Portable SSD/AI/gleaum/`에 완전 미러링했다. 동기화 직후 원본 대비 차이 0건, 로컬·원격 Git HEAD, 환경설정 체크섬과 추적 파일 수를 확인했다. 이후 정식 작업 경로는 Portable SSD이며 WD_BLACK 사본은 검증 완료 전 안전 백업으로 유지한다.
 
 ## 1. 현재 기준점
 
@@ -12,8 +12,8 @@
 |---|---|
 | 저장소 | `https://github.com/Edwin-space/gleaum-app` |
 | 브랜치 | `codex/platform-parity-sync-20260723` |
-| Git 기준점 | `b124305` 자녀 선택 이메일·토큰 연결 `FAM-012` |
-| 현재 작업 경로 | `/Volumes/WD_BLACK/Ai Works/gleaum` |
+| Git 기준점 | `142b1da` Android 네이티브 일정 등록 노출 복구 |
+| 현재 작업 경로 | `/Volumes/Portable SSD/AI/gleaum` |
 | Android 버전 | `versionCode 26`, `versionName 1.1.5` |
 | Android 패키지 | `com.gleaum.app` |
 | 웹 운영 주소 | `https://www.gleaum.com` |
@@ -62,7 +62,7 @@
 ```bash
 mkdir -p "/Volumes/<USB_NAME>/gleaum"
 rsync -a --progress --stats --extended-attributes \
-  "/Volumes/WD_BLACK/Ai Works/gleaum/" \
+  "/Volumes/Portable SSD/AI/gleaum/" \
   "/Volumes/<USB_NAME>/gleaum/"
 ```
 
@@ -86,7 +86,7 @@ rsync -a --progress --stats --extended-attributes \
   --exclude 'android/build/' \
   --exclude 'android/app/build/' \
   --exclude 'ios/App/Pods/' \
-  "/Volumes/WD_BLACK/Ai Works/gleaum/" \
+  "/Volumes/Portable SSD/AI/gleaum/" \
   "/Volumes/<USB_NAME>/gleaum/"
 ```
 

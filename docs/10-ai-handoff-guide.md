@@ -41,8 +41,8 @@
 - **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
 - **최신 배포**: 2026-07-23 Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`. 자녀 선택 이메일·72시간 일회성 토큰 claim·보호자 승인/거절·공유/QR와 Android 초대 로그인 경로 보존까지 반영. 공개 랜딩 200, 신규 API 미인증 401, runtime error 0 확인.
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
-- **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기능 기준 `d8b7a51`.
-- **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
+- **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기능 기준 `142b1da`.
+- **현재 작업 경로**: `/Volumes/Portable SSD/AI/gleaum`. 2026-07-23 기준 WD_BLACK 원본과 파일 차이 0건, Git HEAD·환경설정 체크섬 일치를 확인했다. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
 - **외부 작업 인수인계**: `docs/23-external-work-checkpoint.md`가 복사 방법과 외부 의존성의 단일 체크포인트다. 맥미니의 `stash@{0}`는 동기화 전 오래된 로컬 작업 백업이므로 최신 브랜치에 자동 적용하지 않는다.
 
 ### 최근 변경 이력
