@@ -3,6 +3,8 @@ package com.gleaum.app
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -28,6 +30,7 @@ import java.util.Date
 class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, DefaultLifecycleObserver {
 
     private val appOpenAdManager = AppOpenAdManager()
+    private val mainHandler = Handler(Looper.getMainLooper())
     private var currentActivity: Activity? = null
     private var mobileAdsInitialized = false
 
@@ -51,15 +54,17 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
         currentActivity?.javaClass?.simpleName == "LoginActivity"
 
     fun syncAdvertisingEligibility() {
-        if (!NativeAccountContextStore.capabilities(this).canShowAds) {
-            appOpenAdManager.clear()
-            return
+        mainHandler.post {
+            if (!NativeAccountContextStore.capabilities(this).canShowAds) {
+                appOpenAdManager.clear()
+                return@post
+            }
+            if (!mobileAdsInitialized) {
+                MobileAds.initialize(this)
+                mobileAdsInitialized = true
+            }
+            appOpenAdManager.loadAd(this)
         }
-        if (!mobileAdsInitialized) {
-            MobileAds.initialize(this)
-            mobileAdsInitialized = true
-        }
-        appOpenAdManager.loadAd(this)
     }
 
     // ── DefaultLifecycleObserver: 앱 포그라운드 감지 ─────────────────────────
@@ -138,6 +143,10 @@ class GleaumApp : Application(), Application.ActivityLifecycleCallbacks, Default
 
         /** 광고 로드 */
         fun loadAd(context: android.content.Context) {
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                Handler(Looper.getMainLooper()).post { loadAd(context) }
+                return
+            }
             if (!NativeAccountContextStore.capabilities(context).canShowAds) {
                 clear()
                 return

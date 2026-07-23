@@ -209,6 +209,15 @@
 - SDK가 렌더링한 광고 외곽을 앱이 임의 라운딩/클리핑/오버레이하지 않는다.
 - 광고 로드 실패 또는 차단 시 홈 레이아웃이 깨지지 않아야 한다.
 
+### 2026-07-23 실기기 복구 결과
+
+- 가족 계정 도입 전 일반 계정의 `account_mode=unknown`을 광고 가능 표준 계정으로 처리했다. `pending_guardian_consent`, `child_managed`, `teen_consent_pending`, `teen`은 계속 광고를 차단한다.
+- 운영 Supabase에 `20260723021003_allow_ads_for_legacy_standard_accounts.sql`을 적용하고 Production session context의 `canShowAds=true`를 확인했다.
+- 시작 선조회 백그라운드 스레드에서 Google App Open Ad를 로드해 발생한 `#008 Must be called on the main UI thread` 크래시를 수정했다. 광고 초기화·로드는 메인 Looper에서만 실행한다.
+- `SM_F731N` debug 실기기에서 AdFit `Request Popup Ad` → `AdFit launch popup loaded`를 확인했다.
+- UI 계층에서 SDK 팝업의 `오늘 그만 보기`, `닫기`, 광고 이미지·문구·CTA가 정상 렌더링되고 홈 Activity가 유지되는 것을 확인했다.
+- 남은 수동 QA: `닫기`, `오늘 그만 보기`, 네트워크 차단/재고 없음 상태에서 홈 레이아웃 유지 확인.
+
 ## 8. 기기 캘린더 2차 QA
 
 - 설정에서 권한 요청과 쓰기 가능한 대상 캘린더 선택을 확인한다.

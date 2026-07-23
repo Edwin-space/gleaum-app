@@ -235,9 +235,16 @@ class NativeHomePortActivity : AppCompatActivity() {
     }
 
     private fun maybeShowLaunchBottomAd() {
-        if (summary?.account?.capabilities?.canShowAds != true) return
-        if (popupAdRequested || isFinishing || isDestroyed) return
+        if (summary?.account?.capabilities?.canShowAds != true) {
+            Log.d(TAG, "AdFit launch popup skipped: accountMode=${summary?.account?.accountMode}, canShowAds=false")
+            return
+        }
+        if (popupAdRequested || isFinishing || isDestroyed) {
+            Log.d(TAG, "AdFit launch popup skipped: requested=$popupAdRequested, finishing=$isFinishing, destroyed=$isDestroyed")
+            return
+        }
         popupAdRequested = true
+        Log.d(TAG, "AdFit launch popup request scheduled")
 
         Handler(Looper.getMainLooper()).postDelayed({
             if (isFinishing || isDestroyed || !NativeAccountContextStore.capabilities(this).canShowAds) return@postDelayed

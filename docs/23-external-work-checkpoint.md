@@ -156,7 +156,7 @@ JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' \
 - [ ] 큰 글꼴 1.3배와 TalkBack 확인.
 - [ ] Google/이메일 로그인과 로그아웃 회귀 확인.
 - [ ] 일정·가계부 CRUD, 공간 전환·소식·멤버, 푸시 딥링크 확인.
-- [ ] AdFit 로드/닫기/실패 시 홈 레이아웃 확인.
+- [ ] AdFit 닫기/오늘 그만 보기/실패 시 홈 레이아웃 확인. (2026-07-23 실기기 요청·로드·SDK 팝업 렌더링·무크래시 확인 완료)
 - [ ] 로그인/가입 화면을 Compose Material 3로 전환할지 최종 결정.
 - [ ] 검증 결과로 `docs/22-android-material3-ui-audit.md`의 대기 항목과 최종 점수 갱신.
 

@@ -39,7 +39,7 @@
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
-- **최신 배포**: 2026-07-23 Vercel Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`. Android 가족 공간 전환 API 포함
+- **최신 배포**: 2026-07-23 Vercel Production `dpl_7aJ2HWP9rZNoT1CTEGWcvc4rZcCM`. Android 가족 공간 전환 API와 레거시 일반 계정 광고 capability 보정 포함
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
 - **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기준 `77c6879`. Android 시작 선조회·공유 캐시 변경은 현재 작업 체크포인트에서 이어진다.
 - **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-23 | Android Kakao AdFit 실기기 미노출을 복구했다. 가족 계정 도입 전 생성된 모든 일반 사용자가 `account_mode=unknown`이라 `canShowAds=false`가 되던 정책을 제한 계정 4종만 차단하도록 변경하고 migration `20260723021003_allow_ads_for_legacy_standard_accounts.sql`을 운영 Supabase에 적용했다. Vercel Production `dpl_7aJ2HWP9rZNoT1CTEGWcvc4rZcCM` 배포 후 실기기 account context가 `unknown + canShowAds=true`로 갱신됨을 확인했다. 이어 시작 선조회 스레드에서 Google App Open Ad를 호출해 앱이 종료되며 AdFit 요청 전에 중단되던 문제를 메인 UI 스레드 강제로 수정했다. `SM_F731N`에서 AdFit 요청·로드 로그와 SDK 팝업의 `오늘 그만 보기`·`닫기`·광고 CTA 렌더링, 크래시 0건을 확인했다. |
 | 2026-07-23 | 로그인 실기기 `SM_F731N`에서 Android 콜드 스타트와 홈/일정/공간/가계부/전체 메뉴 왕복을 확인했다. 전체 메뉴의 `기기 일정 가져오기`가 WebView 인증 리다이렉트와 네이티브 라우터 때문에 홈으로 돌아가던 결함을 재현한 뒤, `NativeCalendarImportActivity`와 `NativeDeviceCalendarRepository`로 완전 네이티브화했다. 선택 캘린더의 어제~30일 뒤 이벤트를 조회하고 글리움 표식 및 제목·시작 시각 중복을 제외하며, 선택 항목만 private 개인 일정으로 저장한다. 캘린더 설정 목록의 긴 계정명·스크롤·접근성 역할과 폴더블 하단 시스템 인셋도 보정했다. 후보 3개 미리보기와 Activity 유지, 크래시 0건을 실기기에서 확인했으며 운영 데이터 변경을 피하려고 실제 가져오기 버튼은 누르지 않았다. Android unit/assemble 및 debug APK 설치 통과. 가족 공간 전환 RPC는 운영 DB 존재·authenticated 실행 권한을 확인했으나 일반 공유 공간의 실제 승격은 비가역 작업이라 사용자 명시 테스트 전까지 `FAM-008`에 유지한다. |
 | 2026-07-23 | Android 우선 실행으로 전환. 가족 공간 전환 실패는 앱이 호출하는 운영 `/api/native/spaces/[id]/family`가 미배포되어 `404`를 반환한 것이 직접 원인이었다. 최신 공통 API를 Vercel Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`에 배포해 무인증 요청이 정상 `401` 계약으로 바뀐 것을 확인했다. Android는 스플래시 2초 동안 account context·홈·공간·일정·가계부·알림을 병렬 선조회하고 프로세스 캐시를 화면 간 재사용하도록 변경했다. 일정·가계부·알림의 무조건 `onResume` 재호출을 제거하고 홈·공간·일정·가계부·알림에 Material 3 pull-to-refresh를 연결했으며, 쓰기 작업 후 관련 캐시만 무효화한다. `npm run build`, Android unit/lint/assemble 통과. 로그인 실기기 가족 전환과 선조회 체감 검증은 남아 있다. Web은 라우트 이동 fetch 감사, iOS는 동일 시작 선조회 정책을 각 플랫폼 단계에서 후속 반영한다. |
 | 2026-07-23 | 맥북 최신 브랜치 `codex/platform-parity-sync-20260723`을 맥미니 작업공간에 동기화하고 체크리스트를 재대조했다. 플랫폼 파리티·공간 수명주기·알림 설정·Web 세션 폴백 기능은 `42b53b0`, Google Play 한국어 등록정보와 익명화 폰 스크린샷 6장은 `564b923`에 보존됐다. 맥미니 lockfile 의존성을 복원한 뒤 데이터 경계 9/9, capability 4/4, 알림 설정 2/2, root production build 54/54, backoffice build, Android debug compile/unit/lint/assemble 738 tasks를 통과했다. 운영 완료가 아닌 항목은 `FAM-008`, `OPS-004`, `PAR-001`, `AND-001`에 배포·실기기 검증으로 유지한다. |

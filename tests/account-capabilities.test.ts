@@ -34,13 +34,13 @@ test('adult mode enables general features and advertising', () => {
   assert.equal(capabilities.canShowAds, true);
 });
 
-test('unknown mode preserves general features but defaults advertising off', () => {
+test('unknown legacy mode preserves general features and advertising', () => {
   assert.equal(isManagedMinorAccountMode('unknown'), false);
   const capabilities = capabilitiesForAccountMode('unknown');
   assert.equal(capabilities.canManageSpaces, true);
   assert.equal(capabilities.canInviteMembers, true);
   assert.equal(capabilities.canViewHouseholdBudget, true);
-  assert.equal(capabilities.canShowAds, false);
+  assert.equal(capabilities.canShowAds, true);
 });
 
 test('missing session context fails closed', () => {

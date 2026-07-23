@@ -1182,3 +1182,11 @@ npm run cap:open:android # Android Studio 열기
 - 폴더블 하단 시스템 내비게이션 인셋과 가져오기 버튼이 겹치지 않도록 보정했다.
 - 실기기에서 후보 3개 조회·선택 UI·뒤로가기·시스템 바를 확인했다. 운영 데이터 보호를 위해 실제 가져오기 실행은 보류했다.
 - Android `:app:testDebugUnitTest`, `:app:assembleDebug` 통과 및 최신 debug APK 설치 완료.
+
+## Android Kakao AdFit 실기기 미노출 복구 (완료 — 2026-07-23)
+
+- 가족 계정 도입 전 생성된 일반 계정의 `unknown` account mode를 광고 가능한 레거시 표준 계정으로 정의했다.
+- 자녀·청소년 제한 계정 4종의 광고 차단은 유지하고 Web/API/Android capability 계약을 동일하게 맞췄다.
+- 운영 Supabase migration `20260723021003_allow_ads_for_legacy_standard_accounts.sql` 적용 및 Vercel Production 배포를 완료했다.
+- 스플래시 선조회 스레드가 Google App Open Ad를 백그라운드에서 로드해 앱을 종료시키던 문제를 메인 Looper 강제로 수정했다.
+- 실기기에서 AdFit 하단 전환형 팝업 요청·로드·SDK UI 렌더링과 크래시 0건을 확인했다.

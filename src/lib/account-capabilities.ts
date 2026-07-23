@@ -29,7 +29,10 @@ export function capabilitiesForAccountMode(mode: AccountMode): AccountCapabiliti
     canCompleteRoutine: true,
     canUseCheckIn: mode === 'child_managed' || mode === 'teen',
     canRequestLocationPermission: false,
-    canShowAds: mode === 'adult',
+    // 기존 일반 계정은 가족/자녀 기능 도입 전에 생성되어 연령 프로필이 없고
+    // `unknown`으로 분류된다. 제한 계정은 항상 명시적인 managed mode를 가지므로
+    // 일반 기능과 동일하게 unknown을 레거시 표준 계정으로 취급한다.
+    canShowAds: !isRestricted,
   };
 }
 
