@@ -89,7 +89,7 @@
 ✅ 2026-06-02 공유 테마 모드 시스템 추가
 ✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
-🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. `FAM-012` Production 반영·보호자/자녀 실계정 회귀 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
+🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. `FAM-012` 보호자/자녀 실계정 회귀 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
 ```
 
 ---

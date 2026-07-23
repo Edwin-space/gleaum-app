@@ -15,7 +15,8 @@
 - 자녀 초대/claim/승인/거절 함수 `anon=false`, `authenticated=true`
 - claim 함수가 `account_age_profiles`·`space_members`를 생성하지 않는 정의 확인
 - TypeScript, 자녀 흐름 단위 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next production build, Android debug build 통과
-- 운영 Web 배포와 보호자·자녀 실계정 2개 회귀는 `FAM-012`에서 마감
+- Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN` 배포, 공개 랜딩 200·신규 API 미인증 401·runtime error 0 확인
+- 보호자·자녀 실계정 2개 회귀는 `FAM-012`에서 마감
 
 ### 2026-07-23 — Supabase OTP 메일 목적 분리
 

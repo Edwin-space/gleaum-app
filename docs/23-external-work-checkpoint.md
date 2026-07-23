@@ -12,11 +12,12 @@
 |---|---|
 | 저장소 | `https://github.com/Edwin-space/gleaum-app` |
 | 브랜치 | `codex/platform-parity-sync-20260723` |
-| Git 기준점 | `codex/platform-parity-sync-20260723`의 최신 `git log -1`; 자녀 선택 이메일·토큰 연결은 `FAM-012` 체크포인트 |
+| Git 기준점 | `b124305` 자녀 선택 이메일·토큰 연결 `FAM-012` |
 | 현재 작업 경로 | `/Volumes/WD_BLACK/Ai Works/gleaum` |
 | Android 버전 | `versionCode 26`, `versionName 1.1.5` |
 | Android 패키지 | `com.gleaum.app` |
 | 웹 운영 주소 | `https://www.gleaum.com` |
+| 웹 최신 배포 | Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN` |
 | 공식 관리자 | `https://admins.gleaum.com` |
 | 마지막 Android 검증 | 2026-07-23 맥미니: debug compile·unit test·lint·assemble 738 tasks 통과. 최종 서명과 인증 이후 실기기 흐름은 미완료 |
 | 마지막 단말 | `SM_F731N`, ADB serial `R3CW803L3WH` |
