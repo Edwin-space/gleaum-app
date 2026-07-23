@@ -8,7 +8,7 @@
 - 확인 증적이 없는 필수 동의 요청은 DB에서 차단
 - 보호자 관계와 동의 증빙 방법을 `email_otp`, 정책 버전을 `2026-07-23-email-otp-v2`로 명시
 - 운영 Supabase migration `20260723035907_guardian_email_otp_verification.sql` 적용 및 함수 권한 검증 완료
-- Supabase Auth용 제목 `[글리움] 보호자 확인 코드`와 HTML 템플릿을 `supabase/email-templates/`에 추가
+- Supabase Auth의 Magic Link/OTP 제목을 `[글리움] 보호자 확인 코드`, 본문을 저장소 HTML로 운영 적용
 - Vercel Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포 완료
 
 검증:

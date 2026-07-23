@@ -107,7 +107,7 @@
 
 - [x] Supabase migration `020_family_child_foundation.sql`, `021_family_child_foundation_hardening.sql` 운영 적용
 - [x] 초기 비용 최적화용 보호자 이메일 OTP 확인·항목별 동의·최종 승인 흐름
-- [ ] 운영 Supabase Auth의 Magic Link 템플릿 제목·본문을 `supabase/email-templates/` 기준으로 적용
+- [x] 운영 Supabase Auth의 Magic Link/OTP 제목·본문을 `supabase/email-templates/` 기준으로 적용
 - [x] 보호자 휴대폰 직접 공유와 `/invite/child/[token]` 랜딩
 - [x] Google OAuth 완료 후 자녀 초대 claim 복귀
 - [ ] 서비스 볼륨 확대 시 SMS OTP/PASS/NICE/KCB 본인확인으로 전환
