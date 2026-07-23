@@ -154,15 +154,21 @@ supabase/migrations/20260723025504_harden_family_member_role_updates.sql
 NEXT_PUBLIC_APP_URL=https://www.gleaum.com
 ```
 
-Supabase `Authentication → Email Templates → Magic Link`에는 다음 설정을 적용한다.
+Supabase `Authentication → Emails → Templates → Magic link or OTP`에는 다음 설정을 적용한다.
 
 ```text
-Subject: [글리움] 보호자 확인 코드
-Body: supabase/email-templates/guardian-verification-otp.html 전체
+Subject: [글리움] 이메일 확인 코드
+Body: supabase/email-templates/magic-link-or-otp.html 전체
 필수 변수: {{ .Token }}
+보호자 분기: {{ if eq .RedirectTo "https://www.gleaum.com/auth/email-purpose/guardian-verification" }}
 ```
 
-`{{ .ConfirmationURL }}`을 사용하는 Magic Link 방식이 아니다. 보호자 확인 메일은 기존 Custom SMTP(`helper@gleaum.com`)를 통해 발송된다.
+Supabase Dashboard에는 보호자 전용 Auth 템플릿 종류를 추가할 수 없으므로 고정
+`Magic link or OTP` 템플릿 안에서 `{{ .RedirectTo }}`로 보호자 안내와 일반 안내를
+분리한다. 보호자 OTP 시작 API는 위 식별 URL을 `emailRedirectTo`로 전달한다.
+`{{ .ConfirmationURL }}`을 사용하는 Magic Link 방식이 아니며, 실제 메일은 기존
+Custom SMTP(`helper@gleaum.com`)를 통해 발송된다. 일반 이메일/비밀번호 회원가입은
+별도 `Confirm sign up` 템플릿을 사용하므로 이 분기의 영향을 받지 않는다.
 
 ## 9. 비용 최적화형 보호자 확인의 운영 한계와 전환 기준
 

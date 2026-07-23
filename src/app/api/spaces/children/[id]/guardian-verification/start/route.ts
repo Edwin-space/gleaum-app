@@ -3,6 +3,7 @@ import {
   createGuardianEmailVerification,
   revokeGuardianEmailVerification,
 } from '@/lib/db';
+import { getGuardianEmailOtpRedirectUrl } from '@/lib/guardian-consent';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(
@@ -27,6 +28,9 @@ export async function POST(
       email: user.email,
       options: {
         shouldCreateUser: false,
+        // Supabase Auth의 고정 Magic Link/OTP 템플릿 안에서 보호자용 본문을
+        // 선택하는 표시값이다. 실제 권한 검증은 DB challenge에 계속 묶인다.
+        emailRedirectTo: getGuardianEmailOtpRedirectUrl(),
       },
     });
     if (error) throw error;

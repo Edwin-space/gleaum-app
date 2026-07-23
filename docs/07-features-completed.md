@@ -1,5 +1,19 @@
 # 07. 완료된 기능
 
+### 2026-07-23 — Supabase OTP 메일 목적 분리
+
+- Supabase Dashboard에 사용자 정의 Auth 템플릿 종류를 추가할 수 없는 제약을 반영해 고정 `Magic link or OTP` 슬롯을 조건 분기형으로 변경
+- 보호자 OTP 요청에 `emailRedirectTo=https://www.gleaum.com/auth/email-purpose/guardian-verification` 식별값 추가
+- 템플릿의 `{{ .RedirectTo }}` 조건문으로 보호자 확인 안내와 향후 일반 이메일 OTP 안내 분리
+- 공용 제목을 `[글리움] 이메일 확인 코드`로 변경하고 운영 Supabase Dashboard에 저장 완료
+- 일반 이메일/비밀번호 회원가입은 별도 `Confirm sign up` 템플릿을 사용하므로 영향 없음
+
+검증:
+- 운영 Supabase Redirect URL에 `https://www.gleaum.com/**` 허용 확인
+- 대상 ESLint, `git diff --check`, `npm run build` 통과
+- Dashboard 저장 알림 `Successfully updated email template` 확인
+- 실제 보호자 메일 수신·본문 분기는 최신 API Production 배포 후 회귀 확인 필요
+
 ### 2026-07-23 — 보호자 이메일 OTP·필수 동의 흐름 정합화
 
 - Supabase 메일 템플릿은 OTP를 발송하지만 앱은 Magic Link를 기다리던 프로토콜 불일치 수정
@@ -8,7 +22,7 @@
 - 확인 증적이 없는 필수 동의 요청은 DB에서 차단
 - 보호자 관계와 동의 증빙 방법을 `email_otp`, 정책 버전을 `2026-07-23-email-otp-v2`로 명시
 - 운영 Supabase migration `20260723035907_guardian_email_otp_verification.sql` 적용 및 함수 권한 검증 완료
-- Supabase Auth의 Magic Link/OTP 제목을 `[글리움] 보호자 확인 코드`, 본문을 저장소 HTML로 운영 적용
+- Supabase Auth의 Magic Link/OTP 제목·본문을 저장소 HTML로 운영 적용
 - Vercel Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포 완료
 
 검증:
