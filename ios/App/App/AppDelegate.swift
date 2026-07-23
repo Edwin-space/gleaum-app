@@ -7,7 +7,10 @@ import SafariServices
 import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
+class AppDelegate: UIResponder,
+                   UIApplicationDelegate,
+                   MessagingDelegate,
+                   UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
     private let loginPresentationDelay: TimeInterval = 0.45
@@ -24,7 +27,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
         application.registerForRemoteNotifications()
 
         // ── 3. 알림 센터 delegate 설정 ────────────────────────────────────────
-        UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+        UNUserNotificationCenter.current().delegate = self
 
         // ── 4. 세션 없으면 LoginViewController 표시 ──────────────────────────
         if !SessionManager.shared.hasValidSession() {
@@ -232,6 +235,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate {
             name: .capacitorDidFailToRegisterForRemoteNotifications,
             object: error
         )
+    }
+
+    // 포그라운드에서도 일정·가족 알림을 배너로 표시한다.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .badge, .sound])
     }
 
     // ── 앱 상태 메서드 (Capacitor 플러그인 호환) ─────────────────────────────
