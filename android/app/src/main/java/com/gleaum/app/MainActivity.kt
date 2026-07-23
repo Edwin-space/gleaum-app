@@ -10,6 +10,8 @@ import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.getcapacitor.BridgeActivity
@@ -36,6 +38,7 @@ class MainActivity : BridgeActivity() {
         injectThemeIntoWebView()
         installNativeThemeBridge()
         installNativeRouteBridge()
+        installNativeSafeAreaBridge()
 
         // ── WebView 최적화 ────────────────────────────────────────────────────
         bridge?.webView?.settings?.apply {
@@ -179,6 +182,58 @@ class MainActivity : BridgeActivity() {
                 }
             })
         }
+    }
+
+    /**
+     * Android WebView는 edge-to-edge 상태에서 CSS safe-area env 값을 0으로
+     * 반환하는 기기가 있다. 실제 시스템바/컷아웃 인셋을 CSS 변수로 전달해
+     * WebView 전용 흐름의 상단 헤더와 하단 버튼이 가려지지 않게 한다.
+     */
+    private fun installNativeSafeAreaBridge() {
+        val webView = bridge?.webView ?: return
+
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { _, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                    WindowInsetsCompat.Type.displayCutout(),
+            )
+            val density = resources.displayMetrics.density.coerceAtLeast(1f)
+            applySafeAreaCss(
+                webView = webView,
+                top = bars.top / density,
+                right = bars.right / density,
+                bottom = bars.bottom / density,
+                left = bars.left / density,
+            )
+            insets
+        }
+
+        bridge?.addWebViewListener(object : WebViewListener() {
+            override fun onPageLoaded(webView: WebView) {
+                ViewCompat.requestApplyInsets(webView)
+            }
+        })
+        ViewCompat.requestApplyInsets(webView)
+    }
+
+    private fun applySafeAreaCss(
+        webView: WebView,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        left: Float,
+    ) {
+        val script = """
+            (function(){
+              var root = document.documentElement;
+              if (!root) return;
+              root.style.setProperty('--native-safe-area-inset-top', '${top}px');
+              root.style.setProperty('--native-safe-area-inset-right', '${right}px');
+              root.style.setProperty('--native-safe-area-inset-bottom', '${bottom}px');
+              root.style.setProperty('--native-safe-area-inset-left', '${left}px');
+            })()
+        """.trimIndent()
+        webView.post { webView.evaluateJavascript(script, null) }
     }
 
     private fun nativeRouteScript(): String = """

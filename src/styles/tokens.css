@@ -121,10 +121,15 @@
   --radius-app-icon:  22px;
   --bottom-nav-height: 64px;
   --header-height:     56px;
+  /* Android WebView는 CSS env()를 0으로 반환할 수 있어 네이티브 주입값과 병합한다. */
+  --app-safe-top:      max(env(safe-area-inset-top), var(--native-safe-area-inset-top, 0px));
+  --app-safe-right:    max(env(safe-area-inset-right), var(--native-safe-area-inset-right, 0px));
+  --app-safe-bottom:   max(env(safe-area-inset-bottom), var(--native-safe-area-inset-bottom, 0px));
+  --app-safe-left:     max(env(safe-area-inset-left), var(--native-safe-area-inset-left, 0px));
   /* 스크롤 컨테이너 하단 여백 — BottomNav + safe-area + 여유 16px */
-  --scroll-bottom:     calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
+  --scroll-bottom:     calc(var(--bottom-nav-height) + var(--app-safe-bottom) + 16px);
   /* 고정 버튼 바 높이 (button 52 + padding top 16 + padding bottom 16) */
-  --fixed-btn-bar:     calc(84px + env(safe-area-inset-bottom));
+  --fixed-btn-bar:     calc(84px + var(--app-safe-bottom));
 }
 
 :root[data-theme='dark'] {

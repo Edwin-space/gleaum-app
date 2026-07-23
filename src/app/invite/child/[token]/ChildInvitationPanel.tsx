@@ -55,7 +55,16 @@ export function ChildInvitationPanel({ token, desktop }: { token: string; deskto
   }
 
   return (
-    <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: desktop ? '64px 32px' : '24px 16px', background: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
+    <main style={{
+      minHeight: '100dvh',
+      display: 'grid',
+      placeItems: 'center',
+      padding: desktop
+        ? '64px 32px'
+        : 'calc(max(var(--app-safe-top), 24px) + 24px) max(16px, var(--app-safe-right)) calc(max(var(--app-safe-bottom), 24px) + 24px) max(16px, var(--app-safe-left))',
+      background: 'var(--theme-bg)',
+      color: 'var(--theme-text)',
+    }}>
       <section style={{ width: '100%', maxWidth: desktop ? '720px' : '540px', padding: desktop ? '40px' : '26px 22px', borderRadius: '28px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: '0 8px 32px rgba(0,132,204,0.08)' }}>
         <div style={{ width: '58px', height: '58px', display: 'grid', placeItems: 'center', borderRadius: '20px', background: 'rgba(0,132,204,0.09)', marginBottom: '18px' }}>
           <UserRoundCheck size={29} color="#0084CC" />
@@ -112,7 +121,14 @@ function Info({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 function InvitationState({ title, description }: { title: string; description: string }) {
   return (
-    <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: '24px', background: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
+    <main style={{
+      minHeight: '100dvh',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 'calc(max(var(--app-safe-top), 24px) + 24px) max(24px, var(--app-safe-right)) calc(max(var(--app-safe-bottom), 24px) + 24px) max(24px, var(--app-safe-left))',
+      background: 'var(--theme-bg)',
+      color: 'var(--theme-text)',
+    }}>
       <div style={{ width: '100%', maxWidth: '480px', padding: '30px', borderRadius: '26px', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', textAlign: 'center' }}>
         <CheckCircle2 size={36} color="#0A8F69" />
         <h1 style={{ margin: '16px 0 9px', fontSize: '22px' }}>{title}</h1>

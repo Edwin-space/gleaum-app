@@ -86,7 +86,16 @@ export function BottomNav() {
   const isDesktop = useIsDesktop();
   const { capabilities } = useAccountSession();
 
-  const hideOnPaths = ['/', '/login', '/onboarding', '/auth/callback', '/invite', '/legal'];
+  const hideOnPaths = [
+    '/',
+    '/login',
+    '/onboarding',
+    '/auth/callback',
+    '/invite',
+    '/legal',
+    '/space/children',
+    '/family/guardian/verify',
+  ];
   const shouldHide = hideOnPaths.some(
     path => pathname === path || (path !== '/' && pathname.startsWith(path))
   );
@@ -107,7 +116,7 @@ export function BottomNav() {
           background: 'var(--theme-surface)',
           borderTop: '1px solid var(--theme-border)',
           /* safe-area 포함해 물리 화면 끝까지 흰 배경 확장 */
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingBottom: 'var(--app-safe-bottom, env(safe-area-inset-bottom))',
           boxShadow: '0 -1px 8px rgba(0,0,0,0.05)',
         }}
       >

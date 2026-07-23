@@ -240,13 +240,15 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
     }
   };
 
-  const pagePadding = desktop ? '48px 40px 72px' : '20px 16px 48px';
+  const pagePadding = desktop
+    ? '48px 40px 72px'
+    : 'calc(max(var(--app-safe-top), 24px) + 20px) max(16px, var(--app-safe-right)) calc(max(var(--app-safe-bottom), 24px) + 40px) max(16px, var(--app-safe-left))';
   const contentWidth = desktop ? '1120px' : '640px';
 
   return (
     <main style={{ minHeight: '100dvh', background: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
       <div style={{ maxWidth: contentWidth, margin: '0 auto', padding: pagePadding }}>
-        <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', marginBottom: '28px' }}>
+        <header style={{ display: 'flex', flexDirection: desktop ? 'row' : 'column', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', marginBottom: '28px' }}>
           <div>
             <button
               onClick={() => router.push('/space')}

@@ -122,7 +122,9 @@ export function ChildInviteShareSheet({
         display: 'flex',
         alignItems: desktop ? 'center' : 'flex-end',
         justifyContent: 'center',
-        padding: desktop ? '32px' : 0,
+        padding: desktop
+          ? '32px'
+          : 'max(var(--app-safe-top), 24px) var(--app-safe-right) 0 var(--app-safe-left)',
         background: 'rgba(10,10,10,0.52)',
         backdropFilter: 'blur(8px)',
       }}
@@ -134,9 +136,9 @@ export function ChildInviteShareSheet({
         style={{
           width: '100%',
           maxWidth: desktop ? '560px' : '640px',
-          maxHeight: desktop ? 'calc(100dvh - 64px)' : '90dvh',
+          maxHeight: desktop ? 'calc(100dvh - 64px)' : 'calc(100dvh - max(var(--app-safe-top), 24px))',
           overflowY: 'auto',
-          padding: desktop ? '28px' : '16px 20px 32px',
+          padding: desktop ? '28px' : '16px 20px calc(max(var(--app-safe-bottom), 24px) + 32px)',
           borderRadius: desktop ? '28px' : '28px 28px 0 0',
           background: 'var(--theme-surface)',
           color: 'var(--theme-text)',

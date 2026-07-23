@@ -82,6 +82,8 @@ export function DesktopSidebar() {
     pathname === '/' ||
     pathname === '/login' ||
     pathname === '/onboarding' ||
+    pathname.startsWith('/invite') ||
+    pathname.startsWith('/family/guardian/verify') ||
     pathname.startsWith('/legal')
   ) {
     return null;

@@ -81,7 +81,14 @@ export function GuardianConsentPanel({ token, desktop }: { token: string; deskto
   }
 
   return (
-    <main style={{ minHeight: '100dvh', background: 'var(--theme-bg)', color: 'var(--theme-text)', padding: desktop ? '64px 32px' : '28px 16px' }}>
+    <main style={{
+      minHeight: '100dvh',
+      background: 'var(--theme-bg)',
+      color: 'var(--theme-text)',
+      padding: desktop
+        ? '64px 32px'
+        : 'calc(max(var(--app-safe-top), 24px) + 28px) max(16px, var(--app-safe-right)) calc(max(var(--app-safe-bottom), 24px) + 32px) max(16px, var(--app-safe-left))',
+    }}>
       <div style={{ maxWidth: desktop ? '760px' : '600px', margin: '0 auto' }}>
         <div style={{ width: '56px', height: '56px', display: 'grid', placeItems: 'center', borderRadius: '20px', background: 'rgba(12,201,181,0.12)', marginBottom: '18px' }}>
           <MailCheck size={27} color="#0A8F69" />
@@ -128,7 +135,14 @@ export function GuardianConsentPanel({ token, desktop }: { token: string; deskto
 
 function StateCard({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
   return (
-    <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: '24px', background: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
+    <main style={{
+      minHeight: '100dvh',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 'calc(max(var(--app-safe-top), 24px) + 24px) max(24px, var(--app-safe-right)) calc(max(var(--app-safe-bottom), 24px) + 24px) max(24px, var(--app-safe-left))',
+      background: 'var(--theme-bg)',
+      color: 'var(--theme-text)',
+    }}>
       <div style={{ maxWidth: '460px', padding: '30px', borderRadius: '24px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', textAlign: 'center' }}>
         <CheckCircle2 size={34} color="#0A8F69" />
         <h1 style={{ margin: '16px 0 9px', fontSize: '22px' }}>{title}</h1>

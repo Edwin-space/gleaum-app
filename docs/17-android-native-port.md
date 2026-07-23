@@ -524,3 +524,12 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - OAuth 콜백 또는 이메일 로그인 완료 후 네이티브 Activity 매핑이 없는 자녀 초대 경로는 `MainActivity(start_path=...)` WebView로 복귀한다.
 - `claim`은 후보 계정만 기록하고 보호자 승인 전 공간 멤버십·연령 권한을 생성하지 않는다.
 - 검증: Android debug build 통과. 보호자·자녀 실계정 2개를 사용한 선택 이메일 없음/있음·승인/거절 운영 회귀는 `FAM-012`에서 마감한다.
+
+## 2026-07-23 자녀 연결 WebView 안전 영역 보정과 네이티브 전환 경계
+
+- `/space/children`, `/invite/child/[token]`, `/family/guardian/verify`는 진행 중 전역 하단 내비게이션·푸터가 겹치지 않는 집중 흐름으로 분리했다.
+- Android `MainActivity`가 실제 `WindowInsets`의 시스템바·디스플레이 컷아웃 값을 CSS 변수로 전달한다. CSS `env(safe-area-inset-*)`가 0인 WebView에서도 상단 제목과 하단 버튼을 조작할 수 있다.
+- 새 APK가 배포되기 전에도 동작하도록 해당 흐름에는 최소 24px 안전 여백을 적용했다.
+- 자녀 계정 연결의 최종 Android 구조는 Compose Material 3가 기준이다. 보호자 자녀 목록·등록·OTP·동의·초대 공유·후보 승인/거절과 자녀 claim을 네이티브로 옮긴다.
+- Google OAuth는 기존 시스템 인증 흐름을 유지하고, 이용약관·개인정보처리방침 원문만 `LegalWebViewActivity`에서 표시한다.
+- 서버의 기존 DB/RLS/RPC 계약은 복제하지 않는다. 네이티브 화면은 Bearer 인증 공통 API를 통해 같은 검증 규칙을 사용한다.

@@ -199,16 +199,21 @@ Custom SMTP(`helper@gleaum.com`)를 통해 발송된다. 일반 이메일/비밀
 
 ## 10. 다음 구현 순서
 
-1. 운영 약관·개인정보처리방침 개정 사전 고지 및 시행일 관리
-2. ~~자녀 전용 홈 및 메뉴 capability 차단 (`FAM-002`, Android 포함)~~ — 2026-07-16 완료
-3. Android 기능·실기기·릴리즈 AAB·Play Console 전체 정상화 (`AND-001`, `AND-002`, `AND-006`)
-4. iOS 네이티브 메뉴·홈·광고 capability 동등화 (`IOS-005`, Android 완료 후 재개)
-5. 보호자·자녀 실계정 2개로 선택 이메일 없음/있음, 승인/거절, 링크 재사용 차단 회귀
-6. 일정 assignee/observer 모델과 RLS (`FAM-003`)
-7. 만 14세 본인 재동의 UI
-8. 연령 전환 알림 및 일괄 Cron
-9. 외부 본인확인 사업자 선정과 전환 어댑터 구현
-10. 수동 위치 체크인 MVP와 별도 위치 동의
+1. 자녀 연결 WebView 안전 영역·전역 UI 겹침 실기기 회귀 (`FAM-012`)
+2. Android 자녀 목록·등록·OTP·동의·공유·승인/거절·claim을 Compose Material 3로 전환 (`FAM-013`)
+3. 보호자·자녀 실계정 2개로 선택 이메일 없음/있음, 승인/거절, 링크 재사용 차단 회귀
+4. 운영 약관·개인정보처리방침 개정 사전 고지 및 시행일 관리
+5. ~~자녀 전용 홈 및 메뉴 capability 차단 (`FAM-002`, Android 포함)~~ — 2026-07-16 완료
+6. Android 기능·실기기·릴리즈 AAB·Play Console 전체 정상화 (`AND-001`, `AND-002`, `AND-006`)
+7. iOS 네이티브 메뉴·홈·광고 capability 동등화 (`IOS-005`, Android 완료 후 재개)
+8. 일정 assignee/observer 모델과 RLS (`FAM-003`)
+9. 만 14세 본인 재동의 UI
+10. 연령 전환 알림 및 일괄 Cron
+11. 외부 본인확인 사업자 선정과 전환 어댑터 구현
+12. 수동 위치 체크인 MVP와 별도 위치 동의
+
+Android 전환 중에도 Web 초대 흐름은 외부 링크와 구버전 앱의 fallback으로 유지한다.
+단, 앱 내부 기본 진입은 Compose 화면이며 WebView 전체 플로우를 장기 운영 UI로 사용하지 않는다.
 
 ## 11. 현재 제외 범위
 
