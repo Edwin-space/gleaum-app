@@ -9,10 +9,12 @@
 - 보호자 관계와 동의 증빙 방법을 `email_otp`, 정책 버전을 `2026-07-23-email-otp-v2`로 명시
 - 운영 Supabase migration `20260723035907_guardian_email_otp_verification.sql` 적용 및 함수 권한 검증 완료
 - Supabase Auth용 제목 `[글리움] 보호자 확인 코드`와 HTML 템플릿을 `supabase/email-templates/`에 추가
+- Vercel Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포 완료
 
 검증:
 - 변경 경로 ESLint, `git diff --check`, `npm run build` 통과
 - `confirm_guardian_email_verification`, `complete_guardian_email_consent`: `anon=false`, `authenticated=true`
+- 운영 `/space/children` 인증 리다이렉트 `307`, 신규 OTP API 미인증 요청 `401`
 
 ### 2026-07-23 — Android 자녀 초대 WebView 경로 복귀 오류 수정
 
