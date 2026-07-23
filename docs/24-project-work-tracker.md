@@ -30,24 +30,18 @@
 
 ## 2. 현재 실행 큐
 
-위에서부터 순서대로 처리한다. 현재 큐는 **즉시 코드 구현 → production build → Web/API 운영 반영이 가능한 범위**를 우선한다. iOS와 Google Play Console 제출·최종 AAB 작업은 이 큐에서 제외하고 Android/Web 기능 안정화 뒤 재개한다. 등록정보 카피·공개 애셋 제작은 별도로 진행할 수 있다.
+위에서부터 순서대로 처리한다. 2026-07-23 사용자 결정으로 **Android 기능·성능·실기기 마감이 최우선**이다. Android 작업 중 공통 API 계약이나 Web·iOS 후속 영향은 즉시 기록하되 해당 플랫폼 구현은 Android 완료 뒤 진행한다. Google Play 등록정보 카피·공개 애셋 제작은 별도로 진행할 수 있다.
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-008` | 기존 공간 승격·안전 삭제 운영 마감 | `🟠 진행 중` | GitHub 반영 완료. Preview 검증 → Production 배포 → 로그인 계정 Web/Android 전환·삭제 재검증 |
-| 2 | `OPS-004` | 메인 Web/API 최신 변경 운영 회귀 | `🟠 진행 중` | `FAM-008` API를 포함한 Preview 검증 후 Production 승격·공간/가계부 쓰기 회귀 |
-| 3 | `PAR-001` | Android·PC Web·Mobile Web 3플랫폼 핵심 기능 파리티 | `🟠 진행 중` | 공통 계약 확정 → Android 기준 구현 → PC Web → Mobile Web → 통합 회귀 순서로 마감 |
-| 4 | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `🟠 진행 중` | Android와 공통인 설정은 유지하고 네이티브 전용·미구현·허위 플랜 진입점은 플랫폼별 정리 |
-| 5 | `WEB-006` | 마이페이지 Desktop/Mobile 기능 일치 | `🟠 진행 중` | Android 전체 메뉴 기준으로 빠른 동작·알림·계정·약관 기능을 PC/Mobile Web에서 일치 |
-| 6 | `WEB-010` | 알림 설정을 실제 서버 발송에 강제 | `🟠 진행 중` | 코드·단위 테스트·production build 완료. 운영 배포 후 설정별 실제 수신/비수신 검증 |
-| 7 | `WEB-003` | 일정 이미지·파일 첨부 완성 | `⬜ 대기` | 현재 로컬 미리보기 UI를 Storage 업로드·일정 연결·삭제·RLS·실패 UX까지 완성 |
-| 8 | `WEB-002` | 이메일 가입 운영화 | `⬜ 대기` | Confirm email·Redirect·커스텀 SMTP·만료/재발송 실제 계정 검증 |
-| 9 | `FAM-003` | 일정 assignee/observer 모델·RLS | `⬜ 대기` | Web/API 우선 구현 후 Android production build에 동일 계약 반영 |
-| 10 | `FAM-004` | 만 14세 재동의·만 19세 전환 | `⬜ 대기` | Web UI·알림·Cron·동의 이력 보존 구현 |
-| 11 | `WEB-005` | 일정 단건 외부 공유 | `⬜ 대기` | 만료·취소 가능한 읽기 전용 공유 링크와 개인정보 경계 구현 |
-| 12 | `WEB-009` | 일정 장소·지도 기능 완성 | `🟠 진행 중` | 외부 지도 열기는 연결 완료. 주소 검색·좌표 저장·내장 지도 도입 여부 결정 후 마감 |
-| 13 | `WEB-001` | 실제 RLS 통합 회귀 테스트 | `🔴 차단` | Docker Desktop·로컬 Supabase 준비 후 역할별 CRUD 자동화 |
-| 14 | `SEC-004` | 백오피스 전체 source lint 정상화 | `⬜ 대기` | 기존 React effect/타입 lint 부채 제거 |
+| 1 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
+| 2 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 대기` | 코드·unit/lint/assemble 완료. 콜드 시작 선조회, 메뉴 왕복 무재호출, pull-to-refresh, mutation 후 선택 갱신 체감 검증 |
+| 3 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🔴 차단` | 최신 API 반영 뒤 로그인 단말에서 공간 전환과 핵심 화면 회귀 |
+| 4 | `AND-005` | Android 기기 캘린더 회귀 | `🔴 차단` | 인증 단말에서 권한·CRUD·가져오기·중복 검증 |
+| 5 | `AND-003` | Android TalkBack·적응형 최종 QA | `🔴 차단` | 인증 이후 화면 TalkBack 음성 순서와 실기기 수동 QA |
+| 6 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
+| 7 | `OPS-004` | 최신 공통 API Production 반영 | `⏸ 보류` | Android 수정에 필요한 공통 API가 확정되면 Preview → Production 배포·회귀 |
+| 8 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
 
 ### 2026-07-23 맥북 작업 대조 결과
 
@@ -63,6 +57,7 @@
 
 ### 명시적 후순위
 
+- PC/Mobile Web: Android 기능 마감 뒤 `PAR-001`, `WEB-006`~`WEB-010`을 재개한다.
 - Google Play 출시 절차: `AND-006`의 등록정보 제작은 진행 중이지만 Console 제출·정책·서명 확인과 `AND-002` 최종 AAB는 기능 안정화 뒤 재개한다.
 - iOS: `IOS-001`~`IOS-006`은 Android/Web 기능과 정책이 확정된 뒤 Android 동작을 기준으로 재구현한다.
 - Remote Config: `WEB-007`, `AND-009`는 3플랫폼 핵심 기능 파리티와 운영 회귀가 끝난 뒤 재개한다.
@@ -115,6 +110,7 @@
 | [x] | `AND-007` | Android 백업·컴포넌트·R8·캘린더 변경 경계 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `allowBackup=false`, preview Activity 비공개, 광범위 ProGuard keep 제거, 캘린더 표식/대상 검증. debug/test/lint/release package 재통과 |
 | [x] | `AND-008` | Android 권한·개인정보·Data safety 정합성 보완 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 미사용 CAMERA/feature 제거, 캘린더·Firebase·AdMob/AdFit 개인정보처리방침 반영, Play 입력 초안 문서화. release package manifest의 카메라·미디어·외부 저장소 권한 0건·Android debug/test/lint·웹 lint/build 통과 |
 | [ ] | `AND-009` | Remote Config 긴급 차단·필수 업데이트 기반 | `⏸ 보류` | — | — | 사용자 결정으로 3플랫폼 핵심 기능 파리티 이후 재개. 주요 기능 차단·필수 업데이트·API 버전 계약 범위 유지 |
+| [ ] | `AND-010` | 앱 시작 선조회·공유 캐시·새로고침 정책 | `🟠 실기기 검증 대기` | 2026-07-23 | — | 스플래시 중 account context·홈·공간·일정·가계부·알림 병렬 선조회, 앱 프로세스 캐시 재사용, 홈/공간/일정/가계부/알림 pull-to-refresh, 일정·가계부·알림 무조건 onResume fetch 제거, mutation별 선택 무효화 완료. unit/lint/assemble 통과; 콜드 시작·오프라인·부분 실패 실기기 검증 후 완료 |
 
 ### `AND-009` 세부 체크리스트
 
@@ -133,6 +129,15 @@
 
 상세 QA: `docs/20-android-native-release-qa.md`, `docs/22-android-material3-ui-audit.md`
 
+### Android 작업의 플랫폼 후속 기록
+
+| Android 기준 기능 | 공통 계약 영향 | PC/Mobile Web 후속 | iOS 후속 |
+|---|---|---|---|
+| 가족 공간 전환 (`FAM-008`) | 기존 공간 ID·데이터 유지, admin 권한, 개인 공간 차단, 오류 코드 계약 유지 | Android 마감 뒤 동일 API의 전환·오류·fallback UX 회귀 | iOS 공간 관리 구현 시 같은 API·오류 계약 적용 |
+| 앱 시작 선조회·캐시 (`AND-010`) | API 응답 계약은 유지하고 Android 클라이언트 요청 정책만 변경 | Android 완료 뒤 Web 라우트 이동 중 중복 fetch와 SWR/캐시 정책 별도 감사 | 앱 시작 시 account/home/space 선조회와 pull-to-refresh 동등 정책 적용 |
+
+Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-001` 싱크 보드에 먼저 기록한다. Web/iOS 코드를 같은 작업에서 임의 수정하지 않는다.
+
 ## 6. 가족·자녀·공간 권한
 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
@@ -145,7 +150,7 @@
 | [ ] | `FAM-005` | 약관·개인정보처리방침 개정 운영 | `⬜ 대기` | — | — | 사전 고지일·시행일·버전 기록과 법률 검토 완료 |
 | [ ] | `FAM-006` | 외부 본인확인 전환 | `⏸ 보류` | — | — | 자녀 1,000명/월 500건/분쟁 1건/위치·결제 도입/정책 요구 중 하나 발생 시 재개 |
 | [ ] | `FAM-007` | 수동 위치 체크인 MVP | `⏸ 보류` | — | — | 별도 법률 검토·본인확인·위치 동의 완료 후에만 재개 |
-| [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🟠 진행 중` | 2026-07-16 | — | DB migration 운영 적용·rollback 검증, Web/API·Android 구현과 GitHub 반영, root/Android build 완료. 최신 브랜치 Preview·Production 배포 후 로그인 계정에서 가족 전환·안전 삭제·fallback을 Web/Android로 재검증 |
+| [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🟠 실기기 검증 대기` | 2026-07-16 | — | 전환 실패 직접 원인은 운영 API 미배포로 확인(기존 404). Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY` 배포 후 동일 경로가 정상 인증 계약 401을 반환. DB migration·API·Android 구현·build 완료; 로그인 공간 지기 계정의 실제 전환과 개인 공간/권한 오류 UX 최종 확인 필요 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -352,6 +357,8 @@
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `FAM-008`, `AND-010`, `OPS-004` | Android 가족 전환 복구·시작 데이터 정책 구현 | 운영 가족 전환 경로가 404임을 재현하고 최신 API를 Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`로 배포해 401 인증 계약으로 복구. Android에 스플래시 병렬 선조회, 프로세스 캐시, mutation 선택 무효화, 홈/공간/일정/가계부/알림 pull-to-refresh를 추가하고 일정·가계부·알림의 무조건 onResume fetch를 제거 | root production build 54/54, Android compile·unit·lint·assemble 통과. 다음은 로그인 실기기에서 일반→가족 전환, 화면 왕복 시 무재호출, 당겨서 새로고침, 일정/가계부 쓰기 후 갱신 확인. Web 라우트 fetch 감사와 iOS 동등 정책은 플랫폼 후속 표에 유지 |
+| 2026-07-23 | `FAM-008`, `AND-010`, `PAR-001`, `IOS-005` | Android 우선순위 확정·작업 시작 | Android 기능을 먼저 완성한 뒤 Web, 마지막으로 iOS를 진행하기로 결정. 가족 공간 전환 실패 수정과 스플래시 선조회·공유 캐시·pull-to-refresh 정책을 Android 현재 범위로 시작하고 플랫폼 후속 영향 표를 추가 | Android 코드/API 원인 추적 → 자동 build/test → 로그인 실기기 검증 순서. 공통 계약 변화만 기록하고 Web/iOS 구현은 후속 큐로 유지 |
 | 2026-07-23 | `REPO-003`, `PAR-001`, `FAM-008`, `OPS-004` | 맥북 작업·체크리스트 재대조 | 맥북에서 게시한 `codex/platform-parity-sync-20260723`을 맥미니 `/Volumes/WD_BLACK/Ai Works/gleaum`에 동기화하고 19개 기능/문서 커밋을 현재 트래커 완료 기준과 대조. 코드 존재만으로 운영 완료 처리하지 않고 배포·실기기·역할별 검증을 별도 유지 | 오래된 `node_modules`에서 `tsx` 누락을 발견해 lockfile 기준 복원. 데이터 경계 9/9·capability 4/4·알림 설정 2/2, root production build 54/54, backoffice build, Android 738 tasks compile/unit/lint/assemble 성공. 다음은 `FAM-008` 포함 Preview/Production 배포와 동일 계정 회귀 |
 | 2026-07-23 | `AND-006` | Google Play 등록정보 애셋 준비 | Android 1.1.5 실기기 UI를 기준으로 한국어 앱 이름·설명·출시 노트와 휴대전화 스크린샷 6장을 제작하고 공개용 예시 데이터로 익명화. 개인정보가 포함될 수 있는 원본 캡처는 Git에서 제외 | 이미지 6장 모두 1080×1920 RGB·알파 없음, 앱 이름 15/30자·간단한 설명 37/80자·자세한 설명 1032/4000자·출시 노트 151/500자 확인. 다음은 1024×500 기능 그래픽 제작과 Play Console 업로드·최종 확인 |
 | 2026-07-23 | `REPO-001`, `PAR-001`, `OPS-004` | GitHub 최신 작업 체크포인트 준비 | 원격 `main` 이후 누적된 보안·가족/자녀·Android 적응형/권한 변경 18개 로컬 커밋과 플랫폼 파리티·공간 수명주기·알림 설정·Web 세션 폴백 미커밋 작업을 `codex/platform-parity-sync-20260723` 브랜치로 통합 보존 | TypeScript, 데이터 경계 9/9, capability 4/4, 알림 설정 2/2, Next production build 54/54, Android SDK 36 `compileDebugKotlin`·unit test·lint·assemble(840 tasks) 통과. 로컬 IDE 기기 선택 파일은 체크포인트에서 제외하고 GitHub Draft PR로 게시 |

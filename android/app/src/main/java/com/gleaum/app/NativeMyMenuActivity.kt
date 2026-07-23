@@ -43,9 +43,6 @@ import com.gleaum.app.ui.theme.GleaumTheme
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * Android Native "전체" menu shell.
@@ -79,7 +76,18 @@ class NativeMyMenuActivity : AppCompatActivity() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadSummary() {
+    private fun loadSummary(force: Boolean = false) {
+        if (!force) {
+            val cachedHome = NativeAppDataCache.home
+            if (cachedHome != null) {
+                summary = cachedHome
+                composeProfile = NativeAppDataCache.profile
+                loading = false
+                message = null
+                render()
+                return
+            }
+        }
         val token = SessionManager.get(this)?.let {
             runCatching { JSONObject(it).optString("access_token") }.getOrNull()
         }
@@ -92,9 +100,11 @@ class NativeMyMenuActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val loaded = requestHomeSummary(token)
-                val profile = runCatching { NativeProfileApi.fetch(this) }.getOrNull()
+                val loaded = NativeHomeApi.summary(this, "android-menu")
+                val profile = NativeAppDataCache.profile ?: runCatching { NativeProfileApi.fetch(this) }.getOrNull()
                 runOnUiThread {
+                    NativeAppDataCache.home = loaded
+                    NativeAppDataCache.profile = profile
                     NativeAccountContextStore.save(this, loaded.account)
                     (application as? GleaumApp)?.syncAdvertisingEligibility()
                     summary = loaded
@@ -114,28 +124,6 @@ class NativeMyMenuActivity : AppCompatActivity() {
                 }
             }
         }.start()
-    }
-
-    private fun requestHomeSummary(token: String): NativeHomePortSummary {
-        val connection = (URL(HOME_SUMMARY_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 15000
-            readTimeout = 20000
-            setRequestProperty("Authorization", "Bearer $token")
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("X-Gleaum-Native-Preview", "android-menu")
-        }
-        val responseText = readResponse(connection)
-        val json = if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
-        if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(json.optString("error").ifBlank { "menu_summary_failed" })
-        }
-        return NativeHomePortSummary.fromJson(json)
-    }
-
-    private fun readResponse(connection: HttpURLConnection): String {
-        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
-        return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
     }
 
     private fun render() {
@@ -805,10 +793,12 @@ class NativeMyMenuActivity : AppCompatActivity() {
         Thread {
             try {
                 NativeProfileApi.update(this, displayName.trim(), realName.trim().ifBlank { null }, nameDisplayMode)
+                NativeAppDataCache.profile = null
+                NativeAppDataCache.home = null
                 runOnUiThread {
                     message = null
                     showToast("프로필을 저장했어요.")
-                    loadSummary()
+                    loadSummary(force = true)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -1390,7 +1380,6 @@ class NativeMyMenuActivity : AppCompatActivity() {
         }
 
     companion object {
-        private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
         private const val CALENDAR_PERMISSION_REQUEST = 9001
         private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
         private const val CALENDAR_ENABLED_KEY = "gleaum:calendar-sync-enabled"

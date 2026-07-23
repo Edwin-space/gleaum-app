@@ -307,6 +307,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 }
                 val id = entryId
                 if (id == null) NativeBudgetApi.create(this, payload) else NativeBudgetApi.update(this, id, payload)
+                NativeAppDataCache.invalidateBudget()
                 runOnUiThread { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
             } catch (e: Exception) {
                 runOnUiThread { saving = false; message = friendlyError(e.message); render() }

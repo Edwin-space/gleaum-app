@@ -34,12 +34,13 @@ class RouterActivity : AppCompatActivity() {
         NativeFirebase.syncSession(this, "router_entry")
 
         if (SessionManager.hasValid(this)) {
-            // 앱 진입마다 서버 상태를 다시 확인한다. 이전 adult 캐시로 자녀 계정에
-            // 광고나 관리 메뉴가 잠시 노출되지 않도록 refresh 전에는 fail-closed다.
-            NativeAccountContextStore.clear(this)
             Thread {
-                runCatching { NativeAccountContextStore.refresh(this) }
-                    .onSuccess { (application as? GleaumApp)?.syncAdvertisingEligibility() }
+                NativeStartupPrefetcher.start(applicationContext)
+                NativeStartupPrefetcher.awaitAccount()
+                if (NativeAccountContextStore.current(this) == null) {
+                    runCatching { NativeAccountContextStore.refresh(this) }
+                }
+                (application as? GleaumApp)?.syncAdvertisingEligibility()
                 runOnUiThread { route(isOAuthCallback) }
             }.start()
             return

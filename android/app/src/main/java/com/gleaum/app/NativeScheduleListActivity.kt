@@ -16,6 +16,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.schedules.ComposeScheduleListScreen
@@ -40,14 +42,26 @@ class NativeScheduleListActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!loading) loadSchedules(silent = true)
+        applyLightSystemBars()
+        if (!loading && NativeAppDataCache.schedules == null) {
+            loadSchedules(silent = true, force = true)
+        }
     }
 
     private fun applyLightSystemBars() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadSchedules(silent: Boolean = false) {
+    private fun loadSchedules(silent: Boolean = false, force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.schedules?.let {
+                schedules = it
+                loading = false
+                errorMessage = null
+                render()
+                return
+            }
+        }
         if (!silent) {
             loading = true
             errorMessage = null
@@ -57,6 +71,8 @@ class NativeScheduleListActivity : AppCompatActivity() {
             try {
                 val loaded = NativeScheduleApi.list(this, filter)
                 runOnUiThread {
+                    if (filter == "all") NativeAppDataCache.schedules = loaded
+                    loaded.forEach { schedule -> NativeAppDataCache.scheduleDetails[schedule.id] = schedule }
                     schedules = loaded
                     loading = false
                     errorMessage = null
@@ -80,6 +96,7 @@ class NativeScheduleListActivity : AppCompatActivity() {
         setContentView(buildScreen())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeSchedules() {
         setContent {
             GleaumTheme {
@@ -90,7 +107,15 @@ class NativeScheduleListActivity : AppCompatActivity() {
                     onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
                     onFabClick = { startActivity(Intent(this, NativeScheduleCreateActivity::class.java)) },
                 ) { innerPadding ->
-                    ComposeScheduleListScreen(
+                    PullToRefreshBox(
+                        isRefreshing = loading && schedules.isNotEmpty(),
+                        onRefresh = {
+                            loading = true
+                            render()
+                            loadSchedules(silent = true, force = true)
+                        },
+                    ) {
+                      ComposeScheduleListScreen(
                         innerPadding = innerPadding,
                         schedules = schedules,
                         loading = loading,
@@ -100,12 +125,13 @@ class NativeScheduleListActivity : AppCompatActivity() {
                             filter = key
                             loadSchedules()
                         },
-                        onRetry = { loadSchedules() },
-                        onAddSchedule = { startActivity(Intent(this, NativeScheduleCreateActivity::class.java)) },
+                        onRetry = { loadSchedules(force = true) },
+                        onAddSchedule = { startActivity(Intent(this@NativeScheduleListActivity, NativeScheduleCreateActivity::class.java)) },
                         onOpenSchedule = { id ->
-                            startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id))
+                            startActivity(Intent(this@NativeScheduleListActivity, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", id))
                         },
-                    )
+                      )
+                    }
                 }
             }
         }

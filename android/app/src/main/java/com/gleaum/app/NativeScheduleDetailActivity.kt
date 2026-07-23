@@ -43,19 +43,31 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!loading && scheduleId.isNotBlank()) loadSchedule(silent = true)
+        applyLightSystemBars()
+        if (!loading && scheduleId.isNotBlank() && NativeAppDataCache.scheduleDetails[scheduleId] == null) {
+            loadSchedule(silent = true, force = true)
+        }
     }
 
     private fun applyLightSystemBars() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadSchedule(silent: Boolean = false) {
+    private fun loadSchedule(silent: Boolean = false, force: Boolean = false) {
         if (scheduleId.isBlank()) {
             loading = false
             errorMessage = "일정을 찾을 수 없어요."
             render()
             return
+        }
+        if (!force) {
+            NativeAppDataCache.scheduleDetails[scheduleId]?.let {
+                schedule = it
+                loading = false
+                errorMessage = null
+                render()
+                return
+            }
         }
         if (!silent) {
             loading = true
@@ -65,6 +77,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
             try {
                 val loaded = NativeScheduleApi.detail(this, scheduleId)
                 runOnUiThread {
+                    NativeAppDataCache.scheduleDetails[scheduleId] = loaded
                     schedule = loaded
                     loading = false
                     errorMessage = null
@@ -252,8 +265,15 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
         Thread {
             try {
                 val updated = NativeScheduleApi.update(this, scheduleId, org.json.JSONObject().put("status", status))
+                NativeAppDataCache.invalidateSchedules()
+                NativeAppDataCache.scheduleDetails[scheduleId] = updated
                 runCatching { NativeCalendarAutoSync.upsert(this, updated) }
-                runOnUiThread { loadSchedule() }
+                runOnUiThread {
+                    schedule = updated
+                    loading = false
+                    errorMessage = null
+                    render()
+                }
             } catch (e: Exception) {
                 runOnUiThread { errorMessage = friendlyError(e.message); render() }
             }
@@ -275,6 +295,7 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
             try {
                 val deleting = schedule
                 NativeScheduleApi.delete(this, scheduleId)
+                NativeAppDataCache.invalidateSchedules()
                 runCatching { NativeCalendarAutoSync.delete(this, deleting) }
                 runOnUiThread { finish() }
             } catch (e: Exception) {

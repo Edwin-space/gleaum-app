@@ -17,6 +17,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.budget.ComposeBudgetScreen
@@ -45,14 +47,26 @@ class NativeBudgetActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!loading) loadSummary(silent = true)
+        applyLightSystemBars()
+        if (!loading && summary != null && NativeAppDataCache.budget == null) {
+            loadSummary(silent = true, force = true)
+        }
     }
 
     private fun applyLightSystemBars() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadSummary(silent: Boolean = false) {
+    private fun loadSummary(silent: Boolean = false, force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.budget?.let {
+                summary = it
+                loading = false
+                errorMessage = null
+                render()
+                return
+            }
+        }
         if (!silent) {
             loading = true
             errorMessage = null
@@ -62,6 +76,7 @@ class NativeBudgetActivity : AppCompatActivity() {
             try {
                 val loaded = NativeBudgetApi.summary(this)
                 runOnUiThread {
+                    NativeAppDataCache.budget = loaded
                     summary = loaded
                     loading = false
                     errorMessage = null
@@ -85,6 +100,7 @@ class NativeBudgetActivity : AppCompatActivity() {
         setContentView(buildScreen())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeBudget() {
         setContent {
             GleaumTheme {
@@ -95,17 +111,26 @@ class NativeBudgetActivity : AppCompatActivity() {
                     onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
                     onFabClick = { startActivity(Intent(this, NativeBudgetEntryCreateActivity::class.java)) },
                 ) { innerPadding ->
-                    ComposeBudgetScreen(
+                    PullToRefreshBox(
+                        isRefreshing = loading && summary != null,
+                        onRefresh = {
+                            loading = true
+                            render()
+                            loadSummary(silent = true, force = true)
+                        },
+                    ) {
+                      ComposeBudgetScreen(
                         innerPadding = innerPadding,
                         summary = summary,
                         loading = loading,
                         errorMessage = errorMessage,
-                        onRetry = { loadSummary() },
-                        onAddEntry = { startActivity(Intent(this, NativeBudgetEntryCreateActivity::class.java)) },
+                        onRetry = { loadSummary(force = true) },
+                        onAddEntry = { startActivity(Intent(this@NativeBudgetActivity, NativeBudgetEntryCreateActivity::class.java)) },
                         onEditEntry = { id -> openEdit(id) },
                         onToggleStatus = { entry -> toggleEntryStatus(entry) },
                         onDeleteEntry = { entry -> deleteEntry(entry.id) },
-                    )
+                      )
+                    }
                 }
             }
         }
@@ -357,7 +382,8 @@ class NativeBudgetActivity : AppCompatActivity() {
         Thread {
             try {
                 NativeBudgetApi.update(this, entry.id, org.json.JSONObject().put("status", next))
-                runOnUiThread { loadSummary() }
+                NativeAppDataCache.invalidateBudget()
+                runOnUiThread { loadSummary(force = true) }
             } catch (e: Exception) {
                 runOnUiThread { errorMessage = friendlyError(e.message); render() }
             }
@@ -377,7 +403,8 @@ class NativeBudgetActivity : AppCompatActivity() {
         Thread {
             try {
                 NativeBudgetApi.delete(this, id)
-                runOnUiThread { loadSummary() }
+                NativeAppDataCache.invalidateBudget()
+                runOnUiThread { loadSummary(force = true) }
             } catch (e: Exception) {
                 runOnUiThread { errorMessage = friendlyError(e.message); render() }
             }

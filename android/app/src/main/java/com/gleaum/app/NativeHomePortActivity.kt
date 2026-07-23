@@ -26,6 +26,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.kakao.adfit.ads.popup.AdFitPopupAd
 import com.kakao.adfit.ads.popup.AdFitPopupAdDialogFragment
 import com.kakao.adfit.ads.popup.AdFitPopupAdLoader
@@ -35,9 +37,6 @@ import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.home.ComposeHomeScreen
 import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -88,9 +87,18 @@ class NativeHomePortActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyLightSystemBars()
+        if (!loading && summary != null && NativeAppDataCache.home == null) {
+            loadHomeSummary(force = true)
+        }
     }
 
-    private fun loadHomeSummary() {
+    private fun loadHomeSummary(force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.home?.let {
+                applyHomeSummary(it)
+                return
+            }
+        }
         val session = SessionManager.get(this)
         if (session.isNullOrBlank()) {
             redirectToLogin()
@@ -105,23 +113,10 @@ class NativeHomePortActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val loaded = requestHomeSummary(token)
+                val loaded = NativeHomeApi.summary(this)
                 runOnUiThread {
-                    if (!loaded.onboardingCompleted) {
-                        startActivity(Intent(this, NativeOnboardingActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        })
-                        finish()
-                        return@runOnUiThread
-                    }
-                    NativeAccountContextStore.save(this, loaded.account)
-                    (application as? GleaumApp)?.syncAdvertisingEligibility()
-                    summary = loaded
-                    selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
-                    loading = false
-                    errorMessage = null
-                    render()
-                    maybeShowLaunchBottomAd()
+                    NativeAppDataCache.home = loaded
+                    applyHomeSummary(loaded)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -137,28 +132,23 @@ class NativeHomePortActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun requestHomeSummary(token: String): NativeHomePortSummary {
-        val connection = (URL(HOME_SUMMARY_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 15000
-            readTimeout = 20000
-            setRequestProperty("Authorization", "Bearer $token")
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("X-Gleaum-Native-Preview", "android-home")
+    private fun applyHomeSummary(loaded: NativeHomePortSummary) {
+        if (!loaded.onboardingCompleted) {
+            startActivity(Intent(this, NativeOnboardingActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            })
+            finish()
+            return
         }
-
-        val responseText = readResponse(connection)
-        val json = if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
-        if (connection.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            throw IllegalStateException("session_required")
-        }
-        if (connection.responseCode !in 200..299) {
-            val message = json.optString("error").ifBlank { "홈 데이터 요청 실패 (${connection.responseCode})" }
-            throw IllegalStateException(message)
-        }
-        return NativeHomePortSummary.fromJson(json)
+        NativeAccountContextStore.save(this, loaded.account)
+        (application as? GleaumApp)?.syncAdvertisingEligibility()
+        summary = loaded
+        selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
+        loading = false
+        errorMessage = null
+        render()
+        maybeShowLaunchBottomAd()
     }
-
 
     private fun redirectToLogin() {
         SessionManager.clear(this)
@@ -166,11 +156,6 @@ class NativeHomePortActivity : AppCompatActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()
-    }
-
-    private fun readResponse(connection: HttpURLConnection): String {
-        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
-        return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
     }
 
     private fun normalizedHomeLayout(): String {
@@ -202,6 +187,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         setContentView(buildHomeSkeleton())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeHome() {
         setContent {
             GleaumTheme {
@@ -212,27 +198,37 @@ class NativeHomePortActivity : AppCompatActivity() {
                     onNotificationClick = { openWebPath("/notifications") },
                     onFabClick = { openWebPath("/schedules/new") },
                 ) { innerPadding ->
-                    ComposeHomeScreen(
-                        innerPadding = innerPadding,
-                        summary = summary,
-                        loading = loading,
-                        errorMessage = errorMessage,
-                        selectedDateKey = selectedDateKey,
-                        onRetry = {
+                    PullToRefreshBox(
+                        isRefreshing = loading && summary != null,
+                        onRefresh = {
                             loading = true
                             errorMessage = null
                             render()
-                            loadHomeSummary()
+                            loadHomeSummary(force = true)
                         },
-                        onSelectDate = { date ->
-                            selectedDateKey = date
-                            render()
-                        },
-                        onAddSchedule = { openWebPath("/schedules/new") },
-                        onOpenSchedule = { id -> openWebPath("/schedules/$id") },
-                        onOpenSchedules = { openWebPath("/schedules") },
-                        onOpenBudget = { openWebPath("/budget") },
-                    )
+                    ) {
+                        ComposeHomeScreen(
+                            innerPadding = innerPadding,
+                            summary = summary,
+                            loading = loading,
+                            errorMessage = errorMessage,
+                            selectedDateKey = selectedDateKey,
+                            onRetry = {
+                                loading = true
+                                errorMessage = null
+                                render()
+                                loadHomeSummary(force = true)
+                            },
+                            onSelectDate = { date ->
+                                selectedDateKey = date
+                                render()
+                            },
+                            onAddSchedule = { openWebPath("/schedules/new") },
+                            onOpenSchedule = { id -> openWebPath("/schedules/$id") },
+                            onOpenSchedules = { openWebPath("/schedules") },
+                            onOpenBudget = { openWebPath("/budget") },
+                        )
+                    }
                 }
             }
         }
@@ -1453,7 +1449,6 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun matchWrap(): LinearLayout.LayoutParams = LinearLayout.LayoutParams(match(), wrap())
 
     companion object {
-        private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
         private const val HOME_BOTTOM_ADFIT_CLIENT_ID = "DAN-Brd0FQAE3ByDWwJu"
         private const val TAG = "GleaumHomeAdFit"
         private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"

@@ -22,6 +22,8 @@ import android.app.AlertDialog
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.space.ComposeSpaceScreen
@@ -52,7 +54,17 @@ class NativeSpaceActivity : AppCompatActivity() {
         applyLightSystemBars()
     }
 
-    private fun loadSummary() {
+    private fun loadSummary(force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.spaces?.let {
+                summary = it
+                loading = false
+                errorMessage = null
+                render()
+                showPendingInviteIfNeeded()
+                return
+            }
+        }
         loading = true
         errorMessage = null
         render()
@@ -60,6 +72,7 @@ class NativeSpaceActivity : AppCompatActivity() {
             try {
                 val loaded = NativeSpaceApi.summary(this)
                 runOnUiThread {
+                    NativeAppDataCache.spaces = loaded
                     summary = loaded
                     loading = false
                     render()
@@ -79,6 +92,7 @@ class NativeSpaceActivity : AppCompatActivity() {
         setContentView(buildScreen())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeSpace() {
         setContent {
             GleaumTheme {
@@ -89,24 +103,29 @@ class NativeSpaceActivity : AppCompatActivity() {
                     onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
                     onFabClick = null,
                 ) { innerPadding ->
-                    ComposeSpaceScreen(
+                    PullToRefreshBox(
+                        isRefreshing = loading && summary != null,
+                        onRefresh = { loadSummary(force = true) },
+                    ) {
+                      ComposeSpaceScreen(
                         innerPadding = innerPadding,
                         summary = summary,
                         canManageSpaces = accountCapabilities().canManageSpaces,
                         canInviteMembers = accountCapabilities().canInviteMembers,
                         loading = loading,
                         errorMessage = errorMessage,
-                        onRetry = { loadSummary() },
+                        onRetry = { loadSummary(force = true) },
                         onCopyInviteCode = { code -> copyInviteCode(code) },
                         onSpaceClick = { space -> activateSpace(space) },
                         onMemberClick = { member -> showMemberActions(member) },
                         onManageAction = { action -> handleSpaceManageAction(action) },
                         onCreatePost = { content -> createPost(content) },
-                        onCreateSchedule = { startActivity(Intent(this, NativeScheduleCreateActivity::class.java)) },
+                        onCreateSchedule = { startActivity(Intent(this@NativeSpaceActivity, NativeScheduleCreateActivity::class.java)) },
                         onOpenSchedule = { scheduleId ->
-                            startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", scheduleId))
+                            startActivity(Intent(this@NativeSpaceActivity, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", scheduleId))
                         },
-                    )
+                      )
+                    }
                 }
             }
         }
@@ -691,6 +710,8 @@ class NativeSpaceActivity : AppCompatActivity() {
                 val next = action()
                 runOnUiThread {
                     summary = next
+                    NativeAppDataCache.spaces = next
+                    NativeAppDataCache.home = null
                     loading = false
                     errorMessage = null
                     render()

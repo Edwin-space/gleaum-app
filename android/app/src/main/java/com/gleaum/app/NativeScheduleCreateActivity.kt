@@ -382,6 +382,7 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                 val payload = buildPayload(title, memo)
                 val id = scheduleId
                 val saved = if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
+                NativeAppDataCache.invalidateSchedules()
                 runCatching { NativeCalendarAutoSync.upsert(this, saved) }
                 runOnUiThread {
                     saving = false

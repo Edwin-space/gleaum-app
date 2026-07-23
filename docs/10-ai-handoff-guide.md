@@ -39,9 +39,9 @@
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
-- **최신 배포**: GitHub `main` 자동 배포 기준. 작업 전 Vercel 상태 확인 권장
+- **최신 배포**: 2026-07-23 Vercel Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`. Android 가족 공간 전환 API 포함
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
-- **Git 기준점**: `codex/platform-parity-sync-20260723`, 커밋 `564b923`. 기능 기준점은 `42b53b0`이며 현재 로컬과 원격 브랜치가 일치한다.
+- **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기준 `77c6879`. Android 시작 선조회·공유 캐시 변경은 현재 작업 체크포인트에서 이어진다.
 - **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
 - **외부 작업 인수인계**: `docs/23-external-work-checkpoint.md`가 복사 방법과 외부 의존성의 단일 체크포인트다. 맥미니의 `stash@{0}`는 동기화 전 오래된 로컬 작업 백업이므로 최신 브랜치에 자동 적용하지 않는다.
 
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-23 | Android 우선 실행으로 전환. 가족 공간 전환 실패는 앱이 호출하는 운영 `/api/native/spaces/[id]/family`가 미배포되어 `404`를 반환한 것이 직접 원인이었다. 최신 공통 API를 Vercel Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`에 배포해 무인증 요청이 정상 `401` 계약으로 바뀐 것을 확인했다. Android는 스플래시 2초 동안 account context·홈·공간·일정·가계부·알림을 병렬 선조회하고 프로세스 캐시를 화면 간 재사용하도록 변경했다. 일정·가계부·알림의 무조건 `onResume` 재호출을 제거하고 홈·공간·일정·가계부·알림에 Material 3 pull-to-refresh를 연결했으며, 쓰기 작업 후 관련 캐시만 무효화한다. `npm run build`, Android unit/lint/assemble 통과. 로그인 실기기 가족 전환과 선조회 체감 검증은 남아 있다. Web은 라우트 이동 fetch 감사, iOS는 동일 시작 선조회 정책을 각 플랫폼 단계에서 후속 반영한다. |
 | 2026-07-23 | 맥북 최신 브랜치 `codex/platform-parity-sync-20260723`을 맥미니 작업공간에 동기화하고 체크리스트를 재대조했다. 플랫폼 파리티·공간 수명주기·알림 설정·Web 세션 폴백 기능은 `42b53b0`, Google Play 한국어 등록정보와 익명화 폰 스크린샷 6장은 `564b923`에 보존됐다. 맥미니 lockfile 의존성을 복원한 뒤 데이터 경계 9/9, capability 4/4, 알림 설정 2/2, root production build 54/54, backoffice build, Android debug compile/unit/lint/assemble 738 tasks를 통과했다. 운영 완료가 아닌 항목은 `FAM-008`, `OPS-004`, `PAR-001`, `AND-001`에 배포·실기기 검증으로 유지한다. |
 | 2026-07-14 | Android Material 3 UI 품질 기반 마감. light/dark ColorScheme·Typography·Shapes를 명시하고 공통 adaptive navigation, 상태 카드, 안내 배너, 비클릭 배지, 의미색 토큰을 적용했다. 홈·일정·가계부·공간·전체·알림·온보딩 Compose gate가 활성 상태이며 `assembleDebug`, `lintDebug` 오류 0건을 확인했다. 코드 감사 평균은 90.8/A, XML 로그인은 86/B다. 마지막 연결 단말은 잠금 상태라 최종 시각 QA는 미완료. 상세는 `docs/22-android-material3-ui-audit.md`. |
 | 2026-07-14 | 외장 저장장치 이동 체크포인트 추가. 현재 HEAD `8fc41c6` 이후의 다수 변경·신규 파일은 미커밋 상태라 Git clone만으로 복원되지 않는다. `.git`, `.env.local`, untracked 파일과 저장소 외부 `~/gleaum-release.keystore`를 구분해 옮겨야 하며, 복사·복구 절차는 `docs/23-external-work-checkpoint.md`를 따른다. |

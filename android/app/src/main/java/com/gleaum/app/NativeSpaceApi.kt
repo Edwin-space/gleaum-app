@@ -1,6 +1,7 @@
 package com.gleaum.app
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -192,7 +193,9 @@ object NativeSpaceApi {
             throw IllegalStateException("session_required")
         }
         if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(json.optString("error").ifBlank { "space_summary_failed" })
+            val code = json.optString("error").ifBlank { "space_request_failed_${connection.responseCode}" }
+            Log.e("GleaumSpaceApi", "$method $url failed (${connection.responseCode}): $text")
+            throw IllegalStateException(code)
         }
         return json
     }
