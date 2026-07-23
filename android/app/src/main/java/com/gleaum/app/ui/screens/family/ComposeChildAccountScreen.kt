@@ -53,7 +53,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,6 +65,9 @@ import com.gleaum.app.ui.components.GleaumAdaptiveContent
 import com.gleaum.app.ui.components.GleaumLabelBadge
 import com.gleaum.app.ui.components.GleaumStateCard
 import com.gleaum.app.ui.components.StateKind
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 enum class ChildAccountMode {
     MANAGE,
@@ -639,10 +644,11 @@ private fun RegistrationDialog(
     onSubmit: (String, String, String?, String) -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf(TextFieldValue("")) }
     var email by remember { mutableStateOf("") }
     var relationship by remember { mutableStateOf("parent") }
-    val validDate = Regex("^\\d{4}-\\d{2}-\\d{2}$").matches(birthDate)
+    val validDate = isValidBirthDate(birthDate.text)
+    val showDateError = birthDate.text.length == 10 && !validDate
     val canSubmit = name.isNotBlank() && validDate && !busy
 
     AlertDialog(
@@ -664,9 +670,25 @@ private fun RegistrationDialog(
                 )
                 OutlinedTextField(
                     value = birthDate,
-                    onValueChange = { birthDate = it.filter { char -> char.isDigit() || char == '-' }.take(10) },
+                    onValueChange = { input ->
+                        val formatted = formatBirthDateInput(input.text)
+                        birthDate = TextFieldValue(
+                            text = formatted,
+                            selection = TextRange(formatted.length),
+                        )
+                    },
                     label = { Text("생년월일") },
                     placeholder = { Text("2015-03-18") },
+                    supportingText = {
+                        Text(
+                            if (showDateError) {
+                                "실제 생년월일을 확인해 주세요."
+                            } else {
+                                "숫자 8자리만 입력하면 자동으로 형식이 완성됩니다."
+                            },
+                        )
+                    },
+                    isError = showDateError,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -696,7 +718,7 @@ private fun RegistrationDialog(
                 onClick = {
                     onSubmit(
                         name.trim(),
-                        birthDate,
+                        birthDate.text,
                         email.takeIf { it.isNotBlank() },
                         relationship,
                     )
@@ -708,6 +730,31 @@ private fun RegistrationDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("취소") } },
     )
+}
+
+internal fun formatBirthDateInput(value: String): String {
+    val digits = value.filter(Char::isDigit).take(8)
+    return buildString {
+        append(digits.take(4))
+        if (digits.length > 4) {
+            append('-')
+            append(digits.substring(4, minOf(6, digits.length)))
+        }
+        if (digits.length > 6) {
+            append('-')
+            append(digits.substring(6))
+        }
+    }
+}
+
+internal fun isValidBirthDate(value: String): Boolean {
+    if (!Regex("^\\d{4}-\\d{2}-\\d{2}$").matches(value)) return false
+    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).apply {
+        isLenient = false
+    }
+    val parsed = runCatching { formatter.parse(value) }.getOrNull() ?: return false
+    val minimum = runCatching { formatter.parse("1900-01-01") }.getOrNull() ?: return false
+    return !parsed.before(minimum) && !parsed.after(Date())
 }
 
 @Composable

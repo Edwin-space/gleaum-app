@@ -1296,3 +1296,5 @@ npm run cap:open:android # Android Studio 열기
 - 검증: Next production build 55/55, Android compile/unit test/assemble/lint 통과, lint 오류 0건.
 - `SM_F731N`에 최신 APK를 설치해 스플래시 → 네이티브 홈, 가족 공간 → 자녀 계정 연결 Activity 진입을 확인했다.
 - Production 배포 후 네이티브 Bearer 인증으로 기존 자녀 2명 목록을 정상 조회했다. 데이터 변경 동작은 운영 데이터 보호를 위해 별도 실계정 회귀로 남긴다.
+- 자녀 등록 생년월일은 숫자 8자리 입력을 `YYYY-MM-DD`로 자동 변환하고 삽입된 구분자 뒤로 커서를 유지한다. 실제 날짜·1900년 이후·미래 날짜 금지 검증을 통과해야 등록 버튼이 활성화된다.
+- 실기기에서 `20150318 → 2015-03-18` 변환과 등록 버튼 활성화를 확인했으며 테스트 레코드는 생성하지 않았다.

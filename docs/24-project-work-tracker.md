@@ -34,7 +34,7 @@
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-013` | Android 자녀 계정 연결 네이티브 전환 | `🟠 조회 검증·변경 회귀 대기` | Compose M3·공통 API Bearer 인증·딥링크 구현과 Production 배포 완료. `SM_F731N`에서 기존 자녀 2명 조회 확인. 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 변경 회귀 |
+| 1 | `FAM-013` | Android 자녀 계정 연결 네이티브 전환 | `🟠 조회·입력 검증, 전체 변경 회귀 대기` | Compose M3·공통 API Bearer 인증·딥링크 구현과 Production 배포 완료. 자녀 목록 조회와 생년월일 숫자 8자리 자동 포맷·등록 버튼 활성화 실기기 확인. 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
 | 2 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 코드 완료·외부 설정 대기` | 시스템 계정 선택기와 Supabase ID token 교환 구현. Firebase에 debug·release·Play App Signing SHA-1을 등록하고 최신 `google-services.json`으로 실기기 검증 |
 | 3 | `WEB-011` | 공개 첫 접근 랜딩 재구성 | `✅ 완료` | 실제 Android 정보 구조를 익명화해 PC·태블릿·모바일 반응형 소개/기능/플랫폼/다운로드 페이지 구현. 로컬 양쪽 뷰포트·SSR·Production 반영 검증 |
 | 4 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
