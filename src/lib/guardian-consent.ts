@@ -1,4 +1,4 @@
-export const GUARDIAN_POLICY_VERSION = '2026-07-13-email-v1';
+export const GUARDIAN_POLICY_VERSION = '2026-07-23-email-otp-v2';
 
 export const REQUIRED_GUARDIAN_CONSENTS = [
   'service_registration',

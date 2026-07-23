@@ -33,8 +33,9 @@ family   = 가족 관계·자녀 계정 기능 활성 공간
 ```text
 보호자가 가족 공간에 자녀 기본 정보 등록
 → family_dependents.status = consent_pending
-→ 보호자 로그인 이메일로 일회성 확인 메일 발송
-→ 보호자가 이메일 링크에서 필수 항목 3종을 각각 동의
+→ 보호자 로그인 이메일로 6자리 일회성 확인 코드 발송
+→ 보호자가 앱에서 OTP 확인
+→ OTP 확인 증적이 있는 상태에서 필수 항목 3종을 각각 동의
 → 관계 verification_status = verified
 → 72시간 일회성 초대 발급
 → 보호자가 휴대폰 공유 시트로 문자·카카오톡 등에 직접 전달
@@ -97,7 +98,8 @@ adult                    만 19세 이상
 |---|---|---|
 | `GET /api/spaces/children?spaceId=` | 기반 완료 | 조회 권한이 있는 자녀 프로필 목록 |
 | `POST /api/spaces/children` | 기반 완료 | 가족 공간 자녀 대기 프로필 생성 |
-| `POST /api/spaces/children/[id]/guardian-verification/start` | 구현 완료 | 보호자 로그인 이메일로 일회성 확인 링크 발송 |
+| `POST /api/spaces/children/[id]/guardian-verification/start` | 구현 완료 | 보호자 로그인 이메일로 6자리 OTP 발송 |
+| `POST /api/spaces/children/guardian-verification/verify-otp` | 구현 완료 | Supabase Auth OTP 확인 후 DB 도전을 확인 완료로 기록 |
 | `POST /api/spaces/children/guardian-verification/complete` | 구현 완료 | 필수 동의 3종과 이메일 확인 증적 기록 |
 | `POST /api/spaces/children/[id]/invite` | 기반 완료 | 검증·동의 완료 후 일회성 초대 발급 |
 | `POST /api/spaces/children/invitations/claim` | 구현 완료 | 자녀 연결 요청 생성, 공간 접근은 보류 |
@@ -126,6 +128,7 @@ Web과 Android는 2026-07-16 `FAM-002`에서 이 계약을 홈·메뉴까지 적
 supabase/migrations/020_family_child_foundation.sql
 supabase/migrations/021_family_child_foundation_hardening.sql
 supabase/migrations/022_guardian_email_consent_flow.sql
+supabase/migrations/20260723035907_guardian_email_otp_verification.sql
 supabase/migrations/20260716055953_enforce_account_capabilities.sql
 supabase/migrations/20260716063400_restrict_account_capability_rpc.sql
 supabase/migrations/20260723024521_add_family_member_roles.sql
@@ -141,23 +144,32 @@ supabase/migrations/20260723025504_harden_family_member_role_updates.sql
 5. `020` 결과에 테이블 5개, `family_groups.space_type`, 함수 4개가 표시되는지 확인한다.
 6. 이어서 `021` 파일 전체를 같은 방식으로 실행해 인덱스와 RLS 성능 보강을 적용한다.
 7. `022` 파일 전체를 실행해 이메일 확인 증적, 연결 승인 대기 상태, 보호자 최종 승인 함수를 적용한다.
+8. `20260723035907_guardian_email_otp_verification.sql`을 실행해 OTP 확인 증적 강제와 `email_otp` 검증 방법을 적용한다.
 
-운영 `gleaum_app` 프로젝트에는 위 migration을 모두 적용했다. `has_account_capability(text)`는 `SECURITY INVOKER`, `anon` 실행 불가, `authenticated`·`service_role` 실행 가능으로 검증했고, `ledger_entries`·`family_groups`·`space_members`에 제한형 RLS 7개가 적용되었다. `family_role`은 허용값 CHECK와 기존 `space_members` update guard로 보호하며 공간 지기만 다른 멤버 관계를 바꿀 수 있다. Supabase Security Advisor의 기존 경고는 별도 운영 부채로 유지되며 이번 관계 필드로 새 경고가 추가되지는 않았다.
+운영 `gleaum_app` 프로젝트에는 위 migration을 모두 적용했다. `confirm_guardian_email_verification(text)`와 `complete_guardian_email_consent(text,text,text[])`는 `anon` 실행 불가, `authenticated` 실행 가능으로 검증했다. OTP 확인 전에는 필수 동의 RPC가 `email_otp_verification_required`로 차단된다. `has_account_capability(text)`는 `SECURITY INVOKER`, `anon` 실행 불가, `authenticated`·`service_role` 실행 가능으로 검증했고, `ledger_entries`·`family_groups`·`space_members`에 제한형 RLS 7개가 적용되었다. `family_role`은 허용값 CHECK와 기존 `space_members` update guard로 보호하며 공간 지기만 다른 멤버 관계를 바꿀 수 있다. Supabase Security Advisor의 기존 경고는 별도 운영 부채로 유지한다.
 
 운영 환경 필수 설정:
 
 ```text
 NEXT_PUBLIC_APP_URL=https://www.gleaum.com
-Supabase Auth Redirect URL=https://www.gleaum.com/auth/callback
 ```
 
-Supabase Authentication 이메일 템플릿에는 `{{ .ConfirmationURL }}` 링크가 반드시 포함되어야 한다. 보호자 확인 메일은 기존 Custom SMTP(`helper@gleaum.com`)를 통해 발송된다.
+Supabase `Authentication → Email Templates → Magic Link`에는 다음 설정을 적용한다.
+
+```text
+Subject: [글리움] 보호자 확인 코드
+Body: supabase/email-templates/guardian-verification-otp.html 전체
+필수 변수: {{ .Token }}
+```
+
+`{{ .ConfirmationURL }}`을 사용하는 Magic Link 방식이 아니다. 보호자 확인 메일은 기존 Custom SMTP(`helper@gleaum.com`)를 통해 발송된다.
 
 ## 9. 비용 최적화형 보호자 확인의 운영 한계와 전환 기준
 
 현재 방식은 초기 이용자 규모에서 SMS 발송비를 줄이기 위한 임시 모델이다.
 
-- Supabase Auth와 연결된 보호자 로그인 이메일로 일회성 확인 링크를 보낸다.
+- Supabase Auth와 연결된 보호자 로그인 이메일로 6자리 일회성 OTP를 보낸다.
+- OTP 성공 후 DB 확인 도전의 `verified_at`을 기록하고, 이 증적 없이는 필수 동의를 저장할 수 없다.
 - 필수 동의는 `service_registration`, `personal_data_processing`, `family_data_sharing` 3종만 각각 받는다.
 - 위치 수집·위치 공유·마케팅 동의는 묶지 않으며 기본 비활성이다.
 - 보호자 휴대폰의 OS 공유 기능을 사용하므로 글리움 서버는 SMS를 발송하거나 자녀 전화번호를 저장하지 않는다.

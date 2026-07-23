@@ -1,5 +1,19 @@
 # 07. 완료된 기능
 
+### 2026-07-23 — 보호자 이메일 OTP·필수 동의 흐름 정합화
+
+- Supabase 메일 템플릿은 OTP를 발송하지만 앱은 Magic Link를 기다리던 프로토콜 불일치 수정
+- 자녀 관리 화면에 6자리 OTP 입력·재발송 UI 추가
+- OTP 성공 후에만 `guardian_email_verifications.verified_at`을 기록하는 서버 함수 추가
+- 확인 증적이 없는 필수 동의 요청은 DB에서 차단
+- 보호자 관계와 동의 증빙 방법을 `email_otp`, 정책 버전을 `2026-07-23-email-otp-v2`로 명시
+- 운영 Supabase migration `20260723035907_guardian_email_otp_verification.sql` 적용 및 함수 권한 검증 완료
+- Supabase Auth용 제목 `[글리움] 보호자 확인 코드`와 HTML 템플릿을 `supabase/email-templates/`에 추가
+
+검증:
+- 변경 경로 ESLint, `git diff --check`, `npm run build` 통과
+- `confirm_guardian_email_verification`, `complete_guardian_email_consent`: `anon=false`, `authenticated=true`
+
 ### 2026-07-23 — Android 자녀 초대 WebView 경로 복귀 오류 수정
 
 - 가족 공간 멤버 탭에서 `초대 → 자녀`를 선택하면 `/space/children?sid=...`가 잠깐 열린 뒤 네이티브 홈으로 돌아가던 오류 수정

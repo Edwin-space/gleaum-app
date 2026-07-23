@@ -1054,7 +1054,19 @@ export async function revokeGuardianEmailVerification(
   if (error) throw new Error(error.message);
 }
 
-/** 이메일 링크로 돌아온 보호자의 필수 동의를 원자적으로 증적화한다. */
+/** Supabase 이메일 OTP 검증이 끝난 보호자 확인 도전을 확인 완료로 표시한다. */
+export async function confirmGuardianEmailVerification(
+  token: string,
+  client?: RouteSupabaseClient,
+): Promise<void> {
+  const supabase = client ?? createClient();
+  const { error } = await supabase.rpc('confirm_guardian_email_verification', {
+    p_token: token,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** 이메일 OTP 확인을 마친 보호자의 필수 동의를 원자적으로 증적화한다. */
 export async function completeGuardianEmailConsent(
   token: string,
   policyVersion: string,

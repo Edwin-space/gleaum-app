@@ -47,6 +47,9 @@ export async function POST(request: Request) {
     if (message.includes('verification_expired')) {
       return NextResponse.json({ error: 'verification_expired' }, { status: 410 });
     }
+    if (message.includes('email_otp_verification_required')) {
+      return NextResponse.json({ error: 'email_otp_verification_required' }, { status: 403 });
+    }
     if (message.includes('already_used')) {
       return NextResponse.json({ error: 'verification_already_used' }, { status: 409 });
     }

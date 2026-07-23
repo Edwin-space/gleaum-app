@@ -57,15 +57,17 @@ export function GuardianConsentPanel({ token, desktop }: { token: string; deskto
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : '';
       setError(message === 'verification_expired'
-        ? '확인 링크가 만료되었습니다. 자녀 관리 화면에서 다시 발송해 주세요.'
-        : '확인을 완료하지 못했습니다. 링크가 이미 사용되었는지 확인해 주세요.');
+        ? '보호자 확인이 만료되었습니다. 자녀 관리 화면에서 새 코드를 받아 주세요.'
+        : message === 'email_otp_verification_required'
+          ? '이메일 확인이 완료되지 않았습니다. 자녀 관리 화면에서 코드를 먼저 확인해 주세요.'
+          : '확인을 완료하지 못했습니다. 이미 처리된 요청인지 확인해 주세요.');
     } finally {
       setSubmitting(false);
     }
   };
 
   if (!/^gev_[a-f0-9]{64}$/.test(token)) {
-    return <StateCard title="유효하지 않은 확인 링크입니다" description="자녀 관리 화면에서 보호자 확인 메일을 다시 요청해 주세요." />;
+    return <StateCard title="유효하지 않은 보호자 확인입니다" description="자녀 관리 화면에서 새 확인 코드를 요청해 주세요." />;
   }
 
   if (result) {
@@ -87,7 +89,7 @@ export function GuardianConsentPanel({ token, desktop }: { token: string; deskto
         <p style={{ margin: '0 0 8px', color: '#0CC9B5', fontSize: '12px', fontWeight: 900, letterSpacing: '0.12em' }}>GUARDIAN CONSENT</p>
         <h1 style={{ margin: '0 0 12px', fontSize: desktop ? '34px' : '27px', fontWeight: 950, letterSpacing: '-0.04em' }}>보호자 확인 및 동의</h1>
         <p style={{ margin: '0 0 26px', color: 'var(--theme-text-muted)', fontSize: '14px', lineHeight: 1.7 }}>
-          메일 링크를 연 계정이 자녀를 등록한 보호자 계정인지 확인했습니다. 필수 항목은 묶어서 동의하지 않고 각각 확인받습니다.
+          이메일 확인 코드를 입력한 계정이 자녀를 등록한 보호자 계정인지 확인했습니다. 필수 항목은 묶어서 동의하지 않고 각각 확인받습니다.
         </p>
 
         <div style={{ display: 'grid', gap: '12px' }}>

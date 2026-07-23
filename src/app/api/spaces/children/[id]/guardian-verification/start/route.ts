@@ -3,7 +3,6 @@ import {
   createGuardianEmailVerification,
   revokeGuardianEmailVerification,
 } from '@/lib/db';
-import { getPublicAppUrl } from '@/lib/guardian-consent';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(
@@ -23,15 +22,11 @@ export async function POST(
   let verification: { token: string; expiresAt: string } | null = null;
   try {
     verification = await createGuardianEmailVerification(id, supabase);
-    const nextPath = `/family/guardian/verify?token=${encodeURIComponent(verification.token)}`;
-    const callbackUrl = new URL('/auth/callback', getPublicAppUrl());
-    callbackUrl.searchParams.set('next', nextPath);
 
     const { error } = await supabase.auth.signInWithOtp({
       email: user.email,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: callbackUrl.toString(),
       },
     });
     if (error) throw error;
@@ -39,6 +34,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       email: user.email,
+      challengeToken: verification.token,
       expiresAt: verification.expiresAt,
     });
   } catch (error) {

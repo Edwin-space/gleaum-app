@@ -6,12 +6,15 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  KeyRound,
   MailCheck,
   Plus,
+  RotateCcw,
   Send,
   ShieldCheck,
   UserRoundCheck,
   UsersRound,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { FamilyDependent, FamilyDependentStatus } from '@/types';
@@ -22,7 +25,7 @@ type Props = {
 };
 
 const STATUS_META: Record<FamilyDependentStatus, { label: string; description: string }> = {
-  consent_pending: { label: '보호자 확인 필요', description: '보호자 이메일 확인과 필수 동의를 진행해 주세요.' },
+  consent_pending: { label: '보호자 확인 필요', description: '보호자 이메일로 받은 6자리 코드 확인과 필수 동의를 진행해 주세요.' },
   ready: { label: '초대 준비 완료', description: '자녀에게 보낼 일회성 초대 링크를 만들 수 있습니다.' },
   invited: { label: '초대 전송 가능', description: '기존 링크를 잃어버렸다면 새 링크를 발급할 수 있습니다.' },
   approval_pending: { label: '최종 승인 대기', description: '자녀가 가입했습니다. 계정과 이메일을 확인한 뒤 승인해 주세요.' },
@@ -43,6 +46,15 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [otpChallenge, setOtpChallenge] = useState<{
+    dependentId: string;
+    displayName: string;
+    email: string;
+    challengeToken: string;
+    expiresAt: string;
+  } | null>(null);
   const [form, setForm] = useState({
     displayName: '',
     birthDate: '',
@@ -105,8 +117,20 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
         method: 'POST',
       });
       if (!response.ok) throw new Error(await parseError(response));
-      const payload = await response.json() as { email: string };
-      toast.success(`${payload.email}로 확인 메일을 보냈습니다`);
+      const payload = await response.json() as {
+        email: string;
+        challengeToken: string;
+        expiresAt: string;
+      };
+      setOtpChallenge({
+        dependentId: dependent.id,
+        displayName: dependent.displayName,
+        email: payload.email,
+        challengeToken: payload.challengeToken,
+        expiresAt: payload.expiresAt,
+      });
+      setVerificationCode('');
+      toast.success(`${payload.email}로 6자리 확인 코드를 보냈습니다`);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
       toast.error(message === 'verification_rate_limited'
@@ -114,6 +138,35 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
         : '확인 메일을 보내지 못했습니다');
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const verifyGuardianCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!otpChallenge || verificationCode.length !== 6 || verifyingCode) return;
+    setVerifyingCode(true);
+    try {
+      const response = await fetch('/api/spaces/children/guardian-verification/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: verificationCode,
+          challengeToken: otpChallenge.challengeToken,
+        }),
+      });
+      const payload = await response.json() as { nextPath?: string; error?: string };
+      if (!response.ok || !payload.nextPath) {
+        throw new Error(payload.error ?? 'invalid_verification_code');
+      }
+      toast.success('보호자 이메일이 확인되었습니다');
+      router.push(payload.nextPath);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      toast.error(message === 'verification_expired'
+        ? '확인 코드가 만료되었습니다. 새 코드를 받아 주세요'
+        : '확인 코드가 올바르지 않습니다');
+    } finally {
+      setVerifyingCode(false);
     }
   };
 
@@ -195,7 +248,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
 
         <section style={{ display: 'grid', gridTemplateColumns: desktop ? 'repeat(3, minmax(0, 1fr))' : '1fr', gap: '12px', marginBottom: '24px' }}>
           {[
-            { icon: MailCheck, title: '1. 보호자 확인', text: '로그인 이메일로 본인 확인 후 필수 항목을 각각 동의합니다.' },
+            { icon: MailCheck, title: '1. 보호자 확인', text: '로그인 이메일로 받은 6자리 코드 확인 후 필수 항목을 각각 동의합니다.' },
             { icon: Send, title: '2. 직접 공유', text: '부모 휴대폰의 공유 기능으로 문자·카카오톡 등에 초대 링크를 보냅니다.' },
             { icon: UserRoundCheck, title: '3. 최종 승인', text: '자녀가 가입해도 보호자가 승인하기 전에는 공간에 접근할 수 없습니다.' },
           ].map(({ icon: Icon, title, text }) => (
@@ -206,6 +259,94 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
             </article>
           ))}
         </section>
+
+        {otpChallenge && (
+          <form
+            onSubmit={verifyGuardianCode}
+            style={{
+              padding: desktop ? '26px' : '20px',
+              marginBottom: '24px',
+              borderRadius: '24px',
+              background: 'var(--theme-surface)',
+              border: '1.5px solid #0084CC',
+              boxShadow: '0 8px 32px rgba(0,132,204,0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#0084CC', fontSize: '12px', fontWeight: 900 }}>
+                  <KeyRound size={16} /> 보호자 이메일 확인
+                </div>
+                <h2 style={{ margin: '9px 0 6px', fontSize: '19px', fontWeight: 950 }}>
+                  {otpChallenge.displayName}님의 확인 코드를 입력해 주세요
+                </h2>
+                <p style={{ margin: 0, color: 'var(--theme-text-muted)', fontSize: '13px', lineHeight: 1.6, overflowWrap: 'anywhere' }}>
+                  {otpChallenge.email}로 발송된 6자리 코드이며 30분 동안 유효합니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="확인 코드 입력 닫기"
+                onClick={() => {
+                  setOtpChallenge(null);
+                  setVerificationCode('');
+                }}
+                style={{ width: '40px', height: '40px', display: 'grid', placeItems: 'center', flexShrink: 0, borderRadius: '999px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface-muted)', color: 'var(--theme-text-muted)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: desktop ? 'row' : 'column', alignItems: desktop ? 'flex-end' : 'stretch', gap: '12px', marginTop: '20px' }}>
+              <Field label="이메일 확인 코드">
+                <input
+                  required
+                  autoFocus
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  aria-label="이메일로 받은 6자리 확인 코드"
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  style={{
+                    ...inputStyle,
+                    minWidth: desktop ? '260px' : undefined,
+                    textAlign: 'center',
+                    fontSize: '22px',
+                    fontWeight: 900,
+                    letterSpacing: '0.3em',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                />
+              </Field>
+              <button
+                type="submit"
+                disabled={verificationCode.length !== 6 || verifyingCode}
+                style={{
+                  ...primaryButtonStyle,
+                  minHeight: '50px',
+                  opacity: verificationCode.length === 6 && !verifyingCode ? 1 : 0.45,
+                  cursor: verificationCode.length === 6 && !verifyingCode ? 'pointer' : 'not-allowed',
+                }}
+              >
+                <ShieldCheck size={17} /> {verifyingCode ? '확인 중...' : '코드 확인'}
+              </button>
+              <button
+                type="button"
+                disabled={busyId === otpChallenge.dependentId}
+                onClick={() => {
+                  const dependent = dependents.find(({ id }) => id === otpChallenge.dependentId);
+                  if (dependent) void startVerification(dependent);
+                }}
+                style={{ ...secondaryButtonStyle, minHeight: '50px' }}
+              >
+                <RotateCcw size={16} /> 코드 다시 받기
+              </button>
+            </div>
+          </form>
+        )}
 
         {showForm && (
           <form onSubmit={submitDependent} style={{ padding: desktop ? '26px' : '20px', marginBottom: '24px', borderRadius: '24px', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px rgba(0,132,204,0.08)' }}>
