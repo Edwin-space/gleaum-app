@@ -39,9 +39,9 @@
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
-- **최신 배포**: 2026-07-23 Vercel Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`. 보호자 OTP 요청 목적 식별값과 Magic Link/OTP 조건 분기형 운영 템플릿, 보호자 이메일 OTP 입력·DB 증적 강제, 가족 관계/공간 권한 분리와 자녀 초대 WebView 경로 유지 보정, 기존 Android 가족 공간 전환·광고 capability 보정, Next 16.2.11 포함
+- **최신 배포**: 2026-07-23 Vercel Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe`. 운영 실메일과 일치하는 8자리 보호자 OTP UI·API 검증·메일 안내, 보호자 OTP 요청 목적 식별값과 Magic Link/OTP 조건 분기형 운영 템플릿, DB 증적 강제, 가족 관계/공간 권한 분리와 자녀 초대 WebView 경로 유지 보정, 기존 Android 가족 공간 전환·광고 capability 보정, Next 16.2.11 포함
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
-- **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기준 `a4becaa`.
+- **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기능 기준 `d8b7a51`.
 - **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
 - **외부 작업 인수인계**: `docs/23-external-work-checkpoint.md`가 복사 방법과 외부 의존성의 단일 체크포인트다. 맥미니의 `stash@{0}`는 동기화 전 오래된 로컬 작업 백업이므로 최신 브랜치에 자동 적용하지 않는다.
 

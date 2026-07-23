@@ -8,6 +8,8 @@
 - 공용 제목을 `[글리움] 이메일 확인 코드`로 변경하고 운영 Supabase Dashboard에 저장 완료
 - 일반 이메일/비밀번호 회원가입은 별도 `Confirm sign up` 템플릿을 사용하므로 영향 없음
 - Vercel Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy` 배포 완료
+- 운영 실메일이 8자리로 발급되는 것을 기준으로 UI·API 검증·메일 안내를 `GUARDIAN_EMAIL_OTP_LENGTH=8`로 통일
+- 8자리 보정 Vercel Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe` 배포 완료
 
 검증:
 - 운영 Supabase Redirect URL에 `https://www.gleaum.com/**` 허용 확인
