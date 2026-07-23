@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
+  AtSign,
   Check,
   CheckCircle2,
   KeyRound,
@@ -19,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { GUARDIAN_EMAIL_OTP_LENGTH } from '@/lib/guardian-consent';
 import type { FamilyDependent, FamilyDependentStatus } from '@/types';
+import { ChildInviteShareSheet } from './ChildInviteShareSheet';
 
 type Props = {
   desktop: boolean;
@@ -29,7 +31,7 @@ const STATUS_META: Record<FamilyDependentStatus, { label: string; description: s
   consent_pending: { label: '보호자 확인 필요', description: `보호자 이메일로 받은 ${GUARDIAN_EMAIL_OTP_LENGTH}자리 코드 확인과 필수 동의를 진행해 주세요.` },
   ready: { label: '초대 준비 완료', description: '자녀에게 보낼 일회성 초대 링크를 만들 수 있습니다.' },
   invited: { label: '초대 전송 가능', description: '기존 링크를 잃어버렸다면 새 링크를 발급할 수 있습니다.' },
-  approval_pending: { label: '최종 승인 대기', description: '자녀가 가입했습니다. 계정과 이메일을 확인한 뒤 승인해 주세요.' },
+  approval_pending: { label: '최종 승인 대기', description: '초대 링크를 사용한 계정이 연결을 요청했습니다. 계정을 확인한 뒤 승인하거나 거절해 주세요.' },
   linked: { label: '연결 완료', description: '가족 공간 멤버로 안전하게 연결되었습니다.' },
   suspended: { label: '이용 중지', description: '자녀 계정 이용이 일시 중지되었습니다.' },
   unlinked: { label: '연결 해제', description: '자녀 계정 연결이 해제되었습니다.' },
@@ -45,6 +47,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
   const [dependents, setDependents] = useState<FamilyDependent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showEmailRestriction, setShowEmailRestriction] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
@@ -54,6 +57,11 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
     displayName: string;
     email: string;
     challengeToken: string;
+    expiresAt: string;
+  } | null>(null);
+  const [inviteSheet, setInviteSheet] = useState<{
+    displayName: string;
+    inviteUrl: string;
     expiresAt: string;
   } | null>(null);
   const [form, setForm] = useState({
@@ -88,7 +96,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
 
   const submitDependent = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.displayName.trim() || !form.birthDate || !form.expectedEmail.trim()) return;
+    if (!form.displayName.trim() || !form.birthDate) return;
     setSaving(true);
     try {
       const response = await fetch('/api/spaces/children', {
@@ -98,14 +106,18 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
       });
       if (!response.ok) throw new Error(await parseError(response));
       setForm({ displayName: '', birthDate: '', expectedEmail: '', relationshipType: 'parent' });
+      setShowEmailRestriction(false);
       setShowForm(false);
       toast.success('자녀 정보가 등록되었습니다');
       await loadDependents();
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
-      toast.error(message === 'expected_email_already_registered'
+      const errorMessage = message === 'expected_email_already_registered'
         ? '이미 등록된 자녀 이메일입니다'
-        : '자녀 정보를 등록하지 못했습니다');
+        : message === 'guardian_email_cannot_be_child_email'
+          ? '보호자 본인 이메일은 자녀 연결 계정으로 지정할 수 없습니다'
+          : '자녀 정보를 등록하지 못했습니다';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -175,30 +187,39 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
     }
   };
 
-  const createAndShareInvite = async (dependent: FamilyDependent) => {
+  const createInvite = async (dependent: FamilyDependent) => {
     setBusyId(dependent.id);
     try {
       const response = await fetch(`/api/spaces/children/${dependent.id}/invite`, { method: 'POST' });
       if (!response.ok) throw new Error(await parseError(response));
       const payload = await response.json() as { inviteUrl: string; expiresAt: string };
-      const shareText = [
-        `${dependent.displayName}님, 글리움 가족 공간 초대가 도착했습니다.`,
-        '등록된 Google 이메일로 로그인해 연결을 요청해 주세요.',
-        payload.inviteUrl,
-        '링크는 72시간 동안 한 번만 사용할 수 있습니다.',
-      ].join('\n\n');
-
-      if (navigator.share) {
-        await navigator.share({ title: '글리움 자녀 초대', text: shareText, url: payload.inviteUrl });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        toast.success('초대 내용을 복사했습니다');
-      }
+      setInviteSheet({
+        displayName: dependent.displayName,
+        inviteUrl: payload.inviteUrl,
+        expiresAt: payload.expiresAt,
+      });
       await loadDependents();
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
       console.error('[SpaceChildrenManager/share]', error);
       toast.error('초대 링크를 만들지 못했습니다');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const rejectLink = async (dependent: FamilyDependent) => {
+    if (!window.confirm(`${dependent.candidateEmail ?? '이 계정'}의 연결 요청을 거절할까요? 새 초대 링크를 다시 보낼 수 있습니다.`)) {
+      return;
+    }
+    setBusyId(dependent.id);
+    try {
+      const response = await fetch(`/api/spaces/children/${dependent.id}/reject`, { method: 'POST' });
+      if (!response.ok) throw new Error(await parseError(response));
+      toast.success('연결 요청을 거절했습니다');
+      await loadDependents();
+    } catch (error) {
+      console.error('[SpaceChildrenManager/reject]', error);
+      toast.error('연결 요청을 거절하지 못했습니다');
     } finally {
       setBusyId(null);
     }
@@ -240,7 +261,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
               자녀 계정 연결
             </h1>
             <p style={{ margin: 0, color: 'var(--theme-text-muted)', fontSize: '14px', lineHeight: 1.7, maxWidth: '650px' }}>
-              이메일이 일치해도 즉시 연결되지 않습니다. 보호자 확인과 자녀 가입 후 마지막 승인을 거쳐야 공간 접근이 열립니다.
+              자녀 이메일을 미리 몰라도 등록할 수 있습니다. 보호자 확인, 1회성 초대, 연결 계정 검토와 최종 승인을 모두 거쳐야 공간 접근이 열립니다.
             </p>
           </div>
           <button
@@ -254,8 +275,8 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
         <section style={{ display: 'grid', gridTemplateColumns: desktop ? 'repeat(3, minmax(0, 1fr))' : '1fr', gap: '12px', marginBottom: '24px' }}>
           {[
             { icon: MailCheck, title: '1. 보호자 확인', text: `로그인 이메일로 받은 ${GUARDIAN_EMAIL_OTP_LENGTH}자리 코드 확인 후 필수 항목을 각각 동의합니다.` },
-            { icon: Send, title: '2. 직접 공유', text: '부모 휴대폰의 공유 기능으로 문자·카카오톡 등에 초대 링크를 보냅니다.' },
-            { icon: UserRoundCheck, title: '3. 최종 승인', text: '자녀가 가입해도 보호자가 승인하기 전에는 공간에 접근할 수 없습니다.' },
+            { icon: Send, title: '2. 안전하게 공유', text: '문자·카카오톡·QR 중 편한 방법으로 72시간 일회성 초대를 전달합니다.' },
+            { icon: UserRoundCheck, title: '3. 계정 확인·승인', text: '링크를 사용한 계정을 직접 확인하고 승인하기 전에는 공간 권한이 생기지 않습니다.' },
           ].map(({ icon: Icon, title, text }) => (
             <article key={title} style={{ padding: '20px', borderRadius: '24px', background: 'var(--theme-surface-muted)', border: '1px solid var(--theme-border)' }}>
               <Icon size={22} color="#0084CC" />
@@ -364,15 +385,38 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
               <Field label="생년월일">
                 <input required type="date" max={new Date().toISOString().slice(0, 10)} value={form.birthDate} onChange={(event) => setForm((current) => ({ ...current, birthDate: event.target.value }))} style={inputStyle} />
               </Field>
-              <Field label="자녀 Google 이메일">
-                <input required type="email" value={form.expectedEmail} onChange={(event) => setForm((current) => ({ ...current, expectedEmail: event.target.value }))} placeholder="child@gmail.com" style={inputStyle} />
-              </Field>
               <Field label="보호자 관계">
                 <select value={form.relationshipType} onChange={(event) => setForm((current) => ({ ...current, relationshipType: event.target.value }))} style={inputStyle}>
                   <option value="parent">부모</option>
                   <option value="guardian">법정대리인</option>
                 </select>
               </Field>
+            </div>
+            <div style={{ marginTop: '16px', padding: '16px', borderRadius: '20px', background: 'var(--theme-surface-muted)', border: '1px solid var(--theme-border)' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEmailRestriction((current) => !current);
+                  if (showEmailRestriction) {
+                    setForm((current) => ({ ...current, expectedEmail: '' }));
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '100%', padding: 0, border: 0, background: 'transparent', color: 'var(--theme-text)', fontSize: '13px', fontWeight: 850, cursor: 'pointer', textAlign: 'left' }}
+              >
+                <AtSign size={17} color="#0084CC" />
+                연결할 계정 이메일을 미리 제한하기
+                <span style={{ marginLeft: 'auto', color: 'var(--theme-text-subtle)', fontSize: '11px' }}>선택</span>
+              </button>
+              {showEmailRestriction && (
+                <div style={{ marginTop: '14px' }}>
+                  <Field label="연결 허용 이메일">
+                    <input type="email" value={form.expectedEmail} onChange={(event) => setForm((current) => ({ ...current, expectedEmail: event.target.value }))} placeholder="child@example.com" style={inputStyle} />
+                  </Field>
+                  <p style={{ margin: '8px 2px 0', color: 'var(--theme-text-subtle)', fontSize: '12px', lineHeight: 1.55 }}>
+                    입력하면 이 이메일로 확인된 계정만 초대를 사용할 수 있습니다. 모르면 비워 두세요.
+                  </p>
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
               <button type="button" onClick={() => setShowForm(false)} style={secondaryButtonStyle}>취소</button>
@@ -393,7 +437,7 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
             <div style={emptyStyle}>
               <UsersRound size={30} color="#0084CC" />
               <strong>등록된 자녀가 없습니다</strong>
-              <span>먼저 자녀의 이름, 생년월일, Google 이메일을 등록해 주세요.</span>
+              <span>먼저 자녀의 이름과 생년월일을 등록해 주세요. 계정은 초대 단계에서 안전하게 연결합니다.</span>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: desktop ? 'repeat(2, minmax(0, 1fr))' : '1fr', gap: '14px' }}>
@@ -405,14 +449,31 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                       <div style={{ minWidth: 0 }}>
                         <h3 style={{ margin: '0 0 5px', fontSize: '18px', fontWeight: 900 }}>{dependent.displayName}</h3>
-                        <p style={{ margin: 0, color: 'var(--theme-text-subtle)', fontSize: '12px', overflowWrap: 'anywhere' }}>{dependent.expectedEmail}</p>
+                        <p style={{ margin: 0, color: 'var(--theme-text-subtle)', fontSize: '12px', overflowWrap: 'anywhere' }}>
+                          {dependent.candidateEmail
+                            ? `연결 요청: ${dependent.candidateEmail}`
+                            : dependent.expectedEmail
+                              ? `허용 계정: ${dependent.expectedEmail}`
+                              : '연결 계정은 초대 수락 후 확인'}
+                        </p>
                       </div>
                       <span style={{ padding: '7px 10px', borderRadius: '999px', color: dependent.status === 'linked' ? '#0A8F69' : '#0084CC', background: dependent.status === 'linked' ? 'rgba(46,232,149,0.12)' : 'rgba(0,132,204,0.09)', fontSize: '11px', fontWeight: 900, whiteSpace: 'nowrap' }}>
                         {meta.label}
                       </span>
                     </div>
                     <p style={{ margin: '16px 0', minHeight: desktop ? '42px' : undefined, color: 'var(--theme-text-muted)', fontSize: '13px', lineHeight: 1.6 }}>{meta.description}</p>
-                    <DependentAction dependent={dependent} busy={busy} onVerify={startVerification} onInvite={createAndShareInvite} onApprove={approveLink} />
+                    {dependent.status === 'approval_pending' && dependent.candidateEmail && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '13px 14px', margin: '0 0 14px', borderRadius: '18px', background: 'var(--theme-surface-muted)', border: '1px solid var(--theme-border)' }}>
+                        <UserRoundCheck size={18} color="#0084CC" style={{ flexShrink: 0 }} />
+                        <div style={{ minWidth: 0 }}>
+                          <strong style={{ display: 'block', color: 'var(--theme-text)', fontSize: '12px', overflowWrap: 'anywhere' }}>{dependent.candidateEmail}</strong>
+                          <span style={{ color: 'var(--theme-text-subtle)', fontSize: '11px' }}>
+                            {dependent.candidateProvider === 'google' ? 'Google 로그인' : '이메일 로그인'} · 이메일 확인 완료
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <DependentAction dependent={dependent} busy={busy} onVerify={startVerification} onInvite={createInvite} onApprove={approveLink} onReject={rejectLink} />
                   </article>
                 );
               })}
@@ -425,6 +486,15 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
           <span>현재 위치 수집·공유 동의는 이 절차에 포함되지 않으며 기능도 비활성 상태입니다. 위치 기능은 별도 동의와 본인확인 체계를 갖춘 뒤에만 제공합니다.</span>
         </aside>
       </div>
+      {inviteSheet && (
+        <ChildInviteShareSheet
+          desktop={desktop}
+          displayName={inviteSheet.displayName}
+          inviteUrl={inviteSheet.inviteUrl}
+          expiresAt={inviteSheet.expiresAt}
+          onClose={() => setInviteSheet(null)}
+        />
+      )}
     </main>
   );
 }
@@ -444,12 +514,14 @@ function DependentAction({
   onVerify,
   onInvite,
   onApprove,
+  onReject,
 }: {
   dependent: FamilyDependent;
   busy: boolean;
   onVerify: (dependent: FamilyDependent) => void;
   onInvite: (dependent: FamilyDependent) => void;
   onApprove: (dependent: FamilyDependent) => void;
+  onReject: (dependent: FamilyDependent) => void;
 }) {
   if (dependent.status === 'consent_pending') {
     return <button disabled={busy} onClick={() => onVerify(dependent)} style={primaryButtonStyle}><MailCheck size={17} />{busy ? '발송 중...' : '내 이메일로 확인하기'}</button>;
@@ -458,7 +530,16 @@ function DependentAction({
     return <button disabled={busy} onClick={() => onInvite(dependent)} style={primaryButtonStyle}><Send size={17} />{busy ? '준비 중...' : '초대 링크 공유'}</button>;
   }
   if (dependent.status === 'approval_pending') {
-    return <button disabled={busy} onClick={() => onApprove(dependent)} style={{ ...primaryButtonStyle, background: '#0A8F69' }}><Check size={17} />{busy ? '승인 중...' : '자녀 연결 최종 승인'}</button>;
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '9px' }}>
+        <button disabled={busy} onClick={() => onReject(dependent)} style={secondaryButtonStyle}>
+          <X size={17} /> 거절
+        </button>
+        <button disabled={busy} onClick={() => onApprove(dependent)} style={{ ...primaryButtonStyle, background: '#0A8F69' }}>
+          <Check size={17} />{busy ? '처리 중...' : '최종 승인'}
+        </button>
+      </div>
+    );
   }
   if (dependent.status === 'linked') {
     return <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px', color: '#0A8F69', fontSize: '13px', fontWeight: 900 }}><CheckCircle2 size={19} /> 연결이 완료되었습니다</div>;

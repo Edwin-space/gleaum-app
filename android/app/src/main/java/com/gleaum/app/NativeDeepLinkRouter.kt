@@ -33,6 +33,7 @@ object NativeDeepLinkRouter {
             ?: extras?.getString("link")
             ?: extras?.getString("deep_link")
             ?: extras?.getString("gcm.notification.url")
+            ?: extras?.getString("start_path")
             ?: intent?.dataString
         return pathFromUrl(url)
     }

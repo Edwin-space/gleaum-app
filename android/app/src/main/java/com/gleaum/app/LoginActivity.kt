@@ -38,6 +38,8 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingStartPath = NativeDeepLinkRouter.pathFromIntent(intent)
+            ?: NativePendingRouteStore.peek(this)
+        NativePendingRouteStore.save(this, pendingStartPath)
 
         if (SessionManager.hasValid(this)) { goToMain(); return }
 
@@ -415,14 +417,18 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
 
     private fun goToMain() {
-        val target = NativeDeepLinkRouter.intentFor(this, pendingStartPath)
-            ?: NativeDeepLinkRouter.intentFor(this, "/home")
-            ?: Intent(this, MainActivity::class.java).apply {
-                pendingStartPath?.let { putExtra("start_path", it) }
-            }
+        val pending = pendingStartPath ?: NativePendingRouteStore.peek(this)
+        val target = if (!pending.isNullOrBlank()) {
+            NativeDeepLinkRouter.intentFor(this, pending)
+                ?: Intent(this, MainActivity::class.java).putExtra("start_path", pending)
+        } else {
+            NativeDeepLinkRouter.intentFor(this, "/home")
+                ?: Intent(this, MainActivity::class.java)
+        }
         startActivity(target.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
+        NativePendingRouteStore.clear(this)
         finish()
     }
 

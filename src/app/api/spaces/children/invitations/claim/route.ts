@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { claimFamilyChildInvitation } from '@/lib/db';
+import { isFamilyChildInviteToken } from '@/lib/family-child';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
   }
 
-  if (!/^gfc_[a-f0-9]{48}$/.test(token)) {
+  if (!isFamilyChildInviteToken(token)) {
     return NextResponse.json({ error: 'invalid_invitation' }, { status: 400 });
   }
 
@@ -30,6 +31,9 @@ export async function POST(request: Request) {
     }
     if (message.includes('invited_email_mismatch')) {
       return NextResponse.json({ error: 'invited_email_mismatch' }, { status: 403 });
+    }
+    if (message.includes('guardian_account_cannot_claim_child_invitation')) {
+      return NextResponse.json({ error: 'guardian_account_cannot_claim_child_invitation' }, { status: 403 });
     }
     if (message.includes('invalid_or_used_invitation')) {
       return NextResponse.json({ error: 'invalid_or_used_invitation' }, { status: 404 });

@@ -364,15 +364,17 @@ account_age_profiles     = 생년월일 기반 계정 모드
 ### 안전한 연결 원칙
 
 ```text
-보호자가 자녀 기본 정보와 Google 이메일 등록
+보호자가 자녀 이름·생년월일·관계를 등록
+→ 필요할 때만 연결 허용 이메일을 선택 입력
 → 보호자 본인확인 및 필수 동의
 → 자녀 전용 일회성 초대 발급
-→ 자녀가 해당 링크에서 Google 로그인
-→ 검증 이메일 + 초대 토큰 + 동의 상태 확인
-→ user_id 연결 및 viewer 멤버십 생성
+→ 자녀가 해당 링크에서 Google 또는 이메일 로그인
+→ 선택 이메일 제한 + 검증 로그인 계정 + 초대 토큰 + 동의 상태 확인
+→ 연결 후보 기록, 보호자 최종 승인 또는 거절
+→ 승인 시에만 user_id 연결 및 viewer 멤버십 생성
 ```
 
-이메일 일치만으로 자동 합류시키지 않습니다. 이메일은 후보 식별용이고 지속적인 권한 판정은 Supabase `auth.users.id`를 사용합니다. 보호자 검증 전 자녀 프로필에는 공간 접근 권한이 없습니다.
+이메일 일치만으로 자동 합류시키지 않습니다. 자녀 이메일은 선택적인 계정 제한값이고 지속적인 권한 판정은 Supabase `auth.users.id`를 사용합니다. claim은 후보 이메일·provider만 기록하며 보호자 검증과 최종 승인 전 자녀 프로필에는 공간 접근 권한이나 연령 capability가 없습니다.
 
 ### 연령 전환
 
@@ -387,9 +389,10 @@ account_age_profiles     = 생년월일 기반 계정 모드
 
 - migration `020_family_child_foundation.sql`, `021_family_child_foundation_hardening.sql`: 운영 Supabase 적용 완료
 - migration `022_guardian_email_consent_flow.sql`: 운영 Supabase 적용 완료
+- migration `20260723053050_child_invite_token_binding.sql`: 운영 Supabase 적용 완료
 - 자녀 프로필/관계/동의/초대/연령 상태/RLS: 기반 구현 완료
 - `/api/session/context`: 플랫폼 공통 capability 계약 추가
-- 보호자 로그인 이메일 확인·필수 동의·자녀 초대 랜딩·최종 승인 Web/API: 구현 완료
+- 보호자 로그인 이메일 확인·필수 동의·자녀 초대 랜딩·선택 이메일·후보 승인/거절 Web/API: 구현 완료
 - 공통 capability의 플랫폼별 적용, 자녀 전용 홈, 일정 할당, 연령 전환 UI·Cron: 후속 구현
 - 외부 본인확인 사업자 전환과 위치 체크인: 도입 조건 충족 전까지 보류
 

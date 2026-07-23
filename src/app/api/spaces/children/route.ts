@@ -3,6 +3,10 @@ import {
   createFamilyDependentDraft,
   getFamilyDependents,
 } from '@/lib/db';
+import {
+  isValidOptionalChildEmail,
+  normalizeOptionalChildEmail,
+} from '@/lib/family-child';
 import { createClient } from '@/lib/supabase/server';
 import type { FamilyDependentGender, GuardianRelationshipType } from '@/types';
 
@@ -49,9 +53,7 @@ export async function POST(request: NextRequest) {
   const spaceId = typeof body.spaceId === 'string' ? body.spaceId.trim() : '';
   const displayName = typeof body.displayName === 'string' ? body.displayName.trim() : '';
   const birthDate = typeof body.birthDate === 'string' ? body.birthDate.trim() : '';
-  const expectedEmail = typeof body.expectedEmail === 'string'
-    ? body.expectedEmail.trim().toLowerCase()
-    : '';
+  const expectedEmail = normalizeOptionalChildEmail(body.expectedEmail);
   const gender = typeof body.gender === 'string' ? body.gender as FamilyDependentGender : undefined;
   const relationshipType = typeof body.relationshipType === 'string'
     ? body.relationshipType as GuardianRelationshipType
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
   if (!spaceId || !displayName || displayName.length > 40 || !isIsoDate(birthDate)) {
     return NextResponse.json({ error: 'invalid_dependent_profile' }, { status: 400 });
   }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(expectedEmail)) {
+  if (!isValidOptionalChildEmail(expectedEmail)) {
     return NextResponse.json({ error: 'invalid_expected_email' }, { status: 400 });
   }
   if ((gender && !GENDERS.has(gender)) || !RELATIONSHIPS.has(relationshipType)) {
@@ -90,7 +92,10 @@ export async function POST(request: NextRequest) {
     if (message.includes('family_space_required')) {
       return NextResponse.json({ error: 'family_space_required' }, { status: 409 });
     }
-    if (message.includes('duplicate key')) {
+    if (message.includes('guardian_email_cannot_be_child_email')) {
+      return NextResponse.json({ error: 'guardian_email_cannot_be_child_email' }, { status: 409 });
+    }
+    if (expectedEmail && message.includes('duplicate key')) {
       return NextResponse.json({ error: 'expected_email_already_registered' }, { status: 409 });
     }
     return NextResponse.json({ error: 'dependent_create_failed' }, { status: 500 });

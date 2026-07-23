@@ -237,7 +237,10 @@ export interface FamilyDependent {
   displayName: string;
   birthDate: string;
   gender?: FamilyDependentGender;
-  expectedEmail: string;
+  expectedEmail?: string;
+  candidateEmail?: string;
+  candidateProvider?: string;
+  candidateClaimedAt?: Date;
   status: FamilyDependentStatus;
   linkedUserId?: string;
   createdBy?: string;

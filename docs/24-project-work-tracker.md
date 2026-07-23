@@ -34,15 +34,16 @@
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
-| 2 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
-| 3 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
-| 4 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
-| 5 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 권한·캘린더 선택·네이티브 후보 3개 조회 통과. 격리 일정 실제 가져오기·중복·자동 CRUD 확인 |
-| 6 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 폴더블 하단 인셋·UI 의미 확인. 실제 TalkBack 음성 순서 수동 QA |
-| 7 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
-| 8 | `OPS-004` | 최신 공통 API Production 반영 | `⏸ 보류` | Android 수정에 필요한 공통 API가 확정되면 Preview → Production 배포·회귀 |
-| 9 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
+| 1 | `FAM-012` | 자녀 선택 이메일·일회성 토큰·최종 승인/거절 | `🟠 운영 배포·실계정 회귀 대기` | 운영 DB 적용·코드/build 완료. 최신 Web Production 배포 후 보호자·자녀 실계정으로 제한 없음/있음, 승인/거절, 링크 재사용 차단 확인 |
+| 2 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
+| 3 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
+| 4 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
+| 5 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
+| 6 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 권한·캘린더 선택·네이티브 후보 3개 조회 통과. 격리 일정 실제 가져오기·중복·자동 CRUD 확인 |
+| 7 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 폴더블 하단 인셋·UI 의미 확인. 실제 TalkBack 음성 순서 수동 QA |
+| 8 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
+| 9 | `OPS-004` | 최신 공통 API Production 반영 | `🟠 진행 중` | `FAM-012` 커밋·push 후 Preview/Production 배포와 공개 랜딩·인증 경계 스모크 확인 |
+| 10 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
 
 ### 2026-07-23 맥북 작업 대조 결과
 
@@ -138,6 +139,7 @@
 | 가족 공간 전환 (`FAM-008`) | 기존 공간 ID·데이터 유지, admin 권한, 개인 공간 차단, 오류 코드 계약 유지 | Android 마감 뒤 동일 API의 전환·오류·fallback UX 회귀 | iOS 공간 관리 구현 시 같은 API·오류 계약 적용 |
 | 가족 관계·초대/설정 분리 (`FAM-009`) | `space_members.role`은 권한, `family_role`은 표시 관계. 일반 가족 코드 초대와 자녀 검증 초대 분리 | 가족 멤버 카드 관계 우선 표시, 멤버 탭 전용 초대 유형 선택, 설정의 초대 제거 | Android 확정 정보 구조와 동일하게 네이티브 구현 |
 | 자녀 초대 WebView 경로 유지 (`FAM-010`) | 네이티브 저장 세션 재적용은 현재 기능 경로를 덮어쓰지 않음 | Web 브라우저는 기존 라우팅 유지, 별도 후속 없음 | iOS WebView 기능 진입 시 동일한 세션 재적용 규칙을 사용 |
+| 선택 이메일·토큰 연결 (`FAM-012`) | 자녀 이메일은 선택 제한값, `auth.users.id`가 지속 식별자. claim은 후보만 저장하고 최종 승인 전 멤버십·연령 권한 생성 금지 | PC/Mobile 공통 관리·공유·QR·Google/이메일 claim UI 구현. 운영 실계정 회귀만 남음 | iOS 자녀 초대 진입 시 동일한 pending route·후보 승인 계약 적용 |
 | 앱 시작 선조회·캐시 (`AND-010`) | API 응답 계약은 유지하고 Android 클라이언트 요청 정책만 변경 | Android 완료 뒤 Web 라우트 이동 중 중복 fetch와 SWR/캐시 정책 별도 감사 | 앱 시작 시 account/home/space 선조회와 pull-to-refresh 동등 정책 적용 |
 
 Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-001` 싱크 보드에 먼저 기록한다. Web/iOS 코드를 같은 작업에서 임의 수정하지 않는다.
@@ -158,6 +160,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [x] | `FAM-009` | 가족 관계 역할·초대/설정 분리 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 권한 `role`과 표시 관계 `family_role` 분리, 운영 migration 2개·Native API·Android 관계 관리와 전용 초대 유형 구현. Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy`, root build 54/54, Android unit/assemble, `SM_F731N` 관계/초대/설정 UI 회귀 통과. 실제 관계값 저장은 운영 데이터 보호를 위해 미실행 |
 | [x] | `FAM-010` | Android 자녀 초대 WebView 경로 유지 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 네이티브 세션 재적용이 `/space/children`을 `/home`으로 덮어쓰던 문제 수정. Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 후 `SM_F731N`에서 `MainActivity`와 `/space/children?sid=...` URL 유지 확인 |
 | [ ] | `FAM-011` | 보호자 이메일 OTP·필수 동의 정합화 | `🟠 실메일 회귀 대기` | 2026-07-23 | — | 실메일 8자리에 맞춰 OTP UI/API/공용 템플릿을 통일하고 확인 증적 DB 강제, `email_otp` 이력 완료. 운영 Dashboard 저장과 Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe` 배포·인증 경계 401·runtime error 0 확인. 보호자 본문·코드·필수 동의 실사용자 완료 확인 필요 |
+| [ ] | `FAM-012` | 자녀 선택 이메일·일회성 토큰·최종 승인/거절 | `🟠 운영 배포·실계정 회귀 대기` | 2026-07-23 | — | 이름·생년월일 중심 등록, 선택 이메일 제한, Google/이메일 claim 후보 스냅샷, 보호자 본인 claim 차단, 승인 전 멤버십·연령 권한 보류, 거절·재초대, OS 공유·문자·QR 구현. 운영 migration 적용, TypeScript·3/3·9/9·4/4·Next/Android build 통과. Production 배포와 보호자·자녀 실계정 회귀 필요 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -364,6 +367,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `FAM-012`, `PAR-001`, `OPS-004` | 선택 이메일·토큰 바인딩 구현·운영 DB 적용 | 자녀 이메일 필수 입력을 제거하고 선택적인 계정 제한값으로 변경. 72시간 일회성 초대는 OS 공유·문자·QR로 전달하며 Google/이메일 검증 계정의 claim은 후보 스냅샷만 저장한다. 보호자 본인 claim을 차단하고 최종 승인/거절 전에는 `space_members`·`account_age_profiles`를 만들지 않는다. Android는 로그인 전후 pending route를 보존해 `/invite/child/[token]`으로 복귀한다. migration `20260723053050_child_invite_token_binding.sql` 운영 적용 | DB 열·부분 유니크 인덱스·함수 권한/정의 확인, TypeScript, 자녀 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next production build, Android debug build 통과. Git push·Web Production 배포·보호자/자녀 2계정 회귀 후 완료 |
 | 2026-07-23 | `FAM-011`, `OPS-004` | 운영 OTP 길이 정합화·배포 | 앱과 문서는 6자리로 제한했지만 운영 Supabase 실메일의 `{{ .Token }}`은 8자리로 발급되는 불일치를 확인. `GUARDIAN_EMAIL_OTP_LENGTH=8` 단일 상수로 UI 입력·버튼 상태·API 형식 검증을 통일하고 메일 템플릿 안내도 8자리로 변경. Dashboard 저장 후 Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe` 배포 | 대상 ESLint·production build, 운영 API 미인증 401·runtime error 0 확인. 새 코드 요청→8자리 입력→동의 완료 실사용자 회귀 |
 | 2026-07-23 | `FAM-011`, `WEB-002`, `OPS-004` | Auth OTP 목적 분리·운영 템플릿·Production 반영 | Supabase Auth에 사용자 정의 템플릿 종류를 추가할 수 없어 Magic Link/OTP 고정 슬롯을 조건 분기형으로 변경. 보호자 요청은 `https://www.gleaum.com/auth/email-purpose/guardian-verification`을 `emailRedirectTo`로 전달하고 템플릿은 `{{ .RedirectTo }}`로 보호자/일반 본문을 구분한다. 제목은 `[글리움] 이메일 확인 코드`, 파일은 `supabase/email-templates/magic-link-or-otp.html`이며 Dashboard 저장 완료. Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`로 승격 | 운영 Redirect allow list의 `https://www.gleaum.com/**`, 대상 ESLint·diff check·production build, Dashboard 저장 성공, 운영 API 미인증 401, 배포 runtime error 0 확인. 보호자 실메일 본문·OTP·동의 회귀만 남음 |
 | 2026-07-23 | `FAM-011`, `OPS-004` | 코드·DB·배포·Auth 설정 완료, 실메일 회귀 대기 | 운영 Supabase가 `{{ .Token }}` OTP와 기본 제목 `Your Magic Link`를 보내는 반면 앱은 Magic Link 콜백만 기대하던 불일치 수정. 자녀 관리 화면에 코드 입력·재발송을 추가하고 OTP 성공 뒤 DB 확인 증적이 있어야 동의가 가능하도록 변경. migration `20260723035907_guardian_email_otp_verification.sql` 운영 적용, Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포, Magic Link/OTP 제목·보호자 HTML 적용 | 대상 ESLint·diff check·production build, 신규 함수 anon 불가/authenticated 가능, 운영 화면 307·신규 API 미인증 401, Dashboard 재접속 후 제목·보호자 단일 미리보기·`{{ .Token }}` 확인. 사용자 실메일→OTP→동의 회귀 후 완료 처리 |

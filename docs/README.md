@@ -49,7 +49,7 @@
 - **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 구현 체크포인트**: `42b53b0` 플랫폼 파리티·공간 수명주기, `564b923` Google Play 등록정보 애셋. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
+- **최근 구현 체크포인트**: `FAM-012` 자녀 선택 이메일·72시간 일회성 토큰·보호자 최종 승인/거절, Android 초대 로그인 경로 보존. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
 
 ---
 
@@ -89,7 +89,7 @@
 ✅ 2026-06-02 공유 테마 모드 시스템 추가
 ✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
-🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. 최신 브랜치 Preview/Production 반영 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
+🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. `FAM-012` Production 반영·보호자/자녀 실계정 회귀 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
 ```
 
 ---

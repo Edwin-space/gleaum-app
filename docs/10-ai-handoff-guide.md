@@ -39,7 +39,7 @@
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
-- **최신 배포**: 2026-07-23 Vercel Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe`. 운영 실메일과 일치하는 8자리 보호자 OTP UI·API 검증·메일 안내, 보호자 OTP 요청 목적 식별값과 Magic Link/OTP 조건 분기형 운영 템플릿, DB 증적 강제, 가족 관계/공간 권한 분리와 자녀 초대 WebView 경로 유지 보정, 기존 Android 가족 공간 전환·광고 capability 보정, Next 16.2.11 포함
+- **최신 배포**: 2026-07-23 Vercel Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe`. 운영 실메일과 일치하는 8자리 보호자 OTP UI·API 검증·메일 안내까지 반영. 자녀 선택 이메일·토큰 claim·승인/거절 코드는 운영 DB migration 적용과 build까지 완료했으며 최신 Production 배포 전 상태다.
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
 - **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기능 기준 `d8b7a51`.
 - **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-23 | 자녀 계정 연결에서 Google 이메일 필수 입력을 제거하고 이름·생년월일·보호자 관계 중심 등록으로 변경했다. 이메일은 선택적인 계정 제한값이며 입력한 경우에만 해당 검증 이메일이 초대를 사용할 수 있다. 72시간 일회성 토큰은 OS 공유·문자·QR로 전달하고, Google/이메일 로그인 계정의 claim은 `candidate_email/provider/claimed_at`만 저장한다. 보호자 본인 claim은 차단되며 최종 승인 전 `space_members`·`account_age_profiles`를 생성하지 않는다. 보호자는 후보 계정을 확인해 승인 또는 거절·재초대할 수 있다. Android는 `NativePendingRouteStore`로 OAuth/이메일 로그인 전후 `/invite/child/[token]`을 보존한다. 운영 migration `20260723053050_child_invite_token_binding.sql`, TypeScript, 자녀 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next/Android build까지 완료. 다음은 Git push·Web Production 배포·보호자/자녀 실계정 회귀다. |
 | 2026-07-23 | 보호자 이메일 확인 프로토콜을 실제 Supabase 발송 방식과 일치시켰다. 기존 코드는 Magic Link를 기대했지만 운영 템플릿이 `{{ .Token }}` OTP를 보내고 있어 사용자가 받은 코드를 입력할 곳이 없었다. 자녀 관리 화면에 OTP 입력·재발송 UI와 `/api/spaces/children/guardian-verification/verify-otp`를 추가했고, OTP 성공 시에만 DB 도전의 `verified_at`을 기록하도록 보강했다. 필수 동의 RPC는 이 증적이 없으면 거부하며 증빙 방법은 `email_otp`, 정책 버전은 `2026-07-23-email-otp-v2`다. migration `20260723035907_guardian_email_otp_verification.sql` 운영 적용과 Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포 완료. 이어 Supabase의 고정 Magic Link/OTP 슬롯이 보호자 전용으로 잠기지 않도록 보호자 요청에 전용 `emailRedirectTo`를 추가하고 `{{ .RedirectTo }}` 조건 분기형 `supabase/email-templates/magic-link-or-otp.html`로 변경했다. 운영 제목은 `[글리움] 이메일 확인 코드`이며 일반 이메일/비밀번호 가입의 Confirm sign up 템플릿과는 분리된다. 최종 코드는 Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`에 배포했고 운영 API의 인증 경계 `401`을 확인했다. 실메일이 8자리임을 확인해 UI·API·템플릿을 8자리로 통일했으며 해당 수정의 배포와 OTP 완료 회귀가 남았다. |
 | 2026-07-23 | Android 가족 공간에서 `초대 → 자녀` 진입 시 WebView가 즉시 네이티브 홈으로 복귀하던 오류를 수정했다. `NativeAppProvider.applyNativeSession()`이 모든 경로에서 후속 로그인 경로를 강제하던 것이 원인이며, 네이티브 세션은 항상 동기화하되 `/`·`/login`에서만 `/home` 또는 `/onboarding`으로 이동하도록 제한했다. Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 후 `SM_F731N`에서 `MainActivity` 유지와 WebView URL `/space/children?sid=...` 고정을 확인했다. 자녀 화면 진입 시 앱 잠금이 활성 상태라면 지문/PIN 인증은 정상적으로 선행된다. |
 | 2026-07-23 | Vercel 설치 로그의 신규 의존성 보안 경고를 확인해 Next·eslint-config-next를 `16.2.10 → 16.2.11`로 갱신하고 exact version으로 고정했다. Next 자체 high 권고 4건은 제거됐다. 다만 Next 16.2.11이 `sharp ^0.34.5`를 요구하는 동안 신규 libvips high 권고가 `npm audit --omit=dev`에 Next 경유 포함 2건으로 남는다. 검증되지 않은 sharp 0.35.0 강제 override는 이미지 최적화 회귀 위험 때문에 적용하지 않으며 공식 Next 호환 패치가 나오면 `SEC-009`에서 즉시 갱신한다. |

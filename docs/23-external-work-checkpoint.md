@@ -12,7 +12,7 @@
 |---|---|
 | 저장소 | `https://github.com/Edwin-space/gleaum-app` |
 | 브랜치 | `codex/platform-parity-sync-20260723` |
-| Git 기준점 | `42b53b0` 플랫폼 파리티·공간 수명주기 → `564b923` Google Play 등록정보 애셋 |
+| Git 기준점 | `codex/platform-parity-sync-20260723`의 최신 `git log -1`; 자녀 선택 이메일·토큰 연결은 `FAM-012` 체크포인트 |
 | 현재 작업 경로 | `/Volumes/WD_BLACK/Ai Works/gleaum` |
 | Android 버전 | `versionCode 26`, `versionName 1.1.5` |
 | Android 패키지 | `com.gleaum.app` |
@@ -21,7 +21,7 @@
 | 마지막 Android 검증 | 2026-07-23 맥미니: debug compile·unit test·lint·assemble 738 tasks 통과. 최종 서명과 인증 이후 실기기 흐름은 미완료 |
 | 마지막 단말 | `SM_F731N`, ADB serial `R3CW803L3WH` |
 
-**중요:** 운영 보안, 가족/자녀 Web/API/DB, Android Material 3·캘린더/테마, 플랫폼 파리티, 공간 수명주기와 공개 스토어 애셋은 모두 브랜치에 커밋됐다. Git clone으로 소스는 복원되지만 `.env.local`, Android release keystore·비밀번호, 콘솔 설정과 로컬 stash는 복원되지 않는다.
+**중요:** 운영 보안, 가족/자녀 Web/API/DB, Android Material 3·캘린더/테마, 플랫폼 파리티, 공간 수명주기, 공개 스토어 애셋과 `FAM-012` 자녀 선택 이메일·토큰 claim·승인/거절 변경은 브랜치 체크포인트로 보존한다. Git clone으로 소스는 복원되지만 `.env.local`, Android release keystore·비밀번호, 콘솔 설정과 로컬 stash는 복원되지 않는다.
 
 `android/.idea/deploymentTargetSelector.xml`은 Android Studio의 최근 실행 대상 로컬 상태이며 제품 코드가 아니다. 복사에는 포함해도 되지만 향후 커밋에는 제외하는 것이 기본이다. 정확한 파일 수는 계속 바뀌므로 `git status -sb`를 직접 확인한다.
 
@@ -42,6 +42,7 @@
 
 - 웹 공간의 `소식 / 일정 / 멤버`, 네이티브 공간 활성화·소식 API, session context, 가족 보호자/자녀 초대 흐름은 `ff43799`에 커밋됐다.
 - 가족/자녀 migration `020`, `021`, `022`는 운영 적용과 RLS·권한·RPC 재검증을 완료했다.
+- `20260723053050_child_invite_token_binding.sql`은 운영 적용 완료. 자녀 이메일 선택화, 연결 후보 스냅샷, 보호자 승인/거절과 Android 초대 pending route 보존은 `FAM-012` 체크포인트에 포함된다.
 - 하우스 광고 URL 검증과 Kakao 다중 슬롯 간섭 제거는 `a60d187`에 커밋됐다.
 - 캘린더 설정·테마 Web 브리지와 Android 네이티브 구현은 `da2384e` 이후 커밋에 보존됐다.
 

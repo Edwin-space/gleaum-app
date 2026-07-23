@@ -1,5 +1,22 @@
 # 07. 완료된 기능
 
+### 2026-07-23 — 자녀 계정 선택 이메일·일회성 토큰·최종 승인/거절 분리
+
+- 자녀 사전등록 필수값을 이름·생년월일·보호자 관계로 단순화하고 이메일은 선택 제한값으로 변경
+- 이메일을 입력한 경우에만 해당 검증 이메일 계정이 초대를 사용할 수 있고, 비워 두면 링크를 전달받은 자녀의 검증된 Google/이메일 계정으로 연결 요청 가능
+- 72시간 일회성 토큰 claim은 연결 후보 이메일·인증 provider·요청 시각만 기록하고 공간 멤버십과 연령 프로필 생성은 보호자 최종 승인까지 보류
+- 보호자 본인 계정의 자녀 초대 수락 차단, 연결 후보 확인 UI, 잘못된 요청 거절·재초대 흐름 추가
+- OS 공유 시트, 문자 작성, QR, 링크·안내문 복사를 하나의 공유 시트로 제공하고 자녀 전화번호는 서버에 저장하지 않음
+- Android 네이티브 로그인 전후에도 `/invite/child/[token]` 경로를 보존해 WebView 초대 화면으로 복귀
+- 운영 Supabase migration `20260723053050_child_invite_token_binding.sql` 적용 완료
+
+검증:
+- `family_dependents` 선택 이메일·후보 필드와 부분 유니크 인덱스 확인
+- 자녀 초대/claim/승인/거절 함수 `anon=false`, `authenticated=true`
+- claim 함수가 `account_age_profiles`·`space_members`를 생성하지 않는 정의 확인
+- TypeScript, 자녀 흐름 단위 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next production build, Android debug build 통과
+- 운영 Web 배포와 보호자·자녀 실계정 2개 회귀는 `FAM-012`에서 마감
+
 ### 2026-07-23 — Supabase OTP 메일 목적 분리
 
 - Supabase Dashboard에 사용자 정의 Auth 템플릿 종류를 추가할 수 없는 제약을 반영해 고정 `Magic link or OTP` 슬롯을 조건 분기형으로 변경

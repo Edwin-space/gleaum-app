@@ -515,3 +515,12 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - Native Home은 세션 누락/만료 시 에러 카드에 머무르지 않고 세션을 정리한 뒤 네이티브 로그인으로 복귀한다.
 - 검증: `npm run build`, Android `:app:assembleDebug` 통과.
 - 이번 핵심 마감 제외: 태블릿/폴더블 전체 최적화, 다크모드 전체 QA, 광고 네이티브화, 실제 단말 회귀 테스트.
+
+
+## 2026-07-23 자녀 일회성 초대 로그인 경로 보존
+
+- 자녀 초대 랜딩은 공통 Web/API 계약을 사용하므로 Android에서 `/invite/child/[token]`을 억지로 네이티브 홈에 매핑하지 않는다.
+- `NativePendingRouteStore`가 Google/이메일 로그인 전 원래 초대 경로를 15분 동안 보존한다.
+- OAuth 콜백 또는 이메일 로그인 완료 후 네이티브 Activity 매핑이 없는 자녀 초대 경로는 `MainActivity(start_path=...)` WebView로 복귀한다.
+- `claim`은 후보 계정만 기록하고 보호자 승인 전 공간 멤버십·연령 권한을 생성하지 않는다.
+- 검증: Android debug build 통과. 보호자·자녀 실계정 2개를 사용한 선택 이메일 없음/있음·승인/거절 운영 회귀는 `FAM-012`에서 마감한다.

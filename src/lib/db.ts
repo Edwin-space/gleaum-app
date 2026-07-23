@@ -172,7 +172,10 @@ export interface FamilyDependentRow {
   display_name: string;
   birth_date: string;
   gender: FamilyDependentGender | null;
-  expected_email: string;
+  expected_email: string | null;
+  candidate_email: string | null;
+  candidate_provider: string | null;
+  candidate_claimed_at: string | null;
   linked_user_id: string | null;
   status: FamilyDependent['status'];
   created_by: string | null;
@@ -272,7 +275,12 @@ export function rowToFamilyDependent(row: FamilyDependentRow): FamilyDependent {
     displayName: row.display_name,
     birthDate: row.birth_date,
     gender: row.gender ?? undefined,
-    expectedEmail: row.expected_email,
+    expectedEmail: row.expected_email ?? undefined,
+    candidateEmail: row.candidate_email ?? undefined,
+    candidateProvider: row.candidate_provider ?? undefined,
+    candidateClaimedAt: row.candidate_claimed_at
+      ? new Date(row.candidate_claimed_at)
+      : undefined,
     status: row.status,
     linkedUserId: row.linked_user_id ?? undefined,
     createdBy: row.created_by ?? undefined,
@@ -983,7 +991,7 @@ export interface CreateFamilyDependentInput {
   spaceId: string;
   displayName: string;
   birthDate: string;
-  expectedEmail: string;
+  expectedEmail?: string;
   gender?: FamilyDependentGender;
   relationshipType?: GuardianRelationshipType;
 }
@@ -998,7 +1006,7 @@ export async function createFamilyDependentDraft(
     p_space_id: input.spaceId,
     p_display_name: input.displayName.trim(),
     p_birth_date: input.birthDate,
-    p_expected_email: input.expectedEmail.trim().toLowerCase(),
+    p_expected_email: input.expectedEmail?.trim().toLowerCase() || null,
     p_gender: input.gender ?? null,
     p_relationship_type: input.relationshipType ?? 'guardian',
   });
@@ -1108,7 +1116,7 @@ export async function createFamilyChildInvitation(
   return { token: row.token as string, expiresAt: row.expires_at as string };
 }
 
-/** 로그인한 Google 계정을 일회성 자녀 초대와 원자적으로 연결한다. */
+/** 이메일 확인이 끝난 로그인 계정을 일회성 자녀 초대와 원자적으로 연결 요청한다. */
 export async function claimFamilyChildInvitation(
   token: string,
   client?: RouteSupabaseClient,
@@ -1147,6 +1155,27 @@ export async function approveFamilyChildLink(
     childUserId: row.child_user_id as string,
     spaceId: row.space_id as string,
     accountMode: row.account_mode as AccountMode,
+  };
+}
+
+/** 보호자가 잘못된 연결 후보를 거절하고 자녀 프로필을 재초대 가능한 상태로 돌린다. */
+export async function rejectFamilyChildLink(
+  dependentId: string,
+  client?: RouteSupabaseClient,
+): Promise<{ dependentId: string; spaceId: string; status: 'ready' }> {
+  const supabase = client ?? createClient();
+  const { data, error } = await supabase.rpc('reject_family_child_link', {
+    p_dependent_id: dependentId,
+  });
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (error || !row?.dependent_id || !row?.space_id || row.status !== 'ready') {
+    throw new Error(error?.message ?? '자녀 연결 요청을 거절하지 못했습니다.');
+  }
+  return {
+    dependentId: row.dependent_id as string,
+    spaceId: row.space_id as string,
+    status: 'ready',
   };
 }
 

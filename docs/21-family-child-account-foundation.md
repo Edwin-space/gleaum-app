@@ -1,6 +1,6 @@
 # 가족 공간 자녀 계정 기반
 
-> 상태: 자녀 연결 기반과 플랫폼 공통 session capability 계약·Web/UI·API·RLS 강제 운영 적용 완료. Android 가족 관계 표시·초대/설정 분리 완료
+> 상태: 자녀 연결 기반과 플랫폼 공통 session capability 계약·Web/UI·API·RLS 강제 운영 적용 완료. 선택 이메일·72시간 일회성 토큰·보호자 최종 승인/거절 구조 운영 DB 적용 완료
 > 기준일: 2026-07-23
 
 ## 1. 확정된 원칙
@@ -10,8 +10,9 @@
 - 가족 공간의 멤버 표시 관계는 `space_members.family_role`에 저장하고 권한과 분리한다.
 - 보호자-자녀의 검증된 법적/운영 관계와 동의 상태는 기존 `family_relationships`에서 별도로 관리한다. `family_role`은 접근 권한이나 보호자 검증 근거로 사용하지 않는다.
 - 가입 전 자녀 정보는 `family_dependents`에 접근 권한 없는 대기 프로필로 저장한다.
-- Google 이메일은 연결 후보 식별자이며, 지속적인 권한 판정은 Supabase `auth.users.id`로 한다.
-- 이메일 일치만으로 자동 연결하지 않는다. 보호자 이메일 확인, 항목별 동의, 자녀의 검증된 이메일, 일회성 초대 토큰, 보호자 최종 승인을 모두 확인한다.
+- 자녀 이메일은 선택적인 계정 제한 힌트다. 보호자가 모르면 입력하지 않으며, 입력한 경우에만 해당 검증 이메일 계정으로 초대 사용을 제한한다.
+- Google 또는 이메일 로그인을 지원하되 지속적인 권한 판정은 Supabase `auth.users.id`로 한다.
+- 이메일 일치만으로 자동 연결하지 않는다. 보호자 이메일 확인, 항목별 동의, 자녀의 검증된 로그인 계정, 일회성 초대 토큰, 보호자 최종 승인을 모두 확인한다.
 - 만 14세 미만은 검증된 보호자 관계와 필수 동의가 완료되기 전 초대를 발급하지 않는다.
 - 현재 나이 숫자를 저장하지 않고 생년월일과 서버 날짜로 연령을 계산한다.
 - Android, iOS, Web은 `/api/session/context`의 동일한 capability 계약을 사용한다.
@@ -38,22 +39,23 @@ family   = 가족 관계·자녀 계정 기능 활성 공간
 → OTP 확인 증적이 있는 상태에서 필수 항목 3종을 각각 동의
 → 관계 verification_status = verified
 → 72시간 일회성 초대 발급
-→ 보호자가 휴대폰 공유 시트로 문자·카카오톡 등에 직접 전달
-→ 자녀가 초대 링크에서 등록된 Google 이메일로 로그인
-→ 이메일 검증 + 초대 토큰 + 보호자 동의 서버 확인
+→ 보호자가 OS 공유 시트·문자·카카오톡·QR 중 편한 방법으로 직접 전달
+→ 자녀가 초대 링크에서 본인이 사용할 Google 또는 이메일 계정으로 로그인
+→ 선택 이메일 제한 + 검증된 로그인 계정 + 초대 토큰 + 보호자 동의 서버 확인
 → family_dependents.status = approval_pending
-→ 보호자가 자녀 관리 화면에서 최종 승인
+→ 연결 후보 이메일·인증 제공자 스냅샷 저장
+→ 보호자가 자녀 관리 화면에서 최종 승인 또는 거절
 → space_members.viewer 추가
 → 연령에 맞는 account_mode 적용
 ```
 
-보호자 최종 승인 전 자녀 프로필은 공간 멤버가 아니며 일정·멤버·가계부·위치 데이터에 접근할 수 없다.
+`claim`은 연결 후보만 기록하며 `space_members`나 `account_age_profiles`를 생성하지 않는다. 보호자 최종 승인 전 자녀 프로필은 공간 멤버가 아니며 일정·멤버·가계부·위치 데이터에 접근할 수 없다. 보호자 본인 계정으로는 자녀 초대를 수락할 수 없다. 거절 시 후보 정보와 사용된 연결 상태를 초기화해 새 초대를 발급할 수 있다.
 
 ## 4. 데이터 모델
 
 | 테이블 | 역할 |
 |---|---|
-| `family_dependents` | 보호자가 미리 등록하는 자녀 기본 정보와 계정 연결 상태 |
+| `family_dependents` | 보호자가 미리 등록하는 자녀 기본 정보, 선택 이메일 제한, 연결 후보 이메일·provider·요청 시각과 최종 연결 상태 |
 | `family_relationships` | 보호자-자녀 관계 및 본인확인 상태 |
 | `guardian_consents` | 항목별 동의, 정책 버전, 검증 방법과 증적 참조 |
 | `guardian_email_verifications` | 보호자 이메일 확인 토큰 해시·이메일 해시·만료/사용 증적 |
@@ -104,9 +106,10 @@ adult                    만 19세 이상
 | `POST /api/spaces/children/[id]/invite` | 기반 완료 | 검증·동의 완료 후 일회성 초대 발급 |
 | `POST /api/spaces/children/invitations/claim` | 구현 완료 | 자녀 연결 요청 생성, 공간 접근은 보류 |
 | `POST /api/spaces/children/[id]/approve` | 구현 완료 | 보호자 최종 승인 후 viewer 권한 부여 |
+| `POST /api/spaces/children/[id]/reject` | 구현 완료 | 잘못된 연결 후보 거절 후 재초대 가능한 상태로 복구 |
 | `GET /api/session/context` | 적용 완료 | Cookie·Bearer 인증을 모두 검증하고 플랫폼 공통 accountMode/capabilities 반환 |
 
-초대 발급 API는 보호자 확인과 필수 동의가 없으면 의도적으로 차단된다. 자녀 claim은 `pending_guardian_consent`만 만들고 `space_members`를 생성하지 않는다.
+초대 발급 API는 보호자 확인과 필수 동의가 없으면 의도적으로 차단된다. 자녀 claim은 `approval_pending` 후보만 만들고 `space_members`·`account_age_profiles`를 생성하지 않는다.
 
 ## 7. 현재 capability 기본값
 
@@ -133,6 +136,7 @@ supabase/migrations/20260716055953_enforce_account_capabilities.sql
 supabase/migrations/20260716063400_restrict_account_capability_rpc.sql
 supabase/migrations/20260723024521_add_family_member_roles.sql
 supabase/migrations/20260723025504_harden_family_member_role_updates.sql
+supabase/migrations/20260723053050_child_invite_token_binding.sql
 ```
 
 실행 방법:
@@ -145,8 +149,9 @@ supabase/migrations/20260723025504_harden_family_member_role_updates.sql
 6. 이어서 `021` 파일 전체를 같은 방식으로 실행해 인덱스와 RLS 성능 보강을 적용한다.
 7. `022` 파일 전체를 실행해 이메일 확인 증적, 연결 승인 대기 상태, 보호자 최종 승인 함수를 적용한다.
 8. `20260723035907_guardian_email_otp_verification.sql`을 실행해 OTP 확인 증적 강제와 `email_otp` 검증 방법을 적용한다.
+9. `20260723053050_child_invite_token_binding.sql`을 실행해 자녀 이메일 선택화, 연결 후보 스냅샷, 토큰 claim과 최종 승인/거절 분리를 적용한다.
 
-운영 `gleaum_app` 프로젝트에는 위 migration을 모두 적용했다. `confirm_guardian_email_verification(text)`와 `complete_guardian_email_consent(text,text,text[])`는 `anon` 실행 불가, `authenticated` 실행 가능으로 검증했다. OTP 확인 전에는 필수 동의 RPC가 `email_otp_verification_required`로 차단된다. `has_account_capability(text)`는 `SECURITY INVOKER`, `anon` 실행 불가, `authenticated`·`service_role` 실행 가능으로 검증했고, `ledger_entries`·`family_groups`·`space_members`에 제한형 RLS 7개가 적용되었다. `family_role`은 허용값 CHECK와 기존 `space_members` update guard로 보호하며 공간 지기만 다른 멤버 관계를 바꿀 수 있다. Supabase Security Advisor의 기존 경고는 별도 운영 부채로 유지한다.
+운영 `gleaum_app` 프로젝트에는 위 migration을 모두 적용했다. `confirm_guardian_email_verification(text)`와 `complete_guardian_email_consent(text,text,text[])`는 `anon` 실행 불가, `authenticated` 실행 가능으로 검증했다. OTP 확인 전에는 필수 동의 RPC가 `email_otp_verification_required`로 차단된다. 자녀 초대 함수 4종(`create_family_dependent_draft`, `create_family_child_invitation`, `claim_family_child_invitation`, `approve_family_child_link`)과 거절 함수 `reject_family_child_link`는 `anon` 실행 불가, `authenticated` 실행 가능이며 내부에서 인증 사용자·공간 지기·동의·토큰 상태를 다시 확인한다. `claim_family_child_invitation`이 `account_age_profiles`나 `space_members`를 생성하지 않는 것도 운영 정의로 확인했다. 선택 이메일 중복은 `expected_email IS NOT NULL`인 부분 유니크 인덱스로만 제한한다. `has_account_capability(text)`는 `SECURITY INVOKER`, `anon` 실행 불가, `authenticated`·`service_role` 실행 가능으로 검증했고, `ledger_entries`·`family_groups`·`space_members`에 제한형 RLS 7개가 적용되었다. `family_role`은 허용값 CHECK와 기존 `space_members` update guard로 보호하며 공간 지기만 다른 멤버 관계를 바꿀 수 있다. Supabase Security Advisor의 기존 경고는 별도 운영 부채로 유지한다.
 
 운영 환경 필수 설정:
 
@@ -198,11 +203,12 @@ Custom SMTP(`helper@gleaum.com`)를 통해 발송된다. 일반 이메일/비밀
 2. ~~자녀 전용 홈 및 메뉴 capability 차단 (`FAM-002`, Android 포함)~~ — 2026-07-16 완료
 3. Android 기능·실기기·릴리즈 AAB·Play Console 전체 정상화 (`AND-001`, `AND-002`, `AND-006`)
 4. iOS 네이티브 메뉴·홈·광고 capability 동등화 (`IOS-005`, Android 완료 후 재개)
-5. 일정 assignee/observer 모델과 RLS (`FAM-003`)
-6. 만 14세 본인 재동의 UI
-7. 연령 전환 알림 및 일괄 Cron
-8. 외부 본인확인 사업자 선정과 전환 어댑터 구현
-9. 수동 위치 체크인 MVP와 별도 위치 동의
+5. 보호자·자녀 실계정 2개로 선택 이메일 없음/있음, 승인/거절, 링크 재사용 차단 회귀
+6. 일정 assignee/observer 모델과 RLS (`FAM-003`)
+7. 만 14세 본인 재동의 UI
+8. 연령 전환 알림 및 일괄 Cron
+9. 외부 본인확인 사업자 선정과 전환 어댑터 구현
+10. 수동 위치 체크인 MVP와 별도 위치 동의
 
 ## 11. 현재 제외 범위
 

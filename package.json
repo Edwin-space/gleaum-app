@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:data-boundaries": "node --import tsx --test tests/data-boundaries.test.ts",
     "test:account-capabilities": "node --import tsx --test tests/account-capabilities.test.ts",
+    "test:family-child": "node --import tsx --test tests/family-child.test.ts",
     "postinstall": "patch-package",
     "cap:sync": "npx cap sync",
     "cap:sync:ios": "npx cap sync ios",
@@ -50,6 +51,7 @@
     "jose": "^6.2.3",
     "lucide-react": "^1.12.0",
     "next": "16.2.11",
+    "qrcode": "1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sonner": "^2.0.7",
@@ -59,6 +61,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.39",
+    "@types/qrcode": "1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
