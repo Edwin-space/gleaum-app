@@ -7,7 +7,7 @@ import {
   isValidOptionalChildEmail,
   normalizeOptionalChildEmail,
 } from '@/lib/family-child';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 import type { FamilyDependentGender, GuardianRelationshipType } from '@/types';
 
 const GENDERS = new Set<FamilyDependentGender>(['male', 'female', 'other', 'undisclosed']);
@@ -20,9 +20,9 @@ function isIsoDate(value: string): boolean {
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = await createNativeRouteAuth(request);
+  if (!auth) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { supabase } = auth;
 
   const spaceId = request.nextUrl.searchParams.get('spaceId')?.trim();
   if (!spaceId) {
@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = await createNativeRouteAuth(request);
+  if (!auth) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { supabase } = auth;
 
   let body: Record<string, unknown>;
   try {

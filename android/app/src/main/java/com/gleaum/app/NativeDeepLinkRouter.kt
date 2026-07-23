@@ -39,7 +39,8 @@ object NativeDeepLinkRouter {
     }
 
     fun intentFor(context: Context, pathWithQuery: String?): Intent? {
-        val path = routePath(pathWithQuery) ?: return null
+        val uri = routeUri(pathWithQuery) ?: return null
+        val path = uri.path?.takeIf { it.isNotBlank() } ?: return null
         val capabilities = NativeAccountContextStore.capabilities(context)
         return when {
             path == "/home" -> Intent(context, NativeHomePortActivity::class.java)
@@ -56,7 +57,29 @@ object NativeDeepLinkRouter {
             path == "/space/new" -> Intent(context, NativeSpaceActivity::class.java)
             path == "/space/settings" && capabilities.canManageSpaces -> Intent(context, NativeSpaceActivity::class.java)
             path == "/space/settings" -> Intent(context, NativeSpaceActivity::class.java)
+            path == "/space/children" && capabilities.canManageSpaces -> {
+                Intent(context, NativeChildAccountActivity::class.java).apply {
+                    putExtra(
+                        NativeChildAccountActivity.EXTRA_SPACE_ID,
+                        uri.getQueryParameter("sid") ?: uri.getQueryParameter("spaceId"),
+                    )
+                }
+            }
+            path == "/space/children" -> Intent(context, NativeHomePortActivity::class.java)
+            path == "/family/guardian/verify" -> {
+                Intent(context, NativeChildAccountActivity::class.java).putExtra(
+                    NativeChildAccountActivity.EXTRA_CONSENT_TOKEN,
+                    uri.getQueryParameter("token"),
+                )
+            }
             path == "/family" -> Intent(context, NativeSpaceActivity::class.java)
+            path.matches(Regex("^/invite/child/[^/]+$")) -> {
+                val token = path.removePrefix("/invite/child/")
+                Intent(context, NativeChildAccountActivity::class.java).putExtra(
+                    NativeChildAccountActivity.EXTRA_INVITATION_TOKEN,
+                    token,
+                )
+            }
             path.matches(Regex("^/invite/[^/]+$")) && capabilities.canInviteMembers -> {
                 val code = path.removePrefix("/invite/")
                 Intent(context, NativeSpaceActivity::class.java).putExtra("invite_code", code)
@@ -78,10 +101,9 @@ object NativeDeepLinkRouter {
         }
     }
 
-    private fun routePath(pathWithQuery: String?): String? {
+    private fun routeUri(pathWithQuery: String?): Uri? {
         if (pathWithQuery.isNullOrBlank()) return null
-        val uri = Uri.parse(pathWithQuery)
-        return uri.path?.takeIf { it.isNotBlank() }
+        return Uri.parse(pathWithQuery)
     }
 
     private fun legalIntent(context: Context, title: String, path: String): Intent =

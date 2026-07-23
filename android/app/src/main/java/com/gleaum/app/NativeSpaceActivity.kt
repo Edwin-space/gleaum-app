@@ -517,7 +517,12 @@ class NativeSpaceActivity : AppCompatActivity() {
             toast("자녀 초대는 가족 공간에서만 사용할 수 있어요.")
             return
         }
-        openWebPath("/space/children?sid=${android.net.Uri.encode(active.id)}")
+        startActivity(
+            Intent(this, NativeChildAccountActivity::class.java).putExtra(
+                NativeChildAccountActivity.EXTRA_SPACE_ID,
+                active.id,
+            ),
+        )
     }
 
     private fun showAdvancedSpaceDialog() {

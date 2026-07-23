@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { approveFamilyChildLink } from '@/lib/db';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = await createNativeRouteAuth(request);
+  if (!auth) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { supabase } = auth;
 
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'dependent_id_required' }, { status: 400 });

@@ -142,6 +142,11 @@
             android:name=".NativeSpaceActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".NativeChildAccountActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
 
 
         <!-- ── 회원가입 약관/개인정보 인앱 브라우저 ─────────────────────── -->

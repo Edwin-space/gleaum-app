@@ -13,18 +13,33 @@ import android.content.Context
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
+import androidx.lifecycle.lifecycleScope
 import com.gleaum.app.databinding.ActivityLoginBinding
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
+import java.security.SecureRandom
+import android.util.Base64
 
 /**
  * LoginActivity — 네이티브 로그인 화면
  *
  * 로그인 방식:
- * - Google로 계속하기: 브라우저 OAuth → gleaum://auth/callback → 세션 저장
+ * - Google로 계속하기: Android Credential Manager → Google ID token → Supabase 세션
  * - 이메일로 계속하기: 네이티브 이메일 로그인/회원가입 → Supabase Auth REST API → 세션 저장
  */
 class LoginActivity : AppCompatActivity() {
@@ -32,6 +47,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private var emailSignupMode = false
     private var emailLoading = false
+    private var googleLoading = false
     private var syncingConsentChecks = false
     private var pendingStartPath: String? = null
 
@@ -76,10 +92,7 @@ class LoginActivity : AppCompatActivity() {
         })
     }
 
-    /**
-     * 앱 복귀 시 (Chrome Custom Tab OAuth 완료 후) 세션 확인.
-     * NativeAppProvider/MainActivity가 saveSession() 을 호출하는 데 약간의 시간이 필요하므로 재시도한다.
-     */
+    /** 이전 앱 버전의 OAuth 콜백으로 저장된 세션도 안전하게 이어받는다. */
     override fun onResume() {
         super.onResume()
         if (SessionManager.hasValid(this)) {
@@ -93,34 +106,91 @@ class LoginActivity : AppCompatActivity() {
         }, 2500L)
     }
 
-    // ── Google 로그인 — Chrome Custom Tab ──────────────────────────────────
+    // ── Google 로그인 — Android Credential Manager ─────────────────────────
 
     private fun handleGoogleSignIn() {
+        if (googleLoading) return
         setGoogleLoading(true)
-
-        val supabaseUrl = getString(R.string.supabase_url)
-        val oauthUri = Uri.parse("$supabaseUrl/auth/v1/authorize")
-            .buildUpon()
-            .appendQueryParameter("provider", "google")
-            .appendQueryParameter("redirect_to", "gleaum://auth/callback")
-            .appendQueryParameter("flow_type", "implicit")
-            .appendQueryParameter("prompt", "select_account")
+        val rawNonce = generateRawNonce()
+        val googleOption = GetSignInWithGoogleOption.Builder(
+            getString(R.string.google_web_client_id),
+        )
+            .setNonce(sha256(rawNonce))
+            .build()
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleOption)
             .build()
 
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, oauthUri))
-        } catch (e: Exception) {
-            showToast("브라우저를 열 수 없습니다.")
-        } finally {
-            setGoogleLoading(false)
+        lifecycleScope.launch {
+            try {
+                val result = CredentialManager.create(this@LoginActivity).getCredential(
+                    context = this@LoginActivity,
+                    request = request,
+                )
+                val credential = result.credential
+                if (
+                    credential !is CustomCredential
+                    || credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    throw IllegalStateException("unsupported_google_credential")
+                }
+                val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                val response = withContext(Dispatchers.IO) {
+                    requestSupabaseAuth(
+                        "/auth/v1/token?grant_type=id_token",
+                        JSONObject()
+                            .put("provider", "google")
+                            .put("id_token", googleCredential.idToken)
+                            .put("nonce", rawNonce),
+                    )
+                }
+                handleAuthSuccess(response)
+            } catch (_: GetCredentialCancellationException) {
+                setGoogleLoading(false)
+            } catch (_: NoCredentialException) {
+                setGoogleLoading(false)
+                showToast("사용할 Google 계정을 찾지 못했습니다. 기기에 Google 계정을 추가해 주세요.")
+            } catch (error: GetCredentialException) {
+                setGoogleLoading(false)
+                showToast(mapGoogleCredentialError(error))
+            } catch (error: Exception) {
+                setGoogleLoading(false)
+                showToast(mapAuthError(error.message.orEmpty()))
+            }
         }
     }
 
     private fun setGoogleLoading(loading: Boolean) {
+        googleLoading = loading
         binding.googleLoading.visibility = if (loading) View.VISIBLE else View.GONE
         binding.btnGoogleText.visibility = if (loading) View.GONE   else View.VISIBLE
         binding.googleIcon.visibility    = if (loading) View.GONE   else View.VISIBLE
         binding.btnGoogle.isClickable    = !loading
+    }
+
+    private fun generateRawNonce(): String {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        return Base64.encodeToString(
+            bytes,
+            Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP,
+        )
+    }
+
+    private fun sha256(value: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray(Charsets.UTF_8))
+            .joinToString(separator = "") { byte -> "%02x".format(byte) }
+
+    private fun mapGoogleCredentialError(error: GetCredentialException): String {
+        val raw = error.message.orEmpty().lowercase()
+        return when {
+            "configuration" in raw || "developer console" in raw ->
+                "Google 로그인 설정을 확인할 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요."
+            "no credential" in raw ->
+                "사용할 Google 계정을 찾지 못했습니다. 기기에 Google 계정을 추가해 주세요."
+            else -> "Google 계정 선택을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요."
+        }
     }
 
     // ── 이메일 로그인/회원가입 — Native Supabase Auth ─────────────────────
@@ -270,6 +340,7 @@ class LoginActivity : AppCompatActivity() {
         if (accessToken.isBlank() || refreshToken.isBlank()) {
             runOnUiThread {
                 setEmailLoading(false)
+                setGoogleLoading(false)
                 if (emailSignupMode) {
                     showToast("가입 확인 메일을 보냈어요. 메일 인증 후 로그인해 주세요.")
                     setEmailMode(signup = false)
@@ -290,6 +361,7 @@ class LoginActivity : AppCompatActivity() {
         SessionManager.save(this, response.toString())
         runOnUiThread {
             setEmailLoading(false)
+            setGoogleLoading(false)
             goToMain()
         }
     }

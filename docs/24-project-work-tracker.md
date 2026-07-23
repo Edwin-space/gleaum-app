@@ -34,17 +34,18 @@
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-012` | 자녀 WebView 안전 영역·조작 가능성 복구 | `🟠 실기기 회귀 대기` | Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU`·`SM_F731N` debug APK 설치 완료. 생체인증 해제 후 상·하단 버튼 노출과 스크롤·선택 확인 |
-| 2 | `FAM-013` | Android 자녀 계정 연결 네이티브 전환 | `🟠 설계 확정·구현 대기` | 보호자 자녀 목록/등록/OTP/동의/공유/승인·거절과 자녀 claim을 Compose M3로 이식. 외부 OAuth와 법적 원문만 시스템/인앱 브라우저 유지 |
-| 3 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
-| 4 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
-| 5 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
-| 6 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
-| 7 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 권한·캘린더 선택·네이티브 후보 3개 조회 통과. 격리 일정 실제 가져오기·중복·자동 CRUD 확인 |
-| 8 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 폴더블 하단 인셋·UI 의미 확인. 실제 TalkBack 음성 순서 수동 QA |
-| 9 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
-| 10 | `OPS-004` | 최신 공통 API Production 반영 | `⏸ 보류` | `FAM-012` Production·인증 경계 스모크 완료. 다음 공통 API 변경이 확정될 때 재개 |
-| 11 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
+| 1 | `FAM-013` | Android 자녀 계정 연결 네이티브 전환 | `🟠 코드 완료·실기기 대기` | 보호자 목록/등록/8자리 OTP/필수 동의/공유/승인·거절과 자녀 claim을 Compose M3로 구현. 공통 API Bearer 인증·딥링크 연결 완료. Production API 배포 후 보호자·자녀 실계정 회귀 |
+| 2 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 코드 완료·외부 설정 대기` | 시스템 계정 선택기와 Supabase ID token 교환 구현. Firebase에 debug·release·Play App Signing SHA-1을 등록하고 최신 `google-services.json`으로 실기기 검증 |
+| 3 | `WEB-011` | 공개 첫 접근 랜딩 재구성 | `🟠 코드 완료·시각 회귀 대기` | 실제 Android 정보 구조를 익명화해 PC·태블릿·모바일 반응형 소개/기능/플랫폼/다운로드 페이지 구현. Production 배포 전 브라우저 시각 회귀 |
+| 4 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
+| 5 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
+| 6 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
+| 7 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
+| 8 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 권한·캘린더 선택·네이티브 후보 3개 조회 통과. 격리 일정 실제 가져오기·중복·자동 CRUD 확인 |
+| 9 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 폴더블 하단 인셋·UI 의미 확인. 실제 TalkBack 음성 순서 수동 QA |
+| 10 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
+| 11 | `OPS-004` | 최신 공통 API Production 반영 | `⏸ 보류` | 신규 자녀 Bearer API와 공개 랜딩이 확정된 뒤 Production 배포·인증 경계 스모크 |
+| 12 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
 
 ### 2026-07-23 맥북 작업 대조 결과
 
@@ -115,6 +116,7 @@
 | [x] | `AND-008` | Android 권한·개인정보·Data safety 정합성 보완 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 미사용 CAMERA/feature 제거, 캘린더·Firebase·AdMob/AdFit 개인정보처리방침 반영, Play 입력 초안 문서화. release package manifest의 카메라·미디어·외부 저장소 권한 0건·Android debug/test/lint·웹 lint/build 통과 |
 | [ ] | `AND-009` | Remote Config 긴급 차단·필수 업데이트 기반 | `⏸ 보류` | — | — | 사용자 결정으로 3플랫폼 핵심 기능 파리티 이후 재개. 주요 기능 차단·필수 업데이트·API 버전 계약 범위 유지 |
 | [ ] | `AND-010` | 앱 시작 선조회·공유 캐시·새로고침 정책 | `🟠 실기기 검증 중` | 2026-07-23 | — | 스플래시 병렬 선조회 후 `SM_F731N` 홈 즉시 데이터 표시, 핵심 메뉴 왕복과 크래시/ANR 0건 확인. pull-to-refresh·mutation 선택 무효화·오프라인/부분 실패 체감 검증 후 완료 |
+| [ ] | `AND-011` | Credential Manager 네이티브 Google 로그인 | `🟠 코드 완료·외부 설정 대기` | 2026-07-23 | — | Credential Manager 계정 선택 → Google ID token → Supabase `/auth/v1/token?grant_type=id_token` 교환과 기존 SessionManager 저장 구현, Kotlin compile 통과. Firebase/Google Cloud에 debug·release·Play App Signing SHA-1 등록 후 실제 계정 선택·취소·재로그인 검증 필요 |
 
 ### `AND-009` 세부 체크리스트
 
@@ -141,6 +143,8 @@
 | 가족 관계·초대/설정 분리 (`FAM-009`) | `space_members.role`은 권한, `family_role`은 표시 관계. 일반 가족 코드 초대와 자녀 검증 초대 분리 | 가족 멤버 카드 관계 우선 표시, 멤버 탭 전용 초대 유형 선택, 설정의 초대 제거 | Android 확정 정보 구조와 동일하게 네이티브 구현 |
 | 자녀 초대 WebView 경로 유지 (`FAM-010`) | 네이티브 저장 세션 재적용은 현재 기능 경로를 덮어쓰지 않음 | Web 브라우저는 기존 라우팅 유지, 별도 후속 없음 | iOS WebView 기능 진입 시 동일한 세션 재적용 규칙을 사용 |
 | 선택 이메일·토큰 연결 (`FAM-012`) | 자녀 이메일은 선택 제한값, `auth.users.id`가 지속 식별자. claim은 후보만 저장하고 최종 승인 전 멤버십·연령 권한 생성 금지 | PC/Mobile 공통 관리·공유·QR·Google/이메일 claim UI 구현. 운영 실계정 회귀만 남음 | iOS 자녀 초대 진입 시 동일한 pending route·후보 승인 계약 적용 |
+| 자녀 연결 Compose 전환 (`FAM-013`) | 기존 DB/RLS/RPC는 유지하고 자녀 API 8개가 Cookie·Bearer 인증을 공통 지원 | 기존 Web 화면은 브라우저·법적 문서·fallback으로 유지 | 보호자 관리·OTP·동의·claim을 같은 API 계약으로 SwiftUI/UIKit 구현 |
+| 네이티브 Google 로그인 (`AND-011`) | Supabase 세션 토큰 형식은 기존과 동일 | Web OAuth는 현행 유지 | Google 네이티브 로그인과 App Review 4.8 대응 로그인 수단을 함께 구현 |
 | 앱 시작 선조회·캐시 (`AND-010`) | API 응답 계약은 유지하고 Android 클라이언트 요청 정책만 변경 | Android 완료 뒤 Web 라우트 이동 중 중복 fetch와 SWR/캐시 정책 별도 감사 | 앱 시작 시 account/home/space 선조회와 pull-to-refresh 동등 정책 적용 |
 
 Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-001` 싱크 보드에 먼저 기록한다. Web/iOS 코드를 같은 작업에서 임의 수정하지 않는다.
@@ -162,7 +166,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [x] | `FAM-010` | Android 자녀 초대 WebView 경로 유지 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 네이티브 세션 재적용이 `/space/children`을 `/home`으로 덮어쓰던 문제 수정. Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 후 `SM_F731N`에서 `MainActivity`와 `/space/children?sid=...` URL 유지 확인 |
 | [ ] | `FAM-011` | 보호자 이메일 OTP·필수 동의 정합화 | `🟠 실메일 회귀 대기` | 2026-07-23 | — | 실메일 8자리에 맞춰 OTP UI/API/공용 템플릿을 통일하고 확인 증적 DB 강제, `email_otp` 이력 완료. 운영 Dashboard 저장과 Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe` 배포·인증 경계 401·runtime error 0 확인. 보호자 본문·코드·필수 동의 실사용자 완료 확인 필요 |
 | [ ] | `FAM-012` | 자녀 선택 이메일·일회성 토큰·최종 승인/거절 | `🟠 실계정 회귀 대기` | 2026-07-23 | — | 이름·생년월일 중심 등록, 선택 이메일 제한, Google/이메일 claim 후보 스냅샷, 보호자 본인 claim 차단, 승인 전 멤버십·연령 권한 보류, 거절·재초대, OS 공유·문자·QR 구현. 운영 migration·Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`, TypeScript·3/3·9/9·4/4·Next/Android build, 공개 랜딩 200·신규 API 401·runtime error 0 확인. 보호자·자녀 실계정 회귀 필요 |
-| [ ] | `FAM-013` | Android 자녀 계정 연결 Compose 전환 | `🟠 설계 확정·구현 대기` | 2026-07-23 | — | Android 앱 내부 보호자 목록/등록/OTP/필수 동의/초대 공유/후보 승인·거절과 자녀 토큰 claim을 Compose Material 3로 구현. 기존 공통 DB/RLS/API 계약은 유지하고 Bearer 인증 Native API만 추가. 외부 Google OAuth와 법적 원문은 각각 시스템 인증 화면·`LegalWebViewActivity` 유지 |
+| [ ] | `FAM-013` | Android 자녀 계정 연결 Compose 전환 | `🟠 코드 완료·실기기 대기` | 2026-07-23 | — | Compose Material 3 보호자 목록/등록/8자리 OTP/필수 동의/초대 공유/후보 승인·거절과 자녀 token claim 구현. 자녀 API 8개 Cookie·Bearer 공통 인증, `/space/children`, `/family/guardian/verify`, `/invite/child/{token}` 네이티브 라우팅, Kotlin compile 통과. Production API 배포 후 보호자·자녀 실계정 회귀 필요 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -180,6 +184,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `🟠 진행 중` | 2026-07-16 | — | PC/Mobile Web에서 네이티브 전용 캘린더·생체인증과 보류된 Apple 로그인·포인트/프리미엄 문구를 제거하거나 실제 지원 플랫폼에만 노출하고 죽은 진입점 제거 |
 | [ ] | `WEB-009` | 일정 장소·지도 기능 완성 | `🟠 진행 중` | 2026-07-16 | — | PC/Mobile의 가짜 지도 준비 영역을 실제 외부 지도 검색 동작으로 교체. 주소 검색·좌표 저장·내장 지도 범위는 아직 미구현 |
 | [ ] | `WEB-010` | 알림 설정 서버 발송 경계 적용 | `🟠 진행 중` | 2026-07-16 | — | 일정 리마인더·재알림·자녀 미완료·결제 초과·주간 소비 요약에서 opt-in을 강제하고 명시적 false 사용자의 FCM/인앱 기록을 차단. 운영 배포 후 실제 수신/비수신 회귀 필요 |
+| [ ] | `WEB-011` | 공개 첫 접근 랜딩 크로스 플랫폼 개편 | `🟠 코드 완료·시각 회귀 대기` | 2026-07-23 | — | PC 전용·모바일 로그인 강제 구조를 제거하고 모든 Web 뷰포트에 서비스 소개, 핵심 기능, 플랫폼 상태, Google Play/웹 진입을 제공. 실제 Android 화면의 정보 구조를 개인정보 없이 재구성. production build·브라우저 시각·링크 검증 후 완료 |
 | [ ] | `PAR-001` | PC Web·Mobile Web·Android 3플랫폼 핵심 기능 파리티 회귀 | `🟠 진행 중` | 2026-07-16 | — | 기능별 공통 API·DB·권한 계약 아래 PC Web·Mobile Web·Android 구현과 검증을 각각 관리. 세 플랫폼이 모두 완료되거나 명시적 `N/A` 사유가 있어야 상위 기능을 완료한다. iOS는 현재 완료 조건에서 제외 |
 
 ### `PAR-001` 3플랫폼 운영 규칙
@@ -330,7 +335,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `⏸ 보류` | — | — | Android 관련 기능·실기기·릴리즈·Play Console 검증이 모두 정상 완료된 뒤 확정된 Android 동작을 기준으로 iOS에 재구현 |
 | [ ] | `IOS-006` | TestFlight/App Store 출시 | `⏸ 보류` | — | — | iOS 기능 재구현·실기기 QA 완료 뒤 유료 계정·스크린샷·메타데이터·정책을 준비해 진행 |
 
-상세 계획: `docs/16-ios-native-roadmap.md`
+상세 계획: `docs/16-ios-native-roadmap.md`, 재개 감사: `docs/27-ios-resumption-readiness.md`
 
 ## 9. 백오피스·CRM·광고
 

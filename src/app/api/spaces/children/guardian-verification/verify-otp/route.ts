@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { confirmGuardianEmailVerification } from '@/lib/db';
 import { GUARDIAN_EMAIL_OTP_LENGTH } from '@/lib/guardian-consent';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
-  if (!currentUser?.email) {
+export async function POST(request: NextRequest) {
+  const auth = await createNativeRouteAuth(request);
+  if (!auth) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+  const { supabase, user: currentUser } = auth;
+  const guardianEmail = currentUser.email;
+  if (!guardianEmail) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
@@ -30,7 +34,7 @@ export async function POST(request: Request) {
 
   try {
     const { data, error } = await supabase.auth.verifyOtp({
-      email: currentUser.email,
+      email: guardianEmail,
       token: code,
       type: 'email',
     });

@@ -1283,3 +1283,12 @@ npm run cap:open:android # Android Studio 열기
 - 대상 ESLint, TypeScript, 자녀 테스트 3/3, Next production build, Android debug build 통과
 - Vercel Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU` 배포 및 `SM_F731N` debug APK 설치 완료
 - 생체인증 해제 후 실기기 시각·조작 회귀만 남아 있으므로 기능 완료가 아닌 검증 대기 상태로 추적
+
+## Android 자녀 연결 Compose·공개 랜딩·Google 로그인 (코드 완료 — 2026-07-23)
+
+- Android 자녀 계정 연결을 WebView에서 Compose Material 3로 전환했다.
+- 보호자 자녀 목록/등록, 8자리 OTP, 필수 동의, 초대 공유, 후보 승인/거절, 자녀 claim을 네이티브 Activity에서 처리한다.
+- 자녀 API 8개를 Cookie·Bearer 공통 인증으로 보강해 Web과 Android가 같은 검증·DB 계약을 사용한다.
+- Android Google 로그인은 Credential Manager 계정 선택과 Supabase ID token 교환 방식으로 구현했다.
+- 웹 `/`은 PC 전용 랜딩과 모바일 로그인 강제 구조를 제거하고 PC·태블릿·모바일 공통 반응형 서비스 소개로 재구성했다.
+- 랜딩 화면은 실제 Android 정보 구조를 개인정보 없이 재구성하고 홈·일정·공간·개인 가계부와 현재 지원 플랫폼을 명확히 안내한다.

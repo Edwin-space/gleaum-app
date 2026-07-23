@@ -34,7 +34,7 @@ iOS App은 기반 코드는 있지만 현재 지원 플랫폼·파리티 완료 
 
 | 기능 | PC Web | Mobile Web | Android App | 싱크 기준 |
 |---|---|---|---|---|
-| Google 로그인 | 지원 | 지원 | 네이티브 지원 | 로그인 후 항상 앱/웹의 원래 세션으로 복귀해야 함 |
+| Google 로그인 | 지원 | 지원 | Credential Manager 네이티브 코드 완료·서명 SHA 실기기 검증 대기 | 로그인 후 항상 앱/웹의 원래 세션으로 복귀해야 함 |
 | 로그아웃 | 지원 | 지원 | 지원 | 웹 세션 + 네이티브 세션 정리 정책 통일 |
 | 온보딩 | 지원 | 지원 | Compose 지원 | 신규 사용자는 개인화/보안 설정 흐름을 동일한 의미로 거쳐야 함 |
 | 홈 화면 구성 | 지원 | 지원 | Compose 지원 | 사용자 선호 기반 홈 구성 정책 통일 |
@@ -72,10 +72,11 @@ iOS App은 기반 코드는 있지만 현재 지원 플랫폼·파리티 완료 
 
 | 우선순위 | 대상 | 파일 | 조치 |
 |---|---|---|---|
-| P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity` | Android OAuth callback 보정 완료. 실제 기기 회귀 테스트 필요. iOS는 `IOS-*` 후순위에서 별도 검증 |
+| P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `LoginActivity`, `RouterActivity`, `MainActivity` | Android Credential Manager → Google ID token → Supabase 세션 저장 구현. Firebase SHA 등록 후 실제 계정 선택·취소·재로그인 회귀 필요. iOS는 `IOS-*` 후순위에서 별도 검증 |
 | P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql`, `tests/data-boundaries.test.ts` | 강화 SQL 실행·정책 확인 이력과 코드 접근 매트릭스 9/9 존재. Docker/로컬 Supabase 역할별 CRUD 통합 회귀는 `WEB-001` |
 | P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
 | P1 | 가족 관계·초대 UX | Android `ComposeSpaceScreen`, `NativeSpaceActivity`, Web 공간 멤버/설정 화면 | Android는 관계/권한 분리와 초대/설정 분리 완료. PC/Mobile Web은 같은 API 계약과 정보 구조로 후속 반영하고 iOS는 Android 확정 동작을 기준으로 재구현 |
+| P1 | 자녀 계정 연결 | Android `NativeChildAccountActivity`, `ComposeChildAccountScreen`, 공통 `/api/spaces/children/*` | Android 보호자 관리·OTP·동의·초대·승인/거절·claim Compose 구현. Web은 기존 반응형 흐름 유지, iOS는 동일 Bearer API 계약으로 후속 구현 |
 | P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, `src/lib/native-calendar.ts`, Android `NativeCalendarPlugin` | Android 내보내기·자동 반영·가져오기 완료. iOS EventKit 확장 필요 |
 | P1 | 생체인증 설정 노출 | `src/app/mypage/*`, `src/components/NativeBiometricGate.tsx` | Web에서는 앱 전용으로 오해되지 않게 숨김/안내 기준 필요 |
 | P1 | 광고 플랫폼 타겟 | `src/components/AdSlot.tsx`, Android AdFit/AdMob 코드, `backoffice/*` | 웹/Android 타겟과 AdFit 실패 fallback 실기기 검증 필요 |

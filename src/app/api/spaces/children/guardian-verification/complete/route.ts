@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { completeGuardianEmailConsent } from '@/lib/db';
 import {
   GUARDIAN_POLICY_VERSION,
   REQUIRED_GUARDIAN_CONSENTS,
 } from '@/lib/guardian-consent';
-import { createClient } from '@/lib/supabase/server';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+export async function POST(request: NextRequest) {
+  const auth = await createNativeRouteAuth(request);
+  if (!auth) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { supabase } = auth;
 
   let token = '';
   let consentTypes: string[] = [];

@@ -15,6 +15,7 @@
 | 🟡 | 일정 첨부 완성 | 현재 로컬 미리보기를 Storage 업로드·일정 연결·삭제·RLS까지 완성 |
 | 🟡 | Web 설정·기능 노출 정합화 | PC/Mobile에서 네이티브 전용·보류·준비 중 기능의 문구와 진입 정책 통일 |
 | 🟡 | Android production build 기능 반영 | 위 공통 계약을 Compose에 연결하고 debug/release production build와 실기기 회귀 |
+| 🔴 | Android 네이티브 Google 외부 설정 | Firebase/Google Cloud에 debug·release·Play App Signing SHA-1 등록, 최신 `google-services.json` 반영, 계정 선택·취소·재로그인 실기기 확인 |
 | ⏸ | Remote Config 운영 안전장치 | 핵심 기능 파리티와 운영 회귀가 끝난 뒤 기존 초기화·백오피스 편집기를 실제 차단 계약에 연결 |
 | ⏸ | Google Play 출시·iOS | 현재 기능 안정화와 Web/API 운영 반영이 끝난 뒤 재개 |
 

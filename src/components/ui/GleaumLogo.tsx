@@ -12,16 +12,21 @@
  * variant:
  *  'dark'  — 라이트 배경용 (#2D3035 텍스트, 컬러 다이아몬드)
  *  'white' — 다크 배경용 (흰색 텍스트 + 다이아몬드)
+ *  'auto'  — 현재 서비스 테마 텍스트 색상 사용
  */
 interface GleaumBIProps {
-  variant?: 'dark' | 'white';
+  variant?: 'dark' | 'white' | 'auto';
   width?: number;
   className?: string;
 }
 
 export function GleaumBI({ variant = 'dark', width = 140, className = '' }: GleaumBIProps) {
   const height = Math.round(width * (90 / 360));
-  const textFill = variant === 'white' ? '#FFFFFF' : '#2D3035';
+  const textFill = variant === 'white'
+    ? '#FFFFFF'
+    : variant === 'auto'
+      ? 'var(--theme-text)'
+      : '#2D3035';
 
   return (
     <svg

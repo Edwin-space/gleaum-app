@@ -533,3 +533,12 @@ adb shell am start -n com.gleaum.app/.NativeHomePortActivity
 - 자녀 계정 연결의 최종 Android 구조는 Compose Material 3가 기준이다. 보호자 자녀 목록·등록·OTP·동의·초대 공유·후보 승인/거절과 자녀 claim을 네이티브로 옮긴다.
 - Google OAuth는 기존 시스템 인증 흐름을 유지하고, 이용약관·개인정보처리방침 원문만 `LegalWebViewActivity`에서 표시한다.
 - 서버의 기존 DB/RLS/RPC 계약은 복제하지 않는다. 네이티브 화면은 Bearer 인증 공통 API를 통해 같은 검증 규칙을 사용한다.
+
+## 2026-07-23 자녀 연결 Compose 전환·네이티브 Google 로그인
+
+- `NativeChildAccountActivity`, `NativeChildAccountApi`, `ComposeChildAccountScreen`을 추가했다.
+- 가족 공간의 보호자 자녀 목록, 자녀 사전등록, 8자리 이메일 OTP, 필수 동의, 초대 공유, 후보 승인/거절과 자녀 token claim을 Compose Material 3로 처리한다.
+- `/space/children?sid=...`, `/family/guardian/verify?token=...`, `/invite/child/{token}`은 `NativeDeepLinkRouter`에서 네이티브 화면으로 연결한다.
+- 관련 자녀 API는 `createNativeRouteAuth()`를 사용해 Web cookie와 Native bearer token을 함께 지원한다. DB/RLS/RPC 계약은 변경하지 않았다.
+- Android Google 로그인은 브라우저 OAuth 대신 Credential Manager의 Google 계정 선택기에서 ID token을 받은 뒤 Supabase ID token grant로 세션을 교환한다.
+- 네이티브 Google 로그인 완료 조건에는 Firebase/Google Cloud의 debug·release·Play App Signing SHA-1 등록과 최신 `google-services.json` 반영이 포함된다.

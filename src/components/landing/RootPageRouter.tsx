@@ -1,41 +1,40 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { isNativeApp } from '@/lib/native';
 import { PcLandingPage } from './PcLandingPage';
 
+const subscribeRuntime = (onStoreChange: () => void) => {
+  const timer = window.setTimeout(onStoreChange, 0);
+  return () => window.clearTimeout(timer);
+};
+
 /**
  * 루트(/) 라우터
- * - PC(1024px 이상): PC 랜딩 페이지 표시
- * - 모바일/태블릿: /login 으로 리다이렉트
- *   → Android/iOS 앱(WebView) 접근 시 마케팅 랜딩 노출 방지
+ * - 일반 웹: PC·태블릿·모바일에 동일한 반응형 소개 페이지 표시
+ * - Android/iOS 앱 WebView: 마케팅 페이지를 건너뛰고 네이티브 세션 라우팅 대기
  */
 export function RootPageRouter() {
-  const isDesktop = useIsDesktop();
   const router = useRouter();
+  const nativeRuntime = useSyncExternalStore(
+    subscribeRuntime,
+    isNativeApp,
+    () => true,
+  );
 
   useEffect(() => {
-    // useIsDesktop()은 hydration 안전을 위해 초기값이 false다.
-    // 따라서 루트 리다이렉트 판단은 effect 안에서 실제 브라우저 뷰포트를 다시 확인한다.
-    const desktopNow = window.matchMedia('(min-width: 1024px)').matches;
-    if (desktopNow) return;
-
     // 네이티브 앱은 NativeAppProvider가 네이티브 세션 적용 후 /home 또는 /onboarding으로 이동시킨다.
     // 여기서 먼저 /home으로 이동하면 서버 proxy가 쿠키 없는 요청을 /login으로 돌려보내는 레이스가 생긴다.
-    if (isNativeApp()) {
+    if (nativeRuntime) {
       const timer = window.setTimeout(() => {
         if (window.location.pathname === '/') router.replace('/login');
       }, 4200);
       return () => window.clearTimeout(timer);
     }
+  }, [nativeRuntime, router]);
 
-    router.replace('/login');
-  }, [router]);
-
-  // 데스크탑이면 랜딩 페이지, 모바일이면 빈 화면(리다이렉트 중)
-  if (!isDesktop) {
+  if (nativeRuntime) {
     return (
       <div
         style={{

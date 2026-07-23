@@ -37,6 +37,7 @@
 | `20-android-native-release-qa.md` | Android 빌드·권한·실기기·출시 전 QA 체크리스트 | **최우선** |
 | `21-family-child-account-foundation.md` | ⭐ 가족 공간 자녀 사전등록·보호자 동의·계정 연결·연령 전환 기준 | **최우선** |
 | `22-android-material3-ui-audit.md` | ⭐ Android Material 3 화면별 A등급 평가표·공통 UI 규칙·실기기 QA | **최우선** |
+| `27-ios-resumption-readiness.md` | iOS 중단 지점 감사·재개 준비·출시 차단 항목 | iOS 재개 시 필수 |
 | `23-external-work-checkpoint.md` | ⭐ 외장 저장장치 이동용 현재 작업 상태·복사·복구 체크리스트 | **최우선** |
 | `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
@@ -49,7 +50,7 @@
 - **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 구현 체크포인트**: `FAM-012` 자녀 선택 이메일·72시간 일회성 토큰·보호자 최종 승인/거절, Android 초대 로그인 경로 보존. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
+- **최근 구현 체크포인트**: `FAM-013` Android 자녀 등록·보호자 OTP·필수 동의·초대 공유·claim·최종 승인/거절 Compose 전환, Android Credential Manager Google 로그인, 반응형 공개 랜딩 재구성. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
 
 ---
 
