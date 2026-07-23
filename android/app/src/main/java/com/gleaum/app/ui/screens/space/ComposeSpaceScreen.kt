@@ -89,6 +89,8 @@ fun ComposeSpaceScreen(
     errorMessage: String?,
     onRetry: () -> Unit,
     onCopyInviteCode: (String) -> Unit,
+    onShareInviteCode: (String) -> Unit,
+    onInviteChild: () -> Unit,
     onSpaceClick: (NativeSpaceItem) -> Unit,
     onMemberClick: (NativeSpaceMember) -> Unit,
     onManageAction: (SpaceManageAction) -> Unit,
@@ -100,6 +102,8 @@ fun ComposeSpaceScreen(
     var sectionName by rememberSaveable { mutableStateOf(SpaceSection.FEED.name) }
     var showSpacePicker by rememberSaveable { mutableStateOf(false) }
     var showManagement by rememberSaveable { mutableStateOf(false) }
+    var showInvite by rememberSaveable { mutableStateOf(false) }
+    var showFamilyMemberInvite by rememberSaveable { mutableStateOf(false) }
     var showPostComposer by rememberSaveable { mutableStateOf(false) }
     var postContent by rememberSaveable { mutableStateOf("") }
     val section = runCatching { SpaceSection.valueOf(sectionName) }.getOrDefault(SpaceSection.FEED)
@@ -122,7 +126,11 @@ fun ComposeSpaceScreen(
                     CurrentSpaceCard(
                         active = summary.activeSpace,
                         onSwitch = { showSpacePicker = true },
-                        onSettings = if (canManageSpaces || canInviteMembers) ({ showManagement = true }) else null,
+                        onSettings = if (
+                            canManageSpaces &&
+                            summary.activeSpace?.role == "admin" &&
+                            summary.activeSpace?.isPersonal == false
+                        ) ({ showManagement = true }) else null,
                     )
                 }
                 item { SectionTabs(section) { sectionName = it.name } }
@@ -148,7 +156,17 @@ fun ComposeSpaceScreen(
                         }
                     }
                     SpaceSection.MEMBERS -> {
-                        item { MemberSectionHeader(summary.members.size, canInviteMembers && summary.activeSpace?.isPersonal != true) { showManagement = true } }
+                        item {
+                            MemberSectionHeader(
+                                summary.members.size,
+                                canInviteMembers &&
+                                    summary.activeSpace?.role == "admin" &&
+                                    summary.activeSpace?.isPersonal != true,
+                            ) {
+                                showFamilyMemberInvite = false
+                                showInvite = true
+                            }
+                        }
                         if (summary.members.isEmpty()) {
                             item { EmptyCard("표시할 멤버가 없어요", "아직 이 공간에 함께하는 멤버가 없어요.") }
                         } else {
@@ -156,7 +174,10 @@ fun ComposeSpaceScreen(
                                 item(key = "member-${member.id}") {
                                     MemberItemCard(
                                         member = member,
-                                        canManage = summary.activeSpace?.role == "admin" && summary.activeSpace?.isPersonal == false && !member.isMe,
+                                        canManage = summary.activeSpace?.role == "admin" &&
+                                            summary.activeSpace?.isPersonal == false &&
+                                            (!member.isMe || summary.activeSpace?.spaceKind == "family"),
+                                        isFamily = summary.activeSpace?.spaceKind == "family",
                                         onClick = { onMemberClick(member) },
                                     )
                                 }
@@ -236,11 +257,88 @@ fun ComposeSpaceScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text("공간 설정", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("초대와 역할 같은 운영 정보는 이곳에서 관리합니다.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (canInviteMembers) summary.activeSpace?.inviteCode?.let { InviteCodeCard(it, onCopyInviteCode) }
-                ManageCard(summary.activeSpace, canManageSpaces, canInviteMembers) {
+                Text("공간 이름과 운영 상태를 관리합니다. 멤버 초대는 멤버 탭에서 진행하세요.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ManageCard(summary.activeSpace, canManageSpaces) {
                     showManagement = false
                     onManageAction(it)
+                }
+            }
+        }
+    }
+
+    if (showInvite && summary?.activeSpace != null) {
+        val active = summary.activeSpace
+        val familyChoiceRequired = active.spaceKind == "family" && !showFamilyMemberInvite
+        ModalBottomSheet(
+            onDismissRequest = {
+                showInvite = false
+                showFamilyMemberInvite = false
+            },
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    if (familyChoiceRequired) "가족 초대" else if (active.spaceKind == "family") "가족 구성원 초대" else "멤버 초대",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (familyChoiceRequired) {
+                    Text(
+                        "초대할 가족 유형을 먼저 선택해 주세요. 자녀는 보호자 확인과 동의가 포함된 별도 절차로 연결됩니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    InviteTypeCard(
+                        icon = Icons.Outlined.Person,
+                        title = "일반 가족 구성원",
+                        description = "아빠, 엄마, 조부모, 배우자 등 성인 가족을 초대합니다.",
+                    ) { showFamilyMemberInvite = true }
+                    InviteTypeCard(
+                        icon = Icons.Outlined.FamilyRestroom,
+                        title = "자녀",
+                        description = "자녀 정보 등록, 보호자 확인·동의, 일회성 초대 순서로 안전하게 연결합니다.",
+                    ) {
+                        showInvite = false
+                        onInviteChild()
+                    }
+                } else {
+                    Text(
+                        if (active.spaceKind == "family") {
+                            "가족에게 아래 코드나 초대 링크를 보내세요. 참여 후 멤버 목록에서 가족 관계를 지정할 수 있습니다."
+                        } else {
+                            "함께할 사람에게 아래 코드나 초대 링크를 보내세요."
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    active.inviteCode?.let {
+                        InviteCodeCard(it, onCopyInviteCode, onShareInviteCode)
+                    } ?: GleaumStateCard(
+                        title = "초대 코드가 필요해요",
+                        message = "새 초대 코드를 만든 뒤 공유할 수 있습니다.",
+                        kind = StateKind.EMPTY,
+                        actionLabel = "코드 만들기",
+                        onAction = {
+                            showInvite = false
+                            onManageAction(SpaceManageAction.REGENERATE_INVITE)
+                        },
+                    )
+                    TextButton(
+                        onClick = {
+                            showInvite = false
+                            onManageAction(SpaceManageAction.REGENERATE_INVITE)
+                        },
+                    ) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("초대 코드 새로 만들기", Modifier.padding(start = 6.dp))
+                    }
+                    if (active.spaceKind == "family") {
+                        OutlinedButton(onClick = { showFamilyMemberInvite = false }, modifier = Modifier.fillMaxWidth()) {
+                            Text("가족 유형 다시 선택")
+                        }
+                    }
                 }
             }
         }
@@ -262,7 +360,7 @@ private fun CurrentSpaceCard(active: NativeSpaceItem?, onSwitch: () -> Unit, onS
                     Text(
                         when {
                             active?.isPersonal == true -> "나만의 공간"
-                            active?.spaceKind == "family" -> "가족 공간"
+                            active?.spaceKind == "family" -> "가족 공간 · ${familyRoleLabel(active.familyRole)}"
                             else -> "함께하는 공간"
                         },
                         style = MaterialTheme.typography.bodySmall,
@@ -385,7 +483,11 @@ private fun MemberSectionHeader(count: Int, canInvite: Boolean, onSettings: () -
 }
 
 @Composable
-private fun InviteCodeCard(code: String, onCopyInviteCode: (String) -> Unit) {
+private fun InviteCodeCard(
+    code: String,
+    onCopyInviteCode: (String) -> Unit,
+    onShareInviteCode: ((String) -> Unit)? = null,
+) {
     Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.secondaryContainer) {
         Row(Modifier.padding(start = 14.dp, top = 10.dp, end = 6.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -393,7 +495,38 @@ private fun InviteCodeCard(code: String, onCopyInviteCode: (String) -> Unit) {
                 Text(code, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
             IconButton(onClick = { onCopyInviteCode(code) }) { Icon(Icons.Outlined.ContentCopy, contentDescription = "초대 코드 복사") }
+            if (onShareInviteCode != null) {
+                IconButton(onClick = { onShareInviteCode(code) }) {
+                    Icon(Icons.Outlined.GroupAdd, contentDescription = "초대 링크 공유")
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun InviteTypeCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+) {
+    OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        ListItem(
+            headlineContent = { Text(title, fontWeight = FontWeight.SemiBold) },
+            supportingContent = { Text(description) },
+            leadingContent = {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(44.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                }
+            },
+        )
     }
 }
 
@@ -405,7 +538,11 @@ private fun SpacePickerRow(space: NativeSpaceItem, onClick: () -> Unit) {
             supportingContent = {
                 Text(
                     if (space.isPersonal) "개인 공간"
-                    else "${if (space.spaceKind == "family") "가족 공간 · " else ""}${space.memberCount}명 · ${roleLabel(space.role)}",
+                    else if (space.spaceKind == "family") {
+                        "가족 공간 · ${familyRoleLabel(space.familyRole)} · ${space.memberCount}명"
+                    } else {
+                        "${space.memberCount}명 · ${roleLabel(space.role)}"
+                    },
                 )
             },
             leadingContent = { SpaceIcon(space.isPersonal) },
@@ -415,7 +552,7 @@ private fun SpacePickerRow(space: NativeSpaceItem, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MemberItemCard(member: NativeSpaceMember, canManage: Boolean, onClick: () -> Unit) {
+private fun MemberItemCard(member: NativeSpaceMember, canManage: Boolean, isFamily: Boolean, onClick: () -> Unit) {
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -423,38 +560,31 @@ private fun MemberItemCard(member: NativeSpaceMember, canManage: Boolean, onClic
     ) {
         ListItem(
             headlineContent = { Text(member.displayName + if (member.isMe) " (나)" else "", maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold) },
-            supportingContent = { Text(member.email.ifBlank { roleLabel(member.role) }, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            supportingContent = {
+                Text(
+                    if (isFamily) "${member.email.ifBlank { "이메일 정보 없음" }} · ${roleLabel(member.role)}"
+                    else member.email.ifBlank { roleLabel(member.role) },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
             leadingContent = { InitialAvatar(member.displayName.take(1).ifBlank { "?" }) },
-            trailingContent = { GleaumLabelBadge(roleLabel(member.role)) },
+            trailingContent = { GleaumLabelBadge(if (isFamily) familyRoleLabel(member.familyRole) else roleLabel(member.role)) },
         )
     }
 }
 
 @Composable
-private fun ManageCard(active: NativeSpaceItem?, canManageSpaces: Boolean, canInviteMembers: Boolean, onManageAction: (SpaceManageAction) -> Unit) {
+private fun ManageCard(active: NativeSpaceItem?, canManageSpaces: Boolean, onManageAction: (SpaceManageAction) -> Unit) {
     val canManage = active?.role == "admin"
     val isShared = active?.isPersonal == false
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        if (canInviteMembers) {
-        ManageRow(Icons.Outlined.GroupAdd, "공간 참여하기", "초대 코드로 다른 공간에 입장합니다") { onManageAction(SpaceManageAction.JOIN) }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
         if (canManageSpaces) {
-        ManageRow(Icons.Outlined.Groups, "새 공간 만들기", "친구, 연인, 가족과 함께할 공간을 만듭니다") { onManageAction(SpaceManageAction.CREATE) }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         ManageRow(Icons.Outlined.Edit, "공간 이름 변경", if (canManage) "현재 공간의 이름을 수정합니다" else "공간 지기만 수정할 수 있어요") { onManageAction(SpaceManageAction.RENAME) }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-        if (canInviteMembers) {
-        ManageRow(Icons.Outlined.Refresh, "초대 코드 새로 만들기", if (active?.isPersonal == true) "개인 공간은 초대할 수 없어요" else "기존 코드를 새 코드로 교체합니다") { onManageAction(SpaceManageAction.REGENERATE_INVITE) }
-        if (canManageSpaces) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-        if (canManageSpaces) {
         if (canManage && isShared && active?.spaceKind != "family") {
-            ManageRow(Icons.Outlined.FamilyRestroom, "가족 공간으로 전환", "현재 멤버·일정·소식을 유지하고 가족 기능을 활성화합니다") { onManageAction(SpaceManageAction.CONVERT_TO_FAMILY) }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ManageRow(Icons.Outlined.FamilyRestroom, "가족 공간으로 전환", "현재 멤버·일정·소식을 유지하고 가족 기능을 활성화합니다") { onManageAction(SpaceManageAction.CONVERT_TO_FAMILY) }
         }
-        ManageRow(Icons.Outlined.Settings, "고급 설정", "공간 관리 상태를 확인합니다") { onManageAction(SpaceManageAction.ADVANCED) }
         if (canManage && isShared) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             ManageRow(
@@ -544,4 +674,18 @@ private fun roleLabel(role: String?): String = when (role) {
     "admin" -> "공간 지기"
     "editor" -> "공간 운영자"
     else -> "공간 멤버"
+}
+
+private fun familyRoleLabel(role: String?): String = when (role) {
+    "father" -> "아빠"
+    "mother" -> "엄마"
+    "grandfather" -> "할아버지"
+    "grandmother" -> "할머니"
+    "spouse" -> "배우자"
+    "son" -> "아들"
+    "daughter" -> "딸"
+    "sibling" -> "형제·자매"
+    "guardian" -> "보호자"
+    "other" -> "기타 가족"
+    else -> "가족 구성원"
 }

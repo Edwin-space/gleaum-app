@@ -30,6 +30,7 @@ import type {
   SpacePurpose,
   FamilyDependent,
   FamilyDependentGender,
+  FamilyMemberRole,
   GuardianRelationshipType,
   AccountMode,
   AccountSessionContext,
@@ -113,6 +114,7 @@ export interface SpaceMemberRow {
   space_id:  string;
   user_id:   string;
   role:      SpaceRole;
+  family_role?: FamilyMemberRole | null;
   joined_at: string;
   nickname?: string | null;
   // join 시 포함될 수 있는 profiles 데이터
@@ -256,6 +258,7 @@ export function rowToSpaceMember(row: SpaceMemberRow): SpaceMember {
     spaceId:  row.space_id,
     userId:   row.user_id,
     role:     row.role,
+    familyRole: row.family_role ?? undefined,
     joinedAt: new Date(row.joined_at),
     nickname: row.nickname ?? undefined,
     user:     row.profiles ? rowToUser(row.profiles) : undefined,
@@ -1896,6 +1899,7 @@ export interface NativeSpaceListItem {
   id: string;
   name: string;
   role: SpaceRole;
+  familyRole?: FamilyMemberRole;
   memberCount: number;
   inviteCode?: string;
   spaceKind: SpaceKind;
@@ -1911,6 +1915,7 @@ export interface NativeSpaceMemberItem {
   email: string;
   avatar?: string;
   role: SpaceRole;
+  familyRole?: FamilyMemberRole;
   isMe: boolean;
 }
 
@@ -2648,13 +2653,13 @@ export async function getNativeSpaceSummary(
 
   const { data: membershipRows, error: membershipError } = await supabase
     .from('space_members')
-    .select('space_id, role, joined_at')
+    .select('space_id, role, family_role, joined_at')
     .eq('user_id', userId)
     .order('joined_at', { ascending: true });
 
   if (membershipError) throw new Error(membershipError.message);
 
-  const memberships = (membershipRows ?? []) as Array<Pick<SpaceMemberRow, 'space_id' | 'role' | 'joined_at'>>;
+  const memberships = (membershipRows ?? []) as Array<Pick<SpaceMemberRow, 'space_id' | 'role' | 'family_role' | 'joined_at'>>;
   const membershipSpaceIds = memberships.map((row) => row.space_id);
   const activeSpaceId = profile.family_group_id ?? personalSpaceId ?? membershipSpaceIds[0] ?? null;
   const requestedSpaceIds = [...new Set([
@@ -2691,6 +2696,7 @@ export async function getNativeSpaceSummary(
   if (countsError) throw new Error(countsError.message);
 
   const roleMap = new Map(memberships.map((row) => [row.space_id, row.role]));
+  const familyRoleMap = new Map(memberships.map((row) => [row.space_id, row.family_role]));
   const countMap = new Map<string, number>();
   for (const row of (memberCountRows ?? []) as Array<{ space_id: string }>) {
     countMap.set(row.space_id, (countMap.get(row.space_id) ?? 0) + 1);
@@ -2710,6 +2716,9 @@ export async function getNativeSpaceSummary(
         id: group.id,
         name: group.name,
         role: roleMap.get(group.id) ?? fallbackRole,
+        familyRole: group.space_type === 'family'
+          ? familyRoleMap.get(group.id) ?? 'family'
+          : undefined,
         memberCount: countMap.get(group.id) ?? (isPersonal ? 1 : 0),
         inviteCode: isPersonal ? undefined : group.invite_code ?? undefined,
         spaceKind: isPersonal ? 'personal' : group.space_type === 'family' ? 'family' : 'general',
@@ -2777,6 +2786,9 @@ export async function getNativeSpaceSummary(
         email: profile?.email ?? '',
         avatar: profile?.avatar ?? undefined,
         role: row.role,
+        familyRole: activeSpace.spaceKind === 'family'
+          ? row.family_role ?? 'family'
+          : undefined,
         isMe: row.user_id === userId,
       };
     });
@@ -2934,7 +2946,7 @@ export async function joinNativeSpaceByCode(
 
   const { data: group, error: groupError } = await admin
     .from('family_groups')
-    .select('id,name,invite_code_expires_at')
+    .select('id,name,invite_code_expires_at,space_type')
     .eq('invite_code', normalizedCode)
     .single();
 
@@ -2957,7 +2969,12 @@ export async function joinNativeSpaceByCode(
   if (!existing) {
     const { error: memberError } = await admin
       .from('space_members')
-      .insert({ space_id: spaceId, user_id: userId, role: 'viewer' });
+      .insert({
+        space_id: spaceId,
+        user_id: userId,
+        role: 'viewer',
+        family_role: (group as { space_type?: SpaceKind }).space_type === 'family' ? 'family' : null,
+      });
 
     if (memberError) throw new Error(memberError.message);
   }
@@ -3054,6 +3071,51 @@ export async function updateNativeSpaceMemberRole(
   const { error } = await supabase
     .from('space_members')
     .update({ role })
+    .eq('space_id', spaceId)
+    .eq('user_id', memberUserId);
+
+  if (error) throw new Error(error.message);
+  return getNativeSpaceSummary(supabase, userId);
+}
+
+export async function updateNativeSpaceMemberFamilyRole(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  spaceId: string,
+  memberUserId: string,
+  familyRole: FamilyMemberRole,
+): Promise<NativeSpaceSummary> {
+  await requireNativeSpaceAdmin(supabase, userId, spaceId);
+  await assertNativeSpaceIsNotPersonal(supabase, userId, spaceId);
+
+  const allowedRoles: FamilyMemberRole[] = [
+    'father',
+    'mother',
+    'grandfather',
+    'grandmother',
+    'spouse',
+    'son',
+    'daughter',
+    'sibling',
+    'guardian',
+    'family',
+    'other',
+  ];
+  if (!allowedRoles.includes(familyRole)) throw new Error('invalid_family_role');
+
+  const { data: space, error: spaceError } = await supabase
+    .from('family_groups')
+    .select('space_type')
+    .eq('id', spaceId)
+    .single();
+  if (spaceError) throw new Error(spaceError.message);
+  if ((space as { space_type?: SpaceKind }).space_type !== 'family') {
+    throw new Error('family_space_required');
+  }
+
+  const { error } = await supabase
+    .from('space_members')
+    .update({ family_role: familyRole })
     .eq('space_id', spaceId)
     .eq('user_id', memberUserId);
 

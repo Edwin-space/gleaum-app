@@ -170,10 +170,10 @@ export function SpaceChildrenManager({ desktop, spaceId }: Props) {
         <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', marginBottom: '28px' }}>
           <div>
             <button
-              onClick={() => router.push(`/space/settings?sid=${encodeURIComponent(spaceId)}`)}
+              onClick={() => router.push('/space')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', minHeight: '44px', padding: '0 14px', borderRadius: '999px', border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', color: 'var(--theme-text-muted)', fontWeight: 800, cursor: 'pointer', marginBottom: '16px' }}
             >
-              <ArrowLeft size={17} /> 공간 설정
+              <ArrowLeft size={17} /> 가족 공간
             </button>
             <p style={{ margin: '0 0 7px', color: '#0CC9B5', fontSize: '12px', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               Family Access

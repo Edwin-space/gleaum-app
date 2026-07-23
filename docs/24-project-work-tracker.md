@@ -78,6 +78,7 @@
 | [x] | `SEC-006` | 공개 광고 이미지 버킷 목록 노출 차단 | `✅ 완료` | 2026-07-16 | 2026-07-16 | migration `20260716025042`: broad SELECT 0, 관리자 INSERT/DELETE 각 1, public bucket 유지, 기존 이미지 URL 200, Advisor 경고 제거 |
 | [x] | `SEC-007` | 광고 이벤트 무제한 Data API INSERT 차단 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 배포 `dpl_2QYcncve3PajMHpBTVUtV1kqQ6dV` READY·운영 검증 404, migration `20260716025712`: anon/auth INSERT·sequence false, service role true, INSERT policy 0, Advisor 경고 제거 |
 | [x] | `SEC-008` | 루트 웹 의존성 보안 업데이트 | `✅ 완료` | 2026-07-16 | 2026-07-16 | Next·eslint-config-next `16.2.10`, PostCSS `8.5.12` override, 안전 범위 전이 업데이트. `npm audit` 0건, production build·TypeScript 통과 (`3867550`) |
+| [ ] | `SEC-009` | Next/Sharp 신규 보안 권고 대응 | `🟠 상위 패치 대기` | 2026-07-23 | — | Next·eslint-config-next `16.2.11`로 자체 high 권고 4건 제거. Next가 요구하는 `sharp ^0.34.5`의 신규 libvips high 권고 1건은 호환성 검증 없는 `0.35.0` 강제 override를 금지하고 공식 Next 패치가 나오면 즉시 갱신. 현재 `npm audit --omit=dev`는 Next 경유 표시 포함 high 2건 |
 | [ ] | `AUTH-001` | Supabase 유출 비밀번호 차단 활성화 | `🔴 차단` | 2026-07-16 | — | Pro 이상 기능. Dashboard `Authentication → Providers → Email`의 leaked password protection 활성화 권한 또는 Management API PAT 필요. 활성화 뒤 Advisor 재검사 |
 | [ ] | `OPS-003` | 백오피스 배포 및 인증 스모크 테스트 | `🔴 차단` | 2026-07-16 | — | 배포 `dpl_EN4cMqPT3ReXG7NduMcRv1vn3S4b` READY·`admins.gleaum.com` 연결. 로그인 200, 미인증 페이지 307→`/login`, API 401 확인. 완료에는 비관리자 403·관리자 페이지/API 2xx 실제 세션 검증 필요. 환경 미설정 503은 코드 fail-closed/build로 확인 |
 | [ ] | `SEC-004` | 백오피스 전체 source lint 정상화 | `⬜ 대기` | — | — | `.next` 제외 설정 후 기존 React effect/타입 lint 오류 해결, `npm run lint` 0 error |
@@ -134,6 +135,7 @@
 | Android 기준 기능 | 공통 계약 영향 | PC/Mobile Web 후속 | iOS 후속 |
 |---|---|---|---|
 | 가족 공간 전환 (`FAM-008`) | 기존 공간 ID·데이터 유지, admin 권한, 개인 공간 차단, 오류 코드 계약 유지 | Android 마감 뒤 동일 API의 전환·오류·fallback UX 회귀 | iOS 공간 관리 구현 시 같은 API·오류 계약 적용 |
+| 가족 관계·초대/설정 분리 (`FAM-009`) | `space_members.role`은 권한, `family_role`은 표시 관계. 일반 가족 코드 초대와 자녀 검증 초대 분리 | 가족 멤버 카드 관계 우선 표시, 멤버 탭 전용 초대 유형 선택, 설정의 초대 제거 | Android 확정 정보 구조와 동일하게 네이티브 구현 |
 | 앱 시작 선조회·캐시 (`AND-010`) | API 응답 계약은 유지하고 Android 클라이언트 요청 정책만 변경 | Android 완료 뒤 Web 라우트 이동 중 중복 fetch와 SWR/캐시 정책 별도 감사 | 앱 시작 시 account/home/space 선조회와 pull-to-refresh 동등 정책 적용 |
 
 Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-001` 싱크 보드에 먼저 기록한다. Web/iOS 코드를 같은 작업에서 임의 수정하지 않는다.
@@ -151,6 +153,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `FAM-006` | 외부 본인확인 전환 | `⏸ 보류` | — | — | 자녀 1,000명/월 500건/분쟁 1건/위치·결제 도입/정책 요구 중 하나 발생 시 재개 |
 | [ ] | `FAM-007` | 수동 위치 체크인 MVP | `⏸ 보류` | — | — | 별도 법률 검토·본인확인·위치 동의 완료 후에만 재개 |
 | [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🟠 실기기 검증 대기` | 2026-07-16 | — | 전환 실패 직접 원인은 운영 API 미배포로 확인(기존 404). Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY` 배포 후 동일 경로가 정상 인증 계약 401을 반환. DB migration·API·Android 구현·build 완료; 로그인 공간 지기 계정의 실제 전환과 개인 공간/권한 오류 UX 최종 확인 필요 |
+| [x] | `FAM-009` | 가족 관계 역할·초대/설정 분리 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 권한 `role`과 표시 관계 `family_role` 분리, 운영 migration 2개·Native API·Android 관계 관리와 전용 초대 유형 구현. Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy`, root build 54/54, Android unit/assemble, `SM_F731N` 관계/초대/설정 UI 회귀 통과. 실제 관계값 저장은 운영 데이터 보호를 위해 미실행 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -357,6 +360,8 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `SEC-009`, `OPS-004` | 부분 완료·상위 패치 대기 | Vercel 배포 설치 로그의 high 경고를 재감사해 Next 16.2.10 자체 권고 4건과 sharp/libvips 권고를 확인. Next·eslint-config-next를 16.2.11로 올려 자체 권고를 제거하고 exact version으로 고정 | production build 재검증·재배포. Next가 현재 `sharp ^0.34.5`를 요구하므로 0.35.0 강제 override는 이미지 파이프라인 회귀 위험 때문에 적용하지 않음. 공식 호환 패치 출시 후 `npm audit --omit=dev` 0건까지 추적 |
+| 2026-07-23 | `FAM-009`, `PAR-001`, `OPS-004` | Android 완료·플랫폼 후속 등록 | 가족 공간 멤버의 가족 관계 `family_role`을 공간 권한 `role`과 분리하고 공간 지기 전용 변경 API를 추가. 가족 초대는 멤버 탭에서 일반 가족/자녀를 먼저 고르고, 공간 설정은 공간 자체 수정만 담당하도록 분리. 운영 migration 2개 적용과 최종 Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy` 배포 완료 | root build 54/54, 대상 ESLint, Android unit/assemble/debug 설치 통과. `SM_F731N`에서 가족 관계 배지·권한 보조 표시·초대 유형·일반 가족 코드/공유·설정 분리 확인. Web/iOS 동등화는 플랫폼 후속 표에서 진행 |
 | 2026-07-23 | `AND-006`, `FAM-002`, `OPS-004` | Kakao AdFit 운영 미노출 복구 | 기존 19개 프로필이 모두 연령 프로필 없이 `unknown`으로 분류되어 광고가 전부 차단된 정책을 제한 계정 4종만 차단하도록 정합화. migration `20260723021003` 운영 적용과 Production `dpl_7aJ2HWP9rZNoT1CTEGWcvc4rZcCM` 배포 완료. 시작 선조회 스레드의 AdMob App Open load가 UI thread 위반으로 앱을 종료시켜 AdFit 요청 전 중단되던 문제도 메인 Looper 강제로 수정 | capability 4/4, root production build 54/54, Android assemble 통과. `SM_F731N`에서 `unknown + canShowAds=true`, AdFit request/load, SDK 팝업 버튼·이미지·CTA, 홈 Activity 유지, 크래시 0건 확인. 닫기/오늘 그만 보기/네트워크 실패 레이아웃은 수동 QA 유지 |
 | 2026-07-23 | `AND-001`, `AND-003`, `AND-005`, `AND-010`, `FAM-008` | 로그인 실기기 회귀·캘린더 네이티브화 | `SM_F731N`에서 콜드 스타트와 핵심 메뉴 왕복을 확인. WebView 캘린더 가져오기가 인증/라우팅으로 홈 복귀하던 결함을 재현하고 Compose 네이티브 Activity·Calendar Provider repository로 교체. 캘린더 목록 긴 이름·스크롤·접근성 역할과 폴더블 하단 인셋 보정. 운영 DB의 가족 전환/안전 삭제 RPC 존재와 authenticated 실행 권한 확인 | 캘린더 후보 3개 조회·선택 UI·Activity 유지, 크래시/ANR 0건, unit/assemble·debug 설치 통과. 실제 가져오기·중복/자동 CRUD와 가족 승격은 운영 데이터 변경을 피하기 위해 안전한 테스트 데이터에서 후속 확인 |
 | 2026-07-23 | `FAM-008`, `AND-010`, `OPS-004` | Android 가족 전환 복구·시작 데이터 정책 구현 | 운영 가족 전환 경로가 404임을 재현하고 최신 API를 Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`로 배포해 401 인증 계약으로 복구. Android에 스플래시 병렬 선조회, 프로세스 캐시, mutation 선택 무효화, 홈/공간/일정/가계부/알림 pull-to-refresh를 추가하고 일정·가계부·알림의 무조건 onResume fetch를 제거 | root production build 54/54, Android compile·unit·lint·assemble 통과. 다음은 로그인 실기기에서 일반→가족 전환, 화면 왕복 시 무재호출, 당겨서 새로고침, 일정/가계부 쓰기 후 갱신 확인. Web 라우트 fetch 감사와 iOS 동등 정책은 플랫폼 후속 표에 유지 |

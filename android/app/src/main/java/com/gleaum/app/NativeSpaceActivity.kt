@@ -116,6 +116,8 @@ class NativeSpaceActivity : AppCompatActivity() {
                         errorMessage = errorMessage,
                         onRetry = { loadSummary(force = true) },
                         onCopyInviteCode = { code -> copyInviteCode(code) },
+                        onShareInviteCode = { code -> shareInviteCode(code) },
+                        onInviteChild = { openChildInviteFlow() },
                         onSpaceClick = { space -> activateSpace(space) },
                         onMemberClick = { member -> showMemberActions(member) },
                         onManageAction = { action -> handleSpaceManageAction(action) },
@@ -484,6 +486,40 @@ class NativeSpaceActivity : AppCompatActivity() {
         Toast.makeText(this, "초대 코드가 복사됐어요.", Toast.LENGTH_SHORT).show()
     }
 
+    private fun shareInviteCode(code: String) {
+        val active = summary?.activeSpace ?: return
+        val inviteUrl = "https://www.gleaum.com/invite/$code"
+        val typeLabel = if (active.spaceKind == "family") "가족 공간" else "공간"
+        val shareText = """
+            ${active.name} ${typeLabel}에 초대합니다.
+
+            초대 링크
+            $inviteUrl
+
+            초대 코드
+            $code
+        """.trimIndent()
+        startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "글리움 ${active.name} 초대")
+                    putExtra(Intent.EXTRA_TEXT, shareText)
+                },
+                "가족에게 초대 보내기",
+            ),
+        )
+    }
+
+    private fun openChildInviteFlow() {
+        val active = summary?.activeSpace ?: return
+        if (active.spaceKind != "family") {
+            toast("자녀 초대는 가족 공간에서만 사용할 수 있어요.")
+            return
+        }
+        openWebPath("/space/children?sid=${android.net.Uri.encode(active.id)}")
+    }
+
     private fun showAdvancedSpaceDialog() {
         val active = summary?.activeSpace
         val message = if (active == null) {
@@ -667,17 +703,76 @@ class NativeSpaceActivity : AppCompatActivity() {
     }
 
     private fun showMemberActions(member: NativeSpaceMember) {
-        val labels = arrayOf("공간 운영자로 변경", "공간 멤버로 변경", "공간 지기로 변경", "멤버 내보내기")
+        val isFamily = summary?.activeSpace?.spaceKind == "family"
+        val labels = buildList {
+            if (isFamily) add("가족 관계 변경")
+            if (!member.isMe) {
+                add("공간 권한 변경")
+                add("멤버 내보내기")
+            }
+        }.toTypedArray()
+        if (labels.isEmpty()) return
         AlertDialog.Builder(this)
             .setTitle(member.displayName)
             .setItems(labels) { _, which ->
-                when (which) {
-                    0 -> updateMemberRole(member, "editor")
-                    1 -> updateMemberRole(member, "viewer")
-                    2 -> updateMemberRole(member, "admin")
-                    3 -> confirmRemoveMember(member)
+                when (labels[which]) {
+                    "가족 관계 변경" -> showFamilyRoleDialog(member)
+                    "공간 권한 변경" -> showPermissionRoleDialog(member)
+                    "멤버 내보내기" -> confirmRemoveMember(member)
                 }
             }
+            .show()
+    }
+
+    private fun showPermissionRoleDialog(member: NativeSpaceMember) {
+        val labels = arrayOf("공간 지기", "공간 운영자", "공간 멤버")
+        val values = arrayOf("admin", "editor", "viewer")
+        val selected = values.indexOf(member.role).coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("${member.displayName}님의 공간 권한")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                dialog.dismiss()
+                updateMemberRole(member, values[which])
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun showFamilyRoleDialog(member: NativeSpaceMember) {
+        val labels = arrayOf(
+            "아빠",
+            "엄마",
+            "할아버지",
+            "할머니",
+            "배우자",
+            "아들",
+            "딸",
+            "형제·자매",
+            "보호자",
+            "가족 구성원",
+            "기타 가족",
+        )
+        val values = arrayOf(
+            "father",
+            "mother",
+            "grandfather",
+            "grandmother",
+            "spouse",
+            "son",
+            "daughter",
+            "sibling",
+            "guardian",
+            "family",
+            "other",
+        )
+        val selected = values.indexOf(member.familyRole ?: "family").coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("${member.displayName}님의 가족 관계")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                dialog.dismiss()
+                updateMemberFamilyRole(member, values[which])
+            }
+            .setNegativeButton("취소", null)
             .show()
     }
 
@@ -685,6 +780,13 @@ class NativeSpaceActivity : AppCompatActivity() {
         val spaceId = summary?.activeSpace?.id ?: return
         runSpaceMutation("멤버 역할을 변경하지 못했어요.") {
             NativeSpaceApi.updateMemberRole(this, spaceId, member.userId, role)
+        }
+    }
+
+    private fun updateMemberFamilyRole(member: NativeSpaceMember, familyRole: String) {
+        val spaceId = summary?.activeSpace?.id ?: return
+        runSpaceMutation("가족 관계를 변경하지 못했어요.") {
+            NativeSpaceApi.updateMemberFamilyRole(this, spaceId, member.userId, familyRole)
         }
     }
 

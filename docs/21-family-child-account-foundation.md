@@ -1,13 +1,14 @@
 # 가족 공간 자녀 계정 기반
 
-> 상태: 자녀 연결 기반과 플랫폼 공통 session capability 계약·Web/UI·API·RLS 강제 운영 적용 완료
-> 기준일: 2026-07-16
+> 상태: 자녀 연결 기반과 플랫폼 공통 session capability 계약·Web/UI·API·RLS 강제 운영 적용 완료. Android 가족 관계 표시·초대/설정 분리 완료
+> 기준일: 2026-07-23
 
 ## 1. 확정된 원칙
 
 - 자녀는 `space_members.role`이 아니라 가족 관계다.
 - 공간 권한은 기존 `admin | editor | viewer`를 유지한다.
-- 가족 관계는 `family_relationships`에서 별도로 관리한다.
+- 가족 공간의 멤버 표시 관계는 `space_members.family_role`에 저장하고 권한과 분리한다.
+- 보호자-자녀의 검증된 법적/운영 관계와 동의 상태는 기존 `family_relationships`에서 별도로 관리한다. `family_role`은 접근 권한이나 보호자 검증 근거로 사용하지 않는다.
 - 가입 전 자녀 정보는 `family_dependents`에 접근 권한 없는 대기 프로필로 저장한다.
 - Google 이메일은 연결 후보 식별자이며, 지속적인 권한 판정은 Supabase `auth.users.id`로 한다.
 - 이메일 일치만으로 자동 연결하지 않는다. 보호자 이메일 확인, 항목별 동의, 자녀의 검증된 이메일, 일회성 초대 토큰, 보호자 최종 승인을 모두 확인한다.
@@ -59,6 +60,20 @@ family   = 가족 관계·자녀 계정 기능 활성 공간
 | `account_age_profiles` | 생년월일, 계정 모드, 다음 연령 전환일 |
 
 성별은 선택 항목이다. 제품 기능에 필요성이 확정되지 않으면 UI에서 받지 않는다.
+
+### 가족 멤버 관계와 공간 권한
+
+| 구분 | 저장 필드 | 값 | 용도 |
+|---|---|---|---|
+| 공간 권한 | `space_members.role` | `admin`, `editor`, `viewer` | 수정·초대·삭제 등 접근 제어 |
+| 가족 관계 | `space_members.family_role` | `father`, `mother`, `grandfather`, `grandmother`, `spouse`, `son`, `daughter`, `sibling`, `guardian`, `family`, `other` | 가족 공간의 관계 표시와 개인화 |
+
+- Android 가족 공간 멤버 카드에서는 가족 관계를 주 배지로, 공간 권한을 보조 정보로 표시한다.
+- 가족 공간 전환 시 기존 멤버는 안전한 기본값 `family`로 표시한다.
+- 일반 가족 초대 코드로 합류한 신규 멤버도 기본값 `family`로 저장한다.
+- 가족 관계 변경은 공간 지기만 수행하며, 관계값 변경만으로 공간 권한이 상승하지 않는다.
+- 가족 공간의 `초대`는 공간 설정과 분리한다. 먼저 `일반 가족 구성원` 또는 `자녀`를 선택한다.
+- 자녀 선택 시 일반 초대 코드를 사용하지 않고 보호자 확인·동의·일회성 자녀 초대 흐름으로 진입한다.
 
 ## 5. 연령 상태
 
@@ -113,6 +128,8 @@ supabase/migrations/021_family_child_foundation_hardening.sql
 supabase/migrations/022_guardian_email_consent_flow.sql
 supabase/migrations/20260716055953_enforce_account_capabilities.sql
 supabase/migrations/20260716063400_restrict_account_capability_rpc.sql
+supabase/migrations/20260723024521_add_family_member_roles.sql
+supabase/migrations/20260723025504_harden_family_member_role_updates.sql
 ```
 
 실행 방법:
@@ -125,7 +142,7 @@ supabase/migrations/20260716063400_restrict_account_capability_rpc.sql
 6. 이어서 `021` 파일 전체를 같은 방식으로 실행해 인덱스와 RLS 성능 보강을 적용한다.
 7. `022` 파일 전체를 실행해 이메일 확인 증적, 연결 승인 대기 상태, 보호자 최종 승인 함수를 적용한다.
 
-운영 `gleaum_app` 프로젝트에는 위 migration을 모두 적용했다. `has_account_capability(text)`는 `SECURITY INVOKER`, `anon` 실행 불가, `authenticated`·`service_role` 실행 가능으로 검증했고, `ledger_entries`·`family_groups`·`space_members`에 제한형 RLS 7개가 적용되었다. Supabase Security Advisor에서 신규 capability 경고는 0건이다.
+운영 `gleaum_app` 프로젝트에는 위 migration을 모두 적용했다. `has_account_capability(text)`는 `SECURITY INVOKER`, `anon` 실행 불가, `authenticated`·`service_role` 실행 가능으로 검증했고, `ledger_entries`·`family_groups`·`space_members`에 제한형 RLS 7개가 적용되었다. `family_role`은 허용값 CHECK와 기존 `space_members` update guard로 보호하며 공간 지기만 다른 멤버 관계를 바꿀 수 있다. Supabase Security Advisor의 기존 경고는 별도 운영 부채로 유지되며 이번 관계 필드로 새 경고가 추가되지는 않았다.
 
 운영 환경 필수 설정:
 

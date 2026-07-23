@@ -12,6 +12,20 @@
  */
 export type SpaceRole = 'admin' | 'editor' | 'viewer';
 
+/** 가족 공간에서 사용하는 관계 표시값. 데이터 권한인 SpaceRole과 분리한다. */
+export type FamilyMemberRole =
+  | 'father'
+  | 'mother'
+  | 'grandfather'
+  | 'grandmother'
+  | 'spouse'
+  | 'son'
+  | 'daughter'
+  | 'sibling'
+  | 'guardian'
+  | 'family'
+  | 'other';
+
 /**
  * @deprecated profiles.role 레거시 값 (space_members.role 로 대체됨)
  * DB 트리거 호환 목적으로만 유지
@@ -87,6 +101,7 @@ export interface SpaceMember {
   spaceId:  string;
   userId:   string;
   role:     SpaceRole;
+  familyRole?: FamilyMemberRole;
   joinedAt: Date;
   nickname?: string;
   user?:    User;       // join 시 포함

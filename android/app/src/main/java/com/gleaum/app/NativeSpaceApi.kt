@@ -12,6 +12,7 @@ data class NativeSpaceItem(
     val id: String,
     val name: String,
     val role: String,
+    val familyRole: String?,
     val memberCount: Int,
     val inviteCode: String?,
     val spaceKind: String,
@@ -24,6 +25,7 @@ data class NativeSpaceItem(
             id = json.optString("id"),
             name = json.optString("name", "공간"),
             role = json.optString("role", "viewer"),
+            familyRole = json.optString("familyRole").takeIf { it.isNotBlank() && it != "null" },
             memberCount = json.optInt("memberCount", 0),
             inviteCode = json.optString("inviteCode").takeIf { it.isNotBlank() },
             spaceKind = json.optString("spaceKind", if (json.optBoolean("isPersonal", false)) "personal" else "general"),
@@ -47,6 +49,7 @@ data class NativeSpaceMember(
     val email: String,
     val avatar: String?,
     val role: String,
+    val familyRole: String?,
     val isMe: Boolean,
 ) {
     companion object {
@@ -57,6 +60,7 @@ data class NativeSpaceMember(
             email = json.optString("email"),
             avatar = json.optString("avatar").takeIf { it.isNotBlank() },
             role = json.optString("role", "viewer"),
+            familyRole = json.optString("familyRole").takeIf { it.isNotBlank() && it != "null" },
             isMe = json.optBoolean("isMe", false),
         )
 
@@ -162,6 +166,17 @@ object NativeSpaceApi {
 
     fun updateMemberRole(context: Context, spaceId: String, userId: String, role: String): NativeSpaceSummary {
         return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId/members/$userId", JSONObject().put("role", role)))
+    }
+
+    fun updateMemberFamilyRole(context: Context, spaceId: String, userId: String, familyRole: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(
+            request(
+                context,
+                "PATCH",
+                "$SPACE_URL/$spaceId/members/$userId",
+                JSONObject().put("familyRole", familyRole),
+            ),
+        )
     }
 
     fun removeMember(context: Context, spaceId: String, userId: String): NativeSpaceSummary {

@@ -44,7 +44,9 @@ iOS App은 기반 코드는 있지만 현재 지원 플랫폼·파리티 완료 
 | 개인 일정 | 지원 | 지원 | 지원 | 개인 공간/개인 visibility 데이터만 사용 |
 | 공간 일정 | 지원 | 지원 | Compose 지원 | 공간 멤버/역할 기준으로 생성·조회·수정 제한 |
 | 공간 초대 | 지원 | 지원 | 지원 | 초대 코드/링크 유효성 검증 및 재발급 정책 통일 |
-| 공간 멤버/역할 | 지원 | 지원 | Compose 지원 | 공간 지기/공간 운영자/공간 멤버 명칭 통일 |
+| 가족 공간 초대 | 후속 반영 | 후속 반영 | Compose 지원 | 공간 설정과 분리. `일반 가족 구성원`은 코드/링크, `자녀`는 보호자 확인·동의·일회성 초대 흐름 사용 |
+| 공간 멤버/권한 | 지원 | 지원 | Compose 지원 | 공간 지기/공간 운영자/공간 멤버 명칭 통일 |
+| 가족 관계 표시 | 후속 반영 | 후속 반영 | Compose 지원 | `space_members.role` 권한과 `family_role` 관계를 분리하고 가족 공간에서 관계를 주 배지로 표시 |
 | 알림 목록 | 지원 | 지원 | Compose 지원 | in-app 알림 조회 정책 통일 |
 | 푸시 알림 | 웹 FCM | 웹 FCM | 네이티브 FCM | 권한 요청 타이밍과 실패 안내 통일 |
 | 마이페이지 | 지원 | 지원 | Compose 전체 메뉴 지원 | 프로필, 설정, 계정 관리 항목 노출 정책 통일 |
@@ -72,6 +74,7 @@ iOS App은 기반 코드는 있지만 현재 지원 플랫폼·파리티 완료 
 | P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `RouterActivity`, `MainActivity` | Android OAuth callback 보정 완료. 실제 기기 회귀 테스트 필요. iOS는 `IOS-*` 후순위에서 별도 검증 |
 | P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql`, `tests/data-boundaries.test.ts` | 강화 SQL 실행·정책 확인 이력과 코드 접근 매트릭스 9/9 존재. Docker/로컬 Supabase 역할별 CRUD 통합 회귀는 `WEB-001` |
 | P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
+| P1 | 가족 관계·초대 UX | Android `ComposeSpaceScreen`, `NativeSpaceActivity`, Web 공간 멤버/설정 화면 | Android는 관계/권한 분리와 초대/설정 분리 완료. PC/Mobile Web은 같은 API 계약과 정보 구조로 후속 반영하고 iOS는 Android 확정 동작을 기준으로 재구현 |
 | P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, `src/lib/native-calendar.ts`, Android `NativeCalendarPlugin` | Android 내보내기·자동 반영·가져오기 완료. iOS EventKit 확장 필요 |
 | P1 | 생체인증 설정 노출 | `src/app/mypage/*`, `src/components/NativeBiometricGate.tsx` | Web에서는 앱 전용으로 오해되지 않게 숨김/안내 기준 필요 |
 | P1 | 광고 플랫폼 타겟 | `src/components/AdSlot.tsx`, Android AdFit/AdMob 코드, `backoffice/*` | 웹/Android 타겟과 AdFit 실패 fallback 실기기 검증 필요 |
