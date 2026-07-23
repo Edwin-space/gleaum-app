@@ -1,5 +1,19 @@
 # 07. 완료된 기능
 
+### 2026-07-23 — Android 자녀 초대 WebView 경로 복귀 오류 수정
+
+- 가족 공간 멤버 탭에서 `초대 → 자녀`를 선택하면 `/space/children?sid=...`가 잠깐 열린 뒤 네이티브 홈으로 돌아가던 오류 수정
+- 원인: `NativeAppProvider.applyNativeSession()`이 네이티브 세션을 재적용할 때 현재 WebView 경로와 관계없이 `/home` 또는 `/onboarding`으로 이동
+- 세션 재적용은 계속 수행하되, 후속 진입 경로 계산과 화면 이동은 `/` 또는 `/login`에서만 실행하도록 제한
+- `/space/children`, 약관, 설정 등 의도적으로 연 WebView 기능 경로는 세션 동기화 후에도 그대로 유지
+- 운영 Vercel Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 완료
+
+검증:
+- 변경 파일 ESLint 통과
+- `npm run build` 54/54 통과
+- `SM_F731N`에서 `초대 → 자녀` 진입 후 `MainActivity`가 유지되고 7초 뒤에도 네이티브 홈으로 복귀하지 않음
+- WebView DevTools에서 실제 URL이 `/space/children?sid=...`로 유지되는 것을 확인
+
 ### 2026-07-23 — Android 가족 관계 역할·초대/설정 분리
 
 - 공간 권한 `admin | editor | viewer`와 가족 관계 `family_role`을 분리

@@ -64,9 +64,10 @@ function hasOAuthInProgress(): boolean {
  *   LoginActivity → SessionManager(SharedPrefs) 저장
  *   → NativeSessionPlugin.getSession() (Capacitor 브리지)
  *   → supabase.auth.setSession()
- *   → /home 이동
+ *   → 앱 진입 경로가 / 또는 /login일 때만 /home 이동
  *
- * - 이미 Supabase 세션이 있으면 스킵 (중복 적용 방지)
+ * - 네이티브 저장 세션이 있으면 브라우저 클라이언트에 항상 재적용
+ * - 기능 경로로 직접 진입한 경우 현재 경로를 유지
  * - NativeSession 플러그인이 없는 환경(웹)에서는 session = null → 스킵
  */
 
@@ -130,9 +131,19 @@ async function applyNativeSession(router: ReturnType<typeof useRouter>): Promise
       }
 
       if (data.session) {
-        const nextPath = await resolvePostLoginPath(data.session.user.id);
-        console.log(`[NativeApp] 네이티브 세션 적용 완료 → ${nextPath}`);
-        router.replace(nextPath);
+        const currentPath = window.location.pathname;
+        const shouldResolveEntryPath =
+          currentPath === '/' ||
+          currentPath === '/login' ||
+          currentPath.startsWith('/login/');
+
+        if (shouldResolveEntryPath) {
+          const nextPath = await resolvePostLoginPath(data.session.user.id);
+          console.log(`[NativeApp] 네이티브 세션 적용 완료 → ${nextPath}`);
+          router.replace(nextPath);
+        } else {
+          console.log(`[NativeApp] 네이티브 세션 적용 완료 · 현재 경로 유지: ${currentPath}`);
+        }
       }
       return;
     }

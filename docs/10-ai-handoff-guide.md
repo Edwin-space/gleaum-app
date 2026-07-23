@@ -39,7 +39,7 @@
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
 - **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
-- **최신 배포**: 2026-07-23 Vercel Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy`. 가족 관계/공간 권한 분리 Native API, 기존 Android 가족 공간 전환·광고 capability 보정, Next 16.2.11 포함
+- **최신 배포**: 2026-07-23 Vercel Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN`. 가족 관계/공간 권한 분리와 자녀 초대 WebView 경로 유지 보정, 기존 Android 가족 공간 전환·광고 capability 보정, Next 16.2.11 포함
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
 - **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기준 `77c6879`. Android 시작 선조회·공유 캐시 변경은 현재 작업 체크포인트에서 이어진다.
 - **현재 작업 경로**: `/Volumes/WD_BLACK/Ai Works/gleaum`. 소스·문서·공개 스토어 애셋은 Git에 보존됐고, `.env.local`, release keystore·비밀번호, 빌드 캐시는 Git 외부 자산이다.
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-23 | Android 가족 공간에서 `초대 → 자녀` 진입 시 WebView가 즉시 네이티브 홈으로 복귀하던 오류를 수정했다. `NativeAppProvider.applyNativeSession()`이 모든 경로에서 후속 로그인 경로를 강제하던 것이 원인이며, 네이티브 세션은 항상 동기화하되 `/`·`/login`에서만 `/home` 또는 `/onboarding`으로 이동하도록 제한했다. Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 후 `SM_F731N`에서 `MainActivity` 유지와 WebView URL `/space/children?sid=...` 고정을 확인했다. 자녀 화면 진입 시 앱 잠금이 활성 상태라면 지문/PIN 인증은 정상적으로 선행된다. |
 | 2026-07-23 | Vercel 설치 로그의 신규 의존성 보안 경고를 확인해 Next·eslint-config-next를 `16.2.10 → 16.2.11`로 갱신하고 exact version으로 고정했다. Next 자체 high 권고 4건은 제거됐다. 다만 Next 16.2.11이 `sharp ^0.34.5`를 요구하는 동안 신규 libvips high 권고가 `npm audit --omit=dev`에 Next 경유 포함 2건으로 남는다. 검증되지 않은 sharp 0.35.0 강제 override는 이미지 최적화 회귀 위험 때문에 적용하지 않으며 공식 Next 호환 패치가 나오면 `SEC-009`에서 즉시 갱신한다. |
 | 2026-07-23 | Android 가족 공간의 멤버 관계와 공간 권한을 분리했다. `space_members.family_role`은 아빠/엄마/조부모/배우자/자녀/형제·자매/보호자/가족/기타 표시값이며 접근 제어는 계속 `role=admin/editor/viewer`만 사용한다. 가족 공간의 멤버 초대는 공간 설정에서 제거하고 멤버 탭의 전용 시트에서 `일반 가족 구성원` 또는 `자녀`를 먼저 선택하도록 변경했다. 일반 가족은 코드/링크, 자녀는 기존 보호자 확인·동의·일회성 초대 화면으로 연결한다. migration `20260723024521`, `20260723025504`를 운영 Supabase에 적용하고 최종 Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy` 배포, `SM_F731N` debug 실기기에서 관계 표시·변경 메뉴·초대 유형·설정 분리를 확인했다. 현재 운영 멤버 데이터는 임의 변경하지 않았으며 관계 미지정 멤버는 `가족 구성원`으로 안전 표시한다. Web/iOS 동등 UX는 플랫폼 후속 큐다. |
 | 2026-07-23 | Android Kakao AdFit 실기기 미노출을 복구했다. 가족 계정 도입 전 생성된 모든 일반 사용자가 `account_mode=unknown`이라 `canShowAds=false`가 되던 정책을 제한 계정 4종만 차단하도록 변경하고 migration `20260723021003_allow_ads_for_legacy_standard_accounts.sql`을 운영 Supabase에 적용했다. Vercel Production `dpl_7aJ2HWP9rZNoT1CTEGWcvc4rZcCM` 배포 후 실기기 account context가 `unknown + canShowAds=true`로 갱신됨을 확인했다. 이어 시작 선조회 스레드에서 Google App Open Ad를 호출해 앱이 종료되며 AdFit 요청 전에 중단되던 문제를 메인 UI 스레드 강제로 수정했다. `SM_F731N`에서 AdFit 요청·로드 로그와 SDK 팝업의 `오늘 그만 보기`·`닫기`·광고 CTA 렌더링, 크래시 0건을 확인했다. |

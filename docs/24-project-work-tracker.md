@@ -136,6 +136,7 @@
 |---|---|---|---|
 | 가족 공간 전환 (`FAM-008`) | 기존 공간 ID·데이터 유지, admin 권한, 개인 공간 차단, 오류 코드 계약 유지 | Android 마감 뒤 동일 API의 전환·오류·fallback UX 회귀 | iOS 공간 관리 구현 시 같은 API·오류 계약 적용 |
 | 가족 관계·초대/설정 분리 (`FAM-009`) | `space_members.role`은 권한, `family_role`은 표시 관계. 일반 가족 코드 초대와 자녀 검증 초대 분리 | 가족 멤버 카드 관계 우선 표시, 멤버 탭 전용 초대 유형 선택, 설정의 초대 제거 | Android 확정 정보 구조와 동일하게 네이티브 구현 |
+| 자녀 초대 WebView 경로 유지 (`FAM-010`) | 네이티브 저장 세션 재적용은 현재 기능 경로를 덮어쓰지 않음 | Web 브라우저는 기존 라우팅 유지, 별도 후속 없음 | iOS WebView 기능 진입 시 동일한 세션 재적용 규칙을 사용 |
 | 앱 시작 선조회·캐시 (`AND-010`) | API 응답 계약은 유지하고 Android 클라이언트 요청 정책만 변경 | Android 완료 뒤 Web 라우트 이동 중 중복 fetch와 SWR/캐시 정책 별도 감사 | 앱 시작 시 account/home/space 선조회와 pull-to-refresh 동등 정책 적용 |
 
 Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-001` 싱크 보드에 먼저 기록한다. Web/iOS 코드를 같은 작업에서 임의 수정하지 않는다.
@@ -154,6 +155,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `FAM-007` | 수동 위치 체크인 MVP | `⏸ 보류` | — | — | 별도 법률 검토·본인확인·위치 동의 완료 후에만 재개 |
 | [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🟠 실기기 검증 대기` | 2026-07-16 | — | 전환 실패 직접 원인은 운영 API 미배포로 확인(기존 404). Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY` 배포 후 동일 경로가 정상 인증 계약 401을 반환. DB migration·API·Android 구현·build 완료; 로그인 공간 지기 계정의 실제 전환과 개인 공간/권한 오류 UX 최종 확인 필요 |
 | [x] | `FAM-009` | 가족 관계 역할·초대/설정 분리 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 권한 `role`과 표시 관계 `family_role` 분리, 운영 migration 2개·Native API·Android 관계 관리와 전용 초대 유형 구현. Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy`, root build 54/54, Android unit/assemble, `SM_F731N` 관계/초대/설정 UI 회귀 통과. 실제 관계값 저장은 운영 데이터 보호를 위해 미실행 |
+| [x] | `FAM-010` | Android 자녀 초대 WebView 경로 유지 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 네이티브 세션 재적용이 `/space/children`을 `/home`으로 덮어쓰던 문제 수정. Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 후 `SM_F731N`에서 `MainActivity`와 `/space/children?sid=...` URL 유지 확인 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
