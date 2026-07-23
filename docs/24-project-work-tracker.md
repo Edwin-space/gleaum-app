@@ -34,7 +34,7 @@
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-012` | 자녀 WebView 안전 영역·조작 가능성 복구 | `🟠 배포·실기기 회귀 대기` | 집중 흐름 전역 nav/footer 제거, Android 실제 시스템 인셋 CSS 전달, 24px 안전 fallback 적용. Production 배포 후 상·하단 버튼 조작 확인 |
+| 1 | `FAM-012` | 자녀 WebView 안전 영역·조작 가능성 복구 | `🟠 실기기 회귀 대기` | Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU`·`SM_F731N` debug APK 설치 완료. 생체인증 해제 후 상·하단 버튼 노출과 스크롤·선택 확인 |
 | 2 | `FAM-013` | Android 자녀 계정 연결 네이티브 전환 | `🟠 설계 확정·구현 대기` | 보호자 자녀 목록/등록/OTP/동의/공유/승인·거절과 자녀 claim을 Compose M3로 이식. 외부 OAuth와 법적 원문만 시스템/인앱 브라우저 유지 |
 | 3 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
 | 4 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
@@ -369,7 +369,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
-| 2026-07-23 | `FAM-012`, `FAM-013`, `AND-003` | WebView 잘림 수정·네이티브 경계 확정 | `/space/children`에 전역 BottomNav가 겹치고 일부 Android WebView가 CSS safe-area를 0으로 반환해 상·하단 조작 영역이 가려지는 원인을 확인. 집중 흐름 nav/footer/sidebar를 제거하고 실제 WindowInsets를 CSS 변수로 전달하며 24px fallback을 적용. 자녀 계정 연결은 Android에서 Compose로 전환하고 WebView는 외부 OAuth·법적 원문 fallback에만 제한하기로 결정 | 대상 ESLint·TypeScript·Next production build·Android debug build 통과. Web Production 배포와 실기기 안전 영역 회귀 후 `FAM-013` Native API/Compose 구현 시작 |
+| 2026-07-23 | `FAM-012`, `FAM-013`, `AND-003` | WebView 잘림 수정·네이티브 경계 확정 | `/space/children`에 전역 BottomNav가 겹치고 일부 Android WebView가 CSS safe-area를 0으로 반환해 상·하단 조작 영역이 가려지는 원인을 확인. 집중 흐름 nav/footer/sidebar를 제거하고 실제 WindowInsets를 CSS 변수로 전달하며 24px fallback을 적용. 자녀 계정 연결은 Android에서 Compose로 전환하고 WebView는 외부 OAuth·법적 원문 fallback에만 제한하기로 결정 | 대상 ESLint·TypeScript·자녀 테스트 3/3·Next production build·Android debug build 통과. 커밋 `996b891`, Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU`, 공개 경로 200, `SM_F731N` APK 설치 완료. 생체인증 해제 후 실기기 조작 회귀가 남음 |
 | 2026-07-23 | `FAM-012`, `OPS-004` | GitHub·Production 반영 완료 | 기능·DB·Android 경로·문서 변경을 `b124305`로 커밋해 `codex/platform-parity-sync-20260723`에 push하고 Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`으로 배포 | 운영 자녀 초대 랜딩 200, 자녀 목록·claim·거절 API 미인증 401, 최근 runtime error 0 확인. 보호자·자녀 실계정 2개 회귀만 남음 |
 | 2026-07-23 | `FAM-012`, `PAR-001`, `OPS-004` | 선택 이메일·토큰 바인딩 구현·운영 DB 적용 | 자녀 이메일 필수 입력을 제거하고 선택적인 계정 제한값으로 변경. 72시간 일회성 초대는 OS 공유·문자·QR로 전달하며 Google/이메일 검증 계정의 claim은 후보 스냅샷만 저장한다. 보호자 본인 claim을 차단하고 최종 승인/거절 전에는 `space_members`·`account_age_profiles`를 만들지 않는다. Android는 로그인 전후 pending route를 보존해 `/invite/child/[token]`으로 복귀한다. migration `20260723053050_child_invite_token_binding.sql` 운영 적용 | DB 열·부분 유니크 인덱스·함수 권한/정의 확인, TypeScript, 자녀 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next production build, Android debug build 통과. Git push·Web Production 배포·보호자/자녀 2계정 회귀 후 완료 |
 | 2026-07-23 | `FAM-011`, `OPS-004` | 운영 OTP 길이 정합화·배포 | 앱과 문서는 6자리로 제한했지만 운영 Supabase 실메일의 `{{ .Token }}`은 8자리로 발급되는 불일치를 확인. `GUARDIAN_EMAIL_OTP_LENGTH=8` 단일 상수로 UI 입력·버튼 상태·API 형식 검증을 통일하고 메일 템플릿 안내도 8자리로 변경. Dashboard 저장 후 Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe` 배포 | 대상 ESLint·production build, 운영 API 미인증 401·runtime error 0 확인. 새 코드 요청→8자리 입력→동의 완료 실사용자 회귀 |

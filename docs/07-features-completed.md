@@ -1273,3 +1273,13 @@ npm run cap:open:android # Android Studio 열기
 - 운영 Supabase migration `20260723021003_allow_ads_for_legacy_standard_accounts.sql` 적용 및 Vercel Production 배포를 완료했다.
 - 스플래시 선조회 스레드가 Google App Open Ad를 백그라운드에서 로드해 앱을 종료시키던 문제를 메인 Looper 강제로 수정했다.
 - 실기기에서 AdFit 하단 전환형 팝업 요청·로드·SDK UI 렌더링과 크래시 0건을 확인했다.
+
+## Android 자녀 연결 WebView 안전 영역 복구 (코드·배포 완료 — 2026-07-23)
+
+- 자녀 관리·자녀 초대·보호자 동의 화면에서 전역 내비게이션과 푸터가 버튼 위에 겹치지 않도록 집중 흐름으로 분리
+- Android 실제 시스템바·컷아웃 `WindowInsets`를 WebView CSS 변수로 전달
+- CSS safe-area와 네이티브 인셋을 병합하고 구버전 앱에는 최소 24px 안전 여백 제공
+- 모바일 자녀 관리 헤더를 세로 배치해 작은 화면에서 등록 버튼이 눌리지 않던 문제 방지
+- 대상 ESLint, TypeScript, 자녀 테스트 3/3, Next production build, Android debug build 통과
+- Vercel Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU` 배포 및 `SM_F731N` debug APK 설치 완료
+- 생체인증 해제 후 실기기 시각·조작 회귀만 남아 있으므로 기능 완료가 아닌 검증 대기 상태로 추적

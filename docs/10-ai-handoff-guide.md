@@ -1934,3 +1934,13 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 공통 메뉴는 Material 3 Adaptive Navigation Suite이므로 화면별 별도 하단 메뉴를 만들지 않는다.
 - 코드 감사 평균은 90.8점(A)이며, 연결 단말은 잠금/화면 꺼짐 상태라 시각 QA 점수는 아직 확정하지 않았다.
 - Android debug 빌드 통과, lint 오류 0건.
+
+### 2026-07-23 추가 — 자녀 연결 WebView 안전 영역과 네이티브 전환 경계
+
+- `/space/children`, `/invite/child/[token]`, `/family/guardian/verify`에서 전역 하단 내비게이션·푸터·PC 사이드바가 집중 흐름과 겹치지 않도록 제거했다.
+- Android `MainActivity`는 실제 시스템바·컷아웃 `WindowInsets`를 CSS `--native-safe-area-inset-*`로 전달한다.
+- Web은 CSS `env()`와 Android 주입값을 `--app-safe-*`로 병합하고, 자녀 연결 화면에는 구버전 앱용 최소 24px fallback을 둔다.
+- 검증: 대상 ESLint, TypeScript, 자녀 테스트 3/3, Next production build 55/55, Android debug build 통과.
+- 운영: 커밋 `996b891`, Vercel Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU`, 공개 루트·초대 경로 200, `SM_F731N` debug APK 설치 완료.
+- 실기기 생체인증 해제 후 상·하단 버튼 조작 회귀가 남아 있다.
+- 다음 `FAM-013`은 보호자 자녀 목록/등록/OTP/동의/공유/승인·거절과 자녀 claim을 Compose Material 3로 전환한다. 외부 Google OAuth와 법적 원문만 시스템 인증·`LegalWebViewActivity`로 유지한다.
