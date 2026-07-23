@@ -7,12 +7,14 @@
 - 템플릿의 `{{ .RedirectTo }}` 조건문으로 보호자 확인 안내와 향후 일반 이메일 OTP 안내 분리
 - 공용 제목을 `[글리움] 이메일 확인 코드`로 변경하고 운영 Supabase Dashboard에 저장 완료
 - 일반 이메일/비밀번호 회원가입은 별도 `Confirm sign up` 템플릿을 사용하므로 영향 없음
+- Vercel Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy` 배포 완료
 
 검증:
 - 운영 Supabase Redirect URL에 `https://www.gleaum.com/**` 허용 확인
 - 대상 ESLint, `git diff --check`, `npm run build` 통과
 - Dashboard 저장 알림 `Successfully updated email template` 확인
-- 실제 보호자 메일 수신·본문 분기는 최신 API Production 배포 후 회귀 확인 필요
+- 운영 보호자 인증 API 미인증 요청이 `401 unauthorized`를 반환하는 것 확인
+- 실제 보호자 메일 수신·본문 분기와 OTP 완료는 로그인 실사용자 회귀 확인 필요
 
 ### 2026-07-23 — 보호자 이메일 OTP·필수 동의 흐름 정합화
 

@@ -34,7 +34,7 @@
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | 운영 DB·Production·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
+| 1 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
 | 2 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
 | 3 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
 | 4 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
@@ -157,7 +157,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `FAM-008` | 기존 공간 수명주기·가족 공간 승격 | `🟠 실기기 검증 대기` | 2026-07-16 | — | 전환 실패 직접 원인은 운영 API 미배포로 확인(기존 404). Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY` 배포 후 동일 경로가 정상 인증 계약 401을 반환. DB migration·API·Android 구현·build 완료; 로그인 공간 지기 계정의 실제 전환과 개인 공간/권한 오류 UX 최종 확인 필요 |
 | [x] | `FAM-009` | 가족 관계 역할·초대/설정 분리 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 권한 `role`과 표시 관계 `family_role` 분리, 운영 migration 2개·Native API·Android 관계 관리와 전용 초대 유형 구현. Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy`, root build 54/54, Android unit/assemble, `SM_F731N` 관계/초대/설정 UI 회귀 통과. 실제 관계값 저장은 운영 데이터 보호를 위해 미실행 |
 | [x] | `FAM-010` | Android 자녀 초대 WebView 경로 유지 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 네이티브 세션 재적용이 `/space/children`을 `/home`으로 덮어쓰던 문제 수정. Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 후 `SM_F731N`에서 `MainActivity`와 `/space/children?sid=...` URL 유지 확인 |
-| [ ] | `FAM-011` | 보호자 이메일 OTP·필수 동의 정합화 | `🟠 실메일 회귀 대기` | 2026-07-23 | — | 6자리 OTP UI/API, 확인 증적 DB 강제, `email_otp` 이력 완료. 보호자 전용 `emailRedirectTo`와 조건 분기형 Magic Link/OTP 공용 템플릿을 운영 Dashboard에 적용. 최신 API Production 배포 후 보호자 본문·코드·필수 동의 완료 확인 필요 |
+| [ ] | `FAM-011` | 보호자 이메일 OTP·필수 동의 정합화 | `🟠 실메일 회귀 대기` | 2026-07-23 | — | 6자리 OTP UI/API, 확인 증적 DB 강제, `email_otp` 이력 완료. 보호자 전용 `emailRedirectTo`와 조건 분기형 Magic Link/OTP 공용 템플릿을 운영 Dashboard에 적용하고 Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy` 배포·인증 경계 401 확인. 보호자 본문·코드·필수 동의 실사용자 완료 확인 필요 |
 
 상세 기준: `docs/21-family-child-account-foundation.md`
 
@@ -364,7 +364,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
-| 2026-07-23 | `FAM-011`, `WEB-002`, `OPS-004` | Auth OTP 목적 분리·운영 템플릿 적용 | Supabase Auth에 사용자 정의 템플릿 종류를 추가할 수 없어 Magic Link/OTP 고정 슬롯을 조건 분기형으로 변경. 보호자 요청은 `https://www.gleaum.com/auth/email-purpose/guardian-verification`을 `emailRedirectTo`로 전달하고 템플릿은 `{{ .RedirectTo }}`로 보호자/일반 본문을 구분한다. 제목은 `[글리움] 이메일 확인 코드`, 파일은 `supabase/email-templates/magic-link-or-otp.html`이며 Dashboard 저장 완료 | 운영 Redirect allow list의 `https://www.gleaum.com/**`, 대상 ESLint·diff check·production build, Dashboard 저장 성공 확인. 최신 API Production 배포 후 보호자 실메일 본문·OTP·동의 회귀 |
+| 2026-07-23 | `FAM-011`, `WEB-002`, `OPS-004` | Auth OTP 목적 분리·운영 템플릿·Production 반영 | Supabase Auth에 사용자 정의 템플릿 종류를 추가할 수 없어 Magic Link/OTP 고정 슬롯을 조건 분기형으로 변경. 보호자 요청은 `https://www.gleaum.com/auth/email-purpose/guardian-verification`을 `emailRedirectTo`로 전달하고 템플릿은 `{{ .RedirectTo }}`로 보호자/일반 본문을 구분한다. 제목은 `[글리움] 이메일 확인 코드`, 파일은 `supabase/email-templates/magic-link-or-otp.html`이며 Dashboard 저장 완료. Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`로 승격 | 운영 Redirect allow list의 `https://www.gleaum.com/**`, 대상 ESLint·diff check·production build, Dashboard 저장 성공, 운영 API 미인증 401, 배포 runtime error 0 확인. 보호자 실메일 본문·OTP·동의 회귀만 남음 |
 | 2026-07-23 | `FAM-011`, `OPS-004` | 코드·DB·배포·Auth 설정 완료, 실메일 회귀 대기 | 운영 Supabase가 `{{ .Token }}` OTP와 기본 제목 `Your Magic Link`를 보내는 반면 앱은 Magic Link 콜백만 기대하던 불일치 수정. 자녀 관리 화면에 코드 입력·재발송을 추가하고 OTP 성공 뒤 DB 확인 증적이 있어야 동의가 가능하도록 변경. migration `20260723035907_guardian_email_otp_verification.sql` 운영 적용, Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포, Magic Link/OTP 제목·보호자 HTML 적용 | 대상 ESLint·diff check·production build, 신규 함수 anon 불가/authenticated 가능, 운영 화면 307·신규 API 미인증 401, Dashboard 재접속 후 제목·보호자 단일 미리보기·`{{ .Token }}` 확인. 사용자 실메일→OTP→동의 회귀 후 완료 처리 |
 | 2026-07-23 | `SEC-009`, `OPS-004` | 부분 완료·상위 패치 대기 | Vercel 배포 설치 로그의 high 경고를 재감사해 Next 16.2.10 자체 권고 4건과 sharp/libvips 권고를 확인. Next·eslint-config-next를 16.2.11로 올려 자체 권고를 제거하고 exact version으로 고정 | production build 재검증·재배포. Next가 현재 `sharp ^0.34.5`를 요구하므로 0.35.0 강제 override는 이미지 파이프라인 회귀 위험 때문에 적용하지 않음. 공식 호환 패치 출시 후 `npm audit --omit=dev` 0건까지 추적 |
 | 2026-07-23 | `FAM-009`, `PAR-001`, `OPS-004` | Android 완료·플랫폼 후속 등록 | 가족 공간 멤버의 가족 관계 `family_role`을 공간 권한 `role`과 분리하고 공간 지기 전용 변경 API를 추가. 가족 초대는 멤버 탭에서 일반 가족/자녀를 먼저 고르고, 공간 설정은 공간 자체 수정만 담당하도록 분리. 운영 migration 2개 적용과 최종 Production `dpl_2j1WLB6oEb2zVbupH7J98XLaqUHy` 배포 완료 | root build 54/54, 대상 ESLint, Android unit/assemble/debug 설치 통과. `SM_F731N`에서 가족 관계 배지·권한 보조 표시·초대 유형·일반 가족 코드/공유·설정 분리 확인. Web/iOS 동등화는 플랫폼 후속 표에서 진행 |
