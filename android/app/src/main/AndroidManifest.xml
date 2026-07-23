@@ -92,6 +92,11 @@
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
+            android:name=".NativeCalendarImportActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
             android:name=".NativeNotificationActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />

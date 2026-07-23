@@ -35,10 +35,10 @@
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
 | 1 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
-| 2 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 대기` | 코드·unit/lint/assemble 완료. 콜드 시작 선조회, 메뉴 왕복 무재호출, pull-to-refresh, mutation 후 선택 갱신 체감 검증 |
-| 3 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🔴 차단` | 최신 API 반영 뒤 로그인 단말에서 공간 전환과 핵심 화면 회귀 |
-| 4 | `AND-005` | Android 기기 캘린더 회귀 | `🔴 차단` | 인증 단말에서 권한·CRUD·가져오기·중복 검증 |
-| 5 | `AND-003` | Android TalkBack·적응형 최종 QA | `🔴 차단` | 인증 이후 화면 TalkBack 음성 순서와 실기기 수동 QA |
+| 2 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
+| 3 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
+| 4 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 권한·캘린더 선택·네이티브 후보 3개 조회 통과. 격리 일정 실제 가져오기·중복·자동 CRUD 확인 |
+| 5 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 폴더블 하단 인셋·UI 의미 확인. 실제 TalkBack 음성 순서 수동 QA |
 | 6 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
 | 7 | `OPS-004` | 최신 공통 API Production 반영 | `⏸ 보류` | Android 수정에 필요한 공통 API가 확정되면 Preview → Production 배포·회귀 |
 | 8 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
@@ -101,16 +101,16 @@
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
-| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🔴 차단` | 2026-07-16 | — | `SM_F731N`에 공간 수명주기·오류 UX 수정 debug APK 설치 완료. 로그인 세션 재확보와 `FAM-008` 운영 API 배포 후 공간 전환·삭제를 포함한 핵심 화면 회귀 재개 |
+| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🟠 진행 중` | 2026-07-16 | — | `SM_F731N` 로그인 홈과 홈/일정/공간/가계부/전체 메뉴 왕복, 네이티브 캘린더 후보 조회 통과. 실제 일정/가계부 쓰기·가족 전환·삭제는 안전한 테스트 데이터에서 최종 확인 |
 | [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | 2026-07-16 | — | 사용자 결정으로 Google Play 출시 구간 후순위. 기능 production build와 핵심 회귀가 끝난 뒤 서명 비밀번호를 확보해 최종 AAB 검증 |
-| [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🔴 차단` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과, 단말 설정 복원. 실제 TalkBack 음성 탐색과 인증 이후 화면 수동 QA 필요 |
+| [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🟠 진행 중` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과. `SM_F731N` 캘린더 목록 말줄임·단일 선택 역할·하단 시스템 인셋 통과, 실제 TalkBack 음성 탐색 필요 |
 | [x] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 브랜드 고정 다크 XML 예외 승인. 1080×2640·글꼴 1.3배에서 잘림/겹침 없음. 기능·정보 구조 대폭 변경 시 Compose 재평가 |
-| [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🔴 차단` | 2026-07-14 | — | Web/네이티브 경계·자동 동기화 정적 감사와 build 통과, 네이티브에서도 글리움 표식·캘린더 일치 강제. 인증 세션 확보 후 권한 거부·생성·수정·삭제·가져오기·중복 실기기 검증 |
+| [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🟠 진행 중` | 2026-07-14 | — | WebView 가져오기 경로를 Compose 네이티브 Activity로 교체. `SM_F731N` 권한·캘린더 선택·후보 3개 조회·선택 UI 통과. 격리 일정으로 실제 가져오기→재조회 중복, 자동 생성·수정·삭제 확인 필요 |
 | [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `🟠 진행 중` | 2026-07-16 | — | Android 1.1.5 기준 한국어 등록정보 카피와 익명화된 휴대전화 스크린샷 6장 준비 완료. `docs/25-google-play-release-readiness.md` 기준 1024×500 기능 그래픽 제작, Console 업로드·최신 versionCode·IARC·App access·서명 확인 필요 |
 | [x] | `AND-007` | Android 백업·컴포넌트·R8·캘린더 변경 경계 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `allowBackup=false`, preview Activity 비공개, 광범위 ProGuard keep 제거, 캘린더 표식/대상 검증. debug/test/lint/release package 재통과 |
 | [x] | `AND-008` | Android 권한·개인정보·Data safety 정합성 보완 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 미사용 CAMERA/feature 제거, 캘린더·Firebase·AdMob/AdFit 개인정보처리방침 반영, Play 입력 초안 문서화. release package manifest의 카메라·미디어·외부 저장소 권한 0건·Android debug/test/lint·웹 lint/build 통과 |
 | [ ] | `AND-009` | Remote Config 긴급 차단·필수 업데이트 기반 | `⏸ 보류` | — | — | 사용자 결정으로 3플랫폼 핵심 기능 파리티 이후 재개. 주요 기능 차단·필수 업데이트·API 버전 계약 범위 유지 |
-| [ ] | `AND-010` | 앱 시작 선조회·공유 캐시·새로고침 정책 | `🟠 실기기 검증 대기` | 2026-07-23 | — | 스플래시 중 account context·홈·공간·일정·가계부·알림 병렬 선조회, 앱 프로세스 캐시 재사용, 홈/공간/일정/가계부/알림 pull-to-refresh, 일정·가계부·알림 무조건 onResume fetch 제거, mutation별 선택 무효화 완료. unit/lint/assemble 통과; 콜드 시작·오프라인·부분 실패 실기기 검증 후 완료 |
+| [ ] | `AND-010` | 앱 시작 선조회·공유 캐시·새로고침 정책 | `🟠 실기기 검증 중` | 2026-07-23 | — | 스플래시 병렬 선조회 후 `SM_F731N` 홈 즉시 데이터 표시, 핵심 메뉴 왕복과 크래시/ANR 0건 확인. pull-to-refresh·mutation 선택 무효화·오프라인/부분 실패 체감 검증 후 완료 |
 
 ### `AND-009` 세부 체크리스트
 
@@ -357,6 +357,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `AND-001`, `AND-003`, `AND-005`, `AND-010`, `FAM-008` | 로그인 실기기 회귀·캘린더 네이티브화 | `SM_F731N`에서 콜드 스타트와 핵심 메뉴 왕복을 확인. WebView 캘린더 가져오기가 인증/라우팅으로 홈 복귀하던 결함을 재현하고 Compose 네이티브 Activity·Calendar Provider repository로 교체. 캘린더 목록 긴 이름·스크롤·접근성 역할과 폴더블 하단 인셋 보정. 운영 DB의 가족 전환/안전 삭제 RPC 존재와 authenticated 실행 권한 확인 | 캘린더 후보 3개 조회·선택 UI·Activity 유지, 크래시/ANR 0건, unit/assemble·debug 설치 통과. 실제 가져오기·중복/자동 CRUD와 가족 승격은 운영 데이터 변경을 피하기 위해 안전한 테스트 데이터에서 후속 확인 |
 | 2026-07-23 | `FAM-008`, `AND-010`, `OPS-004` | Android 가족 전환 복구·시작 데이터 정책 구현 | 운영 가족 전환 경로가 404임을 재현하고 최신 API를 Production `dpl_9H8AaLttD7fsXuZUzzMdMycQNcHY`로 배포해 401 인증 계약으로 복구. Android에 스플래시 병렬 선조회, 프로세스 캐시, mutation 선택 무효화, 홈/공간/일정/가계부/알림 pull-to-refresh를 추가하고 일정·가계부·알림의 무조건 onResume fetch를 제거 | root production build 54/54, Android compile·unit·lint·assemble 통과. 다음은 로그인 실기기에서 일반→가족 전환, 화면 왕복 시 무재호출, 당겨서 새로고침, 일정/가계부 쓰기 후 갱신 확인. Web 라우트 fetch 감사와 iOS 동등 정책은 플랫폼 후속 표에 유지 |
 | 2026-07-23 | `FAM-008`, `AND-010`, `PAR-001`, `IOS-005` | Android 우선순위 확정·작업 시작 | Android 기능을 먼저 완성한 뒤 Web, 마지막으로 iOS를 진행하기로 결정. 가족 공간 전환 실패 수정과 스플래시 선조회·공유 캐시·pull-to-refresh 정책을 Android 현재 범위로 시작하고 플랫폼 후속 영향 표를 추가 | Android 코드/API 원인 추적 → 자동 build/test → 로그인 실기기 검증 순서. 공통 계약 변화만 기록하고 Web/iOS 구현은 후속 큐로 유지 |
 | 2026-07-23 | `REPO-003`, `PAR-001`, `FAM-008`, `OPS-004` | 맥북 작업·체크리스트 재대조 | 맥북에서 게시한 `codex/platform-parity-sync-20260723`을 맥미니 `/Volumes/WD_BLACK/Ai Works/gleaum`에 동기화하고 19개 기능/문서 커밋을 현재 트래커 완료 기준과 대조. 코드 존재만으로 운영 완료 처리하지 않고 배포·실기기·역할별 검증을 별도 유지 | 오래된 `node_modules`에서 `tsx` 누락을 발견해 lockfile 기준 복원. 데이터 경계 9/9·capability 4/4·알림 설정 2/2, root production build 54/54, backoffice build, Android 738 tasks compile/unit/lint/assemble 성공. 다음은 `FAM-008` 포함 Preview/Production 배포와 동일 계정 회귀 |

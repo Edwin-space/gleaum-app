@@ -186,7 +186,7 @@ class NativeMyMenuActivity : AppCompatActivity() {
                         onCalendarSelected = { setSelectedCalendar(it.toDeviceCalendarRow()) },
                         onCalendarSyncModeChanged = { setCalendarAutomaticSync(it) },
                         onCalendarSyncDisabled = { disableCalendarSync() },
-                        onOpenCalendarImport = { openWebPath("/settings/calendar") },
+                        onOpenCalendarImport = { openCalendarImport() },
                         onPasswordSave = { password, confirm -> validateAndUpdatePassword(password, confirm) },
                         onProfileSave = { displayName, realName, mode -> updateProfile(displayName, realName, mode) },
                         onAccountWithdraw = { reason -> withdrawAccount(reason) },
@@ -1337,6 +1337,10 @@ class NativeMyMenuActivity : AppCompatActivity() {
         }
         startActivity(Intent(this, MainActivity::class.java).apply { putExtra("start_path", path) })
         finish()
+    }
+
+    private fun openCalendarImport() {
+        startActivity(Intent(this, NativeCalendarImportActivity::class.java))
     }
 
     private fun iconBg(icon: MenuIcon): String = when (icon) {

@@ -1170,3 +1170,15 @@ npm run cap:open:android # Android Studio 열기
 - API 24에서 동작하지 않던 `java.time.Instant` 직접 사용을 호환 ISO 파서로 교체했다.
 - 검증: Android `:app:assembleDebug` 통과, `:app:lintDebug` 오류 0건.
 - 평가 기준과 화면별 임시 점수는 `docs/22-android-material3-ui-audit.md`에서 관리한다.
+
+## Android 실기기 시작 흐름·네이티브 캘린더 가져오기 보강 (완료 — 2026-07-23)
+
+- `SM_F731N` 실기기에서 Google 로그인 후 스플래시 → 네이티브 홈, 홈/일정/공간/가계부/전체 메뉴 왕복을 확인했다.
+- 스플래시 중 선조회한 홈·공간·일정·가계부·알림 캐시가 화면 이동에서 재사용되고 앱 크래시/ANR이 없음을 확인했다.
+- 전체 메뉴의 캘린더 선택 목록을 스크롤 가능한 단일 선택 목록으로 변경하고 긴 캘린더/계정 이름을 말줄임 처리했다.
+- WebView `/settings/calendar`로 이동하던 `기기 일정 가져오기`를 Compose Material 3 네이티브 화면으로 교체했다.
+- 선택한 기기 캘린더에서 어제~30일 뒤 일정을 조회하고, 글리움 표식 일정과 제목·시작 시각이 같은 기존 private 개인 일정을 제외한다.
+- 사용자가 선택한 일정만 `type=personal`, `visibility=private`로 생성하며 공유 공간에는 기록하지 않는다.
+- 폴더블 하단 시스템 내비게이션 인셋과 가져오기 버튼이 겹치지 않도록 보정했다.
+- 실기기에서 후보 3개 조회·선택 UI·뒤로가기·시스템 바를 확인했다. 운영 데이터 보호를 위해 실제 가져오기 실행은 보류했다.
+- Android `:app:testDebugUnitTest`, `:app:assembleDebug` 통과 및 최신 debug APK 설치 완료.

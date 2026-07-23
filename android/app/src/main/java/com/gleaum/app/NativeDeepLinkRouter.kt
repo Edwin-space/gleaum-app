@@ -48,7 +48,7 @@ object NativeDeepLinkRouter {
             path == "/notifications" -> Intent(context, NativeNotificationActivity::class.java)
             path == "/mypage" -> Intent(context, NativeMyMenuActivity::class.java)
             path == "/settings/security" -> Intent(context, NativeMyMenuActivity::class.java)
-            path == "/settings/calendar" -> Intent(context, NativeMyMenuActivity::class.java)
+            path == "/settings/calendar" -> Intent(context, NativeCalendarImportActivity::class.java)
             path == "/settings/home-layout" -> Intent(context, NativeMyMenuActivity::class.java)
             path == "/space" -> Intent(context, NativeSpaceActivity::class.java)
             path == "/space/new" && capabilities.canManageSpaces -> Intent(context, NativeSpaceActivity::class.java)
