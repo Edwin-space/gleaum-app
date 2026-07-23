@@ -342,3 +342,58 @@ notification_rules
 3. 기존 코드의 `family_groups`는 당분간 유지하되, 신규 문서와 설계에서는 shared Space로 해석합니다. 개인 기본 구간을 여기에 강제로 묶지 않습니다.
 4. 자동 알림/상태 전이는 `schedule.type`이 아니라 `automation_policy` 중심으로 확장합니다.
 5. 구현 후에는 반드시 `docs/`를 업데이트해 다른 AI가 이전 가족 중심 방향으로 되돌아가지 않게 합니다.
+
+---
+
+## 11. 가족 공간·자녀 계정 모델
+
+상세 구현 기준은 `docs/21-family-child-account-foundation.md`를 단일 기준으로 사용합니다.
+
+### 확정 구조
+
+```text
+family_groups.space_type = personal | general | family
+space_members.role       = admin | editor | viewer
+family_relationships     = 보호자-자녀 관계와 검증 상태
+family_dependents        = 가입 전 자녀 대기 프로필
+account_age_profiles     = 생년월일 기반 계정 모드
+```
+
+자녀는 공간 권한이 아니라 관계입니다. `space_members.role`이나 `profiles.role`에 `child`를 새로 추가하지 않습니다. 또한 한 명의 자녀에게 복수 보호자가 존재할 수 있으므로 `space_members.relationship` 단일 컬럼도 사용하지 않습니다.
+
+### 안전한 연결 원칙
+
+```text
+보호자가 자녀 이름·생년월일·관계를 등록
+→ 필요할 때만 연결 허용 이메일을 선택 입력
+→ 보호자 본인확인 및 필수 동의
+→ 자녀 전용 일회성 초대 발급
+→ 자녀가 해당 링크에서 Google 또는 이메일 로그인
+→ 선택 이메일 제한 + 검증 로그인 계정 + 초대 토큰 + 동의 상태 확인
+→ 연결 후보 기록, 보호자 최종 승인 또는 거절
+→ 승인 시에만 user_id 연결 및 viewer 멤버십 생성
+```
+
+이메일 일치만으로 자동 합류시키지 않습니다. 자녀 이메일은 선택적인 계정 제한값이고 지속적인 권한 판정은 Supabase `auth.users.id`를 사용합니다. claim은 후보 이메일·provider만 기록하며 보호자 검증과 최종 승인 전 자녀 프로필에는 공간 접근 권한이나 연령 capability가 없습니다.
+
+### 연령 전환
+
+- 만 14세 미만: `child_managed`, 검증된 법정대리인 동의 필수
+- 만 14세 도달: `teen_consent_pending`, 본인 재동의 전 민감 기능 비활성
+- 만 14세 이상 19세 미만: `teen`
+- 만 19세 도달: `adult`, 보호자 관리 capability 자동 종료
+
+가족 관계와 가족 공간 멤버십은 성년 이후에도 유지할 수 있지만 위치·개인 일정 등 보호자 접근 권한은 성인 사용자가 직접 다시 허용해야 합니다.
+
+### 구현 상태
+
+- migration `020_family_child_foundation.sql`, `021_family_child_foundation_hardening.sql`: 운영 Supabase 적용 완료
+- migration `022_guardian_email_consent_flow.sql`: 운영 Supabase 적용 완료
+- migration `20260723053050_child_invite_token_binding.sql`: 운영 Supabase 적용 완료
+- 자녀 프로필/관계/동의/초대/연령 상태/RLS: 기반 구현 완료
+- `/api/session/context`: 플랫폼 공통 capability 계약 추가
+- 보호자 로그인 이메일 확인·필수 동의·자녀 초대 랜딩·선택 이메일·후보 승인/거절 Web/API: 구현 완료
+- 공통 capability의 플랫폼별 적용, 자녀 전용 홈, 일정 할당, 연령 전환 UI·Cron: 후속 구현
+- 외부 본인확인 사업자 전환과 위치 체크인: 도입 조건 충족 전까지 보류
+
+보호자 동의가 완료되고 자녀의 초대 수락 후 보호자가 최종 승인하기 전에는 `space_members`를 생성하지 않습니다.

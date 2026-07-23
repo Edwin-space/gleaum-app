@@ -42,10 +42,11 @@ export default function EditSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const isDesktop = useIsDesktop();
-  const { user, spaceId } = useCurrentUser();
-  const { space: group, members, myRole } = useSpace(spaceId);
-
-  const { refresh } = useSchedules(spaceId);
+  const { user, loading: userLoading } = useCurrentUser();
+  const [scheduleSpaceId, setScheduleSpaceId] = useState<string | null>(null);
+  const [isPrivateOwner, setIsPrivateOwner] = useState(false);
+  const { members, myRole, loading: roleLoading } = useSpace(scheduleSpaceId);
+  const { refresh } = useSchedules(scheduleSpaceId);
 
 
   const [loading, setLoading]   = useState(true);
@@ -78,6 +79,8 @@ export default function EditSchedulePage() {
 
       setType(s.type);
       setTitle(s.title);
+      setScheduleSpaceId(s.spaceId ?? s.familyGroupId);
+      setIsPrivateOwner(s.visibility === 'private' && s.createdBy === user?.id);
 
       // Date → date input value (YYYY-MM-DD)
       const dt = s.startTime;
@@ -102,7 +105,7 @@ export default function EditSchedulePage() {
 
       setLoading(false);
     });
-  }, [id]);
+  }, [id, user?.id]);
 
   const toggleParticipant = (uid: string) => {
     setParticipants((prev) =>
@@ -115,8 +118,12 @@ export default function EditSchedulePage() {
     if (!date)         { toastError('날짜를 선택해주세요'); return; }
     if (!id)           return;
 
-    // viewer 역할은 수정 불가
-    if (myRole === 'viewer') {
+    if (roleLoading) {
+      toastError('공간 권한을 확인하는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    if (!isPrivateOwner && myRole !== 'admin' && myRole !== 'editor') {
       toastError('조회 권한만 있어 일정을 수정할 수 없습니다');
       return;
     }
@@ -179,7 +186,19 @@ export default function EditSchedulePage() {
     );
   }
 
-  const activeType = typeConfig[type];
+  if (!userLoading && !roleLoading && !isPrivateOwner && myRole !== 'admin' && myRole !== 'editor') {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: 'var(--theme-bg)' }}>
+        <span className="text-5xl">🔒</span>
+        <p style={{ color: 'var(--theme-text-subtle)' }}>이 일정을 수정할 권한이 없습니다</p>
+        <button onClick={() => router.replace(`/schedules/${id}`)}
+          className="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white"
+          style={{ background: 'var(--brand-blue)' }}>
+          상세로 돌아가기
+        </button>
+      </div>
+    );
+  }
 
   // ── PC WEB 뷰 ──
   if (isDesktop) {

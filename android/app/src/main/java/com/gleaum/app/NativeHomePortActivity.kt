@@ -13,6 +13,9 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -23,14 +26,17 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.kakao.adfit.ads.popup.AdFitPopupAd
+import com.kakao.adfit.ads.popup.AdFitPopupAdDialogFragment
+import com.kakao.adfit.ads.popup.AdFitPopupAdLoader
+import com.kakao.adfit.ads.popup.AdFitPopupAdRequest
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.home.ComposeHomeScreen
 import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -52,6 +58,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     private var previewDisabled = false
     private var calendarExpanded = true
     private var calendarMode = CalendarMode.WEEK
+    private var popupAdLoader: AdFitPopupAdLoader? = null
+    private var popupAdRequested = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,7 +84,21 @@ class NativeHomePortActivity : AppCompatActivity() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadHomeSummary() {
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
+        if (!loading && summary != null && NativeAppDataCache.home == null) {
+            loadHomeSummary(force = true)
+        }
+    }
+
+    private fun loadHomeSummary(force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.home?.let {
+                applyHomeSummary(it)
+                return
+            }
+        }
         val session = SessionManager.get(this)
         if (session.isNullOrBlank()) {
             redirectToLogin()
@@ -91,20 +113,10 @@ class NativeHomePortActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val loaded = requestHomeSummary(token)
+                val loaded = NativeHomeApi.summary(this)
                 runOnUiThread {
-                    if (!loaded.onboardingCompleted) {
-                        startActivity(Intent(this, NativeOnboardingActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        })
-                        finish()
-                        return@runOnUiThread
-                    }
-                    summary = loaded
-                    selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
-                    loading = false
-                    errorMessage = null
-                    render()
+                    NativeAppDataCache.home = loaded
+                    applyHomeSummary(loaded)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -120,28 +132,23 @@ class NativeHomePortActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun requestHomeSummary(token: String): NativeHomePortSummary {
-        val connection = (URL(HOME_SUMMARY_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 15000
-            readTimeout = 20000
-            setRequestProperty("Authorization", "Bearer $token")
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("X-Gleaum-Native-Preview", "android-home")
+    private fun applyHomeSummary(loaded: NativeHomePortSummary) {
+        if (!loaded.onboardingCompleted) {
+            startActivity(Intent(this, NativeOnboardingActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            })
+            finish()
+            return
         }
-
-        val responseText = readResponse(connection)
-        val json = if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
-        if (connection.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            throw IllegalStateException("session_required")
-        }
-        if (connection.responseCode !in 200..299) {
-            val message = json.optString("error").ifBlank { "홈 데이터 요청 실패 (${connection.responseCode})" }
-            throw IllegalStateException(message)
-        }
-        return NativeHomePortSummary.fromJson(json)
+        NativeAccountContextStore.save(this, loaded.account)
+        (application as? GleaumApp)?.syncAdvertisingEligibility()
+        summary = loaded
+        selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
+        loading = false
+        errorMessage = null
+        render()
+        maybeShowLaunchBottomAd()
     }
-
 
     private fun redirectToLogin() {
         SessionManager.clear(this)
@@ -149,11 +156,6 @@ class NativeHomePortActivity : AppCompatActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()
-    }
-
-    private fun readResponse(connection: HttpURLConnection): String {
-        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
-        return stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
     }
 
     private fun normalizedHomeLayout(): String {
@@ -167,7 +169,9 @@ class NativeHomePortActivity : AppCompatActivity() {
         }
     }
 
-    private fun homeLayoutCopy(): String = when (normalizedHomeLayout()) {
+    private fun homeLayoutCopy(): String = if (isManagedAccount()) {
+        "오늘 할 일과 가까운 일정을 하나씩 확인해 보세요."
+    } else when (normalizedHomeLayout()) {
         "calendar_first" -> "가장 가까운 약속과 캘린더 흐름을 우선으로 보여드립니다."
         "routine_first" -> "반복되는 습관과 완료 확인이 필요한 일을 놓치지 않게 도와드립니다."
         "expense_first" -> "정기결제와 공동비용 알림을 중심으로 홈을 구성합니다."
@@ -183,6 +187,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         setContentView(buildHomeSkeleton())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeHome() {
         setContent {
             GleaumTheme {
@@ -193,30 +198,107 @@ class NativeHomePortActivity : AppCompatActivity() {
                     onNotificationClick = { openWebPath("/notifications") },
                     onFabClick = { openWebPath("/schedules/new") },
                 ) { innerPadding ->
-                    ComposeHomeScreen(
-                        innerPadding = innerPadding,
-                        summary = summary,
-                        loading = loading,
-                        errorMessage = errorMessage,
-                        selectedDateKey = selectedDateKey,
-                        onRetry = {
+                    PullToRefreshBox(
+                        isRefreshing = loading && summary != null,
+                        onRefresh = {
                             loading = true
                             errorMessage = null
                             render()
-                            loadHomeSummary()
+                            loadHomeSummary(force = true)
                         },
-                        onSelectDate = { date ->
-                            selectedDateKey = date
-                            render()
-                        },
-                        onAddSchedule = { openWebPath("/schedules/new") },
-                        onOpenSchedule = { id -> openWebPath("/schedules/$id") },
-                        onOpenSchedules = { openWebPath("/schedules") },
-                        onOpenBudget = { openWebPath("/budget") },
-                    )
+                    ) {
+                        ComposeHomeScreen(
+                            innerPadding = innerPadding,
+                            summary = summary,
+                            loading = loading,
+                            errorMessage = errorMessage,
+                            selectedDateKey = selectedDateKey,
+                            onRetry = {
+                                loading = true
+                                errorMessage = null
+                                render()
+                                loadHomeSummary(force = true)
+                            },
+                            onSelectDate = { date ->
+                                selectedDateKey = date
+                                render()
+                            },
+                            onAddSchedule = { openWebPath("/schedules/new") },
+                            onOpenSchedule = { id -> openWebPath("/schedules/$id") },
+                            onOpenSchedules = { openWebPath("/schedules") },
+                            onOpenBudget = { openWebPath("/budget") },
+                        )
+                    }
                 }
             }
         }
+    }
+
+    private fun maybeShowLaunchBottomAd() {
+        if (summary?.account?.capabilities?.canShowAds != true) {
+            Log.d(TAG, "AdFit launch popup skipped: accountMode=${summary?.account?.accountMode}, canShowAds=false")
+            return
+        }
+        if (popupAdRequested || isFinishing || isDestroyed) {
+            Log.d(TAG, "AdFit launch popup skipped: requested=$popupAdRequested, finishing=$isFinishing, destroyed=$isDestroyed")
+            return
+        }
+        popupAdRequested = true
+        Log.d(TAG, "AdFit launch popup request scheduled")
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (isFinishing || isDestroyed || !NativeAccountContextStore.capabilities(this).canShowAds) return@postDelayed
+
+            val loader = AdFitPopupAdLoader.create(this, HOME_BOTTOM_ADFIT_CLIENT_ID)
+            popupAdLoader = loader
+
+            if (loader.isBlockedByRequestPolicy) {
+                Log.d(TAG, "AdFit launch popup blocked by request policy")
+                return@postDelayed
+            }
+
+            val request = AdFitPopupAdRequest.Builder(AdFitPopupAd.Type.Transition)
+                .setTestModeEnabled(BuildConfig.DEBUG)
+                .build()
+
+            val requested = loader.loadAd(
+                request,
+                object : AdFitPopupAdLoader.OnAdLoadListener {
+                    override fun onAdLoaded(ad: AdFitPopupAd) {
+                        if (isFinishing || isDestroyed || !NativeAccountContextStore.capabilities(this@NativeHomePortActivity).canShowAds) {
+                            popupAdLoader?.destroy()
+                            popupAdLoader = null
+                            return
+                        }
+                        Log.d(TAG, "AdFit launch popup loaded")
+                        runOnUiThread {
+                            runCatching {
+                                AdFitPopupAdDialogFragment.Builder(ad)
+                                    .setNavigationBarColor(NativeTheme.background(this@NativeHomePortActivity), !NativeTheme.isDark(this@NativeHomePortActivity))
+                                    .build()
+                                    .show(supportFragmentManager, AdFitPopupAdDialogFragment.TAG)
+                            }.onFailure {
+                                Log.w(TAG, "AdFit launch popup show failed", it)
+                            }
+                        }
+                    }
+
+                    override fun onAdLoadError(errorCode: Int) {
+                        Log.w(TAG, "AdFit launch popup failed: $errorCode")
+                    }
+                },
+            )
+
+            if (!requested) {
+                Log.w(TAG, "AdFit launch popup request rejected")
+            }
+        }, 500L)
+    }
+
+    override fun onDestroy() {
+        popupAdLoader?.destroy()
+        popupAdLoader = null
+        super.onDestroy()
     }
 
     private fun handleComposeDestination(destination: GleaumDestination) {
@@ -224,7 +306,9 @@ class NativeHomePortActivity : AppCompatActivity() {
             GleaumDestination.HOME -> openWebPath("/home")
             GleaumDestination.SCHEDULES -> openWebPath("/schedules")
             GleaumDestination.SPACE -> openWebPath("/space")
-            GleaumDestination.BUDGET -> openWebPath("/budget")
+            GleaumDestination.BUDGET -> if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                openWebPath("/budget")
+            }
             GleaumDestination.MENU -> openWebPath("/mypage")
         }
     }
@@ -248,13 +332,20 @@ class NativeHomePortActivity : AppCompatActivity() {
                     }
                     if (previewDisabled) return@apply
                     addView(buildGreetingCard(), matchWrap().apply { topMargin = dp(14) })
+                    if (isManagedAccount()) {
+                        addView(buildManagedAccountCard(), matchWrap().apply { topMargin = dp(14) })
+                    }
                     addView(buildTodayToggle(), matchWrap().apply { topMargin = dp(14) })
                     if (calendarExpanded) {
                         addView(buildCalendarPanel(), matchWrap().apply { topMargin = dp(10) })
                     }
                     addView(buildSelectedDateSection(), matchWrap().apply { topMargin = dp(14) })
-                    addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
-                    addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
+                    if (summary?.account?.capabilities?.canShowAds == true) {
+                        addView(buildAdPlaceholder(), matchWrap().apply { topMargin = dp(14) })
+                    }
+                    if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                        addView(buildBudgetSummary(), matchWrap().apply { topMargin = dp(14) })
+                    }
                     addView(buildUpcomingSection(), matchWrap().apply { topMargin = dp(14) })
                 }, NativeAdaptive.scrollChildParams(this@NativeHomePortActivity))
             }, FrameLayout.LayoutParams(match(), match()))
@@ -412,6 +503,42 @@ class NativeHomePortActivity : AppCompatActivity() {
             }, FrameLayout.LayoutParams(match(), wrap()))
         }
     }
+
+    private fun buildManagedAccountCard(): LinearLayout {
+        val pendingConsent = summary?.account?.accountMode in setOf("pending_guardian_consent", "teen_consent_pending")
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(20), dp(20), dp(20))
+            background = cardDrawable(24)
+            elevation = dp(2).toFloat()
+
+            addView(TextView(context).apply {
+                text = if (pendingConsent) "동의 확인 필요" else "보호자 관리 계정"
+                textSize = 11f
+                typeface = brandBold()
+                setTextColor(color("#0084CC"))
+            })
+            addView(TextView(context).apply {
+                text = if (pendingConsent) "동의 상태를 확인하고 있어요" else "일정과 루틴에 집중하는 홈이에요"
+                textSize = 18f
+                typeface = brandBold()
+                setTextColor(NativeTheme.text(context))
+            }, matchWrap().apply { topMargin = dp(8) })
+            addView(TextView(context).apply {
+                text = "가계부·공간 관리·멤버 초대·광고는 나이와 동의 상태에 맞게 제한됩니다."
+                textSize = 13f
+                typeface = brandMedium()
+                setTextColor(NativeTheme.muted(context))
+            }, matchWrap().apply { topMargin = dp(6) })
+        }
+    }
+
+    private fun isManagedAccount(): Boolean = summary?.account?.accountMode in setOf(
+        "pending_guardian_consent",
+        "child_managed",
+        "teen_consent_pending",
+        "teen",
+    )
 
     private fun LinearLayout.addMetric(value: String, label: String, valueColor: Int) {
         addView(LinearLayout(context).apply {
@@ -1112,13 +1239,15 @@ class NativeHomePortActivity : AppCompatActivity() {
             setPadding(dp(0), dp(0), dp(0), dp(0))
             background = roundDrawable("#FFFFFF", if (NativeAdaptive.isLarge(this@NativeHomePortActivity)) 28 else 0, "#E8E8E4")
 
-            listOf(
-                NativeNavItem("홈", NativeNavIcon.HOME, "/home"),
-                NativeNavItem("일정", NativeNavIcon.CALENDAR, "/schedules"),
-                NativeNavItem("공간", NativeNavIcon.SPACE, "/space"),
-                NativeNavItem("가계부", NativeNavIcon.BUDGET, "/budget"),
-                NativeNavItem("전체", NativeNavIcon.MENU, "/mypage"),
-            ).forEachIndexed { index, item ->
+            buildList {
+                add(NativeNavItem("홈", NativeNavIcon.HOME, "/home"))
+                add(NativeNavItem("일정", NativeNavIcon.CALENDAR, "/schedules"))
+                add(NativeNavItem("공간", NativeNavIcon.SPACE, "/space"))
+                if (summary?.account?.capabilities?.canViewHouseholdBudget == true) {
+                    add(NativeNavItem("가계부", NativeNavIcon.BUDGET, "/budget"))
+                }
+                add(NativeNavItem("전체", NativeNavIcon.MENU, "/mypage"))
+            }.forEachIndexed { index, item ->
                 addView(buildBottomNavItem(item, active = index == 0), LinearLayout.LayoutParams(0, match(), 1f))
             }
         }
@@ -1176,6 +1305,7 @@ class NativeHomePortActivity : AppCompatActivity() {
             return
         }
         if (path == "/budget") {
+            if (summary?.account?.capabilities?.canViewHouseholdBudget != true) return
             startActivity(Intent(this, NativeBudgetActivity::class.java))
             finish()
             return
@@ -1326,7 +1456,8 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun matchWrap(): LinearLayout.LayoutParams = LinearLayout.LayoutParams(match(), wrap())
 
     companion object {
-        private const val HOME_SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
+        private const val HOME_BOTTOM_ADFIT_CLIENT_ID = "DAN-Brd0FQAE3ByDWwJu"
+        private const val TAG = "GleaumHomeAdFit"
         private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
         private const val HOME_LAYOUT_KEY = "gleaum:home-layout"
     }

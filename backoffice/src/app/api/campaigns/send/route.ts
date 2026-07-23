@@ -10,7 +10,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { requireAdminApi } from '@/lib/admin-auth';
+import { getAdminSupabase } from '@/lib/supabase';
 import { sendFCMBatch } from '@/lib/fcm';
 
 const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'https://www.gleaum.com';
@@ -26,6 +27,10 @@ function resolveTemplate(
 }
 
 export async function POST(req: NextRequest) {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
+  const supabase = getAdminSupabase();
   const { segment, spaceId, channel, title, body, url } = await req.json() as {
     segment: string;
     spaceId?: string;
@@ -208,6 +213,7 @@ async function updateLog(
   status: string
 ) {
   if (!id) return;
+  const supabase = getAdminSupabase();
   await supabase
     .from('campaign_logs')
     .update({ target_count: targetCount, sent_count: sentCount, failed_count: failedCount, status })

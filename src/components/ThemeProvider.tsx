@@ -9,6 +9,7 @@ import {
   type ResolvedTheme,
   type ThemeMode,
 } from '@/lib/theme';
+import { applyNativeSystemBars, secureStorage } from '@/lib/native';
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -32,22 +33,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    // localStorage 재확인 (SSR과 DOM이 다를 경우 보정)
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    const initialMode = isThemeMode(stored) ? stored : 'system';
-    if (initialMode !== mode) {
-      setModeState(initialMode);
-      setResolvedTheme(applyTheme(initialMode));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void applyNativeSystemBars(mode).catch(() => {});
+  }, [mode]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       setResolvedTheme((current) => {
         if (mode !== 'system') return current;
-        return applyTheme('system');
+        const resolved = applyTheme('system');
+        void applyNativeSystemBars('system').catch(() => {});
+        return resolved;
       });
     };
     media.addEventListener('change', handleChange);
@@ -56,6 +52,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setMode = (nextMode: ThemeMode) => {
     localStorage.setItem(THEME_STORAGE_KEY, nextMode);
+    void secureStorage.set(THEME_STORAGE_KEY, nextMode).catch(() => {
+      // localStorage가 원본이며, 네이티브 저장소 동기화 실패는 화면 전환을 막지 않는다.
+    });
     setModeState(nextMode);
     setResolvedTheme(applyTheme(nextMode));
   };
@@ -79,4 +78,3 @@ export function useTheme() {
   }
   return context;
 }
-

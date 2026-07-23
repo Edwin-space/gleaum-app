@@ -1,12 +1,30 @@
-import { createClient } from "@supabase/supabase-js";
+import 'server-only';
 
-// 백오피스는 관리자 권한이 필요하므로 Service Role Key를 사용하거나, 
-// 일반 Anon Key 사용 후 RLS 정책을 우회할 수 있는 슈퍼어드민 계정으로 로그인해야 합니다.
-let envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-if (!envUrl.startsWith("http")) {
-  envUrl = "https://placeholder.supabase.co";
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { requireAdminPage } from '@/lib/admin-auth';
+
+let adminClient: SupabaseClient | null = null;
+
+export function getAdminSupabase(): SupabaseClient {
+  if (adminClient) return adminClient;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Supabase admin credentials are not configured');
+  }
+
+  adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+  return adminClient;
 }
-const supabaseUrl = envUrl;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder_key";
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export async function getAdminPageSupabase(): Promise<SupabaseClient> {
+  await requireAdminPage();
+  return getAdminSupabase();
+}

@@ -124,7 +124,7 @@ function LoginForm() {
     try {
       if (authMode === 'signup') {
         void trackEvent('sign_up', { method: 'email' });
-        const { session } = await signUpWithEmail(form.email, form.password, form.name);
+        const { session } = await signUpWithEmail(form.email, form.password, form.name, next);
         if (!session) {
           // 이메일 확인이 필요한 경우
           setSignupDone(true);

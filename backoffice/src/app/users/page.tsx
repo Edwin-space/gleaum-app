@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { getAdminPageSupabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { UsersClient } from "./UsersClient";
 
@@ -12,6 +12,7 @@ interface PageProps {
 const PAGE_SIZE = 50;
 
 export default async function UsersPage({ searchParams }: PageProps) {
+  const supabase = await getAdminPageSupabase();
   const params = await searchParams;
   const page = Math.max(1, Number(params?.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;

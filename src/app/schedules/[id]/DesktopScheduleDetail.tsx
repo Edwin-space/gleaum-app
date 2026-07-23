@@ -9,22 +9,24 @@ import {
   EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS, REPEAT_LABELS,
 } from '@/types';
-import type { Schedule, ScheduleStatus } from '@/types';
-import { notifToast } from '@/lib/toast';
+import type { Schedule, ScheduleStatus, User } from '@/types';
 
 interface DesktopScheduleDetailProps {
   schedule: Schedule;
   id: string;
-  cfg: any;
-  participantUsers: any[];
+  cfg: { icon: string; gradient: string };
+  participantUsers: User[];
   steps: { key: ScheduleStatus; label: string }[];
   currentStepIdx: number;
+  canEdit: boolean;
+  renotifying: boolean;
   showDeleteModal: boolean;
   setShowDeleteModal: (v: boolean) => void;
   showCompletionModal: boolean;
   setShowCompletionModal: (v: boolean) => void;
   handleUpdateStatus: (status: ScheduleStatus) => Promise<void>;
   handleDelete: () => Promise<void>;
+  handleRenotify: () => Promise<void>;
 }
 
 const typeColorMap: Record<string, string> = {
@@ -65,9 +67,9 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function DesktopScheduleDetail({
-  schedule, id, cfg, participantUsers, steps, currentStepIdx,
+  schedule, id, cfg, participantUsers, steps, currentStepIdx, canEdit, renotifying,
   showDeleteModal, setShowDeleteModal, showCompletionModal, setShowCompletionModal,
-  handleUpdateStatus, handleDelete,
+  handleUpdateStatus, handleDelete, handleRenotify,
 }: DesktopScheduleDetailProps) {
   const router = useRouter();
   const typeColor = typeColorMap[schedule.type] ?? '#0084CC';
@@ -118,7 +120,7 @@ export function DesktopScheduleDetail({
               목록으로
             </button>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            {canEdit && <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 onClick={() => router.push(`/schedules/${id}/edit`)}
                 style={{
@@ -141,7 +143,7 @@ export function DesktopScheduleDetail({
               >
                 🗑️ 삭제
               </button>
-            </div>
+            </div>}
           </div>
 
           {/* 일정 타이틀 영역 */}
@@ -280,15 +282,20 @@ export function DesktopScheduleDetail({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: 'var(--theme-text)', marginBottom: '16px' }}>
                 <span>📍</span> {schedule.location.address}
               </div>
-              <div style={{
-                height: '240px', borderRadius: '18px',
-                background: '#F7F7FA', border: '1px solid rgba(0,0,0,0.04)',
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.location.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                minHeight: '120px', borderRadius: '18px',
+                background: 'var(--theme-surface-muted)', border: '1px solid var(--theme-border)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--theme-text-subtle)',
+                textDecoration: 'none',
               }}>
-                <span style={{ fontSize: '40px', marginBottom: '12px' }}>🗺️</span>
-                <p style={{ fontSize: '13px', fontWeight: 700, margin: 0 }}>지도 API 연동 준비 중</p>
-              </div>
+                <span style={{ fontSize: '36px', marginBottom: '8px' }}>🗺️</span>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: '#0084CC' }}>지도에서 위치 열기</span>
+              </a>
             </Card>
           )}
 
@@ -307,7 +314,7 @@ export function DesktopScheduleDetail({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* 참여자 */}
-          <Card>
+          {canEdit && <Card>
             <SectionTitle>참여자 ({participantUsers.length}명)</SectionTitle>
             {participantUsers.length === 0 ? (
               <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', fontWeight: 600, margin: 0 }}>참여자가 없습니다</p>
@@ -330,7 +337,7 @@ export function DesktopScheduleDetail({
                 ))}
               </div>
             )}
-          </Card>
+          </Card>}
 
           {/* 상태 관리 */}
           <Card>
@@ -366,15 +373,17 @@ export function DesktopScheduleDetail({
               )}
               {schedule.type === 'child' && (schedule.status === 'pending' || schedule.status === 'missed') && (
                 <button
-                  onClick={() => notifToast.sent(schedule.title)}
+                  onClick={() => void handleRenotify()}
+                  disabled={renotifying}
                   style={{
                     width: '100%', padding: '16px', borderRadius: '16px',
                     background: 'rgba(0,132,204,0.07)', color: '#0084CC',
                     fontSize: '15px', fontWeight: 800,
-                    border: '1px solid rgba(0,132,204,0.15)', cursor: 'pointer',
+                    border: '1px solid rgba(0,132,204,0.15)', cursor: renotifying ? 'not-allowed' : 'pointer',
+                    opacity: renotifying ? 0.6 : 1,
                   }}
                 >
-                  🔔 재알림 보내기
+                  {renotifying ? '발송 중...' : '🔔 재알림 보내기'}
                 </button>
               )}
               {schedule.status === 'in_progress' && schedule.type !== 'child' && (

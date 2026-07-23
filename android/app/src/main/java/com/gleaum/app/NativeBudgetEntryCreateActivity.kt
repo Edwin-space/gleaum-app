@@ -19,6 +19,7 @@ import android.widget.TextView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.ui.screens.budget.ComposeBudgetEntryFormScreen
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 import com.gleaum.app.ui.theme.GleaumTheme
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -46,6 +47,11 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!NativeAccountContextStore.capabilities(this).canViewHouseholdBudget) {
+            startActivity(Intent(this, NativeHomePortActivity::class.java))
+            finish()
+            return
+        }
         entryId = intent.getStringExtra("entry_id")
         kind = intent.getStringExtra("kind") ?: "expense"
         category = if (kind == "income") "salary" else "food"
@@ -55,6 +61,11 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
 
     private fun applyLightSystemBars() {
         NativeTheme.applySystemBars(window, this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
     }
 
     private fun render() {
@@ -68,7 +79,8 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     private fun renderComposeForm() {
         setContent {
             GleaumTheme {
-                ComposeBudgetEntryFormScreen(
+                GleaumAdaptiveContent {
+                    ComposeBudgetEntryFormScreen(
                     isEdit = entryId != null,
                     kind = kind,
                     entryMode = entryMode,
@@ -92,7 +104,8 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                     onMemoChange = { value -> draftMemo = value },
                     onPickDate = { pickDate() },
                     onSave = { save(draftTitle, draftAmount, draftMemo) },
-                )
+                    )
+                }
             }
         }
     }
@@ -294,6 +307,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
                 }
                 val id = entryId
                 if (id == null) NativeBudgetApi.create(this, payload) else NativeBudgetApi.update(this, id, payload)
+                NativeAppDataCache.invalidateBudget()
                 runOnUiThread { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
             } catch (e: Exception) {
                 runOnUiThread { saving = false; message = friendlyError(e.message); render() }
@@ -310,8 +324,7 @@ class NativeBudgetEntryCreateActivity : AppCompatActivity() {
     private fun incomeCategories() = listOf("salary" to "급여", "business" to "사업", "investment" to "투자", "bonus" to "상여", "refund" to "환급", "gift" to "용돈", "other_income" to "기타")
     private fun friendlyError(code: String?): String = when (code) { "session_required" -> "로그인 세션을 찾을 수 없어요."; "personal_space_required" -> "개인 공간을 찾을 수 없어요."; else -> "저장에 실패했어요. 잠시 후 다시 시도해 주세요." }
     private fun applyIsoToDate(iso: String) {
-        val parsed = runCatching { java.time.Instant.parse(iso) }.getOrNull()
-        if (parsed != null) date.timeInMillis = parsed.toEpochMilli()
+        NativeDateTime.parseIsoMillis(iso)?.let { date.timeInMillis = it }
     }
 
     private fun dateText(): String = "${date.get(Calendar.YEAR)}. ${date.get(Calendar.MONTH) + 1}. ${date.get(Calendar.DAY_OF_MONTH)}."

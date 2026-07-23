@@ -46,6 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import com.gleaum.app.ui.components.FeedbackKind
+import com.gleaum.app.ui.components.GleaumFeedbackBanner
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 
 private val expenseCategories = listOf("food" to "식비", "daily" to "생활", "transport" to "교통", "culture" to "문화", "medical" to "의료", "social" to "경조사", "housing" to "주거", "subscription" to "구독", "other" to "기타")
 private val incomeCategories = listOf("salary" to "급여", "business" to "사업", "investment" to "투자", "bonus" to "상여", "refund" to "환급", "gift" to "용돈", "other_income" to "기타")
@@ -96,15 +99,18 @@ fun ComposeBudgetEntryFormScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(PaddingValues(start = 20.dp, top = innerPadding.calculateTopPadding() + 12.dp, end = 20.dp, bottom = 28.dp)),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
+        GleaumAdaptiveContent {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(PaddingValues(start = 20.dp, top = innerPadding.calculateTopPadding() + 12.dp, end = 20.dp, bottom = 28.dp)),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
             HeroCard(kind = kind, isEdit = isEdit)
-            if (message != null) MessageCard(message)
+            if (message != null) {
+                GleaumFeedbackBanner(message = message, kind = FeedbackKind.ERROR)
+            }
             ChipGroupCard("구분", listOf("expense" to "지출", "income" to "수입"), kind, onKindChange)
             ChipGroupCard("입력 방식", listOf("onetime" to "일회", "recurring" to "정기"), entryMode, onEntryModeChange)
             FormCard(
@@ -125,10 +131,11 @@ fun ComposeBudgetEntryFormScreen(
                 onCategoryChange = onCategoryChange,
                 onPaymentMethodChange = onPaymentMethodChange,
             )
-            Button(enabled = !saving, onClick = onSave, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(if (saving) "저장 중..." else if (isEdit) "수정 완료" else if (kind == "income") "수입 등록" else "지출 등록")
+                Button(enabled = !saving, onClick = onSave, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(if (saving) "저장 중..." else if (isEdit) "수정 완료" else if (kind == "income") "수입 등록" else "지출 등록")
+                }
             }
         }
     }
@@ -138,19 +145,12 @@ fun ComposeBudgetEntryFormScreen(
 private fun HeroCard(kind: String, isEdit: Boolean) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
         Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), shape = CircleShape, modifier = Modifier.size(46.dp)) {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest, shape = CircleShape, modifier = Modifier.size(46.dp)) {
                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Payments, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             }
             Text(if (isEdit) "항목을 수정해요" else if (kind == "income") "수입을 기록해요" else "지출을 기록해요", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Text("개인 가계부에만 저장되며, 공간 지출과 섞이지 않습니다.", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f), style = MaterialTheme.typography.bodyMedium)
         }
-    }
-}
-
-@Composable
-private fun MessageCard(message: String) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-        Text(message, modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
     }
 }
 

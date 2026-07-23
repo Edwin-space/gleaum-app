@@ -5,9 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSpace } from '@/hooks/useSpace';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { AccountCapabilityGate } from '@/components/AccountCapabilityGate';
 import {
   getSpaceSettings, updateSpaceSettings, updateSpaceName,
   getSpaceWithMembers, removeSpaceMember, deleteSpace, regenerateInviteCode,
+  convertSpaceToFamily,
 } from '@/lib/db';
 import type { SpaceMember } from '@/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -23,7 +25,7 @@ const PURPOSES = [
 
 const DEFAULT_TYPES = ['공지', '약속', '활동', '행사', '기타'];
 
-// ── 공간 폐쇄 확인 모달 ──────────────────────────────────────
+// ── 공간 삭제 확인 모달 ──────────────────────────────────────
 function CloseSpaceModal({
   hasOtherMembers,
   onConfirm,
@@ -35,7 +37,7 @@ function CloseSpaceModal({
 }) {
   const [confirmText, setConfirmText] = useState('');
   const [closing, setClosing] = useState(false);
-  const isReady = confirmText === '공간 폐쇄';
+  const isReady = confirmText === '공간 삭제';
 
   const handleConfirm = async () => {
     if (!isReady || closing) return;
@@ -71,16 +73,16 @@ function CloseSpaceModal({
         </div>
 
         <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', textAlign: 'center', margin: '0 0 10px' }}>
-          공간 폐쇄
+          공간 삭제
         </h2>
 
         {hasOtherMembers ? (
           <>
             <p style={{ fontSize: '14px', color: '#EF4444', fontWeight: 700, textAlign: 'center', margin: '0 0 8px' }}>
-              멤버가 남아 있어 폐쇄할 수 없습니다
+              멤버가 남아 있어 삭제할 수 없습니다
             </p>
             <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', lineHeight: 1.6, textAlign: 'center', margin: '0 0 20px' }}>
-              공간에 참여 중인 멤버를 모두 내보낸 후<br/>공간 폐쇄를 진행해 주세요.
+              공간에 참여 중인 멤버를 모두 내보낸 후<br/>공간 삭제를 진행해 주세요.
             </p>
             <button
               onClick={onCancel}
@@ -94,17 +96,17 @@ function CloseSpaceModal({
         ) : (
           <>
             <p style={{ fontSize: '13px', color: 'var(--theme-text-subtle)', lineHeight: 1.7, margin: '0 0 18px' }}>
-              공간을 폐쇄하면 <strong style={{ color: '#EF4444' }}>일정, 가계부, 설정 등 모든 데이터가 즉시 삭제</strong>되며 복구할 수 없습니다.
+              공간을 삭제하면 <strong style={{ color: '#EF4444' }}>일정, 가계부, 설정 등 모든 데이터가 즉시 삭제</strong>되며 복구할 수 없습니다.
             </p>
 
             <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text)', margin: '0 0 8px' }}>
-              동의하시면 아래에 <span style={{ color: '#EF4444' }}>공간 폐쇄</span>를 입력해 주세요.
+              동의하시면 아래에 <span style={{ color: '#EF4444' }}>공간 삭제</span>를 입력해 주세요.
             </p>
 
             <input
               value={confirmText}
               onChange={e => setConfirmText(e.target.value)}
-              placeholder="공간 폐쇄"
+              placeholder="공간 삭제"
               autoFocus
               style={{
                 width: '100%', height: '48px', padding: '0 14px',
@@ -137,7 +139,7 @@ function CloseSpaceModal({
                   fontSize: '14px', fontWeight: 800,
                   transition: 'background 0.2s',
                 }}
-              >{closing ? '폐쇄 중...' : '공간 폐쇄 확인'}</button>
+              >{closing ? '삭제 중...' : '공간 삭제 확인'}</button>
             </div>
           </>
         )}
@@ -148,14 +150,28 @@ function CloseSpaceModal({
 
 // ── 메인 페이지 ──────────────────────────────────────────────
 export default function SpaceSettingsPage() {
+  return (
+    <AccountCapabilityGate
+      capability="canManageSpaces"
+      title="공간 설정 권한이 없습니다"
+      description="보호자 관리 또는 미성년 계정에서는 공간 설정과 멤버 권한을 변경할 수 없습니다."
+    >
+      <SpaceSettingsContent />
+    </AccountCapabilityGate>
+  );
+}
+
+function SpaceSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isDesktop = useIsDesktop();
-  const { spaceId, user, loading: userLoading } = useCurrentUser();
+  const { spaceId, personalSpaceId, user, loading: userLoading, refresh: refreshUser } = useCurrentUser();
   const targetSpaceId = searchParams.get('sid') ?? spaceId;
   const userId = user?.id ?? null;
   const { space, myRole, loading: spaceLoading, refresh: refreshSpace } = useSpace(targetSpaceId);
   const isAdmin = myRole === 'admin';
+  const isFamilySpace = space?.spaceKind === 'family';
+  const isPersonalSpace = targetSpaceId === personalSpaceId || space?.spaceKind === 'personal';
 
   // ── 공간 이름 ──────────────────────────────────────────────
   const [spaceName,     setSpaceName]     = useState('');
@@ -163,7 +179,7 @@ export default function SpaceSettingsPage() {
   const [savingName,    setSavingName]    = useState(false);
 
   // ── 설정 (목적 / 일정 유형) ────────────────────────────────
-  const [purpose,       setPurpose]       = useState<string>('family');
+  const [purpose,       setPurpose]       = useState<string>('other');
   const [scheduleTypes, setScheduleTypes] = useState<string[]>(DEFAULT_TYPES);
   const [newType,       setNewType]       = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
@@ -179,7 +195,7 @@ export default function SpaceSettingsPage() {
   const [liveInviteCode, setLiveInviteCode] = useState<string | undefined>(undefined);
   const currentSettingsInviteCode = liveInviteCode ?? space?.inviteCode;
 
-  // ── 공간 폐쇄 ─────────────────────────────────────────────
+  // ── 공간 삭제 ─────────────────────────────────────────────
   const [showCloseModal, setShowCloseModal] = useState(false);
 
   // ── 설정 로드 ─────────────────────────────────────────────
@@ -190,11 +206,11 @@ export default function SpaceSettingsPage() {
     setSpaceName(space?.name ?? '');
 
     getSpaceSettings(targetSpaceId).then(settings => {
-      if (settings.purpose) setPurpose(settings.purpose);
+      setPurpose(space?.spaceKind === 'family' ? 'family' : (settings.purpose ?? 'other'));
       if (settings.scheduleTypes?.length) setScheduleTypes(settings.scheduleTypes);
       setSettingsLoaded(true);
     });
-  }, [targetSpaceId, space?.name]);
+  }, [targetSpaceId, space?.name, space?.spaceKind]);
 
   // ── 멤버 로드 ─────────────────────────────────────────────
   const loadMembers = useCallback(async () => {
@@ -237,10 +253,26 @@ export default function SpaceSettingsPage() {
   // ── 설정 저장 ─────────────────────────────────────────────
   const handleSaveSettings = async () => {
     if (!targetSpaceId) return;
+    const convertsToFamily = !isPersonalSpace && purpose === 'family' && space?.spaceKind !== 'family';
+    if (convertsToFamily && !window.confirm(
+      '가족 공간으로 전환하면 기존 일정, 소식, 멤버는 유지되지만 일반 공간으로 되돌릴 수 없습니다. 전환할까요?',
+    )) return;
+
     setSavingSettings(true);
+    if (convertsToFamily) {
+      const converted = await convertSpaceToFamily(targetSpaceId);
+      if (!converted) {
+        setSavingSettings(false);
+        toast.error('가족 공간 전환에 실패했습니다');
+        return;
+      }
+    }
     const ok = await updateSpaceSettings(targetSpaceId, { purpose, scheduleTypes });
     setSavingSettings(false);
-    if (ok) toast.success('설정이 저장되었습니다');
+    if (ok) {
+      if (convertsToFamily) await refreshSpace();
+      toast.success(convertsToFamily ? '가족 공간으로 전환했습니다' : '설정이 저장되었습니다');
+    }
     else    toast.error('설정 저장에 실패했습니다');
   };
 
@@ -263,6 +295,10 @@ export default function SpaceSettingsPage() {
   const handleRemoveMember = async (member: SpaceMember) => {
     if (!targetSpaceId) return;
     const isSelf = member.userId === userId;
+    if (isSelf && isAdmin) {
+      toast.error('공간 지기는 공간을 나갈 수 없습니다. 공간 삭제를 이용해주세요.');
+      return;
+    }
     const label  = isSelf ? '공간에서 나가시겠습니까?' : `${member.user?.name ?? '멤버'}를 내보내시겠습니까?`;
     if (!window.confirm(label)) return;
 
@@ -282,7 +318,7 @@ export default function SpaceSettingsPage() {
     }
   };
 
-  // ── 공간 폐쇄 ─────────────────────────────────────────────
+  // ── 공간 삭제 ─────────────────────────────────────────────
   const otherMembers = members.filter(m => m.userId !== userId);
   const hasOtherMembers = otherMembers.length > 0;
 
@@ -335,13 +371,24 @@ export default function SpaceSettingsPage() {
 
   const handleCloseSpace = async () => {
     if (!targetSpaceId) return;
-    const ok = await deleteSpace(targetSpaceId);
-    if (ok) {
-      toast.success('공간이 폐쇄되었습니다');
+    const result = await deleteSpace(targetSpaceId);
+    if (result.ok) {
+      toast.success('공간이 삭제되었습니다');
       try { localStorage.removeItem('gleaum_space_name_updated'); } catch {}
-      router.replace('/home');
+      await refreshUser();
+      const nextPath = result.fallbackSpaceId
+        ? `/space?sid=${encodeURIComponent(result.fallbackSpaceId)}`
+        : '/space';
+      router.replace(nextPath);
+      router.refresh();
     } else {
-      toast.error('공간 폐쇄에 실패했습니다');
+      const message = result.error;
+      if (message.includes('space_has_other_members')) toast.error('다른 멤버를 모두 내보낸 뒤 삭제해 주세요');
+      else if (message.includes('family_space_has_dependents')) toast.error('연결된 자녀와 가족 이력이 있어 삭제할 수 없습니다');
+      else if (message.includes('personal_space_locked')) toast.error('개인 공간은 삭제할 수 없습니다');
+      else if (message.includes('space_admin_required')) toast.error('공간 지기만 삭제할 수 있습니다');
+      else if (message.includes('space_not_found')) toast.error('이미 삭제되었거나 존재하지 않는 공간입니다');
+      else toast.error('공간 삭제에 실패했습니다');
     }
   };
 
@@ -548,14 +595,15 @@ export default function SpaceSettingsPage() {
                       return (
                         <button
                           key={p.key}
-                          onClick={() => isAdmin && setPurpose(p.key)}
+                          onClick={() => isAdmin && !isFamilySpace && !isPersonalSpace && setPurpose(p.key)}
+                          disabled={!isAdmin || isFamilySpace || isPersonalSpace}
                           style={{
                             minHeight: '78px',
                             borderRadius: '18px',
                             border: `1.5px solid ${active ? 'rgba(0,132,204,0.45)' : '#E8E8E4'}`,
                             background: active ? 'rgba(0,132,204,0.08)' : 'white',
                             color: active ? '#0084CC' : '#6E6E66',
-                            cursor: isAdmin ? 'pointer' : 'default',
+                            cursor: isAdmin && !isFamilySpace && !isPersonalSpace ? 'pointer' : 'default',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -571,6 +619,19 @@ export default function SpaceSettingsPage() {
                       );
                     })}
                   </div>
+                  {isFamilySpace && (
+                    <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: '12px 0 0', lineHeight: 1.6 }}>
+                      연결된 자녀와 가족 이력을 보호하기 위해 가족 공간은 일반 공간으로 되돌릴 수 없습니다.
+                    </p>
+                  )}
+                  {isAdmin && purpose === 'family' && (
+                    <button
+                      onClick={() => router.push(`/space/children?sid=${encodeURIComponent(targetSpaceId ?? '')}`)}
+                      style={{ width: '100%', minHeight: '50px', marginTop: '18px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.24)', background: 'rgba(0,132,204,0.07)', color: '#0084CC', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
+                    >
+                      자녀 계정 연결 관리
+                    </button>
+                  )}
                 </div>
 
                 <div style={desktopCard}>
@@ -626,7 +687,7 @@ export default function SpaceSettingsPage() {
               </div>
 
               <aside style={{ display: 'grid', gap: '24px' }}>
-                {isAdmin && (
+                {isAdmin && !isPersonalSpace && (
                   <div style={desktopCard}>
                     <p style={desktopLabel}>초대 코드</p>
                     <p style={{ ...mutedText, marginBottom: '16px' }}>공유 공간에 멤버를 초대할 때 사용하는 코드입니다.</p>
@@ -713,13 +774,13 @@ export default function SpaceSettingsPage() {
                                 {memberAdmin ? '공간 지기' : '공간 멤버'}
                               </p>
                             </div>
-                            {isAdmin && (
+                            {isAdmin && !isSelf && (
                               <button
                                 onClick={() => handleRemoveMember(member)}
                                 disabled={removing}
-                                style={{ height: '34px', padding: '0 12px', borderRadius: '999px', border: `1.5px solid ${isSelf ? '#E8E8E4' : 'rgba(239,68,68,0.25)'}`, background: 'var(--theme-surface)', color: isSelf ? '#8E8E93' : '#EF4444', cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.55 : 1, fontSize: '12px', fontWeight: 900 }}
+                                style={{ height: '34px', padding: '0 12px', borderRadius: '999px', border: '1.5px solid rgba(239,68,68,0.25)', background: 'var(--theme-surface)', color: '#EF4444', cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.55 : 1, fontSize: '12px', fontWeight: 900 }}
                               >
-                                {removing ? '처리 중' : isSelf ? '나가기' : '내보내기'}
+                                {removing ? '처리 중' : '내보내기'}
                               </button>
                             )}
                           </div>
@@ -729,18 +790,18 @@ export default function SpaceSettingsPage() {
                   )}
                 </div>
 
-                {isAdmin && (
+                {isAdmin && !isPersonalSpace && (
                   <div style={{ ...desktopCard, border: '1.5px solid rgba(239,68,68,0.18)', background: 'rgba(255,250,250,0.92)' }}>
                     <p style={{ ...desktopLabel, color: '#EF4444' }}>위험 구역</p>
-                    <h3 style={{ fontSize: '17px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>공간 폐쇄</h3>
+                    <h3 style={{ fontSize: '17px', fontWeight: 900, color: 'var(--theme-text)', margin: '0 0 8px' }}>공간 삭제</h3>
                     <p style={{ ...mutedText, marginBottom: '16px' }}>
-                      공간과 연결된 일정, 가계부, 설정 데이터가 삭제됩니다. 멤버가 남아 있으면 폐쇄할 수 없습니다.
+                      공간과 연결된 일정, 가계부, 설정 데이터가 삭제됩니다. 멤버가 남아 있으면 삭제할 수 없습니다.
                     </p>
                     <button
                       onClick={() => setShowCloseModal(true)}
                       style={{ height: '44px', padding: '0 18px', borderRadius: '999px', border: '1.5px solid rgba(239,68,68,0.35)', background: 'var(--theme-surface)', color: '#EF4444', cursor: 'pointer', fontSize: '13px', fontWeight: 900 }}
                     >
-                      공간 폐쇄
+                      공간 삭제
                     </button>
                   </div>
                 )}
@@ -843,13 +904,14 @@ export default function SpaceSettingsPage() {
               {PURPOSES.map(p => (
                 <button
                   key={p.key}
-                  onClick={() => isAdmin && setPurpose(p.key)}
+                  onClick={() => isAdmin && !isFamilySpace && !isPersonalSpace && setPurpose(p.key)}
+                  disabled={!isAdmin || isFamilySpace || isPersonalSpace}
                   style={{
                     padding: '9px 16px', borderRadius: '999px',
                     border: `1.5px solid ${purpose === p.key ? '#0084CC' : '#E0E0E5'}`,
                     background: purpose === p.key ? 'rgba(0,132,204,0.08)' : 'white',
                     color: purpose === p.key ? '#0084CC' : '#8E8E93',
-                    fontSize: '13px', fontWeight: 700, cursor: isAdmin ? 'pointer' : 'default',
+                    fontSize: '13px', fontWeight: 700, cursor: isAdmin && !isFamilySpace && !isPersonalSpace ? 'pointer' : 'default',
                     display: 'flex', alignItems: 'center', gap: '6px',
                   }}
                 >
@@ -857,6 +919,19 @@ export default function SpaceSettingsPage() {
                 </button>
               ))}
             </div>
+            {isFamilySpace && (
+              <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: '12px 0 0', lineHeight: 1.6 }}>
+                연결된 자녀와 가족 이력을 보호하기 위해 가족 공간은 일반 공간으로 되돌릴 수 없습니다.
+              </p>
+            )}
+            {isAdmin && purpose === 'family' && (
+              <button
+                onClick={() => router.push(`/space/children?sid=${encodeURIComponent(targetSpaceId ?? '')}`)}
+                style={{ width: '100%', minHeight: '48px', marginTop: '14px', borderRadius: '999px', border: '1.5px solid rgba(0,132,204,0.24)', background: 'rgba(0,132,204,0.07)', color: '#0084CC', cursor: 'pointer', fontSize: '14px', fontWeight: 850 }}
+              >
+                자녀 계정 연결 관리
+              </button>
+            )}
           </div>
 
           {/* ── 일정 유형 관리 ── */}
@@ -1028,20 +1103,20 @@ export default function SpaceSettingsPage() {
                       </div>
 
                       {/* 내보내기 / 나가기 버튼 */}
-                      {isAdmin && (
+                      {isAdmin && !isSelf && (
                         <button
                           onClick={() => handleRemoveMember(member)}
                           disabled={removing}
                           style={{
                             padding: '6px 14px', borderRadius: '10px', flexShrink: 0,
-                            border: `1.5px solid ${isSelf ? '#E0E0E5' : 'rgba(239,68,68,0.25)'}`,
+                            border: '1.5px solid rgba(239,68,68,0.25)',
                             background: 'var(--theme-surface)',
-                            color: isSelf ? '#8E8E93' : '#EF4444',
+                            color: '#EF4444',
                             fontSize: '12px', fontWeight: 700, cursor: removing ? 'not-allowed' : 'pointer',
                             opacity: removing ? 0.5 : 1,
                           }}
                         >
-                          {removing ? '처리 중' : isSelf ? '나가기' : '내보내기'}
+                          {removing ? '처리 중' : '내보내기'}
                         </button>
                       )}
                     </div>
@@ -1051,14 +1126,14 @@ export default function SpaceSettingsPage() {
             )}
           </div>
 
-          {/* ── 공간 폐쇄 ── */}
-          {isAdmin && (
+          {/* ── 공간 삭제 ── */}
+          {isAdmin && !isPersonalSpace && (
             <>
               <p style={{ ...sectionLabel, color: '#EF4444' }}>위험 구역</p>
               <div style={{ ...card, border: '1.5px solid rgba(239,68,68,0.20)', background: 'rgba(255,250,250,1)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                   <div>
-                    <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px' }}>공간 폐쇄</p>
+                    <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 4px' }}>공간 삭제</p>
                     <p style={{ fontSize: '12px', color: 'var(--theme-text-subtle)', margin: 0, lineHeight: 1.5 }}>
                       공간과 모든 데이터가 즉시 삭제됩니다.<br/>
                       {hasOtherMembers && <span style={{ color: '#EF4444', fontWeight: 700 }}>멤버를 모두 내보낸 후 진행하세요.</span>}

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: '글리움 서비스의 이용약관입니다.',
 };
 
-const EFFECTIVE_DATE = '2026년 5월 13일';
+const EFFECTIVE_DATE = '2026년 7월 20일';
 const SERVICE_NAME = '글리움';
 const OPERATOR = '유태성';
 const EMAIL = 'helper@gleaum.com';
@@ -59,7 +59,7 @@ export default async function TermsPage({ searchParams }: LegalPageProps) {
         <div style={{ background: 'rgba(0,132,204,0.1)', borderRadius: '14px', padding: '16px 20px', marginBottom: '36px', border: '1px solid rgba(0,132,204,0.25)' }}>
           <p style={{ margin: 0, fontSize: '13px', color: '#0CC9B5', fontWeight: 600 }}>시행일: {EFFECTIVE_DATE}</p>
           <p style={{ margin: '6px 0 0', fontSize: '14px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
-            본 약관은 {OPERATOR}(이하 "운영자")가 제공하는 {SERVICE_NAME} 서비스(이하 "서비스")의 이용 조건 및 절차에 관한 사항을 규정합니다.
+            본 약관은 {OPERATOR}(이하 &quot;운영자&quot;)가 제공하는 {SERVICE_NAME} 서비스(이하 &quot;서비스&quot;)의 이용 조건 및 절차에 관한 사항을 규정합니다.
           </p>
         </div>
 
@@ -69,11 +69,13 @@ export default async function TermsPage({ searchParams }: LegalPageProps) {
 
         <Section title="제2조 (정의)">
           <ul style={{ paddingLeft: '20px', lineHeight: '1.9' }}>
-            <li><strong>"서비스"</strong>란 운영자가 제공하는 일정·가계부·공간 관리 앱 및 웹 서비스 전체를 의미합니다.</li>
-            <li><strong>"이용자"</strong>란 이 약관에 동의하고 서비스를 이용하는 자를 말합니다.</li>
-            <li><strong>"계정"</strong>이란 이용자가 서비스에 접근하기 위해 생성한 Google 또는 이메일 기반 인증 정보를 말합니다.</li>
-            <li><strong>"공간(Space)"</strong>이란 이용자가 생성하거나 참여한 그룹으로, 일정·가계부를 함께 관리하는 단위를 말합니다.</li>
-            <li><strong>"콘텐츠"</strong>란 이용자가 서비스 내에 등록한 일정, 가계부 내역, 메모, 첨부파일 등을 말합니다.</li>
+            <li><strong>&quot;서비스&quot;</strong>란 운영자가 제공하는 일정·가계부·공간 관리 앱 및 웹 서비스 전체를 의미합니다.</li>
+            <li><strong>&quot;이용자&quot;</strong>란 이 약관에 동의하고 서비스를 이용하는 자를 말합니다.</li>
+            <li><strong>&quot;계정&quot;</strong>이란 이용자가 서비스에 접근하기 위해 생성한 Google 또는 이메일 기반 인증 정보를 말합니다.</li>
+            <li><strong>&quot;공간(Space)&quot;</strong>이란 이용자가 생성하거나 참여한 그룹으로, 일정·가계부를 함께 관리하는 단위를 말합니다.</li>
+            <li><strong>&quot;가족 공간&quot;</strong>이란 보호자·자녀 관계와 연령별 이용 권한을 관리할 수 있도록 설정된 공간을 말합니다.</li>
+            <li><strong>&quot;보호자&quot;</strong>란 만 14세 미만 아동의 법정대리인으로서 자녀 가입 및 개인정보 처리에 동의하고 이를 확인받은 자를 말합니다.</li>
+            <li><strong>&quot;콘텐츠&quot;</strong>란 이용자가 서비스 내에 등록한 일정, 가계부 내역, 메모, 첨부파일 등을 말합니다.</li>
           </ul>
         </Section>
 
@@ -89,7 +91,9 @@ export default async function TermsPage({ searchParams }: LegalPageProps) {
         <Section title="제4조 (서비스 이용 신청 및 승낙)">
           <ul style={{ paddingLeft: '20px', lineHeight: '1.9' }}>
             <li>이용자는 Google 계정 또는 이메일로 회원가입 후 서비스를 이용할 수 있습니다.</li>
-            <li>만 14세 미만은 법정대리인의 동의 없이 회원가입을 할 수 없습니다.</li>
+            <li>만 14세 미만은 보호자가 가족 공간에서 자녀 정보를 사전 등록하고 필수 동의를 완료한 뒤 발급한 일회성 초대를 통해서만 가입할 수 있습니다.</li>
+            <li>자녀가 초대를 수락해도 보호자의 최종 승인이 끝나기 전에는 가족 공간에 접근할 수 없습니다.</li>
+            <li>보호자 확인 및 동의 절차가 완료되지 않거나 확인 결과가 불충분한 경우 운영자는 가입 또는 연결을 제한할 수 있습니다.</li>
             <li>운영자는 다음에 해당하는 경우 이용 신청을 거부하거나 사후에 이용을 제한할 수 있습니다.
               <ul style={{ paddingLeft: '20px', marginTop: '6px' }}>
                 <li>타인의 명의 또는 허위 정보를 사용한 경우</li>

@@ -170,6 +170,39 @@ export async function setStatusBarLight(): Promise<void> {
   }
 }
 
+export type NativeThemeMode = 'light' | 'dark' | 'system';
+
+function resolveNativeTheme(mode: NativeThemeMode): 'light' | 'dark' {
+  if (mode !== 'system') return mode;
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+/**
+ * 네이티브 앱의 시스템바를 앱 화면 모드와 동기화합니다.
+ * Android는 MainActivity의 JS bridge를 통해 navigation bar까지 함께 갱신합니다.
+ */
+export async function applyNativeSystemBars(mode: NativeThemeMode): Promise<void> {
+  if (!isNativeApp()) return;
+
+  const resolved = resolveNativeTheme(mode);
+  const platform = getNativePlatform();
+
+  if (platform === 'android') {
+    const bridge = (window as unknown as {
+      GleaumNativeTheme?: { setThemeMode?: (mode: NativeThemeMode) => void };
+    }).GleaumNativeTheme;
+    bridge?.setThemeMode?.(mode);
+    return;
+  }
+
+  if (platform === 'ios' && !isMacCatalyst()) {
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    await StatusBar.setStyle({ style: resolved === 'dark' ? Style.Dark : Style.Light });
+    await StatusBar.setBackgroundColor({ color: resolved === 'dark' ? '#0F172A' : '#FAFAFD' });
+  }
+}
+
 // ── OAuth / 브라우저 ──────────────────────────────────────────────────────────
 
 /**

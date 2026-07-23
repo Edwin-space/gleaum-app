@@ -11,6 +11,8 @@ import type { Schedule, ScheduleStatus } from '@/types';
 import { MobileScheduleDetail } from './MobileScheduleDetail';
 import { DesktopScheduleDetail } from './DesktopScheduleDetail';
 import { trackEvent } from '@/lib/analytics';
+import { notifToast } from '@/lib/toast';
+import { canWriteScheduleBoundary } from '@/lib/data-boundaries';
 
 const typeConfig = {
   shared:   { icon: '👨‍👩‍👧‍👦', gradient: 'linear-gradient(135deg, #0CC9B5 0%, #0084CC 100%)' },
@@ -30,12 +32,13 @@ export default function ScheduleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const { spaceId } = useCurrentUser();
-  const { space: group, members } = useSpace(spaceId);
+  const { user } = useCurrentUser();
 
   const [schedule, setSchedule] = useState<Schedule | null | undefined>(undefined);
   const [showDeleteModal, setShowDeleteModal]     = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [renotifying, setRenotifying] = useState(false);
+  const { members, myRole } = useSpace(schedule?.spaceId ?? schedule?.familyGroupId ?? null);
 
   useEffect(() => {
     if (!id) return;
@@ -51,7 +54,7 @@ export default function ScheduleDetailPage() {
   }, [id]);
 
   const handleUpdateStatus = async (status: ScheduleStatus) => {
-    if (!schedule) return;
+    if (!schedule || !canEdit) return;
     await updateScheduleStatus(schedule.id, status);
     setSchedule({ ...schedule, status });
     if (status === 'completed') {
@@ -61,10 +64,33 @@ export default function ScheduleDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!schedule) return;
+    if (!schedule || !canEdit) return;
     void trackEvent('schedule_delete', { schedule_type: schedule.type });
     await deleteSchedule(schedule.id);
     router.back();
+  };
+
+  const handleRenotify = async () => {
+    if (!schedule || !canEdit || renotifying) return;
+    setRenotifying(true);
+    try {
+      const response = await fetch('/api/notifications/renotify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scheduleId: schedule.id,
+          title: `🔔 재알림: ${schedule.title}`,
+          body: '놓친 일정을 확인해주세요',
+          url: `/schedules/${schedule.id}`,
+        }),
+      });
+      if (!response.ok) throw new Error('renotify_failed');
+      notifToast.sent(schedule.title);
+    } catch {
+      notifToast.error();
+    } finally {
+      setRenotifying(false);
+    }
   };
 
   if (schedule === undefined) {
@@ -86,8 +112,16 @@ export default function ScheduleDetailPage() {
   }
 
   const cfg = typeConfig[schedule.type];
-  const participantUsers = members.filter((u) => schedule.participants.includes(u.id));
+  const participantUsers = members
+    .filter((member) => schedule.participants.includes(member.userId))
+    .map((member) => member.user)
+    .filter((member) => member !== undefined);
   const currentStepIdx = steps.findIndex((s) => s.key === schedule.status);
+  const canEdit = canWriteScheduleBoundary(
+    user?.id ?? '',
+    { createdBy: schedule.createdBy, visibility: schedule.visibility ?? null },
+    myRole,
+  );
 
   const commonProps = {
     schedule,
@@ -96,12 +130,15 @@ export default function ScheduleDetailPage() {
     participantUsers,
     steps,
     currentStepIdx,
+    canEdit,
+    renotifying,
     showDeleteModal,
     setShowDeleteModal,
     showCompletionModal,
     setShowCompletionModal,
     handleUpdateStatus,
-    handleDelete
+    handleDelete,
+    handleRenotify,
   };
 
   if (isDesktop) {

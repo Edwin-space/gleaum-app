@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-auth';
 import { getFirebaseAccessToken, RC_BASE, RC_SCOPE } from '@/lib/firebase-admin';
 
 // 허용된 키 목록 (gleaum 앱의 DEFAULT_CONFIG와 동일)
@@ -30,6 +31,9 @@ const DEFAULT_VALUES: Record<string, string> = {
 };
 
 export async function GET() {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
   try {
     const token = await getFirebaseAccessToken(RC_SCOPE);
     const res = await fetch(RC_BASE, {
@@ -60,6 +64,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
   try {
     const { updates } = await req.json() as { updates: Record<string, string> };
     if (!updates || typeof updates !== 'object') {

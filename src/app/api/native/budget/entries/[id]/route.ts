@@ -5,7 +5,7 @@ import {
   updateNativeLedgerEntry,
   type NativeCreateLedgerInput,
 } from '@/lib/db';
-import { createNativeRouteAuth } from '@/lib/supabase/native-route';
+import { authorizeAccountCapability } from '@/lib/supabase/capability-auth';
 import type { LedgerStatus } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +21,9 @@ function errorStatus(message: string) {
 }
 
 export async function GET(req: NextRequest, context: RouteContext) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canViewHouseholdBudget');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
   const { id } = await context.params;
   try {
     const entry = await getNativeLedgerEntryById(auth.supabase, auth.user.id, id);
@@ -34,8 +35,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
 }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canViewHouseholdBudget');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
 
   let input: NativeUpdateLedgerInput;
   try {
@@ -55,8 +57,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canViewHouseholdBudget');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
   const { id } = await context.params;
   try {
     await deleteNativeLedgerEntry(auth.supabase, auth.user.id, id);

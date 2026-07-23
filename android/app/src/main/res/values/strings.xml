@@ -9,4 +9,29 @@
     <string name="supabase_anon_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dmpkc2VzY3VrYWVvcmN1YWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUxNDksImV4cCI6MjA5MzA2MTE0OX0.oFPpDadJIGbEe7du222Wr0ZdRnBJp46-v7oQbBfszqE</string>
 
     <string name="google_web_client_id">913127709928-uba2o16d4dic4cs008b8jrhfpfprqguj.apps.googleusercontent.com</string>
+
+    <string name="brand_wordmark">gleaum</string>
+    <string name="brand_logo_description">글리움 로고</string>
+    <string name="brand_tagline_en">Making everyday life shine together</string>
+    <string name="brand_tagline_ko">나, 그리고 연인/가족의\n일상 네트워크</string>
+    <string name="brand_tagline_line_1">나, 그리고</string>
+    <string name="brand_tagline_line_2">연인/가족의</string>
+    <string name="brand_tagline_line_3">일상 네트워크</string>
+    <string name="google_description">Google</string>
+    <string name="login_google_continue">Google로 계속하기</string>
+    <string name="login_email_continue">이메일로 계속하기</string>
+    <string name="login_other_method">← 다른 방법으로 계속하기</string>
+    <string name="login_email_title">이메일로 로그인</string>
+    <string name="login_email_subtitle">글리움 계정 이메일과 비밀번호를 입력해 주세요.</string>
+    <string name="login_name_hint">이름 또는 닉네임</string>
+    <string name="login_email_hint">이메일</string>
+    <string name="login_password_hint">비밀번호</string>
+    <string name="consent_all">[필수] 전체 동의</string>
+    <string name="consent_age">[필수] 만 14세 이상입니다.</string>
+    <string name="consent_terms">[필수] 이용약관에 동의합니다.</string>
+    <string name="consent_privacy">[필수] 개인정보 수집·이용에 동의합니다.</string>
+    <string name="common_view">보기</string>
+    <string name="common_login">로그인</string>
+    <string name="login_signup_prompt">계정이 없으신가요? 회원가입</string>
+    <string name="login_legal_notice">로그인 시 이용약관 및 개인정보처리방침에\n동의하는 것으로 간주됩니다.</string>
 </resources>

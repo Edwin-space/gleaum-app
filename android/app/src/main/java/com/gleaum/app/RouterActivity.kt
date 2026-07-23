@@ -33,7 +33,27 @@ class RouterActivity : AppCompatActivity() {
 
         NativeFirebase.syncSession(this, "router_entry")
 
+        if (SessionManager.hasValid(this)) {
+            Thread {
+                NativeStartupPrefetcher.start(applicationContext)
+                NativeStartupPrefetcher.awaitAccount()
+                if (NativeAccountContextStore.current(this) == null) {
+                    runCatching { NativeAccountContextStore.refresh(this) }
+                }
+                (application as? GleaumApp)?.syncAdvertisingEligibility()
+                runOnUiThread { route(isOAuthCallback) }
+            }.start()
+            return
+        }
+
+        route(isOAuthCallback)
+    }
+
+    private fun route(isOAuthCallback: Boolean) {
+        if (isFinishing || isDestroyed) return
+
         val notificationPath = NativeDeepLinkRouter.pathFromIntent(intent)
+            ?: if (SessionManager.hasValid(this)) NativePendingRouteStore.peek(this) else null
         val nativeDeepLinkIntent = if (SessionManager.hasValid(this) && !isOAuthCallback) {
             NativeDeepLinkRouter.intentFor(this, notificationPath)
         } else {
@@ -42,6 +62,7 @@ class RouterActivity : AppCompatActivity() {
 
         val target = when {
             nativeDeepLinkIntent != null -> null
+            SessionManager.hasValid(this) && !notificationPath.isNullOrBlank() -> MainActivity::class.java
             SessionManager.hasValid(this) && NativePortFlags.ENABLE_NATIVE_HOME -> NativeHomePortActivity::class.java
             SessionManager.hasValid(this) -> MainActivity::class.java
             isOAuthCallback              -> MainActivity::class.java  // OAuth 콜백은 Main 으로
@@ -59,6 +80,7 @@ class RouterActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         )
+        if (!notificationPath.isNullOrBlank()) NativePendingRouteStore.clear(this)
         finish()
         overridePendingTransition(0, 0)
     }

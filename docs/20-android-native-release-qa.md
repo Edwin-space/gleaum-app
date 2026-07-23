@@ -1,15 +1,22 @@
 # 20. Android Native Release QA Checklist
 
 > 작성일: 2026-07-08
+>
+> 최종 점검: 2026-07-16
 > 목적: Android 네이티브 Material 3 전환 이후 Google Play 업데이트 전 필수 검증 항목을 정리한다.
 
 ## 1. 현재 사전 점검 결과
 
 ### 빌드
-- Debug 빌드: 통과
-  - 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug --quiet`
-- Release manifest 처리: 통과
-  - 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:processReleaseManifest :app:processReleaseManifestForPackage`
+- Debug 빌드·단위 테스트·lint: 통과
+  - 2026-07-16 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:assembleDebug :app:testDebugUnitTest :app:lintDebug`
+  - lint 오류 0건, 경고 170건. 보고서: `android/app/build/reports/lint-results-debug.html`
+- Release R8·manifest·서명 전 bundle 패키징: 통과
+  - 2026-07-16 명령: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' android/gradlew -p android :app:packageReleaseBundle`
+  - intermediary AAB 약 96MB, `mapping.txt` 약 84MB. 광범위 package keep 규칙을 제거해 기존 약 262MB/217MB에서 축소했다.
+- 최종 서명 AAB: 차단
+  - `:app:bundleRelease`는 `:app:signReleaseBundle` 전 단계까지 통과했다.
+  - release keystore는 존재하지만 빌드 환경에 store/key password가 없어 서명 단계만 실패한다. 비밀번호를 출력하거나 저장소에 기록하지 않는다.
 
 ### Play Console 권한 이슈 재점검
 - 릴리즈 매니페스트에서 아래 권한 검출 없음.
@@ -17,11 +24,22 @@
   - `READ_MEDIA_VIDEO`
   - `READ_EXTERNAL_STORAGE`
   - `WRITE_EXTERNAL_STORAGE`
+- `android:allowBackup="false"` 적용 확인.
+- 내부 Material 3 preview Activity는 `exported="false"` 적용 확인.
 
 ### 기기 연결 상태
 - ADB 서버는 승인 후 정상 기동됨.
-- 현재 연결된 Android 기기 없음.
-- 실기기 설치/화면 QA는 기기 연결 후 진행 필요.
+- 연결 기기 `R3CW803L3WH`(`SM_F731N`)에 2026-07-16 최신 debug APK `1.1.5 (26)` 설치 및 런처 실행 확인.
+- 스플래시에서 세션 없음 분기 후 `LoginActivity` 진입, UIAutomator 계층과 1080×2640 캡처 확인, 치명적 AndroidRuntime 로그 없음.
+- 로그인 화면은 시스템 라이트 설정에서도 브랜드 고정 다크 UI로 렌더링되며 로고·문구·Google/이메일 버튼의 잘림이나 겹침이 없다.
+- 인증 계정 세션이 없어 로그인 이후 CRUD·공간·알림·생체인증·캘린더 권한 실사용 회귀는 차단 상태다.
+
+### 즉시 반영한 보안·출시 안정성 보완
+
+- 토큰이 저장되는 앱의 Android 백업을 차단했다.
+- 내부 preview Activity의 외부 실행을 차단했다.
+- 캘린더 생성·수정·삭제는 네이티브 플러그인에서도 `gleaum:schedule:` 표식과 대상 캘린더 일치를 검사한다.
+- SDK 전체를 보존하던 ProGuard 규칙을 제거하고 각 SDK consumer rule에 맡겨 R8 축소가 실제 동작하게 했다.
 
 ## 2. Native Compose 적용 범위
 
@@ -38,10 +56,20 @@
 - `ENABLE_COMPOSE_NOTIFICATIONS = true`
 - `ENABLE_COMPOSE_ONBOARDING = true`
 
+### 2026-07-14 공통 UI 기반
+
+- 공통 내비게이션은 Material 3 `NavigationSuiteScaffold`를 사용한다.
+- compact 화면은 NavigationBar, medium/expanded 화면은 NavigationRail 계열로 자동 전환한다.
+- 화면 상태는 `GleaumStateCard`, 안내는 `GleaumFeedbackBanner`, 상태/분류는 `GleaumStatusBadge`/`GleaumLabelBadge`를 사용한다.
+- 화면별 정량 평가 기준은 `docs/22-android-material3-ui-audit.md`를 따른다.
+
 ## 3. 실기기 필수 QA
 
+> 아래 항목은 체크리스트다. 코드 구현 완료와 실기기 확인 완료를 혼동하지 않는다. 현재는 연결 단말 잠금 해제 후 전체 재검증이 필요하다.
+
 ### 3.1 시작/로그인
-- 스플래시 후 로그인 화면 진입.
+- [x] 스플래시 후 로그인 화면 진입 (2026-07-16, `SM_F731N`).
+- [x] 브랜드 고정 다크 로그인 화면의 로고·텍스트·버튼 시각 확인 (2026-07-16).
 - Google 로그인 성공 후 네이티브 홈 진입.
 - 이메일 로그인/회원가입 약관 동의 플로우 정상.
 - 로그아웃 후 네이티브 로그인 화면 복귀.
@@ -61,6 +89,7 @@
 
 ### 3.4 가계부
 - 가계부 요약 렌더링.
+- 수입/지출/순액/저축률, 반복 예정, 카테고리별 지출 요약이 개인 가계부 기준으로 보이는지 확인.
 - 수입/지출 등록.
 - 일회성/정기 항목 등록.
 - 예정/완료 토글.
@@ -122,6 +151,12 @@
 - 온보딩
 - 로그인/회원가입
 
+### 시스템 바 동기화
+
+- 자동/라이트/다크 모드 전환 후 상태바와 내비게이션 바가 본문 테마와 같은 명도로 전환되는지 확인한다.
+- 설정 저장 직후에는 Activity를 재생성해 Compose 색상 스킴과 Android 시스템 바가 같은 모드를 사용한다.
+- 외부 Activity/다이얼로그에서 돌아온 화면도 `onResume`에서 테마를 다시 적용해야 한다.
+
 ## 5. 태블릿/폴더블 QA
 
 - 화면 좌우 여백 과다/부족 여부.
@@ -129,6 +164,15 @@
 - 하단 네비게이션이 태블릿에서 어색하지 않은지.
 - LegalWebView 약관 문서가 모바일 폭으로 고정되어 보이지 않는지.
 - 온보딩 단계별 입력창/선택 카드가 한 화면에서 과도하게 늘어나지 않는지.
+
+### 2026-07-16 Preview 실기기 결과
+
+- `SM_F731N` compact 1080×2640, 글꼴 1.3배, 다크 테마에서 앱바·카드·FAB·NavigationBar의 잘림·겹침·대비 문제 없음.
+- 2560×1600 / 320dpi expanded 규격에서 NavigationRail 전환 확인.
+- expanded QA 중 공통 콘텐츠 최대 폭이 무효화되는 Modifier 순서 문제를 발견해 수정했고, 840dp 중앙 정렬을 UI 계층 좌표와 캡처로 재확인했다.
+- UIAutomator에서 로고·알림·추가·홈/일정/공간/가계부/전체·펼치기 설명과 44dp 이상 터치 영역을 확인했다.
+- 단말의 화면 크기·밀도·글꼴·라이트 모드는 모두 원래 값으로 복원했다.
+- 실제 TalkBack 음성 탐색과 인증 이후 화면의 폰 가로/expanded 검증은 수동 QA가 남아 있다.
 
 ## 6. 릴리즈 전 차단 기준
 
@@ -142,3 +186,79 @@
 - 캘린더/생체인증 권한 요청이 막힘.
 - 앱 크래시 또는 무한 로딩.
 - Play Console 권한 경고 재발.
+
+## 7. Android Kakao AdFit QA
+
+### 2026-07-13 SDK 탑재 상태
+
+- Android 네이티브 앱에 Kakao AdFit SDK 의존성을 추가했다.
+- Kakao AdFit Maven repository를 Android Gradle 공통 repository에 추가했다.
+- 앱 실행 후 네이티브 홈 진입 시 하단 전환형 팝업 광고 지면을 연결했다.
+  - 광고 단위명: 앱 실행 하단
+  - 광고 단위 코드: `DAN-Brd0FQAE3ByDWwJu`
+  - 위치: 스플래시 종료 후 Android 네이티브 홈 데이터 로드 완료 시.
+  - 구현: `AdFitPopupAdLoader` + `AdFitPopupAdDialogFragment`의 SDK 제공 팝업 UI.
+- 광고 코드나 HTML/스크립트 문자열은 어떤 화면에도 텍스트로 표시되면 안 된다.
+- 홈 중간 인라인 광고 및 홈 하단 고정 배너는 사용하지 않는다.
+
+검증 기준:
+
+- Android Studio Gradle Sync 정상.
+- `:app:assembleDebug` 통과.
+- 기존 AdMob 의존성과 충돌 없음.
+- SDK가 렌더링한 광고 외곽을 앱이 임의 라운딩/클리핑/오버레이하지 않는다.
+- 광고 로드 실패 또는 차단 시 홈 레이아웃이 깨지지 않아야 한다.
+
+### 2026-07-23 실기기 복구 결과
+
+- 가족 계정 도입 전 일반 계정의 `account_mode=unknown`을 광고 가능 표준 계정으로 처리했다. `pending_guardian_consent`, `child_managed`, `teen_consent_pending`, `teen`은 계속 광고를 차단한다.
+- 운영 Supabase에 `20260723021003_allow_ads_for_legacy_standard_accounts.sql`을 적용하고 Production session context의 `canShowAds=true`를 확인했다.
+- 시작 선조회 백그라운드 스레드에서 Google App Open Ad를 로드해 발생한 `#008 Must be called on the main UI thread` 크래시를 수정했다. 광고 초기화·로드는 메인 Looper에서만 실행한다.
+- `SM_F731N` debug 실기기에서 AdFit `Request Popup Ad` → `AdFit launch popup loaded`를 확인했다.
+- UI 계층에서 SDK 팝업의 `오늘 그만 보기`, `닫기`, 광고 이미지·문구·CTA가 정상 렌더링되고 홈 Activity가 유지되는 것을 확인했다.
+- 남은 수동 QA: `닫기`, `오늘 그만 보기`, 네트워크 차단/재고 없음 상태에서 홈 레이아웃 유지 확인.
+
+## 8. 기기 캘린더 2차 QA
+
+- 설정에서 권한 요청과 쓰기 가능한 대상 캘린더 선택을 확인한다.
+- `앞으로 30일 일정 동기화` 실행 시 글리움이 만든 일정만 생성/수정/삭제된다.
+- 같은 일정을 재동기화해 중복 생성되지 않는지 확인한다.
+- 글리움 외부에서 만든 캘린더 일정은 절대 수정·삭제하지 않는지 확인한다.
+- 이 기능은 사용자가 설정 화면에서 직접 실행하는 단방향 동기화다. 백그라운드 자동 동기화나 외부 일정 가져오기는 후속 범위다.
+
+## 9. 기기 캘린더 3차 QA
+
+- 전체 메뉴 → 캘린더 설정에서 `일정 변경 시 자동 반영`을 켤 수 있다.
+- 자동 반영은 사용자가 연동을 켜고 대상 캘린더를 선택한 경우에만 실행된다.
+- 네이티브 일정 등록·수정·삭제 후 선택된 기기 캘린더의 글리움 표식 일정이 즉시 생성·수정·삭제되는지 확인한다.
+- `수동 동기화`로 되돌리면 일정 변경 시 기기 캘린더가 바뀌지 않아야 한다.
+- 지출 일정과 글리움 표식이 없는 외부 일정은 자동 반영 대상이 아니다.
+- 외부 일정 가져오기는 데이터 경계를 위해 개인 공간 전용 흐름으로 구현한다.
+
+## 10. 기기 캘린더 가져오기 QA
+
+- 전체 메뉴 → 캘린더 설정 → `기기 일정 가져오기`로 진입한다.
+- 선택한 기기 캘린더의 앞으로 30일 일정만 후보로 보이는지 확인한다.
+- 가져오기 후보는 사용자가 체크한 항목만 개인 일정으로 생성되는지 확인한다.
+- 가져온 일정은 개인 공간의 `private` 일정이며 공유 공간 일정 목록에는 나타나지 않아야 한다.
+- 글리움에서 내보낸 표식 일정과 제목·시작 시각이 이미 같은 개인 일정은 중복 후보로 제외되는지 확인한다.
+- 외부 기기 일정은 가져오기 작업만으로 수정·삭제되지 않아야 한다.
+
+## 11. 가족 관계·초대/설정 분리 QA
+
+- 가족 공간 멤버 카드의 주 배지가 `가족 구성원` 또는 지정한 가족 관계인지 확인한다.
+- `공간 지기/공간 운영자/공간 멤버` 권한 문구는 관계 배지와 별도로 표시되어야 한다.
+- 공간 지기가 멤버를 선택하면 `가족 관계 변경`, 권한 변경, 제거가 권한 조건에 맞게 노출되는지 확인한다.
+- 일반 멤버가 관계값 변경만으로 공간 운영자나 공간 지기 권한을 얻지 않는지 확인한다.
+- 멤버 탭 `초대`를 누르면 공간 설정이 아니라 `일반 가족 구성원/자녀` 선택 화면이 먼저 나오는지 확인한다.
+- 일반 가족 구성원은 초대 코드 복사·공유·재발급을 사용할 수 있는지 확인한다.
+- 자녀는 `/space/children?sid={spaceId}`의 보호자 확인·동의·일회성 초대 흐름으로 진입하는지 확인한다.
+- 톱 앱바 설정에는 공간 이름 변경·가족 전환·삭제 등 공간 자체 설정만 있고 초대 코드가 중복 노출되지 않는지 확인한다.
+
+### 2026-07-23 실기기 결과
+
+- `SM_F731N` debug APK에서 가족 공간 관계 배지와 권한 보조 문구를 확인했다.
+- 가족 초대 유형 선택 → 일반 가족 코드/공유 화면 → 유형 다시 선택 흐름을 확인했다.
+- 본인 멤버의 가족 관계 변경 목록 11종과 현재 선택 상태를 확인했다.
+- 운영 사용자 데이터를 임의 변경하지 않기 위해 실제 관계값 저장은 실행하지 않았다.
+- 공간 설정에 초대 UI가 없고 공간 이름 변경·삭제만 남은 것을 확인했다.

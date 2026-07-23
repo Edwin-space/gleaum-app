@@ -1,6 +1,7 @@
 package com.gleaum.app
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -25,8 +26,14 @@ data class NativeAppSchedule(
     val repeat: String,
     val reminder: Int,
     val memo: String?,
+    val locationAddress: String?,
+    val locationLat: Double?,
+    val locationLng: Double?,
+    val referenceUrl: String?,
     val spaceId: String,
     val createdBy: String,
+    val participantIds: List<String>,
+    val permissions: NativeSchedulePermissions,
 ) {
     companion object {
         fun fromJson(json: JSONObject): NativeAppSchedule = NativeAppSchedule(
@@ -41,8 +48,14 @@ data class NativeAppSchedule(
             repeat = json.optString("repeat", "none"),
             reminder = json.optInt("reminder", 15),
             memo = json.optNullableString("memo"),
+            locationAddress = json.optNullableString("locationAddress"),
+            locationLat = json.optNullableDouble("locationLat"),
+            locationLng = json.optNullableDouble("locationLng"),
+            referenceUrl = json.optNullableString("referenceUrl"),
             spaceId = json.optString("spaceId"),
             createdBy = json.optString("createdBy"),
+            participantIds = json.optJSONArray("participantIds").toStringList(),
+            permissions = NativeSchedulePermissions.fromJson(json.optJSONObject("permissions")),
         )
 
         fun listFrom(array: JSONArray): List<NativeAppSchedule> = buildList {
@@ -54,8 +67,25 @@ data class NativeAppSchedule(
     }
 }
 
+data class NativeSchedulePermissions(
+    val canEdit: Boolean,
+    val canDelete: Boolean,
+    val canChangeStatus: Boolean,
+    val canRenotify: Boolean,
+) {
+    companion object {
+        fun fromJson(json: JSONObject?): NativeSchedulePermissions = NativeSchedulePermissions(
+            canEdit = json?.optBoolean("canEdit", false) == true,
+            canDelete = json?.optBoolean("canDelete", false) == true,
+            canChangeStatus = json?.optBoolean("canChangeStatus", false) == true,
+            canRenotify = json?.optBoolean("canRenotify", false) == true,
+        )
+    }
+}
+
 object NativeScheduleApi {
     private const val BASE_URL = "https://www.gleaum.com/api/native/schedules"
+    private const val RENOTIFY_URL = "https://www.gleaum.com/api/notifications/renotify"
 
     fun list(context: Context, filter: String = "all", search: String = ""): List<NativeAppSchedule> {
         val now = Calendar.getInstance()
@@ -90,6 +120,19 @@ object NativeScheduleApi {
         request(context, "DELETE", "$BASE_URL/$id")
     }
 
+    fun renotify(context: Context, schedule: NativeAppSchedule) {
+        request(
+            context,
+            "POST",
+            RENOTIFY_URL,
+            JSONObject()
+                .put("scheduleId", schedule.id)
+                .put("title", "🔔 재알림: ${schedule.title}")
+                .put("body", "놓친 일정을 확인해주세요")
+                .put("url", "/schedules/${schedule.id}"),
+        )
+    }
+
     private fun request(context: Context, method: String, url: String, body: JSONObject? = null): JSONObject {
         val token = accessToken(context)
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
@@ -112,7 +155,9 @@ object NativeScheduleApi {
             throw IllegalStateException("session_required")
         }
         if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(json.optString("error").ifBlank { "schedule_request_failed" })
+            val errorCode = json.optString("error").ifBlank { "schedule_request_failed" }
+            Log.e("NativeScheduleApi", "$method $url failed (${connection.responseCode}): $errorCode")
+            throw IllegalStateException(errorCode)
         }
         return json
     }
@@ -138,4 +183,16 @@ object NativeScheduleApi {
 private fun JSONObject.optNullableString(key: String): String? {
     if (!has(key) || isNull(key)) return null
     return optString(key).takeIf { it.isNotBlank() && it != "null" }
+}
+
+private fun JSONObject.optNullableDouble(key: String): Double? {
+    if (!has(key) || isNull(key)) return null
+    return optDouble(key).takeUnless { it.isNaN() }
+}
+
+private fun JSONArray?.toStringList(): List<String> = buildList {
+    val source = this@toStringList ?: return@buildList
+    for (index in 0 until source.length()) {
+        source.optString(index).takeIf { it.isNotBlank() }?.let(::add)
+    }
 }

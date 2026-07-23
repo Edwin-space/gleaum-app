@@ -22,6 +22,8 @@ import android.app.AlertDialog
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.gleaum.app.ui.components.GleaumDestination
 import com.gleaum.app.ui.components.GleaumScaffold
 import com.gleaum.app.ui.screens.space.ComposeSpaceScreen
@@ -47,7 +49,22 @@ class NativeSpaceActivity : AppCompatActivity() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadSummary() {
+    override fun onResume() {
+        super.onResume()
+        applyLightSystemBars()
+    }
+
+    private fun loadSummary(force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.spaces?.let {
+                summary = it
+                loading = false
+                errorMessage = null
+                render()
+                showPendingInviteIfNeeded()
+                return
+            }
+        }
         loading = true
         errorMessage = null
         render()
@@ -55,6 +72,7 @@ class NativeSpaceActivity : AppCompatActivity() {
             try {
                 val loaded = NativeSpaceApi.summary(this)
                 runOnUiThread {
+                    NativeAppDataCache.spaces = loaded
                     summary = loaded
                     loading = false
                     render()
@@ -74,6 +92,7 @@ class NativeSpaceActivity : AppCompatActivity() {
         setContentView(buildScreen())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeSpace() {
         setContent {
             GleaumTheme {
@@ -82,19 +101,33 @@ class NativeSpaceActivity : AppCompatActivity() {
                     selectedDestination = GleaumDestination.SPACE,
                     onDestinationSelected = ::handleComposeDestination,
                     onNotificationClick = { startActivity(Intent(this, NativeNotificationActivity::class.java)) },
-                    onFabClick = { showCreateSpaceDialog() },
+                    onFabClick = null,
                 ) { innerPadding ->
-                    ComposeSpaceScreen(
+                    PullToRefreshBox(
+                        isRefreshing = loading && summary != null,
+                        onRefresh = { loadSummary(force = true) },
+                    ) {
+                      ComposeSpaceScreen(
                         innerPadding = innerPadding,
                         summary = summary,
+                        canManageSpaces = accountCapabilities().canManageSpaces,
+                        canInviteMembers = accountCapabilities().canInviteMembers,
                         loading = loading,
                         errorMessage = errorMessage,
-                        onRetry = { loadSummary() },
+                        onRetry = { loadSummary(force = true) },
                         onCopyInviteCode = { code -> copyInviteCode(code) },
-                        onSpaceClick = { space -> if (space.isActive) toast("현재 사용 중인 공간이에요.") else toast("공간 전환 기능은 준비 중이에요.") },
+                        onShareInviteCode = { code -> shareInviteCode(code) },
+                        onInviteChild = { openChildInviteFlow() },
+                        onSpaceClick = { space -> activateSpace(space) },
                         onMemberClick = { member -> showMemberActions(member) },
                         onManageAction = { action -> handleSpaceManageAction(action) },
-                    )
+                        onCreatePost = { content -> createPost(content) },
+                        onCreateSchedule = { startActivity(Intent(this@NativeSpaceActivity, NativeScheduleCreateActivity::class.java)) },
+                        onOpenSchedule = { scheduleId ->
+                            startActivity(Intent(this@NativeSpaceActivity, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", scheduleId))
+                        },
+                      )
+                    }
                 }
             }
         }
@@ -110,19 +143,81 @@ class NativeSpaceActivity : AppCompatActivity() {
         }
     }
 
+    private fun activateSpace(space: NativeSpaceItem) {
+        if (space.isActive) return
+        loading = true
+        errorMessage = null
+        render()
+        Thread {
+            try {
+                val updated = NativeSpaceApi.activate(this, space.id)
+                runOnUiThread {
+                    summary = updated
+                    loading = false
+                    render()
+                    toast("${space.name} 공간으로 전환했습니다.")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    loading = false
+                    errorMessage = friendlyError(error.message)
+                    render()
+                }
+            }
+        }.start()
+    }
+
+    private fun createPost(content: String) {
+        val activeSpaceId = summary?.activeSpace?.id ?: return
+        Thread {
+            try {
+                val updated = NativeSpaceApi.createPost(this, activeSpaceId, content)
+                runOnUiThread {
+                    summary = updated
+                    render()
+                    toast("공간에 소식을 공유했습니다.")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    toast(friendlyError(error.message))
+                }
+            }
+        }.start()
+    }
+
     private fun handleSpaceManageAction(action: SpaceManageAction) {
         val active = summary?.activeSpace
         val canManage = active?.role == "admin"
+        val capabilities = accountCapabilities()
         when (action) {
-            SpaceManageAction.JOIN -> showJoinSpaceDialog()
-            SpaceManageAction.CREATE -> showCreateSpaceDialog()
-            SpaceManageAction.RENAME -> if (canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
+            SpaceManageAction.JOIN -> if (capabilities.canInviteMembers) showJoinSpaceDialog() else toast("보호자가 관리하는 계정에서는 공간에 참여할 수 없어요.")
+            SpaceManageAction.CREATE -> if (capabilities.canManageSpaces) showCreateSpaceDialog() else toast("보호자가 관리하는 계정에서는 공간을 만들 수 없어요.")
+            SpaceManageAction.RENAME -> if (capabilities.canManageSpaces && canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
             SpaceManageAction.REGENERATE_INVITE -> {
-                if (active?.isPersonal == true) toast("개인 공간은 초대할 수 없어요.")
+                if (!capabilities.canInviteMembers) toast("보호자가 관리하는 계정에서는 초대 코드를 관리할 수 없어요.")
+                else if (active?.isPersonal == true) toast("개인 공간은 초대할 수 없어요.")
                 else if (canManage) confirmRegenerateInviteCode()
                 else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
             }
-            SpaceManageAction.ADVANCED -> showAdvancedSpaceDialog()
+            SpaceManageAction.CONVERT_TO_FAMILY -> {
+                when {
+                    !capabilities.canManageSpaces -> toast("보호자가 관리하는 계정에서는 공간 설정을 변경할 수 없어요.")
+                    active == null || !canManage -> toast("공간 지기만 가족 공간으로 전환할 수 있어요.")
+                    active.isPersonal -> toast("개인 공간은 가족 공간으로 전환할 수 없어요.")
+                    active.spaceKind == "family" -> toast("이미 가족 공간으로 사용 중이에요.")
+                    else -> confirmConvertToFamily(active)
+                }
+            }
+            SpaceManageAction.DELETE -> {
+                when {
+                    !capabilities.canManageSpaces -> toast("보호자가 관리하는 계정에서는 공간을 삭제할 수 없어요.")
+                    active == null || !canManage -> toast("공간 지기만 공간을 삭제할 수 있어요.")
+                    active.isPersonal -> toast("개인 공간은 삭제할 수 없어요.")
+                    active.memberCount > 1 -> toast("다른 멤버를 모두 내보낸 뒤 삭제해 주세요.")
+                    else -> confirmDeleteSpace(active)
+                }
+            }
+            SpaceManageAction.ADVANCED -> if (capabilities.canManageSpaces) showAdvancedSpaceDialog() else toast("보호자가 관리하는 계정에서는 공간 설정을 변경할 수 없어요.")
         }
     }
 
@@ -143,8 +238,10 @@ class NativeSpaceActivity : AppCompatActivity() {
                     addView(spaceList(), matchWrap().apply { topMargin = dp(10) })
                     addView(sectionTitle("공간 멤버"), matchWrap().apply { topMargin = dp(22) })
                     addView(memberList(), matchWrap().apply { topMargin = dp(10) })
-                    addView(sectionTitle("공간 관리"), matchWrap().apply { topMargin = dp(22) })
-                    addView(manageGroup(), matchWrap().apply { topMargin = dp(10) })
+                    if (accountCapabilities().canManageSpaces || accountCapabilities().canInviteMembers) {
+                        addView(sectionTitle("공간 관리"), matchWrap().apply { topMargin = dp(22) })
+                        addView(manageGroup(), matchWrap().apply { topMargin = dp(10) })
+                    }
                 }
             }, NativeAdaptive.scrollChildParams(this@NativeSpaceActivity))
         }, FrameLayout.LayoutParams(match(), match()))
@@ -319,21 +416,25 @@ class NativeSpaceActivity : AppCompatActivity() {
     private fun manageGroup(): LinearLayout = cardGroup().apply {
         val active = summary?.activeSpace
         val canManage = active?.role == "admin"
-        addView(manageRow("공간 참여하기", "초대 코드로 다른 공간에 입장합니다") { showJoinSpaceDialog() }, matchWrap())
-        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
-        addView(manageRow("새 공간 만들기", "친구, 연인, 가족과 함께할 공간을 만듭니다") { showCreateSpaceDialog() }, matchWrap())
-        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
-        addView(manageRow("공간 이름 변경", if (canManage) "현재 공간의 이름을 바로 수정합니다" else "공간 지기만 수정할 수 있어요") {
-            if (canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
-        }, matchWrap())
-        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
-        addView(manageRow("초대 코드 새로 만들기", if (active?.isPersonal == true) "개인 공간은 초대할 수 없어요" else "기존 코드는 새 코드로 교체됩니다") {
+        val capabilities = accountCapabilities()
+        val rows = mutableListOf<View>()
+        if (capabilities.canInviteMembers) rows += manageRow("공간 참여하기", "초대 코드로 다른 공간에 입장합니다") { showJoinSpaceDialog() }
+        if (capabilities.canManageSpaces) {
+            rows += manageRow("새 공간 만들기", "친구, 연인, 가족과 함께할 공간을 만듭니다") { showCreateSpaceDialog() }
+            rows += manageRow("공간 이름 변경", if (canManage) "현재 공간의 이름을 바로 수정합니다" else "공간 지기만 수정할 수 있어요") {
+                if (canManage) showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
+            }
+        }
+        if (capabilities.canInviteMembers) rows += manageRow("초대 코드 새로 만들기", if (active?.isPersonal == true) "개인 공간은 초대할 수 없어요" else "기존 코드는 새 코드로 교체됩니다") {
             if (active?.isPersonal == true) toast("개인 공간은 초대할 수 없어요.")
             else if (canManage) confirmRegenerateInviteCode()
             else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
-        }, matchWrap())
-        addView(divider(), matchWrap().apply { leftMargin = dp(16) })
-        addView(manageRow("고급 설정", "공간 관리 상태와 지원 항목을 확인합니다") { showAdvancedSpaceDialog() }, matchWrap())
+        }
+        if (capabilities.canManageSpaces) rows += manageRow("고급 설정", "공간 관리 상태와 지원 항목을 확인합니다") { showAdvancedSpaceDialog() }
+        rows.forEachIndexed { index, row ->
+            if (index > 0) addView(divider(), matchWrap().apply { leftMargin = dp(16) })
+            addView(row, matchWrap())
+        }
     }
 
     private fun manageRow(title: String, subtitle: String, action: () -> Unit): LinearLayout = LinearLayout(this).apply {
@@ -385,6 +486,45 @@ class NativeSpaceActivity : AppCompatActivity() {
         Toast.makeText(this, "초대 코드가 복사됐어요.", Toast.LENGTH_SHORT).show()
     }
 
+    private fun shareInviteCode(code: String) {
+        val active = summary?.activeSpace ?: return
+        val inviteUrl = "https://www.gleaum.com/invite/$code"
+        val typeLabel = if (active.spaceKind == "family") "가족 공간" else "공간"
+        val shareText = """
+            ${active.name} ${typeLabel}에 초대합니다.
+
+            초대 링크
+            $inviteUrl
+
+            초대 코드
+            $code
+        """.trimIndent()
+        startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "글리움 ${active.name} 초대")
+                    putExtra(Intent.EXTRA_TEXT, shareText)
+                },
+                "가족에게 초대 보내기",
+            ),
+        )
+    }
+
+    private fun openChildInviteFlow() {
+        val active = summary?.activeSpace ?: return
+        if (active.spaceKind != "family") {
+            toast("자녀 초대는 가족 공간에서만 사용할 수 있어요.")
+            return
+        }
+        startActivity(
+            Intent(this, NativeChildAccountActivity::class.java).putExtra(
+                NativeChildAccountActivity.EXTRA_SPACE_ID,
+                active.id,
+            ),
+        )
+    }
+
     private fun showAdvancedSpaceDialog() {
         val active = summary?.activeSpace
         val message = if (active == null) {
@@ -392,12 +532,19 @@ class NativeSpaceActivity : AppCompatActivity() {
         } else if (active.isPersonal) {
             "개인 공간은 초대와 멤버 관리를 지원하지 않아요. 공유 공간을 만들거나 초대 코드로 참여하면 함께 관리할 수 있어요."
         } else {
-            "이 공간은 네이티브에서 이름 변경, 초대 코드 재생성, 멤버 역할 변경, 멤버 내보내기를 지원합니다.\n\n공간 자금 관리는 개인 가계부와 분리된 공간 자금 모델로 확장 예정입니다."
+            "이 공간은 이름·초대·멤버 관리와 가족 공간 전환을 지원합니다. 다른 멤버와 연결된 자녀가 없는 단독 공간은 삭제할 수 있어요."
         }
         val items = if (active?.isPersonal == true) {
             arrayOf("새 공유 공간 만들기", "초대 코드로 참여하기")
         } else {
-            arrayOf("공간 이름 변경", "초대 코드 재생성", "초대 코드로 참여하기", "새 공간 만들기")
+            buildList {
+                add("공간 이름 변경")
+                add("초대 코드 재생성")
+                if (active?.spaceKind != "family") add("가족 공간으로 전환")
+                add("공간 삭제")
+                add("초대 코드로 참여하기")
+                add("새 공간 만들기")
+            }.toTypedArray()
         }
 
         AlertDialog.Builder(this)
@@ -410,11 +557,13 @@ class NativeSpaceActivity : AppCompatActivity() {
                         1 -> showJoinSpaceDialog()
                     }
                 } else {
-                    when (which) {
-                        0 -> if (active?.role == "admin") showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
-                        1 -> if (active?.role == "admin") confirmRegenerateInviteCode() else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
-                        2 -> showJoinSpaceDialog()
-                        3 -> showCreateSpaceDialog()
+                    when (items[which]) {
+                        "공간 이름 변경" -> if (active?.role == "admin") showRenameDialog() else toast("공간 지기만 수정할 수 있어요.")
+                        "초대 코드 재생성" -> if (active?.role == "admin") confirmRegenerateInviteCode() else toast("공간 지기만 초대 코드를 관리할 수 있어요.")
+                        "가족 공간으로 전환" -> handleSpaceManageAction(SpaceManageAction.CONVERT_TO_FAMILY)
+                        "공간 삭제" -> handleSpaceManageAction(SpaceManageAction.DELETE)
+                        "초대 코드로 참여하기" -> showJoinSpaceDialog()
+                        "새 공간 만들기" -> showCreateSpaceDialog()
                     }
                 }
             }
@@ -471,6 +620,7 @@ class NativeSpaceActivity : AppCompatActivity() {
 
     private fun showPendingInviteIfNeeded() {
         val code = pendingInviteCode ?: return
+        if (!accountCapabilities().canInviteMembers) return
         if (invitePromptShown) return
         invitePromptShown = true
         AlertDialog.Builder(this)
@@ -480,6 +630,9 @@ class NativeSpaceActivity : AppCompatActivity() {
             .setPositiveButton("참여") { _, _ -> joinSpace(code) }
             .show()
     }
+
+    private fun accountCapabilities(): NativeAccountCapabilities =
+        NativeAccountContextStore.capabilities(this)
 
     private fun joinSpace(code: String) {
         runSpaceMutation("공간에 참여하지 못했어요. 초대 코드를 확인해 주세요.") {
@@ -528,18 +681,103 @@ class NativeSpaceActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun confirmConvertToFamily(active: NativeSpaceItem) {
+        AlertDialog.Builder(this)
+            .setTitle("가족 공간으로 전환할까요?")
+            .setMessage("${active.name}의 일정, 소식, 멤버는 그대로 유지됩니다. 전환 후에는 자녀 계정과 가족 기능을 연결할 수 있으며 일반 공간으로 되돌릴 수 없어요.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("가족 공간으로 전환") { _, _ ->
+                runSpaceMutation("가족 공간 전환에 실패했어요.", "가족 공간으로 전환했습니다.") {
+                    NativeSpaceApi.convertToFamily(this, active.id)
+                }
+            }
+            .show()
+    }
+
+    private fun confirmDeleteSpace(active: NativeSpaceItem) {
+        AlertDialog.Builder(this)
+            .setTitle("${active.name} 공간을 삭제할까요?")
+            .setMessage("이 공간의 일정, 소식, 가계부 데이터가 영구 삭제되며 복구할 수 없어요. 연결된 자녀가 있으면 안전을 위해 삭제가 차단됩니다.")
+            .setNegativeButton("취소", null)
+            .setPositiveButton("영구 삭제") { _, _ ->
+                runSpaceMutation("공간을 삭제하지 못했어요. 다른 멤버나 연결된 자녀가 남아 있는지 확인해 주세요.", "공간을 삭제했습니다.") {
+                    NativeSpaceApi.delete(this, active.id)
+                }
+            }
+            .show()
+    }
+
     private fun showMemberActions(member: NativeSpaceMember) {
-        val labels = arrayOf("공간 운영자로 변경", "공간 멤버로 변경", "공간 지기로 변경", "멤버 내보내기")
+        val isFamily = summary?.activeSpace?.spaceKind == "family"
+        val labels = buildList {
+            if (isFamily) add("가족 관계 변경")
+            if (!member.isMe) {
+                add("공간 권한 변경")
+                add("멤버 내보내기")
+            }
+        }.toTypedArray()
+        if (labels.isEmpty()) return
         AlertDialog.Builder(this)
             .setTitle(member.displayName)
             .setItems(labels) { _, which ->
-                when (which) {
-                    0 -> updateMemberRole(member, "editor")
-                    1 -> updateMemberRole(member, "viewer")
-                    2 -> updateMemberRole(member, "admin")
-                    3 -> confirmRemoveMember(member)
+                when (labels[which]) {
+                    "가족 관계 변경" -> showFamilyRoleDialog(member)
+                    "공간 권한 변경" -> showPermissionRoleDialog(member)
+                    "멤버 내보내기" -> confirmRemoveMember(member)
                 }
             }
+            .show()
+    }
+
+    private fun showPermissionRoleDialog(member: NativeSpaceMember) {
+        val labels = arrayOf("공간 지기", "공간 운영자", "공간 멤버")
+        val values = arrayOf("admin", "editor", "viewer")
+        val selected = values.indexOf(member.role).coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("${member.displayName}님의 공간 권한")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                dialog.dismiss()
+                updateMemberRole(member, values[which])
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun showFamilyRoleDialog(member: NativeSpaceMember) {
+        val labels = arrayOf(
+            "아빠",
+            "엄마",
+            "할아버지",
+            "할머니",
+            "배우자",
+            "아들",
+            "딸",
+            "형제·자매",
+            "보호자",
+            "가족 구성원",
+            "기타 가족",
+        )
+        val values = arrayOf(
+            "father",
+            "mother",
+            "grandfather",
+            "grandmother",
+            "spouse",
+            "son",
+            "daughter",
+            "sibling",
+            "guardian",
+            "family",
+            "other",
+        )
+        val selected = values.indexOf(member.familyRole ?: "family").coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("${member.displayName}님의 가족 관계")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                dialog.dismiss()
+                updateMemberFamilyRole(member, values[which])
+            }
+            .setNegativeButton("취소", null)
             .show()
     }
 
@@ -547,6 +785,13 @@ class NativeSpaceActivity : AppCompatActivity() {
         val spaceId = summary?.activeSpace?.id ?: return
         runSpaceMutation("멤버 역할을 변경하지 못했어요.") {
             NativeSpaceApi.updateMemberRole(this, spaceId, member.userId, role)
+        }
+    }
+
+    private fun updateMemberFamilyRole(member: NativeSpaceMember, familyRole: String) {
+        val spaceId = summary?.activeSpace?.id ?: return
+        runSpaceMutation("가족 관계를 변경하지 못했어요.") {
+            NativeSpaceApi.updateMemberFamilyRole(this, spaceId, member.userId, familyRole)
         }
     }
 
@@ -564,7 +809,7 @@ class NativeSpaceActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun runSpaceMutation(errorText: String, action: () -> NativeSpaceSummary) {
+    private fun runSpaceMutation(errorText: String, successText: String? = null, action: () -> NativeSpaceSummary) {
         loading = true
         render()
         Thread {
@@ -572,15 +817,19 @@ class NativeSpaceActivity : AppCompatActivity() {
                 val next = action()
                 runOnUiThread {
                     summary = next
+                    NativeAppDataCache.spaces = next
+                    NativeAppDataCache.home = null
                     loading = false
                     errorMessage = null
                     render()
+                    successText?.let(::toast)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
                     loading = false
-                    errorMessage = errorText
+                    errorMessage = null
                     render()
+                    toast(spaceMutationError(e.message, errorText))
                 }
             }
         }.start()
@@ -594,6 +843,16 @@ class NativeSpaceActivity : AppCompatActivity() {
     private fun divider(): View = View(this).apply { setBackgroundColor(color("#EEF0F4")); layoutParams = LinearLayout.LayoutParams(match(), 1) }
     private fun roleLabel(role: String?): String = when (role) { "admin" -> "공간 지기"; "editor" -> "공간 운영자"; "viewer" -> "공간 멤버"; else -> "공간 멤버" }
     private fun friendlyError(code: String?): String = if (code == "session_required") "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요." else "공간 정보를 불러오지 못했어요."
+    private fun spaceMutationError(code: String?, fallback: String): String = when (code) {
+        "space_has_other_members" -> "다른 멤버를 모두 내보낸 뒤 삭제해 주세요."
+        "family_space_has_dependents" -> "연결된 자녀와 가족 이력이 있어 이 공간은 삭제할 수 없어요."
+        "personal_space_locked" -> "개인 공간은 삭제하거나 가족 공간으로 전환할 수 없어요."
+        "space_admin_required" -> "공간 지기만 이 작업을 할 수 있어요."
+        "account_capability_required" -> "보호자가 관리하는 계정에서는 이 작업을 할 수 없어요."
+        "space_not_found" -> "이미 삭제되었거나 존재하지 않는 공간이에요. 목록을 새로 불러와 주세요."
+        "session_required" -> "로그인 세션을 찾을 수 없어요. 다시 로그인해 주세요."
+        else -> fallback
+    }
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     private fun openWebPath(path: String) {
         if (path == "/home") {

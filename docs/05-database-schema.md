@@ -1,5 +1,7 @@
 # 05. 데이터베이스 스키마
 
+> 2026-07-13 주의: 이 문서의 초기 `profiles.role`/단일 가족 그룹 설명은 레거시 호환 구조입니다. 현재 공간 권한은 `space_members`, 가족 자녀 계정 기반은 migration `020_family_child_foundation.sql`과 `docs/21-family-child-account-foundation.md`를 우선 기준으로 사용합니다.
+
 ## Supabase 프로젝트
 
 - **프로젝트 ID**: `tyvjdsescukaeorcuaga`
@@ -162,7 +164,7 @@ CREATE EXTENSION IF NOT EXISTS pg_cron SCHEMA extensions;
 | `cleanup-withdrawals-daily` | `0 18 * * *` | `/api/cron/cleanup-withdrawals` |
 
 요청 헤더에는 `Authorization: Bearer <CRON_SECRET>`이 포함되어야 하며,
-Vercel 환경변수 `CRON_SECRET`(현재 `gleaum-cron-2026`)과 Supabase cron SQL의 Bearer 값이 반드시 같아야 합니다.
+Vercel 환경변수 `CRON_SECRET`과 Supabase cron SQL의 Bearer 값이 반드시 같아야 합니다. 실제 값은 문서나 Git에 기록하지 않습니다.
 
 > ⚠️ 등록 SQL은 `DO/format($$...$$)` 중첩 금지(syntax error). `cron.schedule(name, schedule, '명령문 평문')` 형태로 작성. 상세: `docs/09-deployment.md`.
 

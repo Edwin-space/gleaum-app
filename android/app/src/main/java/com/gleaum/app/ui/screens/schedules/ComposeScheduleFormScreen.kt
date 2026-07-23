@@ -45,10 +45,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.gleaum.app.ui.components.FeedbackKind
+import com.gleaum.app.ui.components.GleaumFeedbackBanner
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
 
 private val scheduleTypes = listOf(
     "personal" to "개인",
@@ -97,16 +99,22 @@ fun ComposeScheduleFormScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(PaddingValues(start = 20.dp, top = innerPadding.calculateTopPadding() + 12.dp, end = 20.dp, bottom = 28.dp)),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
+        GleaumAdaptiveContent {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .verticalScroll(rememberScrollState())
+                    .padding(PaddingValues(start = 20.dp, top = innerPadding.calculateTopPadding() + 12.dp, end = 20.dp, bottom = 28.dp)),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
             FormHero(isEdit = isEdit)
-            if (message != null) MessageCard(message)
+            if (message != null) {
+                GleaumFeedbackBanner(
+                    message = message,
+                    kind = if (message.contains("완료")) FeedbackKind.SUCCESS else FeedbackKind.ERROR,
+                )
+            }
             TypeSelector(selectedType = selectedType, onTypeChange = onTypeChange)
             FormFields(
                 title = titleValue,
@@ -126,10 +134,11 @@ fun ComposeScheduleFormScreen(
                 onPickStartTime = onPickStartTime,
                 onPickEndTime = onPickEndTime,
             )
-            Button(enabled = !saving, onClick = onSave, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(if (saving) if (isEdit) "저장 중..." else "등록 중..." else if (isEdit) "수정 완료" else "일정 등록")
+                Button(enabled = !saving, onClick = onSave, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(if (saving) if (isEdit) "저장 중..." else "등록 중..." else if (isEdit) "수정 완료" else "일정 등록")
+                }
             }
         }
     }
@@ -144,11 +153,10 @@ private fun FormHero(isEdit: Boolean) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.secondaryContainer)))
                 .padding(22.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), shape = CircleShape, modifier = Modifier.size(46.dp)) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLowest, shape = CircleShape, modifier = Modifier.size(46.dp)) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(Icons.Outlined.EditCalendar, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
@@ -166,25 +174,6 @@ private fun FormHero(isEdit: Boolean) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun MessageCard(message: String) {
-    val isSuccess = message.contains("완료")
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSuccess) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-        ),
-    ) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(16.dp),
-            color = if (isSuccess) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-        )
     }
 }
 

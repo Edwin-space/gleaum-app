@@ -11,6 +11,7 @@ import org.json.JSONObject
  * enabling NativePortFlags.ENABLE_NATIVE_HOME.
  */
 data class NativeHomePortSummary(
+    val account: NativeAccountContext,
     val displayName: String,
     val onboardingCompleted: Boolean,
     val timezone: String,
@@ -38,11 +39,13 @@ data class NativeHomePortSummary(
             val schedules = json.optJSONObject("schedules") ?: JSONObject()
             val calendar = json.optJSONObject("calendar") ?: JSONObject()
             val ledger = json.optJSONObject("ledger") ?: JSONObject()
+            val account = NativeAccountContext.fromJson(json.optJSONObject("account") ?: JSONObject())
             val today = NativeHomePortSchedule.listFrom(schedules.optJSONArray("today") ?: JSONArray())
             val upcoming = NativeHomePortSchedule.listFrom(schedules.optJSONArray("upcoming") ?: JSONArray())
             val range = NativeHomePortSchedule.listFrom(schedules.optJSONArray("range") ?: JSONArray())
 
             return NativeHomePortSummary(
+                account = account,
                 displayName = user.optString("displayName", "사용자"),
                 onboardingCompleted = user.optBoolean("onboardingCompleted", true),
                 timezone = user.optString("timezone", "Asia/Seoul"),
@@ -64,6 +67,57 @@ data class NativeHomePortSummary(
                 net = ledger.optLong("net", 0L),
             )
         }
+    }
+}
+
+data class NativeAccountContext(
+    val accountMode: String,
+    val capabilities: NativeAccountCapabilities,
+) {
+    companion object {
+        fun fromJson(json: JSONObject): NativeAccountContext = NativeAccountContext(
+            accountMode = json.optString("accountMode", "unknown"),
+            capabilities = NativeAccountCapabilities.fromJson(json.optJSONObject("capabilities") ?: JSONObject()),
+        )
+    }
+
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("accountMode", accountMode)
+        put("capabilities", capabilities.toJson())
+    }
+}
+
+data class NativeAccountCapabilities(
+    val canManageSpaces: Boolean = false,
+    val canInviteMembers: Boolean = false,
+    val canViewHouseholdBudget: Boolean = false,
+    val canCompleteRoutine: Boolean = false,
+    val canUseCheckIn: Boolean = false,
+    val canRequestLocationPermission: Boolean = false,
+    val canShowAds: Boolean = false,
+) {
+    companion object {
+        val DENIED = NativeAccountCapabilities()
+
+        fun fromJson(json: JSONObject): NativeAccountCapabilities = NativeAccountCapabilities(
+            canManageSpaces = json.optBoolean("canManageSpaces", false),
+            canInviteMembers = json.optBoolean("canInviteMembers", false),
+            canViewHouseholdBudget = json.optBoolean("canViewHouseholdBudget", false),
+            canCompleteRoutine = json.optBoolean("canCompleteRoutine", false),
+            canUseCheckIn = json.optBoolean("canUseCheckIn", false),
+            canRequestLocationPermission = json.optBoolean("canRequestLocationPermission", false),
+            canShowAds = json.optBoolean("canShowAds", false),
+        )
+    }
+
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("canManageSpaces", canManageSpaces)
+        put("canInviteMembers", canInviteMembers)
+        put("canViewHouseholdBudget", canViewHouseholdBudget)
+        put("canCompleteRoutine", canCompleteRoutine)
+        put("canUseCheckIn", canUseCheckIn)
+        put("canRequestLocationPermission", canRequestLocationPermission)
+        put("canShowAds", canShowAds)
     }
 }
 

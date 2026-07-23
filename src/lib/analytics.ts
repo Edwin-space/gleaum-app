@@ -25,7 +25,7 @@
  *  [Space]   space_create
  *  [알림]     notification_view / notification_click / fcm_permission_grant
  *  [PWA]     pwa_banner_show / pwa_install_accept / pwa_install_dismiss / pwa_installed
- *  [UI]      calendar_toggle / quick_action_click / navigation_click
+ *  [UI]      calendar_toggle / device_calendar_sync / quick_action_click / navigation_click
  *
  * ── GA4 Key Events (주요 이벤트 / 구 전환) ──────────────────────
  *  GA4 콘솔 → 이벤트 탭에서 직접 '주요 이벤트로 표시' 클릭 필요:
@@ -95,6 +95,8 @@ export type GleaumEventParams = {
 
   // ── 글리움 커스텀 이벤트 — UI ────────────────────────────────
   calendar_toggle:    { action: 'open' | 'close' };
+  device_calendar_sync: { created: number; updated: number; deleted: number };
+  device_calendar_import: { imported: number; skipped_duplicates: number };
   quick_action_click: { action: string };
   navigation_click:   { destination: string };
 };

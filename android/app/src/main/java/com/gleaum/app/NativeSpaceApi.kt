@@ -1,6 +1,7 @@
 package com.gleaum.app
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -11,8 +12,11 @@ data class NativeSpaceItem(
     val id: String,
     val name: String,
     val role: String,
+    val familyRole: String?,
     val memberCount: Int,
     val inviteCode: String?,
+    val spaceKind: String,
+    val purpose: String?,
     val isPersonal: Boolean,
     val isActive: Boolean,
 ) {
@@ -21,8 +25,11 @@ data class NativeSpaceItem(
             id = json.optString("id"),
             name = json.optString("name", "공간"),
             role = json.optString("role", "viewer"),
+            familyRole = json.optString("familyRole").takeIf { it.isNotBlank() && it != "null" },
             memberCount = json.optInt("memberCount", 0),
             inviteCode = json.optString("inviteCode").takeIf { it.isNotBlank() },
+            spaceKind = json.optString("spaceKind", if (json.optBoolean("isPersonal", false)) "personal" else "general"),
+            purpose = json.optString("purpose").takeIf { it.isNotBlank() && it != "null" },
             isPersonal = json.optBoolean("isPersonal", false),
             isActive = json.optBoolean("isActive", false),
         )
@@ -42,6 +49,7 @@ data class NativeSpaceMember(
     val email: String,
     val avatar: String?,
     val role: String,
+    val familyRole: String?,
     val isMe: Boolean,
 ) {
     companion object {
@@ -52,10 +60,39 @@ data class NativeSpaceMember(
             email = json.optString("email"),
             avatar = json.optString("avatar").takeIf { it.isNotBlank() },
             role = json.optString("role", "viewer"),
+            familyRole = json.optString("familyRole").takeIf { it.isNotBlank() && it != "null" },
             isMe = json.optBoolean("isMe", false),
         )
 
         fun listFrom(array: JSONArray): List<NativeSpaceMember> = buildList {
+            for (index in 0 until array.length()) {
+                array.optJSONObject(index)?.let { add(fromJson(it)) }
+            }
+        }
+    }
+}
+
+data class NativeSpacePost(
+    val id: String,
+    val type: String,
+    val content: String,
+    val pinned: Boolean,
+    val authorName: String,
+    val commentCount: Int,
+    val createdAt: String,
+) {
+    companion object {
+        fun fromJson(json: JSONObject): NativeSpacePost = NativeSpacePost(
+            id = json.optString("id"),
+            type = json.optString("type", "general"),
+            content = json.optString("content"),
+            pinned = json.optBoolean("pinned", false),
+            authorName = json.optString("authorName", "공간 멤버"),
+            commentCount = json.optInt("commentCount", 0),
+            createdAt = json.optString("createdAt"),
+        )
+
+        fun listFrom(array: JSONArray): List<NativeSpacePost> = buildList {
             for (index in 0 until array.length()) {
                 array.optJSONObject(index)?.let { add(fromJson(it)) }
             }
@@ -69,6 +106,8 @@ data class NativeSpaceSummary(
     val activeSpace: NativeSpaceItem?,
     val spaces: List<NativeSpaceItem>,
     val members: List<NativeSpaceMember>,
+    val recentPosts: List<NativeSpacePost>,
+    val upcomingSchedules: List<NativeAppSchedule>,
 ) {
     companion object {
         fun fromJson(json: JSONObject): NativeSpaceSummary = NativeSpaceSummary(
@@ -77,6 +116,8 @@ data class NativeSpaceSummary(
             activeSpace = json.optJSONObject("activeSpace")?.let(NativeSpaceItem::fromJson),
             spaces = NativeSpaceItem.listFrom(json.optJSONArray("spaces") ?: JSONArray()),
             members = NativeSpaceMember.listFrom(json.optJSONArray("members") ?: JSONArray()),
+            recentPosts = NativeSpacePost.listFrom(json.optJSONArray("recentPosts") ?: JSONArray()),
+            upcomingSchedules = NativeAppSchedule.listFrom(json.optJSONArray("upcomingSchedules") ?: JSONArray()),
         )
     }
 }
@@ -93,6 +134,16 @@ object NativeSpaceApi {
         return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId", JSONObject().put("name", name)))
     }
 
+    fun activate(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/activate"))
+    }
+
+    fun createPost(context: Context, spaceId: String, content: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(
+            request(context, "POST", "$SPACE_URL/$spaceId/posts", JSONObject().put("content", content)),
+        )
+    }
+
     fun create(context: Context, name: String): NativeSpaceSummary {
         return NativeSpaceSummary.fromJson(request(context, "POST", SPACE_URL, JSONObject().put("name", name)))
     }
@@ -105,8 +156,27 @@ object NativeSpaceApi {
         return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/invite-code"))
     }
 
+    fun convertToFamily(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "POST", "$SPACE_URL/$spaceId/family"))
+    }
+
+    fun delete(context: Context, spaceId: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(request(context, "DELETE", "$SPACE_URL/$spaceId"))
+    }
+
     fun updateMemberRole(context: Context, spaceId: String, userId: String, role: String): NativeSpaceSummary {
         return NativeSpaceSummary.fromJson(request(context, "PATCH", "$SPACE_URL/$spaceId/members/$userId", JSONObject().put("role", role)))
+    }
+
+    fun updateMemberFamilyRole(context: Context, spaceId: String, userId: String, familyRole: String): NativeSpaceSummary {
+        return NativeSpaceSummary.fromJson(
+            request(
+                context,
+                "PATCH",
+                "$SPACE_URL/$spaceId/members/$userId",
+                JSONObject().put("familyRole", familyRole),
+            ),
+        )
     }
 
     fun removeMember(context: Context, spaceId: String, userId: String): NativeSpaceSummary {
@@ -138,7 +208,9 @@ object NativeSpaceApi {
             throw IllegalStateException("session_required")
         }
         if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(json.optString("error").ifBlank { "space_summary_failed" })
+            val code = json.optString("error").ifBlank { "space_request_failed_${connection.responseCode}" }
+            Log.e("GleaumSpaceApi", "$method $url failed (${connection.responseCode}): $text")
+            throw IllegalStateException(code)
         }
         return json
     }

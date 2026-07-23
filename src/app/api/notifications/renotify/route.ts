@@ -12,8 +12,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
-import { getAuthUser, isCronRequest, isInternalRequest } from '@/lib/supabase/route-auth';
+import { isCronRequest, isInternalRequest } from '@/lib/supabase/route-auth';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 import { isUuid, sanitizeInternalUrl, trimText } from '@/lib/api/request-guards';
+import { isNotificationEnabled } from '@/lib/notification-settings';
 
 export async function POST(req: NextRequest) {
   // ── 인증 검증 ──────────────────────────────────────────────
@@ -22,11 +24,11 @@ export async function POST(req: NextRequest) {
   let requesterId: string | null = null;
 
   if (!isServer) {
-    const user = await getAuthUser();
-    if (!user) {
+    const auth = await createNativeRouteAuth(req);
+    if (!auth) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    requesterId = user.id;
+    requesterId = auth.user.id;
   }
 
   // ── 요청 처리 ─────────────────────────────────────────────
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
   // ── 권한 검증: 일정 작성자 또는 해당 공간 editor/admin 만 재알림 가능 ──
   const { data: schedule, error: scheduleError } = await supabaseAdmin
     .from('schedules')
-    .select('id, family_group_id, created_by, visibility')
+    .select('id, family_group_id, created_by, visibility, type')
     .eq('id', scheduleId)
     .single();
 
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!isServer && requesterId) {
-    const isCreator = schedule.created_by === requesterId;
+    const isPrivateCreator = schedule.visibility === 'private' && schedule.created_by === requesterId;
     let canEdit = false;
 
     if (schedule.visibility !== 'private') {
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
       canEdit = membership?.role === 'admin' || membership?.role === 'editor';
     }
 
-    if (!isCreator && !canEdit) {
+    if (!isPrivateCreator && !canEdit) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
   }
@@ -105,21 +107,25 @@ export async function POST(req: NextRequest) {
   // ── 2) FCM 토큰 조회 ──────────────────────────────────────
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
-    .select('id, fcm_token')
+    .select('id, fcm_token, notification_settings')
     .in('id', targetIds)
     .not('fcm_token', 'is', null);
 
-  if (!profiles || profiles.length === 0) {
+  const settingKey = schedule.type === 'child' ? 'routineReminders' : 'scheduleReminders';
+  const enabledProfiles = (profiles ?? []).filter((profile) =>
+    isNotificationEnabled(profile.notification_settings, settingKey),
+  );
+  if (enabledProfiles.length === 0) {
     return NextResponse.json({ error: 'FCM 토큰 없음 (알림 미허용)' }, { status: 404 });
   }
 
-  const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
+  const tokens = enabledProfiles.map((p) => p.fcm_token).filter(Boolean);
 
   // ── 3) FCM v1 발송 ────────────────────────────────────────
   const sent = await sendFCMToMultiple(tokens, title, body, url);
 
   // ── 4) 알림 기록 ──────────────────────────────────────────
-  const records = profiles.map((p: { id: string }) => ({
+  const records = enabledProfiles.map((p) => ({
     user_id:     p.id,
     schedule_id: scheduleId,
     title,

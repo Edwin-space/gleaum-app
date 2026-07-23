@@ -18,6 +18,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { isNativeApp } from '@/lib/native';
+import { useAccountCapability } from '@/components/AccountSessionProvider';
 
 interface HouseAd {
   id:          string;
@@ -49,9 +50,11 @@ export function useSaveAdSheet() {
   const trackedRef             = useRef(false);
   const autoCloseRef           = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const native                 = isNativeApp();
+  const canShowAds             = useAccountCapability('canShowAds');
 
   // ── 하우스 광고 조회 (웹/앱 공통, 플랫폼 필터 적용) ─────────
   useEffect(() => {
+    if (!canShowAds) return;
     const platform = native ? 'android' : 'web';
     fetch(`/api/ads?slot=save-prompt&platform=${platform}`)
       .then(async (res) => {
@@ -61,7 +64,7 @@ export function useSaveAdSheet() {
         else setAd(null);
       })
       .catch(() => setAd(null));
-  }, [native]);
+  }, [native, canShowAds]);
 
   const close = useCallback(() => {
     setVisible(false);
@@ -69,6 +72,7 @@ export function useSaveAdSheet() {
   }, []);
 
   const showAd = useCallback(() => {
+    if (!canShowAds) return;
     if (!canShow()) return;
     if (ad === 'loading') return;
 
@@ -90,38 +94,41 @@ export function useSaveAdSheet() {
       autoCloseRef.current = setTimeout(close, 8000);
     }
     // 어떤 광고도 없으면 아무것도 표시 안 함
-  }, [ad, native, close]);
+  }, [ad, native, close, canShowAds]);
 
   // ── 하우스 광고 노출 이벤트 ───────────────────────────────────
   useEffect(() => {
+    if (!canShowAds) return;
     if (!visible || !ad || ad === 'loading' || trackedRef.current) return;
     trackedRef.current = true;
     navigator.sendBeacon('/api/ads/events', JSON.stringify({
       adId: ad.id, event: 'impression',
       platform: native ? 'android' : 'web',
     }));
-  }, [visible, ad, native]);
+  }, [visible, ad, native, canShowAds]);
 
   // ── AdSense 초기화 (웹 전용) ──────────────────────────────────
   useEffect(() => {
+    if (!canShowAds) return;
     if (native || !visible || ad !== null || !ADSENSE_CLIENT || !ADSENSE_SLOT) return;
     try {
       const w = window as unknown as { adsbygoogle?: unknown[] };
       if (Array.isArray(w.adsbygoogle)) w.adsbygoogle.push({});
     } catch {}
-  }, [visible, ad, native]);
+  }, [visible, ad, native, canShowAds]);
 
   const handleAdClick = useCallback(() => {
+    if (!canShowAds) return;
     if (!ad || ad === 'loading') return;
     navigator.sendBeacon('/api/ads/events', JSON.stringify({
       adId: ad.id, event: 'click',
       platform: native ? 'android' : 'web',
     }));
-  }, [ad, native]);
+  }, [ad, native, canShowAds]);
 
   // ── AdSheet JSX ───────────────────────────────────────────────
   const AdSheet = useCallback(() => {
-    if (!visible) return null;
+    if (!canShowAds || !visible) return null;
 
     return (
       <>
@@ -201,7 +208,7 @@ export function useSaveAdSheet() {
         `}</style>
       </>
     );
-  }, [visible, ad, close, handleAdClick, native]);
+  }, [visible, ad, close, handleAdClick, native, canShowAds]);
 
   return { showAd, AdSheet };
 }

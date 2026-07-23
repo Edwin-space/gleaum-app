@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient as createAdmin } from '@supabase/supabase-js';
 import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 const RECOVERY_DAYS = 30;
@@ -13,12 +12,7 @@ export async function GET(req: NextRequest) {
   const auth = await createNativeRouteAuth(req);
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { data: profile } = await admin
+  const { data: profile } = await auth.supabase
     .from('profiles')
     .select('withdrawal_requested_at, is_withdrawn')
     .eq('id', auth.user.id)

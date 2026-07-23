@@ -1,5 +1,7 @@
 # 18. Android Home Native Port Snapshot
 
+> 이 문서는 2026-06-22 당시 Web UI 비교용 스냅샷이다. 현재 `ENABLE_NATIVE_HOME`과 Compose Home gate는 활성 상태이며, 최종 기준은 `docs/17-android-native-port.md`, `docs/19-android-material3-redesign-plan.md`, `docs/22-android-material3-ui-audit.md`다. 아래 비활성 플래그 문구는 당시 구현 이력으로만 읽는다.
+
 > 최종 업데이트: 2026-06-23
 >
 > 목적: Android 홈 화면을 네이티브로 이식할 때 현재 Mobile Web 홈 UI를 정답지로 고정한다. 이 문서의 기준 없이 Android 홈 화면을 구현하거나 활성화하지 않는다.

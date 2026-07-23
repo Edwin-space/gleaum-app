@@ -10,6 +10,9 @@ import { useTimeGreeting } from '@/hooks/useTimeGreeting';
 import type { Schedule, HomeLayoutPreference, OnboardingPreferences } from '@/types';
 import type { ProfileRow } from '@/lib/db';
 import type { User } from '@/types';
+import { useAccountSession } from '@/components/AccountSessionProvider';
+import { ChildAccountHomeBanner } from '@/components/ChildAccountHomeBanner';
+import { isManagedMinorAccountMode } from '@/lib/account-capabilities';
 
 interface DesktopHomeProps {
   user: User | null;
@@ -21,6 +24,9 @@ interface DesktopHomeProps {
 
 export default function DesktopHome({ user, profile, schedules, personalExpenses, loading }: DesktopHomeProps) {
   const router = useRouter();
+  const { capabilities, context: accountContext } = useAccountSession();
+  const canViewBudget = capabilities.canViewHouseholdBudget;
+  const isManagedMinor = isManagedMinorAccountMode(accountContext?.accountMode ?? 'unknown');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 
@@ -137,7 +143,7 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
           <div>
             <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', margin: '0 0 8px', letterSpacing: '0.04em' }}>{greeting} 👋</p>
             <h1 style={{ fontSize: '30px', fontWeight: 900, letterSpacing: '-0.5px', margin: '0 0 8px' }}>
-              {displayName}님, 오늘도 함께해요.
+              {displayName}님, {isManagedMinor ? '오늘 할 일을 확인해 볼까요?' : '오늘도 함께해요.'}
             </h1>
             {/* suppressHydrationWarning: 서버(UTC)/클라이언트(로컬) 날짜가 자정 전후로 갈릴 수 있음 — React가 허용하는 시간 표시 예외 */}
             <p suppressHydrationWarning style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, margin: 0 }}>
@@ -171,6 +177,12 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
           </div>
         </div>
       </div>
+
+      {isManagedMinor && (
+        <div style={{ marginBottom: '24px' }}>
+          <ChildAccountHomeBanner />
+        </div>
+      )}
 
       {/* ── 2-컬럼 메인 레이아웃 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '7fr 5fr', gap: '24px' }}>
@@ -247,7 +259,7 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
             </div>
           )}
 
-          {!loading && homeLayout === 'expense_first' && budgetSummaryCard}
+          {!loading && canViewBudget && homeLayout === 'expense_first' && budgetSummaryCard}
 
           {/* 자녀 일정 요약 */}
           {!loading && totalChild > 0 && (
@@ -330,7 +342,7 @@ export default function DesktopHome({ user, profile, schedules, personalExpenses
             </div>
           )}
 
-          {!loading && homeLayout !== 'expense_first' && budgetSummaryCard}
+          {!loading && canViewBudget && homeLayout !== 'expense_first' && budgetSummaryCard}
         </div>
       </div>
     </div>

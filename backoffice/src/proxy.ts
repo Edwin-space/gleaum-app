@@ -7,12 +7,15 @@
  *
  * 관리자 판별:
  * - ADMIN_EMAILS 환경변수(쉼표 구분)에 포함된 이메일만 허용
- * - ADMIN_EMAILS 미설정 시 인증된 모든 Supabase 사용자 허용
- *   (보안상 반드시 설정 권장)
+ * - ADMIN_EMAILS 미설정 시 모든 관리자 접근 차단 (fail-closed)
  */
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  getConfiguredAdminEmails,
+  isAllowedAdminEmail,
+} from '@/lib/admin-policy'
 
 // 인증 없이 접근 가능한 경로
 const PUBLIC_PREFIXES = ['/_next/', '/favicon', '/_next/static', '/_next/image']
@@ -23,21 +26,13 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
 }
 
-/** ADMIN_EMAILS 환경변수를 소문자 Set으로 파싱 */
-function adminEmailSet(): Set<string> {
-  const raw = process.env.ADMIN_EMAILS ?? ''
-  return new Set(
-    raw.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
-  )
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 공개 경로는 통과
   if (isPublic(pathname)) return NextResponse.next()
 
-  let supabaseResponse = NextResponse.next({ request })
+  const supabaseResponse = NextResponse.next({ request })
 
   try {
     const supabase = createServerClient(
@@ -67,10 +62,20 @@ export async function proxy(request: NextRequest) {
     }
 
     // ── 2. 관리자 권한 확인 ───────────────────────────────────
-    const adminEmails = adminEmailSet()
-    const userEmail   = (user.email ?? '').toLowerCase()
+    const adminEmails = getConfiguredAdminEmails()
+    if (adminEmails.size === 0) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'Admin access is not configured' },
+          { status: 503 }
+        )
+      }
+      const url = new URL('/login', request.url)
+      url.searchParams.set('error', 'configuration')
+      return NextResponse.redirect(url)
+    }
 
-    if (adminEmails.size > 0 && !adminEmails.has(userEmail)) {
+    if (!isAllowedAdminEmail(user.email)) {
       await supabase.auth.signOut()
 
       if (pathname.startsWith('/api/')) {

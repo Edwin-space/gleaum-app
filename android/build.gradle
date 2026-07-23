@@ -5,6 +5,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:9.2.1'
@@ -29,6 +30,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' }
     }
     // Kotlin 2.x 부터는 kotlin-stdlib-jdk7/jdk8 이 kotlin-stdlib 에 완전히 통합되어
     // 별도 force 설정이 불필요합니다.

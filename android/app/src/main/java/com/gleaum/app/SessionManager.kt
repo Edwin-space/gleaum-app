@@ -16,6 +16,11 @@ object SessionManager {
 
     /** 세션 저장 (로그인 성공 시) */
     fun save(context: Context, sessionJson: String) {
+        val previous = prefs(context).getString(KEY_SESSION, null)
+        if (previous != sessionJson) {
+            NativeAccountContextStore.clear(context)
+            NativeStartupPrefetcher.reset()
+        }
         prefs(context).edit().putString(KEY_SESSION, sessionJson).apply()
         NativeFirebase.syncSession(context, "session_saved")
     }
@@ -43,6 +48,8 @@ object SessionManager {
     /** 세션 삭제 (로그아웃 시) */
     fun clear(context: Context) {
         prefs(context).edit().remove(KEY_SESSION).apply()
+        NativeAccountContextStore.clear(context)
+        NativeStartupPrefetcher.reset()
     }
 
     private fun prefs(context: Context): SharedPreferences =

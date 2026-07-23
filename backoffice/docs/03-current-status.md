@@ -1,7 +1,8 @@
 # 03. 현재 상태 및 다음 작업 (Current Status)
 
-> 마지막 업데이트: 2026-06-01
+> 마지막 업데이트: 2026-07-16
 > 이 문서는 다음 AI 에이전트가 작업을 이어받기 위한 핵심 인수인계 문서입니다.
+> 프로젝트 전체의 실제 우선순위·진행·완료일은 `../../docs/24-project-work-tracker.md`를 단일 기준으로 사용합니다.
 
 ---
 
@@ -9,7 +10,7 @@
 
 ### 인프라 / 배포
 - [x] `backoffice/` Next.js 서브프로젝트 생성
-- [x] **Next.js 16.2.6 업그레이드** (CVE-2025-66478 보안 취약점 대응)
+- [x] **Next.js 16.2.10 / React 19.2.4 / PostCSS 8.5.10** 보안 업데이트 (2026-07-16)
 - [x] shadcn/ui 설치 (Nova 프리셋, Tailwind v4 호환)
 - [x] Vercel 독립 프로젝트 — `gleaum-backoffice`
 - [x] Production 배포: `https://gleaum-backoffice.vercel.app`
@@ -53,7 +54,9 @@
 - [x] `schedules.expense_category` CHECK 제약 확장 (food/daily/fashion/transport/culture/medical/social 추가)
 
 ### 인증 시스템
-- [x] `src/proxy.ts` — 비로그인 시 `/login` 리다이렉트
+- [x] 서버 전용 `ADMIN_EMAILS` 허용 목록 — 미설정 시 전체 접근 차단(fail-closed)
+- [x] `src/proxy.ts` + 서버 페이지/API 핸들러 — 세션과 관리자 권한 중복 검증
+- [x] Service Role 클라이언트 — 서버 전용 키가 없으면 즉시 실패하며 anon 키로 대체하지 않음
 - [x] `src/components/SessionProvider.tsx` — 비활동 30분 자동 로그아웃
 - [x] `src/components/Sidebar.tsx` — 세션 카운트다운 (120초 이하 경고)
 
@@ -64,14 +67,14 @@
 ### Phase 5: 차트 및 상세 페이지
 - [ ] 대시보드 WAU 트렌드 차트 (Recharts)
 - [ ] 대시보드 가계부 vs 캘린더 비율 차트
-- [ ] 회원 상세 페이지 (`/users/[id]`)
-- [ ] 공간 상세 페이지 (`/spaces/[id]`)
+- [x] 회원 상세 페이지 (`/users/[id]`)
+- [x] 공간 상세 페이지 (`/spaces/[id]`)
 
 ### Phase 6: CRM 실제 발송 API
-- [ ] Firebase Admin SDK — 앱 푸시 발송
+- [x] Firebase Admin SDK — 앱 푸시 발송
 - [ ] Aligo API — SMS 발송
 - [ ] SendGrid API — 이메일 발송
-- [ ] 발송 이력 DB 저장
+- [x] 발송 이력 DB 저장
 
 ### Phase 7: 광고 매니저 고도화
 - [x] 광고 CRUD DB 연동 완료
@@ -116,6 +119,11 @@ const nextConfig: NextConfig = {
 | `GA4_PROPERTY_ID` | GA4 속성 ID (서버 사이드) |
 | `GOOGLE_SERVICE_ACCOUNT` | 서비스 계정 JSON |
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | 백오피스 자체 GA4 추적 |
+
+### 관리자 인증 환경변수
+| 변수명 | 용도 |
+|--------|------|
+| `ADMIN_EMAILS` | 접근을 허용할 관리자 이메일의 쉼표 구분 목록(서버 전용, 필수) |
 
 ### 광고 슬롯 관련 환경변수 (메인 앱)
 | 변수명 | 값 |

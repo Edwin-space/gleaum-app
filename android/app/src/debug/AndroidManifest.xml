@@ -9,5 +9,11 @@
             android:label="Gleaum Native Home Preview"
             android:theme="@style/AppTheme.NoActionBar"
             tools:replace="android:exported,android:label" />
+
+        <!-- Debug builds only: adaptive/navigation/accessibility device QA. -->
+        <activity
+            android:name=".Material3ShellPreviewActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
     </application>
 </manifest>

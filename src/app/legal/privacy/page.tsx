@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: '글리움 서비스의 개인정보처리방침입니다.',
 };
 
-const EFFECTIVE_DATE = '2026년 5월 13일';
+const EFFECTIVE_DATE = '2026년 7월 20일';
 const OPERATOR = '유태성';
 const EMAIL = 'helper@gleaum.com';
 
@@ -58,7 +58,7 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
         <div style={{ background: 'rgba(0,132,204,0.1)', borderRadius: '14px', padding: '16px 20px', marginBottom: '36px', border: '1px solid rgba(0,132,204,0.25)' }}>
           <p style={{ margin: 0, fontSize: '13px', color: '#0CC9B5', fontWeight: 600 }}>시행일: {EFFECTIVE_DATE}</p>
           <p style={{ margin: '6px 0 0', fontSize: '14px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
-            글리움(이하 "서비스")은 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」을 준수합니다.
+            글리움(이하 &quot;서비스&quot;)은 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」을 준수합니다.
           </p>
         </div>
 
@@ -69,12 +69,18 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
             rows={[
               ['회원가입 (Google)', '이메일 주소, 이름, 프로필 사진', 'Google OAuth 인증'],
               ['회원가입 (이메일)', '이메일 주소, 비밀번호(암호화)', '직접 입력'],
+              ['가족 공간 자녀 사전등록', '자녀 이름, 생년월일, Google 이메일, 보호자와의 관계, 성별(선택)', '보호자 직접 입력'],
+              ['보호자 확인 및 동의', '보호자 계정 이메일의 해시, 동의 항목·정책 버전·동의 시각·확인 방법·증적 식별자', '보호자 이메일 확인 및 항목별 동의'],
               ['서비스 이용', '일정 정보, 가계부 내역, 공간(Space) 정보', '앱 내 직접 입력'],
+              ['기기 캘린더 연동', '사용자가 선택한 캘린더명·일정 제목·시간·장소·메모', '캘린더 권한 허용 후 선택한 일정만 가져오기'],
+              ['프로필 이미지', '사용자가 선택하거나 촬영 앱에서 전달한 이미지', '시스템 사진·파일 선택기'],
               ['알림 서비스', 'FCM 푸시 알림 토큰', '앱 자동 수집'],
-              ['자동 수집', '접속 IP, 기기 정보, 이용 기록, 쿠키', '시스템 자동 수집'],
+              ['서비스 분석·안정성', '앱 화면·기능 이용 기록, 앱·기기 식별자, 충돌 로그·스택 추적·기기 및 앱 상태', 'Firebase Analytics·Crashlytics SDK'],
+              ['광고 제공', 'IP 주소(일반 지역 추정 가능), 광고 ID·App Set ID 등 기기 식별자, 앱 실행·광고 조회·탭 등 상호작용, SDK 진단 정보', 'Google Mobile Ads·Kakao AdFit SDK'],
+              ['웹 자동 수집', '접속 IP, 기기·브라우저 정보, 이용 기록, 쿠키', '시스템 자동 수집'],
             ]}
           />
-          <Note>서비스는 만 14세 미만 아동의 개인정보를 수집하지 않습니다.</Note>
+          <Note>만 14세 미만 아동의 정보는 법정대리인의 동의 및 동의 확인 절차가 완료된 경우에만 처리합니다. 동의 확인에 필요한 최소 정보는 관련 법령이 허용하는 범위에서 먼저 수집할 수 있습니다.</Note>
         </Section>
 
         <Section title="제2조 (개인정보의 수집 및 이용 목적)">
@@ -84,14 +90,17 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
             '일정·가계부·공간 관리 서비스 제공',
             '푸시 알림 및 리마인더 발송',
             '공간(Space) 초대 코드 기반 그룹 관리',
-            '서비스 개선 및 통계 분석 (개인 식별 불가 형태)',
+            '가족 공간의 보호자-자녀 관계 확인, 연령별 권한 제한 및 자녀 계정 연결',
+            '법정대리인 동의 여부 확인과 동의 증적 관리',
+            '서비스 이용 통계 분석, 오류·충돌 진단 및 품질 개선',
+            '광고 표시·성과 측정 및 부정 이용 방지',
             '고객 문의 및 민원 처리',
             '법령상 의무 이행',
           ]} />
         </Section>
 
         <Section title="제3조 (개인정보의 보유 및 이용 기간)">
-          <p>서비스는 회원 탈퇴 시 즉시 개인정보를 파기합니다. 단, 관련 법령에 따라 아래 정보는 해당 기간 보관합니다.</p>
+          <p>서비스는 처리 목적이 달성되거나 회원 탈퇴·자녀 연결 해제 등으로 개인정보가 불필요해지면 지체 없이 파기합니다. 단, 관련 법령상 보존 의무 또는 분쟁 처리를 위해 필요한 경우에는 정해진 기간 동안 분리 보관합니다.</p>
           <Table
             headers={['항목', '근거 법령', '보유 기간']}
             rows={[
@@ -117,12 +126,25 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
             rows={[
               ['Supabase, Inc.', '회원 인증 및 데이터베이스 관리', '회원 탈퇴 시까지'],
               ['Vercel, Inc.', '서버 및 애플리케이션 호스팅', '회원 탈퇴 시까지'],
-              ['Google LLC', '소셜 로그인(OAuth), 푸시 알림(FCM)', '회원 탈퇴 시까지'],
+              ['Google LLC', '소셜 로그인(OAuth), 푸시 알림(FCM), 이용 분석(Firebase Analytics), 오류 진단(Crashlytics), 광고 제공·성과 측정(AdMob)', '각 서비스 목적 달성 또는 회원 탈퇴 시까지'],
+              ['Kakao Corp.', '광고 제공·성과 측정(Kakao AdFit)', '광고 SDK 정책 및 관련 법령에 따른 기간'],
             ]}
           />
         </Section>
 
-        <Section title="제6조 (이용자의 권리)">
+        <Section title="제6조 (만 14세 미만 아동 및 법정대리인)">
+          <p>서비스는 만 14세 미만 아동의 개인정보 처리에 필요한 동의를 법정대리인에게 받고, 법정대리인이 동의했는지를 확인합니다.</p>
+          <List items={[
+            '보호자가 가족 공간에서 자녀 기본 정보를 사전 등록합니다.',
+            '보호자 계정 이메일 확인 후 서비스 가입, 개인정보 수집·이용, 가족 공간 내 정보 공유 항목을 각각 동의받습니다.',
+            '자녀는 등록된 Google 이메일과 일회성 초대 링크가 모두 일치해야 연결을 요청할 수 있습니다.',
+            '보호자의 최종 승인 전에는 자녀 계정에 가족 공간 접근 권한을 부여하지 않습니다.',
+            '위치정보 수집·이용·공유와 마케팅 수신은 위 필수 동의에 포함하지 않으며 현재 자동 활성화하지 않습니다.',
+          ]} />
+          <p>법정대리인은 자녀 개인정보의 열람, 정정·삭제, 처리정지 및 동의 철회를 앱의 자녀 관리 화면 또는 {EMAIL}을 통해 요청할 수 있습니다.</p>
+        </Section>
+
+        <Section title="제7조 (이용자와 법정대리인의 권리)">
           <p>이용자는 언제든지 다음의 권리를 행사할 수 있습니다.</p>
           <List items={[
             '개인정보 열람 요청',
@@ -133,7 +155,7 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
           <p>권리 행사는 앱 내 [마이페이지 → 회원 탈퇴] 또는 이메일({EMAIL})로 요청하실 수 있습니다.</p>
         </Section>
 
-        <Section title="제7조 (개인정보의 파기)">
+        <Section title="제8조 (개인정보의 파기)">
           <p>서비스는 보유 기간이 경과하거나 처리 목적이 달성된 경우 해당 개인정보를 지체 없이 파기합니다.</p>
           <List items={[
             '전자적 파일 형태: 복구 불가능한 방법으로 영구 삭제',
@@ -141,11 +163,12 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
           ]} />
         </Section>
 
-        <Section title="제8조 (쿠키의 사용)">
+        <Section title="제9조 (쿠키의 사용)">
           <p>서비스는 이용자 인증 및 서비스 유지를 위해 쿠키(Cookie)를 사용합니다. 이용자는 브라우저 설정을 통해 쿠키를 거부할 수 있으나, 이 경우 서비스 이용에 제한이 생길 수 있습니다.</p>
+          <p>Android 이용자는 시스템 설정에서 캘린더 권한을 철회할 수 있고, 광고 ID를 재설정하거나 삭제할 수 있습니다. 캘린더 내보내기 정보는 기기 안에서 처리되며, 사용자가 가져오기로 선택한 일정만 글리움 개인 일정으로 서버에 저장됩니다.</p>
         </Section>
 
-        <Section title="제9조 (개인정보 보호책임자)">
+        <Section title="제10조 (개인정보 보호책임자)">
           <Table
             headers={['항목', '내용']}
             rows={[
@@ -156,7 +179,7 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
           <p>개인정보 관련 불편사항, 열람·정정·삭제 요청은 위 이메일로 문의해 주세요. 요청 접수 후 10일 이내 처리 결과를 안내합니다.</p>
         </Section>
 
-        <Section title="제10조 (개인정보 침해 신고)">
+        <Section title="제11조 (개인정보 침해 신고)">
           <p>개인정보 침해로 인한 신고나 상담은 아래 기관에 문의하실 수 있습니다.</p>
           <List items={[
             '개인정보 침해신고센터: privacy.kisa.or.kr / ☎ 118',
@@ -166,7 +189,7 @@ export default async function PrivacyPage({ searchParams }: LegalPageProps) {
           ]} />
         </Section>
 
-        <Section title="제11조 (방침의 변경)">
+        <Section title="제12조 (방침의 변경)">
           <p>이 개인정보처리방침은 법령·정책 변경 또는 서비스 개선을 위해 변경될 수 있습니다. 변경 시 시행일 7일 전부터 앱 공지 또는 이메일로 안내합니다.</p>
           <Note>현재 버전 시행일: {EFFECTIVE_DATE}</Note>
         </Section>

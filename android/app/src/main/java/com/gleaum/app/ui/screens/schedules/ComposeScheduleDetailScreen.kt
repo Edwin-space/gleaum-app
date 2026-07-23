@@ -22,11 +22,11 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,12 +50,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeAppSchedule
+import com.gleaum.app.ui.components.GleaumLabelBadge
+import com.gleaum.app.ui.components.GleaumStatusBadge
+import com.gleaum.app.ui.components.GleaumStateCard
+import com.gleaum.app.ui.components.StateKind
+import com.gleaum.app.ui.components.GleaumAdaptiveContent
+import com.gleaum.app.ui.theme.expenseContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,6 +75,9 @@ fun ComposeScheduleDetailScreen(
     onBack: () -> Unit,
     onEdit: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
+    onRenotify: () -> Unit,
+    renotifying: Boolean,
+    onOpenLocation: (String) -> Unit,
     onDelete: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -83,7 +91,7 @@ fun ComposeScheduleDetailScreen(
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "뒤로") }
                 },
                 actions = {
-                    if (schedule != null) {
+                    if (schedule?.permissions?.canEdit == true) {
                         IconButton(onClick = { onEdit(schedule.id) }) { Icon(Icons.Outlined.Edit, contentDescription = "수정") }
                     }
                 },
@@ -96,13 +104,14 @@ fun ComposeScheduleDetailScreen(
             )
         },
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(innerPadding),
-        ) {
-            when {
+        GleaumAdaptiveContent {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(innerPadding),
+            ) {
+                when {
                 loading -> DetailStateCard(
                     title = "일정을 불러오는 중이에요",
                     message = "일정 정보를 확인하고 있어요.",
@@ -117,12 +126,16 @@ fun ComposeScheduleDetailScreen(
                     onAction = onRetry,
                     modifier = Modifier.padding(20.dp),
                 )
-                else -> DetailContent(
-                    schedule = schedule,
-                    onEdit = onEdit,
-                    onToggleComplete = onToggleComplete,
-                    onDelete = onDelete,
-                )
+                    else -> DetailContent(
+                        schedule = schedule,
+                        onEdit = onEdit,
+                        onToggleComplete = onToggleComplete,
+                        onRenotify = onRenotify,
+                        renotifying = renotifying,
+                        onOpenLocation = onOpenLocation,
+                        onDelete = onDelete,
+                    )
+                }
             }
         }
     }
@@ -133,6 +146,9 @@ private fun DetailContent(
     schedule: NativeAppSchedule,
     onEdit: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
+    onRenotify: () -> Unit,
+    renotifying: Boolean,
+    onOpenLocation: (String) -> Unit,
     onDelete: () -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
@@ -144,11 +160,13 @@ private fun DetailContent(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         DetailHero(schedule)
-        DetailInfoCard(schedule)
+        DetailInfoCard(schedule, onOpenLocation)
         ActionCard(
             schedule = schedule,
             onEdit = onEdit,
             onToggleComplete = onToggleComplete,
+            onRenotify = onRenotify,
+            renotifying = renotifying,
             onAskDelete = { confirmDelete = true },
         )
     }
@@ -177,13 +195,12 @@ private fun DetailHero(schedule: NativeAppSchedule) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.linearGradient(listOf(typeContainer(schedule.type), MaterialTheme.colorScheme.primaryContainer)))
                 .padding(22.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(onClick = {}, label = { Text(typeLabel(schedule.type)) })
-                    AssistChip(onClick = {}, label = { Text(statusLabel(schedule.status)) })
+                    GleaumLabelBadge(typeLabel(schedule.type))
+                    GleaumStatusBadge(schedule.status)
                 }
                 Text(
                     text = schedule.title,
@@ -204,7 +221,7 @@ private fun DetailHero(schedule: NativeAppSchedule) {
 }
 
 @Composable
-private fun DetailInfoCard(schedule: NativeAppSchedule) {
+private fun DetailInfoCard(schedule: NativeAppSchedule, onOpenLocation: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -213,14 +230,24 @@ private fun DetailInfoCard(schedule: NativeAppSchedule) {
             DetailRow(Icons.Outlined.Event, "상태", statusLabel(schedule.status))
             DetailRow(Icons.Outlined.Repeat, "반복", repeatLabel(schedule.repeat))
             DetailRow(Icons.Outlined.Notifications, "알림", if (schedule.reminder > 0) "${schedule.reminder}분 전" else "없음")
+            schedule.locationAddress?.takeIf { it.isNotBlank() }?.let { address ->
+                DetailRow(Icons.Outlined.LocationOn, "장소", address, onClick = { onOpenLocation(address) })
+            }
+            DetailRow(Icons.Outlined.Event, "참여자", "${schedule.participantIds.size}명")
             DetailRow(Icons.Outlined.Schedule, "메모", schedule.memo?.takeIf { it.isNotBlank() } ?: "등록된 메모가 없어요")
         }
     }
 }
 
 @Composable
-private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+private fun DetailRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    onClick: (() -> Unit)? = null,
+) {
     ListItem(
+        modifier = Modifier.fillMaxWidth(),
         leadingContent = {
             Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape, modifier = Modifier.size(42.dp)) {
                 Box(contentAlignment = Alignment.Center) { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp)) }
@@ -228,6 +255,9 @@ private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, lab
         },
         headlineContent = { Text(label, fontWeight = FontWeight.Bold) },
         supportingContent = { Text(value) },
+        trailingContent = if (onClick != null) {
+            { TextButton(onClick = onClick) { Text("지도 열기") } }
+        } else null,
     )
 }
 
@@ -236,6 +266,8 @@ private fun ActionCard(
     schedule: NativeAppSchedule,
     onEdit: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
+    onRenotify: () -> Unit,
+    renotifying: Boolean,
     onAskDelete: () -> Unit,
 ) {
     Card(
@@ -243,20 +275,35 @@ private fun ActionCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { onToggleComplete(if (schedule.status == "completed") "pending" else "completed") }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(if (schedule.status == "completed") "예정으로 되돌리기" else "완료 처리")
+            if (!schedule.permissions.canEdit) {
+                Text("이 일정은 읽기 전용이에요.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                return@Column
+            }
+            if (schedule.permissions.canChangeStatus) {
+                Button(onClick = { onToggleComplete(if (schedule.status == "completed") "pending" else "completed") }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(if (schedule.status == "completed") "예정으로 되돌리기" else "완료 처리")
+                }
             }
             FilledTonalButton(onClick = { onEdit(schedule.id) }, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
                 Text("수정하기")
             }
-            OutlinedButton(onClick = onAskDelete, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text("삭제하기", color = MaterialTheme.colorScheme.error)
+            if (schedule.permissions.canRenotify) {
+                FilledTonalButton(onClick = onRenotify, enabled = !renotifying, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text(if (renotifying) "발송 중..." else "재알림 보내기")
+                }
+            }
+            if (schedule.permissions.canDelete) {
+                OutlinedButton(onClick = onAskDelete, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text("삭제하기", color = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }
@@ -264,17 +311,14 @@ private fun ActionCard(
 
 @Composable
 private fun DetailStateCard(title: String, message: String, actionLabel: String?, onAction: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (actionLabel != null) Button(onClick = onAction, modifier = Modifier.padding(top = 6.dp)) { Text(actionLabel) }
-        }
-    }
+    GleaumStateCard(
+        title = title,
+        message = message,
+        modifier = modifier,
+        kind = if (actionLabel == null) StateKind.LOADING else StateKind.ERROR,
+        actionLabel = actionLabel,
+        onAction = onAction,
+    )
 }
 
 private fun typeLabel(type: String): String = when (type) {
@@ -303,7 +347,7 @@ private fun repeatLabel(repeat: String): String = when (repeat) {
 private fun typeContainer(type: String): Color = when (type) {
     "shared" -> MaterialTheme.colorScheme.primaryContainer
     "child" -> MaterialTheme.colorScheme.tertiaryContainer
-    "expense" -> Color(0xFFFFF7ED)
+    "expense" -> MaterialTheme.colorScheme.expenseContainer
     else -> MaterialTheme.colorScheme.secondaryContainer
 }
 

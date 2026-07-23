@@ -13,7 +13,13 @@ export function AppFooter() {
   const pathname = usePathname();
 
   // 랜딩/법적 문서는 자체 푸터 또는 전용 뷰를 사용하므로 전역 푸터 숨김
-  if (pathname === '/' || pathname?.startsWith('/legal')) {
+  if (
+    pathname === '/' ||
+    pathname?.startsWith('/legal') ||
+    pathname?.startsWith('/invite') ||
+    pathname?.startsWith('/space/children') ||
+    pathname?.startsWith('/family/guardian/verify')
+  ) {
     return null;
   }
 

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getAdminPageSupabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ interface PageProps {
 }
 
 export default async function UserDetailPage({ params }: PageProps) {
+  const supabase = await getAdminPageSupabase();
   const { id } = await params;
 
   /* ── 프로필 조회 ── */

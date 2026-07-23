@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-auth';
 import {
   getFirebaseAccessToken,
   ANDROID_APP_ID,
@@ -96,6 +97,9 @@ function findTargetGroup(groups: FirebaseGroup[]): FirebaseGroup | undefined {
 
 /** GET — 릴리즈 목록 + internal-testers 그룹 테스터 조회 */
 export async function GET() {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
   try {
     const token = await getFirebaseAccessToken(DIST_SCOPE);
 
@@ -154,6 +158,9 @@ export async function GET() {
 
 /** POST — 테스터 추가 */
 export async function POST(req: NextRequest) {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
   try {
     const { emails, groupName } = await req.json() as { emails: string[]; groupName: string };
     if (!emails?.length || !groupName) {
@@ -177,6 +184,9 @@ export async function POST(req: NextRequest) {
 
 /** DELETE — 테스터 제거 */
 export async function DELETE(req: NextRequest) {
+  const denial = await requireAdminApi();
+  if (denial) return denial;
+
   try {
     const { emails, groupName } = await req.json() as { emails: string[]; groupName: string };
     if (!emails?.length || !groupName) {

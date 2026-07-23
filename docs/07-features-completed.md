@@ -1,5 +1,120 @@
 # 07. 완료된 기능
 
+### 2026-07-23 — 자녀 계정 선택 이메일·일회성 토큰·최종 승인/거절 분리
+
+- 자녀 사전등록 필수값을 이름·생년월일·보호자 관계로 단순화하고 이메일은 선택 제한값으로 변경
+- 이메일을 입력한 경우에만 해당 검증 이메일 계정이 초대를 사용할 수 있고, 비워 두면 링크를 전달받은 자녀의 검증된 Google/이메일 계정으로 연결 요청 가능
+- 72시간 일회성 토큰 claim은 연결 후보 이메일·인증 provider·요청 시각만 기록하고 공간 멤버십과 연령 프로필 생성은 보호자 최종 승인까지 보류
+- 보호자 본인 계정의 자녀 초대 수락 차단, 연결 후보 확인 UI, 잘못된 요청 거절·재초대 흐름 추가
+- OS 공유 시트, 문자 작성, QR, 링크·안내문 복사를 하나의 공유 시트로 제공하고 자녀 전화번호는 서버에 저장하지 않음
+- Android 네이티브 로그인 전후에도 `/invite/child/[token]` 경로를 보존해 WebView 초대 화면으로 복귀
+- 운영 Supabase migration `20260723053050_child_invite_token_binding.sql` 적용 완료
+
+검증:
+- `family_dependents` 선택 이메일·후보 필드와 부분 유니크 인덱스 확인
+- 자녀 초대/claim/승인/거절 함수 `anon=false`, `authenticated=true`
+- claim 함수가 `account_age_profiles`·`space_members`를 생성하지 않는 정의 확인
+- TypeScript, 자녀 흐름 단위 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next production build, Android debug build 통과
+- Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN` 배포, 공개 랜딩 200·신규 API 미인증 401·runtime error 0 확인
+- 보호자·자녀 실계정 2개 회귀는 `FAM-012`에서 마감
+
+### 2026-07-23 — Supabase OTP 메일 목적 분리
+
+- Supabase Dashboard에 사용자 정의 Auth 템플릿 종류를 추가할 수 없는 제약을 반영해 고정 `Magic link or OTP` 슬롯을 조건 분기형으로 변경
+- 보호자 OTP 요청에 `emailRedirectTo=https://www.gleaum.com/auth/email-purpose/guardian-verification` 식별값 추가
+- 템플릿의 `{{ .RedirectTo }}` 조건문으로 보호자 확인 안내와 향후 일반 이메일 OTP 안내 분리
+- 공용 제목을 `[글리움] 이메일 확인 코드`로 변경하고 운영 Supabase Dashboard에 저장 완료
+- 일반 이메일/비밀번호 회원가입은 별도 `Confirm sign up` 템플릿을 사용하므로 영향 없음
+- Vercel Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy` 배포 완료
+- 운영 실메일이 8자리로 발급되는 것을 기준으로 UI·API 검증·메일 안내를 `GUARDIAN_EMAIL_OTP_LENGTH=8`로 통일
+- 8자리 보정 Vercel Production `dpl_6tpDS5ay519BAZsTaVZo18JhJFKe` 배포 완료
+
+검증:
+- 운영 Supabase Redirect URL에 `https://www.gleaum.com/**` 허용 확인
+- 대상 ESLint, `git diff --check`, `npm run build` 통과
+- Dashboard 저장 알림 `Successfully updated email template` 확인
+- 운영 보호자 인증 API 미인증 요청이 `401 unauthorized`를 반환하는 것 확인
+- 실제 보호자 메일 수신·본문 분기와 OTP 완료는 로그인 실사용자 회귀 확인 필요
+
+### 2026-07-23 — 보호자 이메일 OTP·필수 동의 흐름 정합화
+
+- Supabase 메일 템플릿은 OTP를 발송하지만 앱은 Magic Link를 기다리던 프로토콜 불일치 수정
+- 자녀 관리 화면에 운영 메일과 일치하는 8자리 OTP 입력·재발송 UI 추가
+- OTP 성공 후에만 `guardian_email_verifications.verified_at`을 기록하는 서버 함수 추가
+- 확인 증적이 없는 필수 동의 요청은 DB에서 차단
+- 보호자 관계와 동의 증빙 방법을 `email_otp`, 정책 버전을 `2026-07-23-email-otp-v2`로 명시
+- 운영 Supabase migration `20260723035907_guardian_email_otp_verification.sql` 적용 및 함수 권한 검증 완료
+- Supabase Auth의 Magic Link/OTP 제목·본문을 저장소 HTML로 운영 적용
+- Vercel Production `dpl_Gc7Dmx7ahfUVTw7qvnEY7GYEzLfr` 배포 완료
+
+검증:
+- 변경 경로 ESLint, `git diff --check`, `npm run build` 통과
+- `confirm_guardian_email_verification`, `complete_guardian_email_consent`: `anon=false`, `authenticated=true`
+- 운영 `/space/children` 인증 리다이렉트 `307`, 신규 OTP API 미인증 요청 `401`
+
+### 2026-07-23 — Android 자녀 초대 WebView 경로 복귀 오류 수정
+
+- 가족 공간 멤버 탭에서 `초대 → 자녀`를 선택하면 `/space/children?sid=...`가 잠깐 열린 뒤 네이티브 홈으로 돌아가던 오류 수정
+- 원인: `NativeAppProvider.applyNativeSession()`이 네이티브 세션을 재적용할 때 현재 WebView 경로와 관계없이 `/home` 또는 `/onboarding`으로 이동
+- 세션 재적용은 계속 수행하되, 후속 진입 경로 계산과 화면 이동은 `/` 또는 `/login`에서만 실행하도록 제한
+- `/space/children`, 약관, 설정 등 의도적으로 연 WebView 기능 경로는 세션 동기화 후에도 그대로 유지
+- 운영 Vercel Production `dpl_8haU9476UgHXLDmZ3Pnd8maqwXJN` 배포 완료
+
+검증:
+- 변경 파일 ESLint 통과
+- `npm run build` 54/54 통과
+- `SM_F731N`에서 `초대 → 자녀` 진입 후 `MainActivity`가 유지되고 7초 뒤에도 네이티브 홈으로 복귀하지 않음
+- WebView DevTools에서 실제 URL이 `/space/children?sid=...`로 유지되는 것을 확인
+
+### 2026-07-23 — Android 가족 관계 역할·초대/설정 분리
+
+- 공간 권한 `admin | editor | viewer`와 가족 관계 `family_role`을 분리
+- 아빠, 엄마, 할아버지, 할머니, 배우자, 아들, 딸, 형제/자매, 보호자, 가족 구성원, 기타 관계 지원
+- 가족 공간 멤버 카드에서 관계를 주 배지로 표시하고 공간 권한은 보조 정보로 유지
+- 공간 지기가 멤버별 가족 관계를 변경할 수 있도록 Native API와 Android UI 연결
+- 가족 공간 멤버 초대 시 `일반 가족 구성원`과 `자녀`를 먼저 선택하도록 전용 초대 시트 추가
+- 일반 가족은 기존 보안 초대 코드/링크를 사용하고, 자녀는 보호자 확인·동의·일회성 초대 관리 화면으로 연결
+- 공간 설정에서 초대 코드·초대 동선을 제거하고 이름 변경·가족 전환·삭제 등 공간 자체 설정만 유지
+- 운영 Supabase migration 2개 적용, Vercel Production 배포, Android debug 실기기 UI 회귀 완료
+
+검증:
+- `npm run build` 54/54 통과
+- 변경 TypeScript ESLint 통과
+- Android `testDebugUnitTest`, `assembleDebug` 통과
+- `SM_F731N`에서 가족 초대 유형 선택, 일반 가족 초대 코드/공유, 관계 선택, 설정/초대 분리 확인
+
+### 2026-07-13 — 보호자 이메일 확인·자녀 최종 승인 흐름
+
+- 초기 비용을 줄이기 위해 외부 SMS 발송 없이 보호자 로그인 이메일 확인을 사용
+- 필수 동의 3종을 각각 확인하고 정책 버전·확인 방법·증적 식별자를 DB에 기록
+- 보호자 휴대폰의 OS 공유 시트로 문자·카카오톡 등에 자녀 초대 링크를 직접 전달
+- 자녀 Google 이메일과 72시간 일회성 토큰이 일치해도 `approval_pending`만 생성
+- 보호자 최종 승인 전에는 `space_members`를 만들지 않아 가족 공간 데이터 접근 차단
+- `/space/children`, `/family/guardian/verify`, `/invite/child/[token]` PC/Mobile 화면 구현
+- 위치 수집·공유 및 마케팅 동의는 제외하고 계속 비활성
+
+전환 조건:
+- 활성 자녀 계정 1,000명, 월 연결 500건, 관계 분쟁 1건, 위치/결제 도입 또는 정책 강화 시 SMS OTP/PASS/NICE/KCB 본인확인으로 전환
+
+검증:
+- Supabase migration `022_guardian_email_consent_flow.sql` 운영 적용 완료
+- 신규 증적 테이블, 함수 3종, RLS 정책 확인
+- `npm run build`, 변경 경로 ESLint 통과
+
+### 2026-07-13 — 가족 공간 자녀 계정 백엔드 뼈대
+
+- `family_groups.space_type`으로 개인/일반/가족 공간 저장 기준 추가
+- 가입 전 자녀 프로필, 보호자 관계, 항목별 동의, 일회성 초대, 연령 상태 테이블 설계
+- 이메일 일치만으로 연결하지 않고 검증된 Google 이메일 + 일회성 초대를 함께 확인하는 DB 트랜잭션 추가
+- 만 14세/19세 전환을 서버 생년월일 기준으로 갱신하는 계정 모드 기반 추가
+- Web/Android/iOS 공통 `/api/session/context` capability 계약 추가
+- 가족 자녀 기능은 후속 이메일 확인·최종 승인 흐름으로 운영 UI 연결
+
+검증:
+- `npm run build` 통과
+- Supabase migration `020_family_child_foundation.sql`, `021_family_child_foundation_hardening.sql` 운영 적용 완료
+- 신규 테이블 5개·함수 4개·RLS 정책 확인, 신규 외래키 인덱스/auth.uid initplan Advisor 경고 0건
+
 ### 2026-06-19 — PC 웹 루트 랜딩 리다이렉트 보정
 
 - `www.gleaum.com` 접속 시 PC에서도 `/login`으로 이동할 수 있던 문제 수정
@@ -901,7 +1016,7 @@ npm run cap:open:android # Android Studio 열기
 
 - [x] 크론 6종 타깃을 `https://www.gleaum.com`으로 통일 (automations·reminders의 구 `gleaum-app.vercel.app`, cleanup의 apex `gleaum.com` 정리)
 - [x] `012`/`016` 등록 SQL의 `$$` 도크쿼팅 중첩 버그를 평문 `cron.schedule(name, schedule, '명령문')` 형태로 재작성
-- [x] CRON_SECRET=`gleaum-cron-2026` — Vercel·로컬·크론 6종 일치 확인 (overdue-expenses 200 응답 검증)
+- [x] `CRON_SECRET` — Vercel·로컬·크론 6종 일치 확인 (실제 값은 비밀 저장소에서만 관리)
 
 ## iOS 네이티브 홈/일정 전환 API 기반 (완료 — 2026-06-18)
 
@@ -1089,3 +1204,97 @@ npm run cap:open:android # Android Studio 열기
 - Material3ShellPreviewActivity 추가
 - 상위 메뉴 선택 시 하위 메뉴가 펼쳐지는 M3 motion 샘플 구현
 - Android debug 빌드 및 실기기 Preview 실행 확인
+
+## Web 공간 전환·정보 구조 개편 (완료 — 2026-07-14)
+
+- 모바일의 도트/스와이프 중심 공간 전환을 명시적인 공간 선택 바텀시트로 교체
+- PC의 대형 공간 Hero와 공간 칩 목록을 1행 공간 컨텍스트 툴바로 축소
+- 공간 선택 시 화면 상태, `gleaum_lastSpaceId`, `/space?sid=`를 함께 갱신
+- URL/최근 선택/프로필 기본 공간을 실제 멤버십 목록으로 검증한 뒤 활성 공간 결정
+- 초대 코드 참여 완료 직후 참여한 공간으로 자동 전환
+- 모바일/PC 공간 내부를 `소식 / 일정 / 멤버` 탭으로 통일
+- 존재하지 않는 `/space/schedule` 이동을 현재 공간의 일정 탭 전환으로 수정
+- 모바일 피드 하단과 화면 고정 FAB가 중복 노출되던 추가 버튼 제거
+- `npm run build`, 공간 관련 ESLint 검사 통과
+
+## Android 네이티브 공간 전환·Material 3 UI 개편 (완료 — 2026-07-14)
+
+- `NativeSpaceActivity`의 임시 `공간 전환 기능은 준비 중` 처리를 실제 전환 API로 교체
+- 공간 멤버십 확인 후 `profiles.family_group_id`를 변경하는 `/api/native/spaces/[id]/activate` 추가
+- 현재 공간 카드를 누르면 Material 3 `ModalBottomSheet` 공간 선택기 노출
+- 대형 Hero와 전체 공간 목록 상시 노출을 제거하고 현재 공간 컨텍스트를 compact card로 축소
+- 공간 내부를 `요약 / 멤버 / 관리` 구간으로 분리
+- 요약에서 멤버 수, 역할, 초대 코드, 일정·참여·생성 빠른 이동 제공
+- 공간 생성용 전역 FAB 제거하고 기능 문맥 안으로 이동
+- Android debug APK 빌드 및 연결 기기 설치 성공
+- Vercel 운영 배포 완료, `/api/native/spaces/[id]/activate` 인증 경계 401 응답 확인
+
+## Android 공간 커뮤니티 홈 전환 (완료 — 2026-07-14)
+
+- 공간 기본 화면을 운영 요약에서 멤버 커뮤니티 소식으로 변경
+- `소식 / 일정 / 멤버` 정보 구조로 Android와 웹의 공간 개념 통일
+- 공간 소식 목록, 소식 작성, 고정 소식 및 댓글 수 표시 구현
+- 현재 공간의 다가오는 일정 목록, 일정 상세 이동, 일정 추가 진입 구현
+- 초대 코드·역할·공간 관리는 설정 바텀시트로 후순위 이동
+- Material 3 전체 색상 role을 글리움 브랜드/neutral token으로 명시해 fallback 보라·분홍 제거
+- 별도 Supabase migration 없이 기존 `space_posts` RLS를 재사용
+- `npm run build`, Android debug 빌드 통과
+
+## Android Material 3 UI 품질 기준 A 개편 (코드 감사 완료 — 2026-07-14)
+
+- light/dark 전체 ColorScheme, Typography, Shapes를 명시적으로 정의했다.
+- 임의 그라데이션과 고정 지출 배경색을 제거하고 Material surface/container 및 의미색 토큰으로 교체했다.
+- `GleaumFeedbackBanner`, `GleaumStatusBadge`, `GleaumLabelBadge`, `GleaumStateCard`로 안내·상태 UI를 통일했다.
+- 일반 안내가 errorContainer로 표시되거나 비클릭 상태가 AssistChip으로 보이던 문제를 제거했다.
+- 공통 하단 메뉴를 Material 3 `NavigationSuiteScaffold`로 교체해 폰 NavigationBar와 태블릿 NavigationRail 전환을 공식 컴포넌트에 맡겼다.
+- 홈 로딩/오류 시 빈 데이터 본문이 함께 노출되던 문제와 알림 화면의 선택 상태 없는 중복 하단 메뉴를 수정했다.
+- 독립 Scaffold 화면(일정 상세/폼, 가계부 폼, 알림)과 온보딩에도 적응형 콘텐츠 폭 제한을 적용했다.
+- 로그인/스플래시 XML의 사용자 문자열을 string resource로 이동하고 predictive back lint 오류를 수정했다.
+- API 24에서 동작하지 않던 `java.time.Instant` 직접 사용을 호환 ISO 파서로 교체했다.
+- 검증: Android `:app:assembleDebug` 통과, `:app:lintDebug` 오류 0건.
+- 평가 기준과 화면별 임시 점수는 `docs/22-android-material3-ui-audit.md`에서 관리한다.
+
+## Android 실기기 시작 흐름·네이티브 캘린더 가져오기 보강 (완료 — 2026-07-23)
+
+- `SM_F731N` 실기기에서 Google 로그인 후 스플래시 → 네이티브 홈, 홈/일정/공간/가계부/전체 메뉴 왕복을 확인했다.
+- 스플래시 중 선조회한 홈·공간·일정·가계부·알림 캐시가 화면 이동에서 재사용되고 앱 크래시/ANR이 없음을 확인했다.
+- 전체 메뉴의 캘린더 선택 목록을 스크롤 가능한 단일 선택 목록으로 변경하고 긴 캘린더/계정 이름을 말줄임 처리했다.
+- WebView `/settings/calendar`로 이동하던 `기기 일정 가져오기`를 Compose Material 3 네이티브 화면으로 교체했다.
+- 선택한 기기 캘린더에서 어제~30일 뒤 일정을 조회하고, 글리움 표식 일정과 제목·시작 시각이 같은 기존 private 개인 일정을 제외한다.
+- 사용자가 선택한 일정만 `type=personal`, `visibility=private`로 생성하며 공유 공간에는 기록하지 않는다.
+- 폴더블 하단 시스템 내비게이션 인셋과 가져오기 버튼이 겹치지 않도록 보정했다.
+- 실기기에서 후보 3개 조회·선택 UI·뒤로가기·시스템 바를 확인했다. 운영 데이터 보호를 위해 실제 가져오기 실행은 보류했다.
+- Android `:app:testDebugUnitTest`, `:app:assembleDebug` 통과 및 최신 debug APK 설치 완료.
+
+## Android Kakao AdFit 실기기 미노출 복구 (완료 — 2026-07-23)
+
+- 가족 계정 도입 전 생성된 일반 계정의 `unknown` account mode를 광고 가능한 레거시 표준 계정으로 정의했다.
+- 자녀·청소년 제한 계정 4종의 광고 차단은 유지하고 Web/API/Android capability 계약을 동일하게 맞췄다.
+- 운영 Supabase migration `20260723021003_allow_ads_for_legacy_standard_accounts.sql` 적용 및 Vercel Production 배포를 완료했다.
+- 스플래시 선조회 스레드가 Google App Open Ad를 백그라운드에서 로드해 앱을 종료시키던 문제를 메인 Looper 강제로 수정했다.
+- 실기기에서 AdFit 하단 전환형 팝업 요청·로드·SDK UI 렌더링과 크래시 0건을 확인했다.
+
+## Android 자녀 연결 WebView 안전 영역 복구 (코드·배포 완료 — 2026-07-23)
+
+- 자녀 관리·자녀 초대·보호자 동의 화면에서 전역 내비게이션과 푸터가 버튼 위에 겹치지 않도록 집중 흐름으로 분리
+- Android 실제 시스템바·컷아웃 `WindowInsets`를 WebView CSS 변수로 전달
+- CSS safe-area와 네이티브 인셋을 병합하고 구버전 앱에는 최소 24px 안전 여백 제공
+- 모바일 자녀 관리 헤더를 세로 배치해 작은 화면에서 등록 버튼이 눌리지 않던 문제 방지
+- 대상 ESLint, TypeScript, 자녀 테스트 3/3, Next production build, Android debug build 통과
+- Vercel Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU` 배포 및 `SM_F731N` debug APK 설치 완료
+- 생체인증 해제 후 실기기 시각·조작 회귀만 남아 있으므로 기능 완료가 아닌 검증 대기 상태로 추적
+
+## Android 자녀 연결 Compose·공개 랜딩·Google 로그인 (구현·배포 완료 — 2026-07-23)
+
+- Android 자녀 계정 연결을 WebView에서 Compose Material 3로 전환했다.
+- 보호자 자녀 목록/등록, 8자리 OTP, 필수 동의, 초대 공유, 후보 승인/거절, 자녀 claim을 네이티브 Activity에서 처리한다.
+- 자녀 API 8개를 Cookie·Bearer 공통 인증으로 보강해 Web과 Android가 같은 검증·DB 계약을 사용한다.
+- Android Google 로그인은 Credential Manager 계정 선택과 Supabase ID token 교환 방식으로 구현했다.
+- 웹 `/`은 PC 전용 랜딩과 모바일 로그인 강제 구조를 제거하고 PC·태블릿·모바일 공통 반응형 서비스 소개로 재구성했다.
+- 랜딩 화면은 실제 Android 정보 구조를 개인정보 없이 재구성하고 홈·일정·공간·개인 가계부와 현재 지원 플랫폼을 명확히 안내한다.
+- 검색엔진이 첫 HTML에서 소개 문구를 읽을 수 있도록 웹 SSR은 랜딩을 렌더링하고, 앱 WebView만 hydration 뒤 네이티브 세션 분기로 전환한다.
+- 검증: Next production build 55/55, Android compile/unit test/assemble/lint 통과, lint 오류 0건.
+- `SM_F731N`에 최신 APK를 설치해 스플래시 → 네이티브 홈, 가족 공간 → 자녀 계정 연결 Activity 진입을 확인했다.
+- Production 배포 후 네이티브 Bearer 인증으로 기존 자녀 2명 목록을 정상 조회했다. 데이터 변경 동작은 운영 데이터 보호를 위해 별도 실계정 회귀로 남긴다.
+- 자녀 등록 생년월일은 숫자 8자리 입력을 `YYYY-MM-DD`로 자동 변환하고 삽입된 구분자 뒤로 커서를 유지한다. 실제 날짜·1900년 이후·미래 날짜 금지 검증을 통과해야 등록 버튼이 활성화된다.
+- 실기기에서 `20150318 → 2015-03-18` 변환과 등록 버튼 활성화를 확인했으며 테스트 레코드는 생성하지 않았다.

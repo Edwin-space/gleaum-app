@@ -16,7 +16,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import com.gleaum.app.ui.components.GleaumDestination
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.gleaum.app.ui.screens.notifications.ComposeNotificationScreen
 import com.gleaum.app.ui.theme.GleaumTheme
 
@@ -34,14 +35,23 @@ class NativeNotificationActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!loading) loadNotifications(silent = true)
+        applyLightSystemBars()
     }
 
     private fun applyLightSystemBars() {
         NativeTheme.applySystemBars(window, this)
     }
 
-    private fun loadNotifications(silent: Boolean = false) {
+    private fun loadNotifications(silent: Boolean = false, force: Boolean = false) {
+        if (!force) {
+            NativeAppDataCache.notifications?.let {
+                summary = it
+                loading = false
+                message = null
+                render()
+                return
+            }
+        }
         if (!silent) {
             loading = true
             message = null
@@ -51,6 +61,7 @@ class NativeNotificationActivity : AppCompatActivity() {
             try {
                 val loaded = NativeNotificationApi.fetch(this)
                 runOnUiThread {
+                    NativeAppDataCache.notifications = loaded
                     summary = loaded
                     loading = false
                     message = null
@@ -74,30 +85,29 @@ class NativeNotificationActivity : AppCompatActivity() {
         setContentView(buildScreen())
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun renderComposeNotifications() {
         setContent {
             GleaumTheme {
-                ComposeNotificationScreen(
-                    summary = summary,
-                    loading = loading,
-                    message = message,
-                    onRefresh = { loadNotifications() },
-                    onMarkAllRead = { markAllRead() },
-                    onNotificationClick = { openNotification(it) },
-                    onBack = { finish() },
-                    onDestinationSelected = ::handleComposeDestination,
-                )
+                PullToRefreshBox(
+                    isRefreshing = loading && summary != null,
+                    onRefresh = {
+                        loading = true
+                        render()
+                        loadNotifications(silent = true, force = true)
+                    },
+                ) {
+                    ComposeNotificationScreen(
+                        summary = summary,
+                        loading = loading,
+                        message = message,
+                        onRefresh = { loadNotifications(force = true) },
+                        onMarkAllRead = { markAllRead() },
+                        onNotificationClick = { openNotification(it) },
+                        onBack = { finish() },
+                    )
+                }
             }
-        }
-    }
-
-    private fun handleComposeDestination(destination: GleaumDestination) {
-        when (destination) {
-            GleaumDestination.HOME -> { startActivity(Intent(this, NativeHomePortActivity::class.java)); finish() }
-            GleaumDestination.SCHEDULES -> { startActivity(Intent(this, NativeScheduleListActivity::class.java)); finish() }
-            GleaumDestination.SPACE -> { startActivity(Intent(this, NativeSpaceActivity::class.java)); finish() }
-            GleaumDestination.BUDGET -> { startActivity(Intent(this, NativeBudgetActivity::class.java)); finish() }
-            GleaumDestination.MENU -> { startActivity(Intent(this, NativeMyMenuActivity::class.java)); finish() }
         }
     }
 
@@ -253,7 +263,8 @@ class NativeNotificationActivity : AppCompatActivity() {
         Thread {
             try {
                 NativeNotificationApi.markAllRead(this)
-                runOnUiThread { loadNotifications() }
+                NativeAppDataCache.notifications = null
+                runOnUiThread { loadNotifications(force = true) }
             } catch (e: Exception) {
                 runOnUiThread { Toast.makeText(this, friendlyError(e.message), Toast.LENGTH_SHORT).show() }
             }
@@ -262,12 +273,17 @@ class NativeNotificationActivity : AppCompatActivity() {
 
     private fun openNotification(item: NativeNotificationItem) {
         Thread {
-            try { if (!item.read) NativeNotificationApi.markRead(this, item.id) } catch (_: Exception) { }
+            try {
+                if (!item.read) {
+                    NativeNotificationApi.markRead(this, item.id)
+                    NativeAppDataCache.notifications = null
+                }
+            } catch (_: Exception) { }
             runOnUiThread {
                 if (!item.scheduleId.isNullOrBlank()) {
                     startActivity(Intent(this, NativeScheduleDetailActivity::class.java).putExtra("schedule_id", item.scheduleId))
                 } else {
-                    loadNotifications(silent = true)
+                    loadNotifications(silent = true, force = true)
                 }
             }
         }.start()

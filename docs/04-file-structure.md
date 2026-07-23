@@ -13,8 +13,19 @@ gleaum-app/                            # GitHub 레포지토리 루트
 │   ├── next.config.ts
 │   └── package.json
 ├── docs/                              # ← 지금 읽고 있는 문서 (사용자 앱 전용)
+├── android/                           # Android 네이티브 앱 (Compose Material 3 + Capacitor)
+│   └── app/src/main/java/com/gleaum/app/
+│       ├── NativePortFlags.kt         # 네이티브/Compose 화면 활성 gate
+│       ├── Native*Activity.kt         # 홈·일정·가계부·공간·전체·알림·온보딩
+│       ├── NativeDateTime.kt          # API 24 호환 ISO 날짜 파서
+│       └── ui/
+│           ├── theme/                 # GleaumTheme, semantic colors
+│           ├── components/            # Scaffold, 상태, 안내, 배지, 적응형 폭
+│           └── screens/               # 화면별 Compose Material 3 구현
+├── ios/                               # iOS UIKit/Capacitor 앱
 ├── supabase/
-│   └── schema.sql                 # DB 스키마 (Supabase SQL Editor에서 실행)
+│   ├── schema.sql                     # DB 기준 스키마
+│   └── migrations/                    # 순차 SQL과 실행 상태 README
 ├── src/
 │   ├── app/                       # Next.js App Router 페이지
 │   │   ├── layout.tsx             # 루트 레이아웃 (블롭 배경 포함)

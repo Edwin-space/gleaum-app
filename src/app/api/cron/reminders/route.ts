@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
 import { formatTimeTZ } from '@/lib/utils';
+import { isNotificationEnabled } from '@/lib/notification-settings';
 
 // Supabase pg_net은 POST로 호출 → GET과 동일하게 처리
 export async function POST(req: NextRequest) { return GET(req); }
@@ -80,13 +81,16 @@ export async function GET(req: NextRequest) {
 
     const { data: profiles } = await supabaseAdmin
       .from('profiles')
-      .select('id, fcm_token')
+      .select('id, fcm_token, notification_settings')
       .in('id', memberIds)
       .not('fcm_token', 'is', null);
 
-    if (!profiles || profiles.length === 0) continue;
+    const enabledProfiles = (profiles ?? []).filter((profile) =>
+      isNotificationEnabled(profile.notification_settings, 'scheduleReminders'),
+    );
+    if (enabledProfiles.length === 0) continue;
 
-    const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
+    const tokens = enabledProfiles.map((p) => p.fcm_token).filter(Boolean);
 
     // timezone: 모든 사용자 한국 기준 'Asia/Seoul' 고정
     const spaceTZ = 'Asia/Seoul';
@@ -100,7 +104,7 @@ export async function GET(req: NextRequest) {
     totalSent += sent;
 
     // ── 5) 알림 기록 ──────────────────────────────────────
-    const records = profiles.map((p: { id: string }) => ({
+    const records = enabledProfiles.map((p) => ({
       user_id:     p.id,
       schedule_id: schedule.id,
       title,

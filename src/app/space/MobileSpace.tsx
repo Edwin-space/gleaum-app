@@ -15,8 +15,11 @@ import { SpaceFeed } from './SpaceFeed';
 import { KakaoAdBanner } from '@/components/ads/KakaoAdBanner';
 import { SpaceEntryModal } from './SpaceEntryModal';
 import { toast } from 'sonner';
-import type { Space, SpaceMember, SpaceRole } from '@/types';
+import type { Space, SpaceRole } from '@/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { SpaceSectionTabs, SpaceSwitcher, type SpaceSection } from './SpaceSwitcher';
+import { SpaceScheduleTimeline } from './SpaceScheduleTimeline';
+import { useAccountSession } from '@/components/AccountSessionProvider';
 
 const FREE_MAX_SPACES  = 2;
 const FREE_MAX_MEMBERS = 10;
@@ -30,6 +33,7 @@ export function MobileSpace() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { spaceId, user, profile, loading: userLoading, refresh: refreshUser } = useCurrentUser();
+  const { capabilities } = useAccountSession();
 
   // space/new 에서 넘어올 때 새 공간 ID를 즉시 표시하기 위한 파라미터
   const sidParam = searchParams.get('sid');
@@ -45,6 +49,7 @@ export function MobileSpace() {
   const [joinCode,        setJoinCode]           = useState('');
   const [joining,         setJoining]            = useState(false);
   const [joinError,       setJoinError]          = useState('');
+  const [liveInviteCode,  setLiveInviteCode]     = useState<string | undefined>(undefined);
 
   // Inline name editing
   const [isEditingName,       setIsEditingName]       = useState(false);
@@ -58,27 +63,17 @@ export function MobileSpace() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // My spaces (for plan + swipe)
+  // My spaces
   const [mySpaces,     setMySpaces]     = useState<Space[]>([]);
-  const [spaceIndex,   setSpaceIndex]   = useState(0);
 
-  // 우선순위: 1) URL ?sid 파라미터  2) localStorage 최근 공간  3) profiles.family_group_id
-  const initActiveSpace = (() => {
-    if (typeof window === 'undefined') return spaceId;
-    if (sidParam) return sidParam;
-    try {
-      const stored = localStorage.getItem('gleaum_lastSpaceId');
-      if (stored) return stored;
-    } catch {}
-    return spaceId;
-  })();
-  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(initActiveSpace);
+  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(sidParam ?? spaceId);
 
   // FAB / 바텀 시트 상태
   const [showFabSheet,      setShowFabSheet]      = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showExpenseModal,  setShowExpenseModal]  = useState(false);
   const [showManageSheet,   setShowManageSheet]   = useState(false);
+  const [activeSection,     setActiveSection]     = useState<SpaceSection>('feed');
 
   // 관리 시트 내부 상태
   const [editingRole,    setEditingRole]    = useState<string | null>(null);
@@ -89,22 +84,14 @@ export function MobileSpace() {
   // Push subscriptions
   usePushSubscription();
 
-  // ★ spaceId(profiles.family_group_id)가 바뀌면 activeSpaceId도 동기화
-  useEffect(() => {
-    if (spaceId && !activeSpaceId) {
-      setActiveSpaceId(spaceId);
-    }
-  }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const displaySpaceId = activeSpaceId ?? spaceId;
 
-  // ★ activeSpaceId 변경 시 localStorage 저장 + optimistic 이름/초대코드 초기화
-  useEffect(() => {
-    if (!activeSpaceId) return;
-    try { localStorage.setItem('gleaum_lastSpaceId', activeSpaceId); } catch {}
-    setOptimisticSpaceName(null);
-    setLiveInviteCode(undefined);
-  }, [activeSpaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
+  const isAdmin = myRole === 'admin' && capabilities.canManageSpaces;
 
-  // ★ 모바일 앱/PWA 포그라운드 복귀 시 최신 데이터 재조회
+  const { refresh: refreshSchedules } = useSchedules(displaySpaceId);
+
+  // 모바일 앱/PWA가 포그라운드로 돌아오면 현재 공간 정보를 갱신합니다.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
@@ -114,38 +101,31 @@ export function MobileSpace() {
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ★ 스와이프된 공간 ID 우선 사용 (activeSpaceId) — 없으면 기본 spaceId
-  const displaySpaceId = activeSpaceId ?? spaceId;
-
-  const { space: group, members, myRole, loading, refresh } = useSpace(displaySpaceId);
-  const isAdmin = myRole === 'admin';
-
-  const { refresh: refreshSchedules } = useSchedules(displaySpaceId);
+  }, [refresh]);
 
   // ── 개인 공간 여부 ─────────────────────────────────────────
   const personalSpaceId = (profile?.preferences as { personalSpaceId?: string } | null)?.personalSpaceId ?? null;
   const isPersonalSpace = !!displaySpaceId && displaySpaceId === personalSpaceId;
 
-  // Swipe
-  const touchStartX = useRef<number>(0);
-  const touchEndX   = useRef<number>(0);
-
   // ── 데이터 로드 ──────────────────────────────────────
   useEffect(() => {
     getMySpaces().then(spaces => {
       setMySpaces(spaces);
-      const currentId = activeSpaceId ?? spaceId;
-      let idx = spaces.findIndex(s => s.id === currentId);
-      if (idx < 0 && spaceId) idx = spaces.findIndex(s => s.id === spaceId);
+      let storedSpaceId: string | null = null;
+      try { storedSpaceId = localStorage.getItem('gleaum_lastSpaceId'); } catch {}
+      const preferredIds = [sidParam, storedSpaceId, activeSpaceId, spaceId].filter(Boolean) as string[];
+      const idx = preferredIds
+        .map(id => spaces.findIndex(space => space.id === id))
+        .find(index => index >= 0) ?? -1;
       const finalIdx = idx >= 0 ? idx : 0;
-      setSpaceIndex(finalIdx);
-      if (spaces[finalIdx] && spaces[finalIdx].id !== activeSpaceId) {
-        setActiveSpaceId(spaces[finalIdx].id);
+      const selected = spaces[finalIdx];
+      if (selected && selected.id !== activeSpaceId) {
+        setActiveSpaceId(selected.id);
+        setOptimisticSpaceName(null);
+        setLiveInviteCode(undefined);
       }
     });
-  }, [spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sidParam, spaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 공간이 없으면 온보딩으로
   useEffect(() => {
@@ -154,29 +134,15 @@ export function MobileSpace() {
     }
   }, [userLoading, spaceId, router]);
 
-  // cover image 초기화
-  useEffect(() => {
-    setCoverImageUrl((group as any)?.coverImageUrl ?? null);
-  }, [group]);
+  const currentCoverImageUrl = coverImageUrl ?? (group as Space & { coverImageUrl?: string })?.coverImageUrl ?? null;
 
-  // ── 스와이프 핸들러 ──────────────────────────────────
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.changedTouches[0].screenX;
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    touchEndX.current = e.changedTouches[0].screenX;
-    const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) < 60) return;
-
-    if (diff > 0 && spaceIndex < mySpaces.length - 1) {
-      const next = spaceIndex + 1;
-      setSpaceIndex(next);
-      setActiveSpaceId(mySpaces[next].id);
-    } else if (diff < 0 && spaceIndex > 0) {
-      const prev = spaceIndex - 1;
-      setSpaceIndex(prev);
-      setActiveSpaceId(mySpaces[prev].id);
-    }
+  const selectSpace = (space: Space) => {
+    setActiveSpaceId(space.id);
+    setOptimisticSpaceName(null);
+    setLiveInviteCode(undefined);
+    setCoverImageUrl(null);
+    try { localStorage.setItem('gleaum_lastSpaceId', space.id); } catch {}
+    router.replace(`${pathname}?sid=${encodeURIComponent(space.id)}`, { scroll: false });
   };
 
   // ── 공간 이름 편집 ────────────────────────────────────
@@ -202,11 +168,6 @@ export function MobileSpace() {
       void getMySpaces().then(spaces => { setMySpaces(spaces); });
     }
   };
-
-  // group 데이터가 갱신되면 optimistic 이름 클리어
-  useEffect(() => {
-    if (group?.name) setOptimisticSpaceName(null);
-  }, [group?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // SpaceFeed의 + 버튼 → FAB 액션 시트 열기
   useEffect(() => {
@@ -280,8 +241,7 @@ export function MobileSpace() {
     await getMySpaces().then(spaces => {
       setMySpaces(spaces);
       if (spaces.length > 0) {
-        setSpaceIndex(0);
-        setActiveSpaceId(spaces[0].id);
+        selectSpace(spaces[0]);
       } else {
         router.replace('/space/new');
       }
@@ -290,7 +250,6 @@ export function MobileSpace() {
   };
 
   // ── 초대 링크 ────────────────────────────────────────
-  const [liveInviteCode, setLiveInviteCode] = useState<string | undefined>(undefined);
   const currentInviteCode = liveInviteCode ?? group?.inviteCode;
 
   const isInviteCodeValid = async (code: string): Promise<boolean> => {
@@ -431,8 +390,12 @@ export function MobileSpace() {
     const result = await joinSpaceByCode(joinCode.trim().toUpperCase());
     setJoining(false);
     if (result.success) {
-      await refreshUser(); await refresh();
-      await getMySpaces().then(setMySpaces);
+      await refreshUser();
+      const spaces = await getMySpaces();
+      setMySpaces(spaces);
+      const joinedIndex = spaces.findIndex(space => space.id === result.spaceId);
+      if (joinedIndex >= 0) selectSpace(spaces[joinedIndex]);
+      await refresh();
       setShowJoinModal(false); setJoinCode('');
     } else {
       setJoinError('유효하지 않은 공간 코드입니다.');
@@ -444,8 +407,6 @@ export function MobileSpace() {
   const sharedSpaceCount = mySpaces.filter(s => s.id !== personalSpaceId).length;
   const spaceAtLimit     = sharedSpaceCount >= FREE_MAX_SPACES;
   const currentSpaceName = optimisticSpaceName ?? group?.name ?? mySpaces.find(s => s.id === displaySpaceId)?.name ?? '나의 공간';
-  const myMember = members.find(m => m.userId === user?.id);
-
   // ── 로딩 ─────────────────────────────────────────────
   if (userLoading || (!displaySpaceId && !userLoading)) {
     return (
@@ -460,8 +421,6 @@ export function MobileSpace() {
     <div
       className="min-h-dvh"
       style={{ background: 'var(--theme-bg)', paddingBottom: 'max(80px, calc(80px + env(safe-area-inset-bottom)))' }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -474,33 +433,18 @@ export function MobileSpace() {
         borderBottom: '1px solid var(--theme-border)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* 공간 아이콘 */}
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '12px',
-            background: 'rgba(0,132,204,0.10)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '20px', flexShrink: 0,
-          }}>🏠</div>
-
-          {/* 공간명 */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--theme-text)', letterSpacing: '-0.5px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {currentSpaceName}
-            </h1>
+            <SpaceSwitcher
+              spaces={mySpaces}
+              currentSpaceId={displaySpaceId}
+              personalSpaceId={personalSpaceId}
+              mobile
+              onSelect={selectSpace}
+              onJoin={() => setShowJoinModal(true)}
+              onCreate={() => router.push('/space/new')}
+              createDisabled={spaceAtLimit}
+            />
           </div>
-
-          {/* 역할 뱃지 */}
-          {myRole && (
-            <span style={{
-              fontSize: '10px', fontWeight: 800, letterSpacing: '0.2px',
-              padding: '3px 8px', borderRadius: '999px',
-              background: myRole === 'admin' ? 'rgba(0,132,204,0.10)' : myRole === 'editor' ? 'rgba(12,201,181,0.10)' : 'rgba(142,142,147,0.10)',
-              color: myRole === 'admin' ? '#0084CC' : myRole === 'editor' ? '#0CC9B5' : '#8E8E93',
-              flexShrink: 0,
-            }}>
-              {ROLE_LABELS[myRole]}
-            </span>
-          )}
 
           {/* 공간 관리 버튼 */}
           <button
@@ -514,25 +458,6 @@ export function MobileSpace() {
           </button>
         </div>
 
-        {/* 공간 인디케이터 도트 */}
-        {mySpaces.length > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '10px' }}>
-            {mySpaces.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => { setSpaceIndex(i); setActiveSpaceId(mySpaces[i].id); }}
-                title={s.name}
-                style={{
-                  width: i === spaceIndex ? '20px' : '6px',
-                  height: '6px', borderRadius: '999px',
-                  background: i === spaceIndex ? '#0084CC' : '#D1D1D6',
-                  border: 'none', cursor: 'pointer', padding: 0,
-                  transition: 'all 0.25s ease',
-                }}
-              />
-            ))}
-          </div>
-        )}
       </header>
 
       {/* ── 멤버 클러스터 (compact) ── */}
@@ -583,31 +508,60 @@ export function MobileSpace() {
         </div>
       )}
 
-      {/* ── 메인 콘텐츠: SpaceFeed ── */}
+      <div style={{ padding: '12px 16px 10px' }}>
+        <SpaceSectionTabs value={activeSection} onChange={setActiveSection} compact />
+      </div>
+
+      {/* 선택한 공간의 소식·일정·멤버를 한 화면에서 탐색 */}
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: '80px', gap: '16px' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px solid #0084CC', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
           <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text-subtle)' }}>공간 정보를 불러오는 중...</p>
         </div>
       ) : (
-        <>
-          {/* ── 카카오 광고 배너 (320×100) ── */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-            <KakaoAdBanner
-              adUnit="DAN-9QO2xcl8YeUyiixc"
-              width={320}
-              height={100}
-            />
-          </div>
-          <SpaceFeed
-            spaceId={displaySpaceId}
-            members={members}
-            currentUser={user ?? null}
-            currentUserRole={myRole}
-            spaceName={currentSpaceName}
-            isMobile
-          />
-        </>
+        <div style={{ padding: '0 16px' }}>
+          {activeSection === 'feed' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                <KakaoAdBanner adUnit="DAN-9QO2xcl8YeUyiixc" width={320} height={100} />
+              </div>
+              <SpaceFeed
+                spaceId={displaySpaceId}
+                members={members}
+                currentUser={user ?? null}
+                currentUserRole={myRole}
+                spaceName={currentSpaceName}
+                isMobile
+              />
+            </>
+          )}
+          {activeSection === 'schedule' && user && (
+            <SpaceScheduleTimeline spaceId={displaySpaceId} members={members} currentUserId={user.id} />
+          )}
+          {activeSection === 'members' && (
+            <section style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)', borderRadius: '20px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid var(--theme-border)' }}>
+                <div>
+                  <h2 style={{ margin: 0, color: 'var(--theme-text)', fontSize: '15px', fontWeight: 850 }}>공간 멤버</h2>
+                  <p style={{ margin: '3px 0 0', color: 'var(--theme-text-subtle)', fontSize: '11px', fontWeight: 600 }}>{memberCount}명이 참여 중입니다.</p>
+                </div>
+                {!isPersonalSpace && !memberAtLimit && (
+                  <button type="button" onClick={() => setShowInviteModal(true)} style={{ minHeight: '36px', padding: '0 12px', borderRadius: '12px', border: '1px solid rgba(0,132,204,0.20)', background: 'rgba(0,132,204,0.08)', color: '#0084CC', fontSize: '12px', fontWeight: 800 }}>멤버 초대</button>
+                )}
+              </div>
+              {members.map((member, index) => (
+                <div key={member.id} style={{ minHeight: '64px', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '12px', borderTop: index ? '1px solid var(--theme-border)' : 'none' }}>
+                  <UserAvatar avatar={member.user?.avatar} name={member.user?.name} size={40} radius={14} fontSize={15} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--theme-text)', fontSize: '14px', fontWeight: 800 }}>{member.nickname || member.user?.displayName || member.user?.name || '사용자'}</p>
+                    <p style={{ margin: '2px 0 0', color: 'var(--theme-text-subtle)', fontSize: '11px', fontWeight: 600 }}>{ROLE_LABELS[member.role]}</p>
+                  </div>
+                  {member.userId === user?.id && <span style={{ color: '#0084CC', fontSize: '11px', fontWeight: 800 }}>나</span>}
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
       )}
 
       {/* ── FAB ── */}
@@ -690,22 +644,23 @@ export function MobileSpace() {
                 </div>
               </button>
 
-              {/* 지출 등록 */}
-              <button
-                onClick={() => { setShowFabSheet(false); setShowExpenseModal(true); }}
-                style={{
-                  width: '100%', padding: '18px 20px', borderRadius: '20px',
-                  border: '1.5px solid rgba(0,0,0,0.06)', background: 'var(--theme-surface-muted)',
-                  display: 'flex', alignItems: 'center', gap: '14px',
-                  cursor: 'pointer', textAlign: 'left',
-                }}
-              >
-                <span style={{ fontSize: '24px' }}>💰</span>
-                <div>
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>지출 등록</p>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>공간 지출 내역 기록하기</p>
-                </div>
-              </button>
+              {capabilities.canViewHouseholdBudget && (
+                <button
+                  onClick={() => { setShowFabSheet(false); setShowExpenseModal(true); }}
+                  style={{
+                    width: '100%', padding: '18px 20px', borderRadius: '20px',
+                    border: '1.5px solid rgba(0,0,0,0.06)', background: 'var(--theme-surface-muted)',
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <span style={{ fontSize: '24px' }}>💰</span>
+                  <div>
+                    <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>지출 등록</p>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>공간 지출 내역 기록하기</p>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -724,7 +679,7 @@ export function MobileSpace() {
       )}
 
       {/* ── SpaceEntryModal: 지출 ── */}
-      {showExpenseModal && displaySpaceId && user && (
+      {capabilities.canViewHouseholdBudget && showExpenseModal && displaySpaceId && user && (
         <SpaceEntryModal
           type="expense"
           spaceId={displaySpaceId}
@@ -822,13 +777,13 @@ export function MobileSpace() {
                       cursor: 'pointer', textAlign: 'left',
                     }}
                   >
-                    {coverImageUrl ? (
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundImage: `url(${coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }} />
+                    {currentCoverImageUrl ? (
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundImage: `url(${currentCoverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }} />
                     ) : (
                       <span style={{ fontSize: '20px' }}>📷</span>
                     )}
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--theme-text-subtle)' }}>
-                      {uploadingCover ? '업로드 중...' : coverImageUrl ? '커버 이미지 변경' : '커버 이미지 추가'}
+                      {uploadingCover ? '업로드 중...' : currentCoverImageUrl ? '커버 이미지 변경' : '커버 이미지 추가'}
                     </span>
                   </button>
                   <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
@@ -836,7 +791,7 @@ export function MobileSpace() {
               )}
 
               {/* ── 초대 코드 (공유 공간, loading 완료 후) ── */}
-              {!isPersonalSpace && !loading && (currentInviteCode || isAdmin) && (
+              {capabilities.canInviteMembers && !isPersonalSpace && !loading && (currentInviteCode || isAdmin) && (
                 <div style={{ marginBottom: '20px' }}>
                   <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>초대 코드</p>
                   <div style={{ background: 'linear-gradient(135deg, #1A1B2E 0%, #2D2E4A 100%)', borderRadius: '16px', padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
@@ -965,10 +920,10 @@ export function MobileSpace() {
                               </div>
                             ) : (
                               <button
-                                onClick={() => { setNicknameValue((member as any).nickname ?? ''); setEditingNickname(true); }}
+                                onClick={() => { setNicknameValue(member.nickname ?? ''); setEditingNickname(true); }}
                                 style={{ fontSize: '12px', fontWeight: 700, color: '#0084CC', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}
                               >
-                                닉네임 편집 {(member as any).nickname ? `(현재: ${(member as any).nickname})` : '(미설정)'}
+                                닉네임 편집 {member.nickname ? `(현재: ${member.nickname})` : '(미설정)'}
                               </button>
                             )}
                           </div>
@@ -980,10 +935,11 @@ export function MobileSpace() {
               </div>
 
               {/* ── 공간 합류 ── */}
+              {(capabilities.canInviteMembers || capabilities.canManageSpaces) && (
               <div style={{ marginBottom: '20px' }}>
                 <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--theme-text-subtle)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>내 공간 관리</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <button
+                  {capabilities.canInviteMembers && <button
                     onClick={() => { setShowManageSheet(false); setShowJoinModal(true); }}
                     style={{
                       width: '100%', padding: '14px 16px', borderRadius: '16px',
@@ -998,9 +954,9 @@ export function MobileSpace() {
                       <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>초대 코드로 기존 공간에 합류</p>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                  </button>
+                  </button>}
 
-                  <button
+                  {capabilities.canManageSpaces && <button
                     disabled={spaceAtLimit}
                     onClick={() => !spaceAtLimit && (setShowManageSheet(false), router.push('/space/new'))}
                     style={{
@@ -1020,9 +976,32 @@ export function MobileSpace() {
                       </p>
                     </div>
                     {!spaceAtLimit && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>}
-                  </button>
+                  </button>}
+
+                  {isAdmin && !isPersonalSpace && displaySpaceId && (
+                    <button
+                      onClick={() => {
+                        setShowManageSheet(false);
+                        router.push(`/space/settings?sid=${encodeURIComponent(displaySpaceId)}`);
+                      }}
+                      style={{
+                        width: '100%', padding: '14px 16px', borderRadius: '16px',
+                        border: '1.5px solid var(--theme-border)', background: 'var(--theme-surface-muted)',
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ fontSize: '20px' }}>⚙️</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '14px', fontWeight: 800, color: 'var(--theme-text)', margin: '0 0 2px' }}>공간 설정</p>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--theme-text-subtle)', margin: 0 }}>이름·멤버·가족 전환·공간 삭제 관리</p>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-subtle)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  )}
                 </div>
               </div>
+              )}
 
               {/* ── 공간 탈퇴 (admin 아닌 경우) ── */}
               {!isAdmin && !isPersonalSpace && (
@@ -1057,7 +1036,7 @@ export function MobileSpace() {
       )}
 
       {/* ── Invite modal (공유 방법 3종) ── */}
-      {showInviteModal && (
+      {capabilities.canInviteMembers && showInviteModal && (
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           onClick={() => setShowInviteModal(false)}
@@ -1137,7 +1116,7 @@ export function MobileSpace() {
       )}
 
       {/* ── Join modal ── */}
-      {showJoinModal && (
+      {capabilities.canInviteMembers && showJoinModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           onClick={() => setShowJoinModal(false)}>
           <div style={{ width: '100%', maxWidth: '600px', background: 'var(--theme-surface)', borderRadius: '32px 32px 0 0', padding: '8px 24px calc(env(safe-area-inset-bottom) + 32px)', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}

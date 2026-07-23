@@ -7,11 +7,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.WindowInsetsController
 import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.getcapacitor.BridgeActivity
@@ -35,7 +35,10 @@ class MainActivity : BridgeActivity() {
         // addDocumentStartJavaScript 로 페이지 스크립트 실행 전에 주입하면
         // 서버 미들웨어 리다이렉트 없이 바로 인증 상태로 시작됨.
         injectSessionIntoWebView()
+        injectThemeIntoWebView()
+        installNativeThemeBridge()
         installNativeRouteBridge()
+        installNativeSafeAreaBridge()
 
         // ── WebView 최적화 ────────────────────────────────────────────────────
         bridge?.webView?.settings?.apply {
@@ -100,6 +103,64 @@ class MainActivity : BridgeActivity() {
     }
 
     /**
+     * 네이티브 설정 화면에서 저장한 화면 모드를 WebView localStorage에도 주입한다.
+     * Capacitor server.url 방식은 운영 웹을 직접 로드하므로, 앱 설정값을 문서 시작
+     * 시점에 넣어야 웹 화면의 ThemeProvider와 네이티브 메뉴 설정이 같은 값을 본다.
+     */
+    private fun injectThemeIntoWebView() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            android.util.Log.w("GleaumMain", "DOCUMENT_START_SCRIPT 미지원: 테마 주입 생략")
+            return
+        }
+
+        val mode = NativeTheme.themeMode(this)
+        val escapedMode = mode.replace("'", "\\'")
+        val script = """
+            (function(){
+              try {
+                var mode = '$escapedMode';
+                if (mode !== 'light' && mode !== 'dark' && mode !== 'system') mode = 'system';
+                localStorage.setItem('gleaum:theme-mode', mode);
+                var resolved = mode === 'system'
+                  ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                  : mode;
+                document.documentElement.dataset.themeMode = mode;
+                document.documentElement.dataset.theme = resolved;
+                document.documentElement.style.colorScheme = resolved;
+              } catch(e) {}
+            })()
+        """.trimIndent()
+
+        WebViewCompat.addDocumentStartJavaScript(
+            bridge!!.webView,
+            script,
+            setOf("https://www.gleaum.com")
+        )
+        android.util.Log.d("GleaumMain", "테마 localStorage 주입 완료: $mode")
+    }
+
+    private fun installNativeThemeBridge() {
+        bridge?.webView?.addJavascriptInterface(NativeThemeBridge(), "GleaumNativeTheme")
+    }
+
+    private inner class NativeThemeBridge {
+        @JavascriptInterface
+        fun setThemeMode(mode: String?) {
+            val normalized = when (mode) {
+                "light", "dark", "system" -> mode
+                else -> "system"
+            }
+            getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE)
+                .edit()
+                .putString("gleaum:theme-mode", normalized)
+                .apply()
+            runOnUiThread {
+                NativeTheme.applySystemBars(window, this@MainActivity)
+            }
+        }
+    }
+
+    /**
      * WebView에 남아 있는 레거시 링크를 핵심 네이티브 화면으로 승격한다.
      * 핵심 서비스 경로는 Native Activity가 우선이고, 아직 이식하지 않은 보조 경로만 WebView가 처리한다.
      */
@@ -121,6 +182,58 @@ class MainActivity : BridgeActivity() {
                 }
             })
         }
+    }
+
+    /**
+     * Android WebView는 edge-to-edge 상태에서 CSS safe-area env 값을 0으로
+     * 반환하는 기기가 있다. 실제 시스템바/컷아웃 인셋을 CSS 변수로 전달해
+     * WebView 전용 흐름의 상단 헤더와 하단 버튼이 가려지지 않게 한다.
+     */
+    private fun installNativeSafeAreaBridge() {
+        val webView = bridge?.webView ?: return
+
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { _, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                    WindowInsetsCompat.Type.displayCutout(),
+            )
+            val density = resources.displayMetrics.density.coerceAtLeast(1f)
+            applySafeAreaCss(
+                webView = webView,
+                top = bars.top / density,
+                right = bars.right / density,
+                bottom = bars.bottom / density,
+                left = bars.left / density,
+            )
+            insets
+        }
+
+        bridge?.addWebViewListener(object : WebViewListener() {
+            override fun onPageLoaded(webView: WebView) {
+                ViewCompat.requestApplyInsets(webView)
+            }
+        })
+        ViewCompat.requestApplyInsets(webView)
+    }
+
+    private fun applySafeAreaCss(
+        webView: WebView,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        left: Float,
+    ) {
+        val script = """
+            (function(){
+              var root = document.documentElement;
+              if (!root) return;
+              root.style.setProperty('--native-safe-area-inset-top', '${top}px');
+              root.style.setProperty('--native-safe-area-inset-right', '${right}px');
+              root.style.setProperty('--native-safe-area-inset-bottom', '${bottom}px');
+              root.style.setProperty('--native-safe-area-inset-left', '${left}px');
+            })()
+        """.trimIndent()
+        webView.post { webView.evaluateJavascript(script, null) }
     }
 
     private fun nativeRouteScript(): String = """
@@ -281,24 +394,6 @@ class MainActivity : BridgeActivity() {
     }
 
     private fun setupEdgeToEdge() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.apply {
-                setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
-                setSystemBarsAppearance(
-                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
-                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-                )
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            )
-        }
-        window.statusBarColor     = android.graphics.Color.parseColor("#0F1A2E")
-        window.navigationBarColor = android.graphics.Color.parseColor("#FAFAFD")
+        NativeTheme.applySystemBars(window, this)
     }
 }

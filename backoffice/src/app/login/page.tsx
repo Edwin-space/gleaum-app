@@ -20,6 +20,8 @@ function SearchParamsHandler({ onError }: { onError: (msg: string) => void }) {
   useEffect(() => {
     if (searchParams.get("error") === "unauthorized") {
       onError("관리자 계정이 아닙니다. 접근 권한이 없습니다.");
+    } else if (searchParams.get("error") === "configuration") {
+      onError("관리자 접근 설정이 완료되지 않았습니다. 운영 환경변수를 확인하세요.");
     }
   }, [searchParams, onError]);
 
@@ -30,8 +32,7 @@ function SearchParamsHandler({ onError }: { onError: (msg: string) => void }) {
  * 백오피스 로그인 페이지
  *
  * 보안 처리:
- * 1. Supabase 인증 성공 후 클라이언트 측 관리자 이메일 사전 검증 (UX용)
- * 2. 서버사이드 최종 검증은 proxy.ts 에서 처리
+ * Supabase 인증 후 서버의 proxy 및 각 데이터 접근 지점에서 관리자 권한을 검증합니다.
  */
 export default function LoginPage() {
   const [email,         setEmail]         = useState("");
@@ -81,22 +82,7 @@ export default function LoginPage() {
       else               localStorage.removeItem(SAVED_EMAIL_KEY);
     } catch {}
 
-    // ── 3. 클라이언트 측 관리자 이메일 사전 검증 (UX 개선용) ─
-    //       서버사이드 최종 검증은 proxy.ts 에서 수행
-    const adminEmailsRaw = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
-    const adminEmails    = adminEmailsRaw
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (adminEmails.length > 0 && !adminEmails.includes(email.trim().toLowerCase())) {
-      await supabase.auth.signOut();
-      setError("관리자 계정이 아닙니다. 접근 권한이 없습니다.");
-      setLoading(false);
-      return;
-    }
-
-    // ── 4. 대시보드로 이동 ────────────────────────────────
+    // ── 3. 대시보드로 이동 ────────────────────────────────
     router.push("/");
     router.refresh();
   };

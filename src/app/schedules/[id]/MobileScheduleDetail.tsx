@@ -9,28 +9,30 @@ import {
   EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_ICONS,
   PAYMENT_METHOD_LABELS, REPEAT_LABELS,
 } from '@/types';
-import type { Schedule, ScheduleStatus } from '@/types';
-import { notifToast } from '@/lib/toast';
+import type { Schedule, ScheduleStatus, User } from '@/types';
 
 interface MobileScheduleDetailProps {
   schedule: Schedule;
   id: string;
-  cfg: any;
-  participantUsers: any[];
+  cfg: { icon: string; gradient: string };
+  participantUsers: User[];
   steps: { key: ScheduleStatus; label: string }[];
   currentStepIdx: number;
+  canEdit: boolean;
+  renotifying: boolean;
   showDeleteModal: boolean;
   setShowDeleteModal: (v: boolean) => void;
   showCompletionModal: boolean;
   setShowCompletionModal: (v: boolean) => void;
   handleUpdateStatus: (status: ScheduleStatus) => Promise<void>;
   handleDelete: () => Promise<void>;
+  handleRenotify: () => Promise<void>;
 }
 
 export function MobileScheduleDetail({
-  schedule, id, cfg, participantUsers, steps, currentStepIdx,
+  schedule, id, cfg, participantUsers, steps, currentStepIdx, canEdit, renotifying,
   showDeleteModal, setShowDeleteModal, showCompletionModal, setShowCompletionModal,
-  handleUpdateStatus, handleDelete
+  handleUpdateStatus, handleDelete, handleRenotify,
 }: MobileScheduleDetailProps) {
   const router = useRouter();
 
@@ -104,7 +106,7 @@ export function MobileScheduleDetail({
             일정 상세
           </span>
 
-          <button
+          {canEdit ? <button
             onClick={() => router.push(`/schedules/${id}/edit`)}
             style={{
               padding: '7px 16px',
@@ -118,7 +120,7 @@ export function MobileScheduleDetail({
             }}
           >
             수정
-          </button>
+          </button> : <div style={{ width: '36px' }} aria-hidden="true" />}
         </div>
 
         {/* 히어로 본문 */}
@@ -414,20 +416,25 @@ export function MobileScheduleDetail({
             <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--theme-text)', marginBottom: '14px' }}>
               {schedule.location.address}
             </p>
-            <div style={{
-              height: '144px',
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.location.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+              minHeight: '96px',
               borderRadius: '16px',
-              background: 'rgba(0,132,204,0.04)',
-              border: '1.5px dashed rgba(0,132,204,0.18)',
+              background: 'var(--theme-surface-muted)',
+              border: '1.5px solid var(--theme-border)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
+              textDecoration: 'none',
             }}>
-              <span style={{ fontSize: '36px' }}>🗺️</span>
-              <p style={{ fontSize: '11px', color: 'var(--theme-text-subtle)' }}>지도 표시 영역</p>
-            </div>
+              <span style={{ fontSize: '28px' }}>🗺️</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#0084CC' }}>지도에서 위치 열기</span>
+            </a>
           </div>
         )}
 
@@ -456,7 +463,7 @@ export function MobileScheduleDetail({
         )}
 
         {/* ── 액션 버튼 ── */}
-        <div style={{ paddingTop: '4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {canEdit && <div style={{ paddingTop: '4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {schedule.status === 'in_progress' && (
             <button
               onClick={() => setShowCompletionModal(true)}
@@ -501,13 +508,15 @@ export function MobileScheduleDetail({
 
           {schedule.type === 'child' && (schedule.status === 'pending' || schedule.status === 'missed') && (
             <button
-              onClick={() => notifToast.sent(schedule.title)}
+              onClick={() => void handleRenotify()}
+              disabled={renotifying}
               style={{
                 width: '100%',
                 padding: '17px 0',
                 borderRadius: '20px',
                 border: 'none',
-                cursor: 'pointer',
+                cursor: renotifying ? 'not-allowed' : 'pointer',
+                opacity: renotifying ? 0.6 : 1,
                 fontSize: '15px',
                 fontWeight: 700,
                 color: '#0084CC',
@@ -515,7 +524,7 @@ export function MobileScheduleDetail({
                 letterSpacing: '-0.01em',
               }}
             >
-              🔔 재알림 보내기
+              {renotifying ? '발송 중...' : '🔔 재알림 보내기'}
             </button>
           )}
 
@@ -556,7 +565,7 @@ export function MobileScheduleDetail({
           >
             일정 삭제
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* ── 완료 확인 모달 (바텀시트) ── */}

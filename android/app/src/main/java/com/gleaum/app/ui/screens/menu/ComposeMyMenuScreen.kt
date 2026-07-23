@@ -1,15 +1,18 @@
 package com.gleaum.app.ui.screens.menu
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -26,7 +29,6 @@ import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SpaceDashboard
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,10 +57,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.gleaum.app.NativeAccountStatus
 import com.gleaum.app.NativeHomePortSummary
 import com.gleaum.app.NativeProfile
+import com.gleaum.app.ui.components.FeedbackKind
+import com.gleaum.app.ui.components.GleaumFeedbackBanner
+import com.gleaum.app.ui.components.GleaumLabelBadge
 
 enum class MyMenuAction {
     ADD_SCHEDULE,
@@ -100,6 +106,9 @@ fun ComposeMyMenuScreen(
     summary: NativeHomePortSummary?,
     loading: Boolean,
     message: String?,
+    canViewHouseholdBudget: Boolean,
+    modifier: Modifier = Modifier,
+    messageKind: FeedbackKind = FeedbackKind.ERROR,
     themeModeSubtitle: String,
     themeModeBadge: String?,
     homeLayoutSubtitle: String,
@@ -120,6 +129,7 @@ fun ComposeMyMenuScreen(
     biometricRelockInterval: String = "always",
     calendarPermissionGranted: Boolean = false,
     calendarSyncEnabled: Boolean = false,
+    calendarSyncMode: String = "manual",
     selectedCalendarId: String? = null,
     calendarChoices: List<CalendarChoice> = emptyList(),
     profile: NativeProfile? = null,
@@ -133,7 +143,9 @@ fun ComposeMyMenuScreen(
     onOpenDeviceSecuritySettings: () -> Unit = {},
     onRequestCalendarPermission: () -> Unit = {},
     onCalendarSelected: (CalendarChoice) -> Unit = {},
+    onCalendarSyncModeChanged: (Boolean) -> Unit = {},
     onCalendarSyncDisabled: () -> Unit = {},
+    onOpenCalendarImport: () -> Unit = {},
     onPasswordSave: (String, String) -> Unit = { _, _ -> },
     onProfileSave: (String, String, String) -> Unit = { _, _, _ -> },
     onAccountWithdraw: (String) -> Unit = {},
@@ -141,7 +153,6 @@ fun ComposeMyMenuScreen(
     onOpenTerms: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     onAction: (MyMenuAction) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -154,8 +165,10 @@ fun ComposeMyMenuScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item { ProfileHero(summary = summary, loading = loading) }
-        if (!message.isNullOrBlank()) item { MessageCard(message) }
-        item { QuickActions(onAction) }
+        if (!message.isNullOrBlank()) {
+            item { GleaumFeedbackBanner(message = message, kind = messageKind) }
+        }
+        item { QuickActions(onAction, canViewHouseholdBudget) }
         item { SectionTitle("앱 설정") }
         item {
             MenuGroup(
@@ -209,13 +222,13 @@ fun ComposeMyMenuScreen(
         MyMenuSettingsDialog.HOME_LAYOUT -> ChoiceSettingsDialog(
             title = "홈 레이아웃",
             description = "홈에서 먼저 보여줄 정보 흐름을 선택합니다.",
-            options = listOf(
-                SettingsChoice("balanced", "균형형", "일정, 공간, 가계부를 고르게 보여줍니다."),
-                SettingsChoice("calendar_first", "일정 중심", "오늘과 다가오는 일정을 먼저 보여줍니다."),
-                SettingsChoice("routine_first", "루틴 중심", "반복 흐름과 할 일을 우선합니다."),
-                SettingsChoice("expense_first", "가계부 중심", "수입/지출 흐름을 먼저 보여줍니다."),
-                SettingsChoice("space_first", "공간 중심", "함께 쓰는 공간 정보를 우선합니다."),
-            ),
+            options = buildList {
+                add(SettingsChoice("balanced", "균형형", "일정과 공간 흐름을 고르게 보여줍니다."))
+                add(SettingsChoice("calendar_first", "일정 중심", "오늘과 다가오는 일정을 먼저 보여줍니다."))
+                add(SettingsChoice("routine_first", "루틴 중심", "반복 흐름과 할 일을 우선합니다."))
+                if (canViewHouseholdBudget) add(SettingsChoice("expense_first", "가계부 중심", "수입/지출 흐름을 먼저 보여줍니다."))
+                add(SettingsChoice("space_first", "공간 중심", "함께 쓰는 공간 정보를 우선합니다."))
+            },
             selectedValue = homeLayoutValue,
             onSelected = onHomeLayoutSelected,
             onDismiss = onDismissSettingsDialog,
@@ -223,6 +236,7 @@ fun ComposeMyMenuScreen(
         MyMenuSettingsDialog.NOTIFICATIONS -> NotificationSettingsDialog(
             scheduleEnabled = notificationScheduleEnabled,
             budgetEnabled = notificationBudgetEnabled,
+            canViewHouseholdBudget = canViewHouseholdBudget,
             onSave = onNotificationSettingsSaved,
             onDismiss = onDismissSettingsDialog,
         )
@@ -238,11 +252,14 @@ fun ComposeMyMenuScreen(
         MyMenuSettingsDialog.CALENDAR -> CalendarSettingsDialog(
             permissionGranted = calendarPermissionGranted,
             syncEnabled = calendarSyncEnabled,
+            automaticSync = calendarSyncMode == "automatic",
             selectedCalendarId = selectedCalendarId,
             calendars = calendarChoices,
             onRequestPermission = onRequestCalendarPermission,
             onCalendarSelected = onCalendarSelected,
+            onAutomaticSyncChanged = onCalendarSyncModeChanged,
             onSyncDisabled = onCalendarSyncDisabled,
+            onOpenImport = onOpenCalendarImport,
             onDismiss = onDismissSettingsDialog,
         )
         MyMenuSettingsDialog.PASSWORD -> PasswordSettingsDialog(
@@ -279,7 +296,7 @@ private fun ProfileHero(summary: NativeHomePortSummary?, loading: Boolean) {
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            AssistChip(onClick = {}, label = { Text(if (loading) "프로필 불러오는 중" else "좋은 하루예요") }, leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null, modifier = Modifier.size(18.dp)) })
+            GleaumLabelBadge(if (loading) "프로필 불러오는 중" else "좋은 하루예요")
             Text("${name}님", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Text("$space · ${members}명 참여 중", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
         }
@@ -287,10 +304,12 @@ private fun ProfileHero(summary: NativeHomePortSummary?, loading: Boolean) {
 }
 
 @Composable
-private fun QuickActions(onAction: (MyMenuAction) -> Unit) {
+private fun QuickActions(onAction: (MyMenuAction) -> Unit, canViewHouseholdBudget: Boolean) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
         QuickActionCard("일정 추가", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { onAction(MyMenuAction.ADD_SCHEDULE) }
-        QuickActionCard("가계부", Icons.Outlined.CreditCard, Modifier.weight(1f)) { onAction(MyMenuAction.OPEN_BUDGET) }
+        if (canViewHouseholdBudget) {
+            QuickActionCard("가계부", Icons.Outlined.CreditCard, Modifier.weight(1f)) { onAction(MyMenuAction.OPEN_BUDGET) }
+        }
         QuickActionCard("공간", Icons.Outlined.SpaceDashboard, Modifier.weight(1f)) { onAction(MyMenuAction.OPEN_SPACE) }
     }
 }
@@ -341,13 +360,6 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
-private fun MessageCard(message: String) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-        Text(message, modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
 private fun ChoiceSettingsDialog(
     title: String,
     description: String,
@@ -382,6 +394,7 @@ private fun ChoiceSettingsDialog(
 private fun NotificationSettingsDialog(
     scheduleEnabled: Boolean,
     budgetEnabled: Boolean,
+    canViewHouseholdBudget: Boolean,
     onSave: (Boolean, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -400,15 +413,17 @@ private fun NotificationSettingsDialog(
                     checked = scheduleChecked,
                     onCheckedChange = { scheduleChecked = it },
                 )
-                CheckSettingRow(
-                    title = "가계부 결제 알림",
-                    description = "정기 지출 예정 알림을 받습니다.",
-                    checked = budgetChecked,
-                    onCheckedChange = { budgetChecked = it },
-                )
+                if (canViewHouseholdBudget) {
+                    CheckSettingRow(
+                        title = "가계부 결제 알림",
+                        description = "정기 지출 예정 알림을 받습니다.",
+                        checked = budgetChecked,
+                        onCheckedChange = { budgetChecked = it },
+                    )
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(scheduleChecked, budgetChecked) }) { Text("저장") } },
+        confirmButton = { TextButton(onClick = { onSave(scheduleChecked, canViewHouseholdBudget && budgetChecked) }) { Text("저장") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("닫기") } },
     )
 }
@@ -581,11 +596,14 @@ private fun AccountStatusDialog(
 private fun CalendarSettingsDialog(
     permissionGranted: Boolean,
     syncEnabled: Boolean,
+    automaticSync: Boolean,
     selectedCalendarId: String?,
     calendars: List<CalendarChoice>,
     onRequestPermission: () -> Unit,
     onCalendarSelected: (CalendarChoice) -> Unit,
+    onAutomaticSyncChanged: (Boolean) -> Unit,
     onSyncDisabled: () -> Unit,
+    onOpenImport: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -622,15 +640,53 @@ private fun CalendarSettingsDialog(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        calendars.forEach { calendar ->
-                            ListItem(
-                                headlineContent = { Text(calendar.name, fontWeight = FontWeight.SemiBold) },
-                                supportingContent = { Text(calendar.accountName.ifBlank { "기기 캘린더" }) },
-                                leadingContent = { RadioButton(selected = selectedCalendarId == calendar.id, onClick = { onCalendarSelected(calendar) }) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onCalendarSelected(calendar) },
-                            )
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 320.dp),
+                        ) {
+                            items(calendars, key = { it.id }) { calendar ->
+                                val selected = selectedCalendarId == calendar.id
+                                ListItem(
+                                    headlineContent = {
+                                        Text(
+                                            calendar.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Text(
+                                            calendar.accountName.ifBlank { "기기 캘린더" },
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    leadingContent = { RadioButton(selected = selected, onClick = null) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .selectable(
+                                            selected = selected,
+                                            role = Role.RadioButton,
+                                            onClick = { onCalendarSelected(calendar) },
+                                        ),
+                                )
+                            }
+                        }
+                        ListItem(
+                            headlineContent = { Text("일정 변경 시 자동 반영", fontWeight = FontWeight.SemiBold) },
+                            supportingContent = { Text("글리움이 만든 일정만 생성·수정·삭제합니다.") },
+                            trailingContent = {
+                                Switch(
+                                    checked = automaticSync,
+                                    onCheckedChange = onAutomaticSyncChanged,
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        TextButton(onClick = onOpenImport) {
+                            Text("기기 일정 가져오기")
                         }
                     }
                 }

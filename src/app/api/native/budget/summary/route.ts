@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getNativeBudgetSummary } from '@/lib/db';
-import { createNativeRouteAuth } from '@/lib/supabase/native-route';
+import { authorizeAccountCapability } from '@/lib/supabase/capability-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const auth = await createNativeRouteAuth(req);
-  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const access = await authorizeAccountCapability(req, 'canViewHouseholdBudget');
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const { auth } = access;
 
   const { searchParams } = new URL(req.url);
   try {

@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendFCMToMultiple } from '@/lib/fcm';
+import { isNotificationEnabled } from '@/lib/notification-settings';
 
 // Supabase pg_net은 POST로 호출 → GET과 동일하게 처리
 export async function POST(req: NextRequest) { return GET(req); }
@@ -214,21 +215,24 @@ async function sendMissedNotification(
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, fcm_token')
+    .select('id, fcm_token, notification_settings')
     .in('id', Array.from(targetUserIds))
     .not('fcm_token', 'is', null);
 
-  if (!profiles || profiles.length === 0) return;
+  const enabledProfiles = (profiles ?? []).filter((profile: { notification_settings?: unknown }) =>
+    isNotificationEnabled(profile.notification_settings, 'routineReminders'),
+  );
+  if (enabledProfiles.length === 0) return;
 
   const title = `❌ ${schedule.title}`;
   const body = '기한이 지났지만 완료되지 않았습니다.';
   const url = `/schedules/${schedule.id}`;
 
-  const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
+  const tokens = enabledProfiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
   await sendFCMToMultiple(tokens, title, body, url);
 
   // DB 알림 기록
-  const records = profiles.map((p: { id: string }) => ({
+  const records = enabledProfiles.map((p: { id: string }) => ({
     user_id: p.id,
     schedule_id: schedule.id,
     title,
@@ -256,20 +260,23 @@ async function sendOverdueNotification(
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, fcm_token')
+    .select('id, fcm_token, notification_settings')
     .in('id', memberIds)
     .not('fcm_token', 'is', null);
 
-  if (!profiles || profiles.length === 0) return;
+  const enabledProfiles = (profiles ?? []).filter((profile: { notification_settings?: unknown }) =>
+    isNotificationEnabled(profile.notification_settings, 'expenseReminders'),
+  );
+  if (enabledProfiles.length === 0) return;
 
   const title = `💳 ${schedule.title}`;
   const body = '결제 기한이 지났습니다. 확인해주세요.';
   const url = `/schedules/${schedule.id}`;
 
-  const tokens = profiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
+  const tokens = enabledProfiles.map((p: { fcm_token: string }) => p.fcm_token).filter(Boolean);
   await sendFCMToMultiple(tokens, title, body, url);
 
-  const records = profiles.map((p: { id: string }) => ({
+  const records = enabledProfiles.map((p: { id: string }) => ({
     user_id: p.id,
     schedule_id: schedule.id,
     title,

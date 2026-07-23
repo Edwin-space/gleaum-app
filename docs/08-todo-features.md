@@ -42,7 +42,7 @@
 ## Android 정식 출시 전 빌드 개선
 
 ### R8 난독화 활성화
-현재 `minifyEnabled false` 상태. 정식 출시 전 활성화 필요.
+`android/app/build.gradle`의 release `minifyEnabled true` 적용 완료. 아래 설정 변경 작업은 과거 TODO이며, 현재는 매 릴리즈의 `mapping.txt` 생성·Play Console 업로드 여부를 확인한다.
 
 ```groovy
 // android/app/build.gradle

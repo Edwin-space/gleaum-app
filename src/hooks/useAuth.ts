@@ -83,14 +83,22 @@ export function useAuth() {
   };
 
   // 이메일/비밀번호 회원가입
-  const signUpWithEmail = async (email: string, password: string, name: string) => {
+  const signUpWithEmail = async (email: string, password: string, name: string, next?: string) => {
     const supabase = createClient();
+    if (isNativeApp() && next) {
+      try { sessionStorage.setItem('gleaum_oauth_next', next); } catch {}
+    }
+    const emailRedirectTo = isNativeApp()
+      ? 'gleaum://auth/callback'
+      : next
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+        : `${window.location.origin}/auth/callback`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { name },
-        emailRedirectTo: isNativeApp() ? 'gleaum://auth/callback' : `${window.location.origin}/auth/callback`,
+        emailRedirectTo,
       },
     });
     if (error) throw error;

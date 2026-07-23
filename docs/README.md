@@ -1,8 +1,8 @@
 # 📚 글리움(Gleaum) 프로젝트 문서 센터
 
 > **모든 AI 어시스턴트에게**: 이 `docs/` 폴더는 글리움 **사용자 앱(User-facing App)**의 완전한 인수인계 문서입니다.
-> 작업을 시작하기 전에 반드시 **`10-ai-handoff-guide.md`부터 먼저 읽어주세요.**
-> 그 다음 `12-product-model.md`, `07-features-completed.md` 순으로 확인하세요.
+> 작업을 시작하기 전에 반드시 **`24-project-work-tracker.md`에서 현재 실행 큐와 진행 상태를 먼저 확인하세요.**
+> 그 다음 `10-ai-handoff-guide.md`, `12-product-model.md`와 해당 작업의 상세 문서를 확인하세요.
 >
 > ⚠️ **백오피스(Admin Backoffice)** 관련 작업 시에는 이 폴더가 아닌
 > **`backoffice/docs/`** 폴더의 문서를 기준으로 하세요. 두 시스템은 완전히 독립적으로 운영됩니다.
@@ -13,6 +13,8 @@
 
 | 파일 | 내용 | 중요도 |
 |------|------|--------|
+| `24-project-work-tracker.md` | ⭐ 전체 작업의 우선순위·상태·시작일·완료일·검증 근거·작업 일지 단일 기준 | **최우선** |
+| `25-google-play-release-readiness.md` | Google Play 정책·Data safety·스토어 자료·서명 산출물 체크리스트 | **최우선** |
 | `01-project-overview.md`   | 프로젝트 비전, 목표, 서비스 개요 | 참고 |
 | `02-tech-stack.md`         | 기술 스택 전체 상세 | 참고 |
 | `03-design-system.md`      | 디자인 시스템 (컬러, 타이포, 컴포넌트 규칙) | 참고 |
@@ -31,6 +33,12 @@
 | `16-ios-native-roadmap.md` | ⭐ iOS 네이티브 전환 우선순위와 API 계약 | **최우선** |
 | `17-android-native-port.md` | ⭐ Android Web UI Native Port 기준 — 모바일 웹 UI를 정답지로 한 네이티브 이식 원칙 | **최우선** |
 | `18-android-home-port-snapshot.md` | ⭐ Android 홈 Native Port용 Mobile Web UI 스냅샷/구현 체크리스트 | **최우선** |
+| `19-android-material3-redesign-plan.md` | Android Material 3 전환 원칙과 단계별 계획 | 필수 |
+| `20-android-native-release-qa.md` | Android 빌드·권한·실기기·출시 전 QA 체크리스트 | **최우선** |
+| `21-family-child-account-foundation.md` | ⭐ 가족 공간 자녀 사전등록·보호자 동의·계정 연결·연령 전환 기준 | **최우선** |
+| `22-android-material3-ui-audit.md` | ⭐ Android Material 3 화면별 A등급 평가표·공통 UI 규칙·실기기 QA | **최우선** |
+| `27-ios-resumption-readiness.md` | iOS 중단 지점 감사·재개 준비·출시 차단 항목 | iOS 재개 시 필수 |
+| `23-external-work-checkpoint.md` | ⭐ 외장 저장장치 이동용 현재 작업 상태·복사·복구 체크리스트 | **최우선** |
 | `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
 ---
@@ -39,10 +47,10 @@
 
 - **서비스명**: 글리움 (Gleaum)
 - **성격**: 개인 중심 + 친구/연인/가족 Space 확장형 토털 라이프 관리 서비스
-- **현재 단계**: 웹 서비스 운영 + 네이티브 앱/스토어 출시 준비 + 초대/공간 정책 안정화
+- **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 기준 커밋**: `d7b2cfc` (2026-06-02) — 공유 테마 모드 시스템 추가까지 반영
+- **최근 구현 체크포인트**: `FAM-013` Android 자녀 등록·보호자 OTP·필수 동의·초대 공유·claim·최종 승인/거절 Compose 전환, Android Credential Manager Google 로그인, 반응형 공개 랜딩 재구성. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
 
 ---
 
@@ -82,22 +90,22 @@
 ✅ 2026-06-02 공유 테마 모드 시스템 추가
 ✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
-🔜 다음 단계  Supabase `012_cron_overdue_and_digest.sql` 실행 여부 확인 → Firebase Remote Config 실값 등록 → Android 내부 배포 검증 → Apple Developer 유료 계정 연결
+🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. `FAM-012` 보호자/자녀 실계정 회귀 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
 ```
 
 ---
 
 ## 🚨 작업 시 절대 규칙
 
-1. **인라인 스타일 전용** — Tailwind CSS v4 신뢰성 문제로 **모든 컴포넌트는 100% 인라인 스타일만 사용**. `glass-card`, `animate-*`, CSS `var()` 금지
+1. **디자인 시스템 우선** — UI 작업 전 루트 `DESIGN.md`, `design-system-ui.html`을 읽고 테마 대응 색상은 `var(--theme-*)` 토큰을 사용. 새 고정 `bg-white`, `text-black`, 임의 Hex 및 Purple(`#5A32FA`) 추가 금지
 2. **제품 모델 우선 확인** — 신규 기능은 반드시 `12-product-model.md` 기준으로 설계
 3. **`src/lib/db.ts`** — 모든 DB 접근의 단일 진입점, 구조 변경 금지
 4. **Purple(`#5A32FA`) 사용 금지** — 브랜드 컬러는 `#0084CC` / `#0CC9B5` / `#2EE895`
 5. **`useIsDesktop()`** — `@/hooks/useMediaQuery`에서 import (NOT `@/hooks/useIsDesktop`)
 6. **빌드 확인 필수** — `npm run build` 후 에러 없을 때만 push
-7. **문서 업데이트 필수** — 작업 완료 후 `07-features-completed.md`, `10-ai-handoff-guide.md` 반드시 업데이트
-8. **NAS 자동 동기화** — `git push` 완료 시 post-push 훅이 자동으로 NAS(`/Users/edwin/Sync-NAS/#1. Personal/Project/Gleaum/`)에 동기화. 훅 재설치 필요 시: `bash scripts/install-hooks.sh`
+7. **작업 트래커 업데이트 필수** — 모든 작업의 시작·완료·차단 상태와 날짜·검증 근거를 `24-project-work-tracker.md`에 기록. 기능 이력이나 아키텍처가 실제로 바뀐 경우에만 `07-features-completed.md`, `10-ai-handoff-guide.md`와 관련 상세 문서도 갱신
+8. **외부 이동 전 체크포인트 확인** — 미커밋 파일과 저장소 외부 서명키/환경변수는 Git clone만으로 복원되지 않음. `23-external-work-checkpoint.md` 절차 준수
 
 ---
 
-마지막 업데이트: 2026-06-02
+마지막 업데이트: 2026-07-23

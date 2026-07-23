@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getNativeHomeSummary } from '@/lib/db';
+import { getAccountSessionContext, getNativeHomeSummary } from '@/lib/db';
 import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 export const dynamic = 'force-dynamic';
@@ -11,8 +11,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const summary = await getNativeHomeSummary(auth.supabase, auth.user.id);
-    return NextResponse.json(summary, {
+    const [summary, account] = await Promise.all([
+      getNativeHomeSummary(auth.supabase, auth.user.id),
+      getAccountSessionContext(auth.supabase),
+    ]);
+    if (!account) {
+      return NextResponse.json({ error: 'account_context_unavailable' }, { status: 403 });
+    }
+    return NextResponse.json({ ...summary, account }, {
       headers: {
         'Cache-Control': 'no-store',
         'X-Gleaum-Auth-Mode': auth.mode,

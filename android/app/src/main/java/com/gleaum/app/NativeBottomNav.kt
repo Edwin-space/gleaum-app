@@ -1,6 +1,7 @@
 package com.gleaum.app
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -28,7 +29,7 @@ object NativeBottomNav {
             background = rounded(activity, NativeTheme.surface(activity), if (NativeAdaptive.isLarge(activity)) 28 else 0, NativeTheme.border(activity))
             elevation = dp(activity, 8).toFloat()
 
-            items().forEach { item ->
+            items(activity).forEach { item ->
                 addView(tab(activity, item, active == item.destination), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
             }
         }
@@ -77,13 +78,15 @@ object NativeBottomNav {
         activity.finish()
     }
 
-    private fun items(): List<Item> = listOf(
-        Item("홈", NativeTabIcon.HOME, NativeBottomDestination.HOME),
-        Item("일정", NativeTabIcon.CALENDAR, NativeBottomDestination.SCHEDULES),
-        Item("공간", NativeTabIcon.SPACE, NativeBottomDestination.SPACE),
-        Item("가계부", NativeTabIcon.BUDGET, NativeBottomDestination.BUDGET),
-        Item("전체", NativeTabIcon.MENU, NativeBottomDestination.MENU),
-    )
+    private fun items(context: Context): List<Item> = buildList {
+        add(Item("홈", NativeTabIcon.HOME, NativeBottomDestination.HOME))
+        add(Item("일정", NativeTabIcon.CALENDAR, NativeBottomDestination.SCHEDULES))
+        add(Item("공간", NativeTabIcon.SPACE, NativeBottomDestination.SPACE))
+        if (NativeAccountContextStore.capabilities(context).canViewHouseholdBudget) {
+            add(Item("가계부", NativeTabIcon.BUDGET, NativeBottomDestination.BUDGET))
+        }
+        add(Item("전체", NativeTabIcon.MENU, NativeBottomDestination.MENU))
+    }
 
     private fun rounded(activity: Activity, fill: Int, radius: Int, stroke: Int?): GradientDrawable =
         GradientDrawable().apply {

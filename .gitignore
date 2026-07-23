@@ -58,3 +58,6 @@ android/local.properties
 # Android 키스토어 (절대 커밋 금지)
 *.keystore
 *.jks
+
+# Google Play 원본 단말 캡처 — 실사용자 정보가 포함될 수 있음
+store-assets/google-play/phone/raw/

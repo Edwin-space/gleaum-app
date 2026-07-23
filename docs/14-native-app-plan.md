@@ -72,7 +72,7 @@ Android 생태계(Phone + Tablet)는 **Android Studio 1개 프로젝트**에서 
 ### 2-1. 패키지 설치
 
 ```bash
-cd "/Volumes/WD_BLACK/Ai Works/gleaum"
+cd "/Volumes/Portable SSD/AI/gleaum"
 
 # Capacitor 핵심
 npm install @capacitor/core @capacitor/cli
@@ -1420,7 +1420,7 @@ Week 3 — 마무리 + 스토어 제출
 ```bash
 # ✅ 지금 바로 실행 가능한 명령어 순서
 
-cd "/Volumes/WD_BLACK/Ai Works/gleaum"
+cd "/Volumes/Portable SSD/AI/gleaum"
 
 # 1. Capacitor 설치
 npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android

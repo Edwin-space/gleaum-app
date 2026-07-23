@@ -42,6 +42,9 @@ class SplashActivity : ComponentActivity() {
         val binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 로그인 세션이 있으면 고정 스플래시 시간 동안 공통 화면 데이터를 병렬 선조회한다.
+        NativeStartupPrefetcher.start(applicationContext)
+
         // insetsController 는 DecorView(setContentView) 이후에만 접근 가능
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.insetsController?.setSystemBarsAppearance(
