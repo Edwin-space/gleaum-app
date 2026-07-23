@@ -30,22 +30,20 @@
 
 ## 2. 현재 실행 큐
 
-위에서부터 순서대로 처리한다. 2026-07-23 사용자 결정으로 **Android 기능·성능·실기기 마감이 최우선**이다. Android 작업 중 공통 API 계약이나 Web·iOS 후속 영향은 즉시 기록하되 해당 플랫폼 구현은 Android 완료 뒤 진행한다. Google Play 등록정보 카피·공개 애셋 제작은 별도로 진행할 수 있다.
+위에서부터 순서대로 처리한다. 2026-07-23 사용자 결정으로 **iOS 재개와 핵심 네이티브 기능 동등화**를 다음 주 작업 축으로 전환한다. Android에서 확정한 공통 API·권한·오류 계약을 재사용하되 iOS 화면은 Apple 네이티브 패턴으로 구현한다. 기존 Android 수동 회귀와 외부 콘솔 대기 항목은 별도 잔여 큐로 유지한다.
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `FAM-013` | Android 자녀 계정 연결 네이티브 전환 | `🟠 조회·입력 검증, 전체 변경 회귀 대기` | Compose M3·공통 API Bearer 인증·딥링크 구현과 Production 배포 완료. 자녀 목록 조회와 생년월일 숫자 8자리 자동 포맷·등록 버튼 활성화 실기기 확인. 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
-| 2 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 코드 완료·외부 설정 대기` | 시스템 계정 선택기와 Supabase ID token 교환 구현. Firebase에 debug·release·Play App Signing SHA-1을 등록하고 최신 `google-services.json`으로 실기기 검증 |
-| 3 | `WEB-011` | 공개 첫 접근 랜딩 재구성 | `✅ 완료` | 실제 Android 정보 구조를 익명화해 PC·태블릿·모바일 반응형 소개/기능/플랫폼/다운로드 페이지 구현. 로컬 양쪽 뷰포트·SSR·Production 반영 검증 |
-| 4 | `FAM-011` | 보호자 이메일 OTP·동의 정합화 | `🟠 실메일 회귀 대기` | Production `dpl_3M2He5p9F3UfBs5H4tW3u7kRXZwy`·운영 DB·Supabase Auth 템플릿 적용 완료. 새 코드 요청→OTP 입력→필수 동의→초대 준비 완료 확인 |
-| 5 | `FAM-008` | Android 가족 공간 전환 오류 수정 | `🟠 실기기 검증 대기` | 운영 API 404 원인 수정·Production 배포 완료. 로그인 공간 지기 계정으로 일반→가족 전환·개인 공간 차단 최종 확인 |
-| 6 | `AND-010` | 앱 시작 선조회·화면 캐시·수동 새로고침 | `🟠 실기기 검증 중` | 콜드 시작·핵심 메뉴 왕복 통과. pull-to-refresh와 mutation 후 선택 갱신 체감 검증 |
-| 7 | `AND-001` | Android 실기기 시각·핵심 회귀 | `🟠 진행 중` | 로그인 홈·핵심 메뉴 왕복·캘린더 화면 통과. 일정/가계부 쓰기와 가족 전환은 안전한 테스트 데이터로 확인 |
-| 8 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 권한·캘린더 선택·네이티브 후보 3개 조회 통과. 격리 일정 실제 가져오기·중복·자동 CRUD 확인 |
-| 9 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 폴더블 하단 인셋·UI 의미 확인. 실제 TalkBack 음성 순서 수동 QA |
-| 10 | `AND-002` | Android Release AAB 검증 | `⏸ 보류` | Android 기능·실기기 마감 후 서명 AAB 검증 |
-| 11 | `OPS-004` | 최신 공통 API Production 반영 | `✅ 완료` | 신규 자녀 Bearer API와 공개 랜딩 Production 배포. 미인증 401 및 Android 실세션 자녀 목록 조회 검증 |
-| 12 | `PAR-001` | PC Web·Mobile Web 후속 파리티 | `⏸ 보류` | Android 완료 후 기록된 플랫폼 후속 목록 순서대로 반영 |
+| 1 | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 코드 완료·유료 팀 대기` | CoreSimulator 복구, 시뮬레이터 실행, capability·최소 권한·Privacy Manifest·Debug/Release 빌드 완료. 유료 Apple Developer Team에서 App ID capability·프로비저닝 활성화 후 실제 iPhone 서명 빌드 |
+| 2 | `IOS-008` | 네이티브 인증·세션 마감 | `⬜ 대기` | Sign in with Apple, Google Sign-In SDK, 이메일 로그인/가입/약관, 세션 복원·만료·로그아웃을 단일 상태 머신으로 구현 |
+| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `⬜ 대기` | `TabView` 5개 탭과 탭별 `NavigationStack`, 중앙 Route 계약, 스플래시 선조회·캐시·pull-to-refresh 구현 |
+| 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `⬜ 대기` | Android 공통 API 계약을 사용해 핵심 기능을 WebView 없이 구현 |
+| 5 | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | 가족 관계·일반 가족/자녀 초대 분리와 자녀 등록→OTP→동의→claim→승인/거절을 iOS 네이티브로 구현 |
+| 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `⬜ 대기` | 캘린더·푸시 토큰/딥링크·AASA를 실제 iPhone에서 검증 |
+| 7 | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | 소형/대형 iPhone, iPad/Split View, 라이트·다크·시스템, Dynamic Type·VoiceOver 회귀 |
+| 8 | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | 내부 테스트, 개인정보·연령등급·심사 계정·메타데이터 정합화 후 제출 |
+| 9 | `FAM-013` | Android 자녀 계정 연결 전체 회귀 | `🟠 잔여 QA` | 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
+| 10 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 외부 설정 대기` | Firebase SHA-1·최신 `google-services.json` 반영 후 실제 계정 선택·취소·재로그인 검증 |
 
 ### 2026-07-23 맥북 작업 대조 결과
 
@@ -63,7 +61,7 @@
 
 - PC/Mobile Web: Android 기능 마감 뒤 `PAR-001`, `WEB-006`~`WEB-010`을 재개한다.
 - Google Play 출시 절차: `AND-006`의 등록정보 제작은 진행 중이지만 Console 제출·정책·서명 확인과 `AND-002` 최종 AAB는 기능 안정화 뒤 재개한다.
-- iOS: `IOS-001`~`IOS-006`은 Android/Web 기능과 정책이 확정된 뒤 Android 동작을 기준으로 재구현한다.
+- iOS: 현재 `IOS-007`을 시작으로 재개했다. 유료 Apple Developer Team 대기 중에도 시뮬레이터에서 `IOS-008`·`IOS-009` 기반 구현은 진행할 수 있다.
 - Remote Config: `WEB-007`, `AND-009`는 3플랫폼 핵심 기능 파리티와 운영 회귀가 끝난 뒤 재개한다.
 - 장기 후보·외부 본인확인·위치·CRM 채널은 각 항목의 기존 재개 조건을 유지한다.
 
@@ -106,7 +104,7 @@
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
-| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🟠 진행 중` | 2026-07-16 | — | `SM_F731N` 로그인 홈과 홈/일정/공간/가계부/전체 메뉴 왕복, 네이티브 캘린더 후보 조회 통과. 실제 일정/가계부 쓰기·가족 전환·삭제는 안전한 테스트 데이터에서 최종 확인 |
+| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🟠 진행 중·일정 등록 복구` | 2026-07-16 | — | `SM_F731N`에서 개인 일정 저장 성공 후 활성 공유 공간만 조회해 목록이 비는 결함을 재현·수정. 개인 공간+활성 공유 공간 집계, 저장 응답 즉시 캐시 반영, ISO 시간 정규화, 상세 권한 재조회까지 적용. 제목·날짜·시작·종료 입력→목록·홈→상세 날짜/권한→삭제 실기기 회귀 통과. 남은 가계부 쓰기·가족 전환·삭제 회귀는 계속 진행 |
 | [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | 2026-07-16 | — | 사용자 결정으로 Google Play 출시 구간 후순위. 기능 production build와 핵심 회귀가 끝난 뒤 서명 비밀번호를 확보해 최종 AAB 검증 |
 | [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🟠 진행 중` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과. `SM_F731N` 캘린더 목록 말줄임·단일 선택 역할·하단 시스템 인셋 통과, 실제 TalkBack 음성 탐색 필요 |
 | [x] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 브랜드 고정 다크 XML 예외 승인. 1080×2640·글꼴 1.3배에서 잘림/겹침 없음. 기능·정보 구조 대폭 변경 시 Compose 재평가 |
@@ -328,12 +326,17 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `IOS-000` | iOS 네이티브 셸·홈·일정 등록 1차 기반 | `✅ 완료` | 2026-06-18 | 2026-06-18 | Swift 네이티브 API client, 홈, 일정 Sheet, 라우팅 기반 |
-| [ ] | `IOS-001` | 운영 API 배포 후 실제 계정 회귀 | `⏸ 보류` | — | — | Android/Web 기능 안정화 뒤 홈 요약·일정 등록·WebView 왕복·세션 유지 검증 |
-| [ ] | `IOS-002` | EventKit 캘린더 UX | `⏸ 보류` | — | — | Android/Web 기능 안정화 뒤 캘린더 선택·내보내기·가져오기·중복 정책 구현 |
-| [ ] | `IOS-003` | APNs·알림 운영 설정 | `⏸ 보류` | — | — | iOS 재개 결정과 유료 Apple Developer·APNs Auth Key·Firebase·Xcode Capabilities 확보 후 진행 |
-| [ ] | `IOS-004` | Universal Links 재활성화 | `⏸ 보류` | — | — | iOS 재개 결정과 유료 Apple Developer 전환 후 Associated Domains·운영 링크 검증 |
-| [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `⏸ 보류` | — | — | Android 관련 기능·실기기·릴리즈·Play Console 검증이 모두 정상 완료된 뒤 확정된 Android 동작을 기준으로 iOS에 재구현 |
-| [ ] | `IOS-006` | TestFlight/App Store 출시 | `⏸ 보류` | — | — | iOS 기능 재구현·실기기 QA 완료 뒤 유료 계정·스크린샷·메타데이터·정책을 준비해 진행 |
+| [ ] | `IOS-001` | 운영 API 실제 계정 회귀 | `⬜ 대기` | — | — | 네이티브 셸 전환 뒤 홈 요약·일정 등록·세션 유지와 공통 API 오류 계약 검증 |
+| [ ] | `IOS-002` | EventKit 캘린더 UX | `⬜ 대기` | — | — | 캘린더 선택·내보내기·가져오기·중복 정책 구현 |
+| [ ] | `IOS-003` | APNs·알림 운영 설정 | `⬜ 대기` | — | — | APNs Auth Key·Firebase·Xcode capability·실기기 토큰·알림 딥링크 검증 |
+| [ ] | `IOS-004` | Universal Links 재활성화 | `⬜ 대기` | — | — | Associated Domains·AASA·초대/알림 링크 실기기 검증 |
+| [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | — | — | Android 확정 동작과 공통 API를 기준으로 가족 관계·초대 분리·자녀 연결을 iOS에 구현 |
+| [ ] | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | — | — | iOS 기능·실기기 QA 완료 뒤 스크린샷·메타데이터·개인정보·심사 계정 준비 |
+| [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 코드 완료·외부 계정 대기` | 2026-07-23 | — | CoreSimulator 자동 복구, iPhone 17 Pro 시뮬레이터 빌드·설치·콜드 스타트, 최소 권한·Privacy Manifest 타겟 포함, Debug/Release 빌드 통과. Personal Team은 Apple 로그인·Push·Associated Domains 프로파일 생성 불가. 유료 Team 연결 후 실제 iPhone 서명 빌드 |
+| [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `⬜ 대기` | — | — | Sign in with Apple·Google Sign-In SDK·이메일 인증·약관·세션 상태 머신 |
+| [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `⬜ 대기` | — | — | 5탭 `TabView`, 탭별 `NavigationStack`, 중앙 Route, 시작 선조회·캐시·수동 새로고침 |
+| [ ] | `IOS-010` | 핵심 기능 네이티브화 | `⬜ 대기` | — | — | 홈·일정·공간·가계부·알림·전체 메뉴를 WebView 없이 구현 |
+| [ ] | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | — | — | 기기 크기·Split View·테마·Dynamic Type·VoiceOver·오프라인/세션 회귀 |
 
 상세 계획: `docs/16-ios-native-roadmap.md`, 재개 감사: `docs/27-ios-resumption-readiness.md`
 
@@ -374,6 +377,9 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-23 | `AND-001`, `OPS-004` | Android 일정 등록 긴급 수정 완료 | 일정 생성 POST는 성공했지만 새 개인 일정은 `personalSpaceId`에 저장되고 목록·홈 API는 `activeSpaceId` 한 곳만 조회해 가족/공유 공간 사용자의 일정이 반영되지 않는 것처럼 보이는 원인을 실기기에서 재현. 홈·일정 조회를 개인 공간+활성 공유 공간으로 통합하고 Android 저장 응답 즉시 upsert, BFF ISO 시간 정규화, 생성 응답 권한 포함, 상세 서버 권한 재확인, API 오류 코드 Logcat 기록을 적용 | Next production build 55/55, Android debug assemble·`SM_F731N` 설치 통과. Production `dpl_EpauxB5tc4uQBKcUmp9XCj52yq8Z` READY·`www.gleaum.com` alias. 실기기에서 `QA_schedule_1746` 제목·날짜·시작·종료 입력→등록→목록·홈 노출→상세 `7월 23일 09:00~10:00`·수정 권한→삭제까지 통과하고 QA 데이터 제거 |
+| 2026-07-23 | `IOS-007` | iOS 1단계 코드 완료·외부 계정 대기 | Xcode 누락 구성요소 설치와 stale CoreSimulator 교체로 iOS 26.4/26.5 런타임을 복구. `App.entitlements`를 타겟에 연결해 Push·Associated Domains·Sign in with Apple을 구성하고, 미사용 카메라·사진·마이크·현재 위치·ATT·background fetch 선언을 제거. 빌드에서 누락되던 `PrivacyInfo.xcprivacy`를 Resources에 포함하고 실제 서비스 수집 범위를 보강. 알림 delegate의 실패하는 조건부 캐스팅도 정식 프로토콜 채택으로 수정 | plist 3종 lint, iPhone 17 Pro iOS 26.5 simulator Debug build/install/launch, Release iphoneOS 무서명 build와 번들 Privacy Manifest 확인 통과. 실제 서명은 Personal Team이 3개 capability를 지원하지 않아 프로비저닝 생성 단계에서 차단. 유료 Apple Developer Team 연결·App ID capability 활성화 후 실제 iPhone 검증 |
+| 2026-07-23 | `IOS-007`~`IOS-011` | iOS 재개 감사·실행 순서 확정 | iOS는 홈과 빠른 일정 등록만 네이티브이고 그 외 핵심 경로가 운영 WebView로 이동함을 확인. 기존 modal overlay 라우팅을 확장하지 않고 SwiftUI 단일 탭 셸·중앙 라우터를 먼저 구축한 뒤 Android 공통 API 계약으로 기능을 이식하기로 결정 | 최초 감사에서 CoreSimulator 버전 불일치를 발견했고, 같은 날 `IOS-007` 후속에서 Xcode 구성요소 설치와 stale service 교체로 해소했다. 상세 단계는 `docs/27-ios-resumption-readiness.md` |
 | 2026-07-23 | `FAM-012`, `FAM-013`, `AND-003` | WebView 잘림 수정·네이티브 경계 확정 | `/space/children`에 전역 BottomNav가 겹치고 일부 Android WebView가 CSS safe-area를 0으로 반환해 상·하단 조작 영역이 가려지는 원인을 확인. 집중 흐름 nav/footer/sidebar를 제거하고 실제 WindowInsets를 CSS 변수로 전달하며 24px fallback을 적용. 자녀 계정 연결은 Android에서 Compose로 전환하고 WebView는 외부 OAuth·법적 원문 fallback에만 제한하기로 결정 | 대상 ESLint·TypeScript·자녀 테스트 3/3·Next production build·Android debug build 통과. 커밋 `996b891`, Production `dpl_Cy4qKA2ctT4TmuoJsYwZnPfyevXU`, 공개 경로 200, `SM_F731N` APK 설치 완료. 생체인증 해제 후 실기기 조작 회귀가 남음 |
 | 2026-07-23 | `FAM-012`, `OPS-004` | GitHub·Production 반영 완료 | 기능·DB·Android 경로·문서 변경을 `b124305`로 커밋해 `codex/platform-parity-sync-20260723`에 push하고 Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`으로 배포 | 운영 자녀 초대 랜딩 200, 자녀 목록·claim·거절 API 미인증 401, 최근 runtime error 0 확인. 보호자·자녀 실계정 2개 회귀만 남음 |
 | 2026-07-23 | `FAM-012`, `PAR-001`, `OPS-004` | 선택 이메일·토큰 바인딩 구현·운영 DB 적용 | 자녀 이메일 필수 입력을 제거하고 선택적인 계정 제한값으로 변경. 72시간 일회성 초대는 OS 공유·문자·QR로 전달하며 Google/이메일 검증 계정의 claim은 후보 스냅샷만 저장한다. 보호자 본인 claim을 차단하고 최종 승인/거절 전에는 `space_members`·`account_age_profiles`를 만들지 않는다. Android는 로그인 전후 pending route를 보존해 `/invite/child/[token]`으로 복귀한다. migration `20260723053050_child_invite_token_binding.sql` 운영 적용 | DB 열·부분 유니크 인덱스·함수 권한/정의 확인, TypeScript, 자녀 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next production build, Android debug build 통과. Git push·Web Production 배포·보호자/자녀 2계정 회귀 후 완료 |

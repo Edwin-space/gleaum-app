@@ -2104,8 +2104,10 @@ function nativeScheduleItemFromRow(row: ScheduleRow): NativeScheduleItem {
     category: row.category ?? undefined,
     visibility: row.visibility ?? undefined,
     automationPolicy: row.automation_policy ?? undefined,
-    startTime: row.start_time,
-    endTime: row.end_time ?? undefined,
+    // Supabase can serialize timestamptz with a +00:00 offset. Normalize the
+    // BFF contract so every native client receives one stable ISO-8601 shape.
+    startTime: new Date(row.start_time).toISOString(),
+    endTime: row.end_time ? new Date(row.end_time).toISOString() : undefined,
     allDay: row.all_day,
     status: row.status,
     repeat: row.repeat,
@@ -3235,6 +3237,9 @@ export async function getNativeHomeSummary(
   const activeSpaceId = profile.family_group_id ?? personalSpaceId ?? null;
   const sharedSpaceId = activeSpaceId && activeSpaceId !== personalSpaceId ? activeSpaceId : null;
   const hasSharedSpace = !!sharedSpaceId;
+  const scheduleSpaceIds = Array.from(
+    new Set([personalSpaceId, activeSpaceId].filter((spaceId): spaceId is string => !!spaceId)),
+  );
 
   let activeSpaceName: string | null = null;
   let memberCount = 0;
@@ -3267,11 +3272,11 @@ export async function getNativeHomeSummary(
   let upcomingSchedules: NativeScheduleItem[] = [];
   let calendarSchedules: NativeScheduleItem[] = [];
 
-  if (activeSpaceId) {
+  if (scheduleSpaceIds.length > 0) {
     const { data: scheduleRows, error: schedulesError } = await supabase
       .from('schedules')
       .select('*, schedule_participants (user_id)')
-      .eq('family_group_id', activeSpaceId)
+      .in('family_group_id', scheduleSpaceIds)
       .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
       .gte('start_time', scheduleWindowStart.toISOString())
       .lte('start_time', scheduleWindowEnd.toISOString())
@@ -3508,10 +3513,14 @@ export async function createNativeSchedule(
     if (participantError) throw new Error(participantError.message);
   }
 
-  return nativeScheduleItemFromRow({
+  const createdRow = {
     ...(schedule as ScheduleRow),
     schedule_participants: participantIds.map((participantId) => ({ user_id: participantId })),
-  });
+  };
+  return {
+    ...nativeScheduleItemFromRow(createdRow),
+    permissions: await nativeSchedulePermissions(supabase, userId, createdRow),
+  };
 }
 
 
@@ -3520,8 +3529,11 @@ export async function getNativeSchedules(
   userId: string,
   options: { from?: string; to?: string; filter?: ScheduleType | 'all'; search?: string } = {},
 ): Promise<NativeScheduleItem[]> {
-  const { activeSpaceId } = await getNativeProfileContext(supabase, userId);
-  if (!activeSpaceId) return [];
+  const { personalSpaceId, activeSpaceId } = await getNativeProfileContext(supabase, userId);
+  const scheduleSpaceIds = Array.from(
+    new Set([personalSpaceId, activeSpaceId].filter((spaceId): spaceId is string => !!spaceId)),
+  );
+  if (scheduleSpaceIds.length === 0) return [];
 
   const now = new Date();
   const from = options.from ? new Date(options.from) : addDays(now, -30);
@@ -3532,7 +3544,7 @@ export async function getNativeSchedules(
   let query = supabase
     .from('schedules')
     .select('*, schedule_participants (user_id)')
-    .eq('family_group_id', activeSpaceId)
+    .in('family_group_id', scheduleSpaceIds)
     .or(`visibility.neq.private,visibility.is.null,created_by.eq.${userId}`)
     .gte('start_time', from.toISOString())
     .lte('start_time', to.toISOString())

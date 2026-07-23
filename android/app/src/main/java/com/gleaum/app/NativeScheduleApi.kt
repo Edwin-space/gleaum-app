@@ -1,6 +1,7 @@
 package com.gleaum.app
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -154,7 +155,9 @@ object NativeScheduleApi {
             throw IllegalStateException("session_required")
         }
         if (connection.responseCode !in 200..299) {
-            throw IllegalStateException(json.optString("error").ifBlank { "schedule_request_failed" })
+            val errorCode = json.optString("error").ifBlank { "schedule_request_failed" }
+            Log.e("NativeScheduleApi", "$method $url failed (${connection.responseCode}): $errorCode")
+            throw IllegalStateException(errorCode)
         }
         return json
     }

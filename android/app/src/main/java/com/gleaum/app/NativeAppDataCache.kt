@@ -32,6 +32,19 @@ object NativeAppDataCache {
         spaces = null
     }
 
+    /**
+     * Keeps a successful mutation visible immediately while the server-backed
+     * aggregate cache is refreshed on the next explicit reload or cold start.
+     */
+    fun upsertSchedule(schedule: NativeAppSchedule) {
+        val current = schedules.orEmpty()
+        schedules = (current.filterNot { it.id == schedule.id } + schedule)
+            .sortedBy { it.startTime }
+        scheduleDetails[schedule.id] = schedule
+        home = null
+        spaces = null
+    }
+
     fun invalidateBudget() {
         budget = null
         home = null

@@ -60,16 +60,17 @@ class NativeScheduleDetailActivity : AppCompatActivity() {
             render()
             return
         }
+        var renderedCachedSchedule = false
         if (!force) {
             NativeAppDataCache.scheduleDetails[scheduleId]?.let {
                 schedule = it
                 loading = false
                 errorMessage = null
                 render()
-                return
+                renderedCachedSchedule = true
             }
         }
-        if (!silent) {
+        if (!silent && !renderedCachedSchedule) {
             loading = true
             render()
         }
