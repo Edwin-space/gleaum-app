@@ -51,7 +51,7 @@
 - **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 구현 체크포인트**: iOS Claude 혼합 WIP는 `codex/archive-claude-wip-20260727`에 보존. `codex/ios-rebuild-20260727`에서 Keychain 세션·refresh-first 상태와 Apple/Google/이메일 네이티브 인증 기반을 재구축했다. UI 감사 결과 UIKit 카드·Capacitor modal 확장을 중단하고 `28-ios-apple-design-realignment.md` 기준 SwiftUI root·브랜드 전환·선조회 캐시·시스템 5탭 순으로 재정렬한다.
+- **최근 구현 체크포인트**: `codex/ios-rebuild-20260727`에서 Keychain 세션·Apple/Google/이메일 인증 기반 위에 SwiftUI 실제 root, 앱 내부 브랜드 전환, 시작 병렬 snapshot·5분 캐시, 시스템 5탭, SwiftUI 홈 1차를 구현했다. Capacitor는 미전환 화면의 지연 폴백으로 축소했다. 다음은 일정→공간→가계부→알림/전체 순서의 iPhone 네이티브화이며 iPad·Android 태블릿·폴더블은 후순위다.
 
 ---
 
@@ -91,7 +91,7 @@
 ✅ 2026-06-02 공유 테마 모드 시스템 추가
 ✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
-🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. iOS 외부 OAuth/capability 설정을 병행하면서 SwiftUI 5탭 단일 셸·중앙 Route·선조회 → 핵심 기능 네이티브화
+🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. iOS 외부 OAuth/capability 설정을 병행하면서 iPhone 일정→공간→가계부→알림/전체 메뉴 네이티브화
 ```
 
 ---

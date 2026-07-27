@@ -1,11 +1,9 @@
 import Foundation
 
-final class NativeAPIClient {
+final class NativeAPIClient: @unchecked Sendable {
     static let shared = NativeAPIClient()
 
     private let baseURL = URL(string: "https://www.gleaum.com")!
-    private let decoder = JSONDecoder()
-    private let encoder = JSONEncoder()
 
     private init() {}
 
@@ -14,16 +12,20 @@ final class NativeAPIClient {
             path: "/api/native/home-summary",
             method: "GET"
         )
-        return try decoder.decode(NativeHomeSummary.self, from: data)
+        return try JSONDecoder().decode(NativeHomeSummary.self, from: data)
+    }
+
+    func fetchSnapshot(path: String) async throws -> Data {
+        try await performAuthorizedRequest(path: path, method: "GET")
     }
 
     func createSchedule(_ payload: NativeCreateScheduleRequest) async throws -> NativeScheduleItem {
         let data = try await performAuthorizedRequest(
             path: "/api/native/schedules",
             method: "POST",
-            body: try encoder.encode(payload)
+            body: try JSONEncoder().encode(payload)
         )
-        return try decoder.decode(NativeCreateScheduleResponse.self, from: data).schedule
+        return try JSONDecoder().decode(NativeCreateScheduleResponse.self, from: data).schedule
     }
 
     private func performAuthorizedRequest(

@@ -1,10 +1,9 @@
 import UIKit
-import WebKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
-import SafariServices
 import UserNotifications
+import SwiftUI
 
 @UIApplicationMain
 class AppDelegate: UIResponder,
@@ -14,7 +13,7 @@ class AppDelegate: UIResponder,
                    AppSessionRouting {
 
     var window: UIWindow?
-    private let loginPresentationDelay: TimeInterval = 0.45
+    private var legacyBridgeViewController: AppBridgeViewController?
     private lazy var sessionStateCoordinator = AppSessionStateCoordinator(router: self)
 
     func application(_ application: UIApplication,
@@ -45,25 +44,22 @@ class AppDelegate: UIResponder,
             object: nil
         )
 
+        // Capacitor는 아직 네이티브 전환 전인 경로에서만 지연 로드합니다.
+        // 앱 시작 시 WebView를 만들지 않아 iPhone 시작 시간과 화면 안정성을 지킵니다.
+        let legacyBridge = AppBridgeViewController()
+        legacyBridgeViewController = legacyBridge
+        NativeRouteCoordinator.shared.attachLegacyBridge(legacyBridge)
+
+        let root = UIHostingController(rootView: IOSAppRootView(model: .shared))
+        root.view.backgroundColor = UIColor(red: 0.039, green: 0.043, blue: 0.063, alpha: 1)
+        window?.rootViewController = root
+        window?.makeKeyAndVisible()
+
         // 저장된 access token이 만료되어도 refresh 결과를 확인하기 전 로그인으로
         // 보내지 않는다. 화면 전환은 sessionStateCoordinator 한 곳에서 결정한다.
         sessionStateCoordinator.start()
 
         return true
-    }
-
-    private func showLoginScreenAfterLaunch() {
-        // 스플래시가 3초 유지되는 동안 LoginVC를 미리 올려둔다.
-        // 스플래시가 사라질 때 WebView /login이 아니라 네이티브 로그인 화면이 바로 보이게 한다.
-        DispatchQueue.main.asyncAfter(deadline: .now() + loginPresentationDelay) { [weak self] in
-            self?.presentLoginScreenWhenReady()
-        }
-    }
-
-    private func presentNativeHomeAfterLaunch() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            NativeRouteCoordinator.shared.presentNativeHome()
-        }
     }
 
     @objc private func onNativeSessionSaved() {
@@ -72,70 +68,6 @@ class AppDelegate: UIResponder,
 
     @objc private func onNativeSessionInvalidated() {
         sessionStateCoordinator.sessionCleared()
-    }
-
-    private func presentLoginScreenWhenReady(attempt: Int = 0) {
-        if SessionManager.shared.hasValidSession() { return }
-
-        guard let rootVC = currentRootViewController() else {
-            if attempt < 20 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                    self?.presentLoginScreenWhenReady(attempt: attempt + 1)
-                }
-            }
-            return
-        }
-
-        guard rootVC.isViewLoaded, rootVC.view.window != nil else {
-            if attempt < 20 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                    self?.presentLoginScreenWhenReady(attempt: attempt + 1)
-                }
-            }
-            return
-        }
-
-        let presenter = topMostViewController(from: rootVC)
-        if presenter is LoginViewController { return }
-        if presenter is SFSafariViewController { return }
-        if presenter.presentedViewController is LoginViewController { return }
-        if presenter.presentedViewController is SFSafariViewController { return }
-
-        let loginVC = LoginViewController()
-        loginVC.modalPresentationStyle = .fullScreen
-        loginVC.modalTransitionStyle   = .crossDissolve
-        presenter.present(loginVC, animated: false)
-    }
-
-    private func currentRootViewController() -> UIViewController? {
-        if let rootVC = window?.rootViewController {
-            return rootVC
-        }
-
-        let keyWindow = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow }
-
-        if let keyWindow {
-            window = keyWindow
-            return keyWindow.rootViewController
-        }
-
-        return nil
-    }
-
-    private func topMostViewController(from root: UIViewController) -> UIViewController {
-        if let nav = root as? UINavigationController, let visible = nav.visibleViewController {
-            return topMostViewController(from: visible)
-        }
-        if let tab = root as? UITabBarController, let selected = tab.selectedViewController {
-            return topMostViewController(from: selected)
-        }
-        if let presented = root.presentedViewController {
-            return topMostViewController(from: presented)
-        }
-        return root
     }
 
     // ── FCM 토큰 갱신 시 콜백 ─────────────────────────────────────────────────
@@ -163,7 +95,6 @@ class AppDelegate: UIResponder,
         // NativeSessionPlugin 미등록 시 폴백 경로
         if url.scheme == "gleaum", url.host == "logout" {
             SessionManager.shared.clearSession()
-            showLoginScreenAfterLaunch()
         }
 
         if NativeRouteCoordinator.shared.handle(url: url) {
@@ -230,11 +161,6 @@ class AppDelegate: UIResponder,
     func applicationWillTerminate(_ application: UIApplication) {}
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // ── WKWebView 성능 최적화 ────────────────────────────────────────────
-        setupWebView()
-
-        // window/rootViewController 준비 타이밍에 따라 didFinishLaunching 시점의
-        // 네이티브 로그인 화면 표시가 누락될 수 있어 앱 활성화 시 한 번 더 보장한다.
         GleaumThemeManager.shared.applyToConnectedWindows()
         sessionStateCoordinator.resume()
 
@@ -250,100 +176,27 @@ class AppDelegate: UIResponder,
         #endif
     }
 
-    // ── WKWebView 성능 설정 (Android WebView 최적화와 대칭) ─────────────────
-    private func setupWebView() {
-        guard let rootVC = currentRootViewController() as? CAPBridgeViewController,
-              let webView = rootVC.webView else { return }
-
-        // 네이티브 로그인 세션 → WebView localStorage 주입
-        // Android의 addDocumentStartJavaScript 와 동일한 역할
-        if let sessionJson = SessionManager.shared.getSession() {
-            let escaped = sessionJson
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "'",  with: "\\'")
-                .replacingOccurrences(of: "\n", with: "\\n")
-            let projectRef = "tyvjdsescukaeorcuaga"
-            let storageKey = "sb-\(projectRef)-auth-token"
-            let script = WKUserScript(
-                source: "(function(){try{localStorage.setItem('\(storageKey)','\(escaped)');}catch(e){}})()",
-                injectionTime: .atDocumentStart,
-                forMainFrameOnly: true
-            )
-            webView.configuration.userContentController.addUserScript(script)
-        }
-
-        let scrollView = webView.scrollView
-
-        // 고무줄 스크롤 비활성화 → 네이티브 앱 느낌
-        scrollView.bounces = false
-        scrollView.alwaysBounceVertical = false
-        scrollView.alwaysBounceHorizontal = false
-
-        // CSS env(safe-area-inset-*) 직접 처리
-        // capacitor.config ios.contentInset = 'never' 와 일관성 유지
-        scrollView.contentInsetAdjustmentBehavior = .never
-
-        // 스크롤바 숨김 (globals.css ::-webkit-scrollbar와 일치)
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.showsHorizontalScrollIndicator = false
-
-        // WebView 배경: 로드 전 흰 화면 플래시 방지
-        // app 배경색 #FAFAFD 와 동일하게 설정
-        webView.isOpaque = false
-        webView.backgroundColor = GleaumUIColor.background
-        scrollView.backgroundColor = GleaumUIColor.background
-    }
-
     func showSignedOutState() {
-        showLoginScreenAfterLaunch()
+        if let bridge = legacyBridgeViewController, bridge.presentingViewController != nil {
+            bridge.dismiss(animated: false)
+        }
+        IOSAppModel.shared.apply(sessionState: .signedOut)
     }
 
     func showAuthenticatedState() {
         if let pendingPath = NativeRouteCoordinator.shared.consumePendingPath() {
             NativeRouteCoordinator.shared.openWebPath(pendingPath)
-        } else if NativeRouteCoordinator.shared.prefersNativeHome {
-            presentNativeHomeAfterLaunch()
+        } else {
+            IOSAppModel.shared.apply(sessionState: .authenticated)
         }
     }
 
     func showAuthenticatedOfflineState() {
-        presentSessionRecoveryWhenReady()
+        IOSAppModel.shared.apply(sessionState: .authenticatedOffline)
     }
 
-    private func presentSessionRecoveryWhenReady(attempt: Int = 0) {
-        guard let rootVC = currentRootViewController() else {
-            if attempt < 20 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                    self?.presentSessionRecoveryWhenReady(attempt: attempt + 1)
-                }
-            }
-            return
-        }
-
-        guard rootVC.isViewLoaded, rootVC.view.window != nil else {
-            if attempt < 20 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                    self?.presentSessionRecoveryWhenReady(attempt: attempt + 1)
-                }
-            }
-            return
-        }
-
-        let presenter = topMostViewController(from: rootVC)
-        if presenter is SessionRecoveryViewController {
-            return
-        }
-
-        let recovery = SessionRecoveryViewController()
-        recovery.modalPresentationStyle = .fullScreen
-        recovery.modalTransitionStyle = .crossDissolve
-        recovery.onRetry = { [weak self, weak recovery] in
-            recovery?.dismiss(animated: true)
-            self?.sessionStateCoordinator.retry()
-        }
-        recovery.onSignOut = {
-            SessionManager.shared.clearSession()
-        }
-        presenter.present(recovery, animated: true)
+    func retrySessionValidation() {
+        sessionStateCoordinator.retry()
     }
+
 }

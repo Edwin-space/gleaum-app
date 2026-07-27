@@ -4,6 +4,15 @@
 > 대상: `IOS-009`, `IOS-010`, `IOS-011`  
 > 결론: 인증·세션 기반은 보존하고 현재 UIKit 표현 계층과 Capacitor 중심 화면 소유권은 교체한다.
 
+## 0. 2026-07-27 구현 상태
+
+- SwiftUI `IOSAppRootView`가 실제 window root를 소유하도록 전환했다.
+- Launch Screen은 브랜드 배경·로고로 단순화하고 앱 내부 `BrandTransitionView`에서만 절제된 전환을 사용한다.
+- `StartupSnapshotStore`가 account/home/spaces/schedules/notifications와 capability 조건부 budget을 병렬 선조회하고 5분 프로세스 캐시·부분 실패를 관리한다.
+- 시스템 `TabView` 5탭과 snapshot 기반 SwiftUI 홈 1차를 구현했다.
+- Capacitor는 앱 시작 때 WebView를 만들지 않으며, 네이티브 전환 전 화면에서만 지연 생성되는 폴백으로 축소했다.
+- 현재 제품 우선순위는 iPhone이다. iPad·Split View와 Android 태블릿·폴더블은 휴대전화 기능 마감 뒤 재개한다.
+
 ## 1. 감사 결론
 
 사용자의 문제 제기는 맞다. 현재 구현은 Apple 네이티브 앱의 완성 방향이 아니라 **Capacitor WebView를 루트로 유지한 채 UIKit 화면을 modal로 덧씌운 과도기 구조**다.
@@ -78,7 +87,7 @@ System Launch Screen
 
 ## 4. 데이터 선조회·캐시 계약
 
-`StartupSnapshotStore`를 actor로 구현한다.
+`StartupSnapshotStore`를 Swift Concurrency 기반 공유 store로 구현한다.
 
 1. 콜드 스타트에서 세션·계정 상태를 먼저 판정한다.
 2. `async let` 또는 task group으로 홈·공간·일정·알림을 병렬 조회한다.
@@ -102,6 +111,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 ### iPad
 
+- **현재 후순위**: iPhone 핵심 기능 네이티브화와 휴대전화 QA를 마친 뒤 재개한다.
 - 지원 OS와 정보 구조에 따라 `NavigationSplitView` 또는 sidebar-adaptable tab 구성을 사용한다.
 - 목록-상세 화면은 2열을 기본으로 하고 로그인은 고정 휴대전화 카드가 아닌 화면 폭에 맞는 안내/폼 구성을 사용한다.
 - Split View와 키보드 사용을 완료 조건에 포함한다.
@@ -121,23 +131,23 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 ### 1단계 — root와 시작 흐름
 
-- [ ] SwiftUI `AppRootView`와 앱 상태 enum
-- [ ] `UIHostingController`를 사용자 화면의 단일 root로 전환
-- [ ] 단순 Launch Screen + 앱 내부 `BrandTransitionView`
-- [ ] `StartupSnapshotStore` 병렬 선조회·부분 실패·캐시
-- [ ] 기존 세션·인증 서비스를 SwiftUI environment에 연결
+- [x] SwiftUI `AppRootView`와 앱 상태 enum
+- [x] `UIHostingController`를 사용자 화면의 단일 root로 전환
+- [x] 단순 Launch Screen + 앱 내부 `BrandTransitionView`
+- [x] `StartupSnapshotStore` 병렬 선조회·부분 실패·캐시
+- [x] 기존 세션·인증 서비스를 SwiftUI root 상태에 연결
 
 ### 2단계 — 시스템 내비게이션
 
-- [ ] 시스템 `TabView` 5탭
+- [x] 시스템 `TabView` 5탭
 - [ ] 탭별 `NavigationStack`
 - [ ] 중앙 Route와 Universal Link/푸시 목적지 연결
-- [ ] iPad `NavigationSplitView` 적응
-- [ ] Capacitor modal 홈·custom floating tab 제거
+- [ ] iPad `NavigationSplitView` 적응 — 후순위
+- [x] Capacitor modal 홈·custom floating tab을 실제 앱 root에서 제거
 
 ### 3단계 — 핵심 화면
 
-- [ ] 홈
+- [x] 홈 1차 — snapshot 요약·오늘 일정·가계부 요약·새 일정 sheet·pull-to-refresh
 - [ ] 일정 목록·상세·생성/수정
 - [ ] 공간 목록·상세·멤버·초대
 - [ ] 개인 가계부

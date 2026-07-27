@@ -1,20 +1,25 @@
 import UIKit
 import WebKit
-import Capacitor
 
+@MainActor
 final class NativeRouteCoordinator {
     static let shared = NativeRouteCoordinator()
 
-    // 운영 API(`/api/native/home-summary`)가 배포되기 전까지는 네이티브 홈을 시도하지 않는다.
-    // true로 전환하면 /home 진입 시 NativeHomeViewController를 먼저 표시한다.
     private let nativeHomeEnabled = true
     var prefersNativeHome = true
+
+    private weak var legacyBridge: AppBridgeViewController?
     private var pendingPath: String?
 
     private init() {}
 
     var isNativeHomeEnabled: Bool {
         nativeHomeEnabled
+    }
+
+    func attachLegacyBridge(_ bridge: AppBridgeViewController) {
+        legacyBridge = bridge
+        bridge.modalPresentationStyle = .fullScreen
     }
 
     func consumePendingPath() -> String? {
@@ -29,8 +34,7 @@ final class NativeRouteCoordinator {
         if url.scheme == "gleaum", url.host == "auth" { return false }
 
         if url.scheme == "gleaum" {
-            let path = nativePath(from: url)
-            route(path: path)
+            route(path: nativePath(from: url))
             return true
         }
 
@@ -60,44 +64,37 @@ final class NativeRouteCoordinator {
 
     func openWebPath(_ path: String) {
         prefersNativeHome = false
+        pendingPath = path
 
-        guard let root = rootBridgeViewController() else {
-            pendingPath = path
+        guard let root = rootViewController(), let bridge = legacyBridge else {
             return
         }
 
-        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
-        let url = URL(string: "https://www.gleaum.com\(encodedPath)")!
+        bridge.modalPresentationStyle = .fullScreen
+        bridge.prepareForNativePresentation()
 
-        DispatchQueue.main.async {
-            root.dismiss(animated: false) {
-                root.prepareForNativePresentation()
-                root.webView?.load(URLRequest(url: url))
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    root.revealWebContent()
-                }
-            }
+        let presentAndLoad = { [weak self, weak bridge] in
+            guard let self, let bridge else { return }
+            self.load(path: path, in: bridge)
+        }
+
+        if bridge.presentingViewController != nil || root.presentedViewController === bridge {
+            presentAndLoad()
+        } else {
+            root.present(bridge, animated: true, completion: presentAndLoad)
         }
     }
 
     func presentNativeHome() {
-        guard nativeHomeEnabled else {
-            openWebPath("/home")
-            return
-        }
+        guard nativeHomeEnabled, SessionManager.shared.hasValidSession() else { return }
 
-        guard SessionManager.shared.hasValidSession() else { return }
-        guard let root = rootBridgeViewController() else { return }
-        let top = topMostViewController(from: root)
-        if top is LoginViewController { return }
-        if top is NativeHomeViewController { return }
+        prefersNativeHome = true
+        pendingPath = nil
+        IOSAppModel.shared.showNativeHome()
 
-        DispatchQueue.main.async {
-            root.prepareForNativePresentation()
-            let home = NativeHomeViewController()
-            home.modalPresentationStyle = .fullScreen
-            home.modalTransitionStyle = .crossDissolve
-            top.present(home, animated: true)
+        if let bridge = legacyBridge, bridge.presentingViewController != nil {
+            bridge.prepareForNativePresentation()
+            bridge.dismiss(animated: true)
         }
     }
 
@@ -108,37 +105,45 @@ final class NativeRouteCoordinator {
         return path == "/" || path == "/home"
     }
 
+    private func load(path: String, in bridge: AppBridgeViewController, attempt: Int = 0) {
+        guard let webView = bridge.webView else {
+            guard attempt < 30 else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self, weak bridge] in
+                guard let self, let bridge else { return }
+                self.load(path: path, in: bridge, attempt: attempt + 1)
+            }
+            return
+        }
+
+        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+        guard let url = URL(string: "https://www.gleaum.com\(encodedPath)") else { return }
+
+        webView.load(URLRequest(url: url))
+        if SessionManager.shared.hasValidSession(), pendingPath == path {
+            pendingPath = nil
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            bridge.revealWebContent()
+        }
+    }
+
+    private func rootViewController() -> UIViewController? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .rootViewController
+    }
+
     private func nativePath(from url: URL) -> String {
         if url.host == "invite" {
             let code = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             return code.isEmpty ? "/invite" : "/invite/\(code)"
         }
-        if let host = url.host, host != "" {
+        if let host = url.host, !host.isEmpty {
             let suffix = url.path == "/" ? "" : url.path
             return "/\(host)\(suffix)"
         }
         return url.path.isEmpty ? "/home" : url.path
-    }
-
-    private func rootBridgeViewController() -> AppBridgeViewController? {
-        let root = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first(where: \.isKeyWindow)?
-            .rootViewController
-        return root as? AppBridgeViewController
-    }
-
-    private func topMostViewController(from root: UIViewController) -> UIViewController {
-        if let nav = root as? UINavigationController, let visible = nav.visibleViewController {
-            return topMostViewController(from: visible)
-        }
-        if let tab = root as? UITabBarController, let selected = tab.selectedViewController {
-            return topMostViewController(from: selected)
-        }
-        if let presented = root.presentedViewController {
-            return topMostViewController(from: presented)
-        }
-        return root
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-struct NativeHomeSummary: Codable {
+struct NativeHomeSummary: Codable, Sendable {
     let serverTime: String
     let user: NativeHomeUser
     let spaces: NativeHomeSpaces
@@ -8,7 +8,7 @@ struct NativeHomeSummary: Codable {
     let ledger: NativeHomeLedger
 }
 
-struct NativeHomeUser: Codable {
+struct NativeHomeUser: Codable, Sendable {
     let id: String
     let displayName: String
     let email: String
@@ -17,7 +17,7 @@ struct NativeHomeUser: Codable {
     let timezone: String
 }
 
-struct NativeHomeSpaces: Codable {
+struct NativeHomeSpaces: Codable, Sendable {
     let activeSpaceId: String?
     let activeSpaceName: String?
     let personalSpaceId: String?
@@ -27,14 +27,14 @@ struct NativeHomeSpaces: Codable {
     let memberCount: Int
 }
 
-struct NativeHomeSchedules: Codable {
+struct NativeHomeSchedules: Codable, Sendable {
     let today: [NativeScheduleItem]
     let upcoming: [NativeScheduleItem]
     let todayCount: Int
     let upcomingCount: Int
 }
 
-struct NativeScheduleItem: Codable, Identifiable {
+struct NativeScheduleItem: Codable, Identifiable, Sendable {
     let id: String
     let title: String
     let type: String
@@ -53,7 +53,7 @@ struct NativeScheduleItem: Codable, Identifiable {
     let participantIds: [String]
 }
 
-struct NativeHomeLedger: Codable {
+struct NativeHomeLedger: Codable, Sendable {
     let month: String
     let incomeTotal: Int
     let expenseTotal: Int
@@ -61,7 +61,7 @@ struct NativeHomeLedger: Codable {
     let recentEntries: [NativeLedgerItem]
 }
 
-struct NativeLedgerItem: Codable, Identifiable {
+struct NativeLedgerItem: Codable, Identifiable, Sendable {
     let id: String
     let kind: String
     let title: String
@@ -72,7 +72,7 @@ struct NativeLedgerItem: Codable, Identifiable {
     let recurFreq: String
 }
 
-struct NativeCreateScheduleRequest: Codable {
+struct NativeCreateScheduleRequest: Codable, Sendable {
     let title: String
     let type: String
     let spaceId: String?
@@ -85,6 +85,21 @@ struct NativeCreateScheduleRequest: Codable {
     let visibility: String?
 }
 
-struct NativeCreateScheduleResponse: Codable {
+struct NativeCreateScheduleResponse: Codable, Sendable {
     let schedule: NativeScheduleItem
+}
+
+struct NativeAccountContext: Codable, Sendable {
+    let accountMode: String
+    let capabilities: NativeAccountCapabilities
+}
+
+struct NativeAccountCapabilities: Codable, Sendable {
+    let canManageSpaces: Bool
+    let canInviteMembers: Bool
+    let canViewHouseholdBudget: Bool
+    let canCompleteRoutine: Bool
+    let canUseCheckIn: Bool
+    let canRequestLocationPermission: Bool
+    let canShowAds: Bool
 }

@@ -36,11 +36,11 @@
 |---:|---|---|---|---|
 | 1 | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Debug 실기기 통과·유료 팀 대기` | Personal Team Debug 빌드·iPhone 설치·실행 완료. 유료 Apple Developer Team에서 App ID capability·Release 프로비저닝을 활성화한 뒤 Apple 로그인·APNs·Universal Link 검증 |
 | 2 | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 세션 기반 완료·인증 SDK 대기` | Keychain 이전·refresh 오류 분류·동시 갱신·로그아웃 경합·401 재시도 13개 시나리오와 실기기 실행 통과. 다음은 Apple·Google·이메일 인증을 단일 상태에 연결 |
-| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 전면 재정렬 확정·구현 대기` | UIKit 카드·custom floating tab·Capacitor root 확장을 중단한다. SwiftUI root 상태 머신 → 앱 내부 브랜드 전환 → `StartupSnapshotStore` 병렬 선조회/캐시 → 시스템 `TabView` 5탭·탭별 `NavigationStack` 순서로 교체 |
+| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 1차 기반 구현·iPhone 검증` | SwiftUI를 실제 window root로 전환하고 브랜드 전환·병렬 snapshot·시스템 5탭·홈 1차 구현을 완료했다. 다음은 일정→공간→가계부→알림/전체 순서로 웹 폴백을 제거하고 탭별 `NavigationStack` 상태를 완성 |
 | 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `⬜ 대기` | Android 공통 API 계약을 사용해 핵심 기능을 WebView 없이 구현 |
 | 5 | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | 가족 관계·일반 가족/자녀 초대 분리와 자녀 등록→OTP→동의→claim→승인/거절을 iOS 네이티브로 구현 |
 | 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `⬜ 대기` | 캘린더·푸시 토큰/딥링크·AASA를 실제 iPhone에서 검증 |
-| 7 | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | 소형/대형 iPhone, iPad/Split View, 라이트·다크·시스템, Dynamic Type·VoiceOver 회귀 |
+| 7 | `IOS-011` | iPhone·테마·접근성 QA | `⬜ 대기` | iPhone 소형/표준/대형, 라이트·다크·시스템, Dynamic Type·VoiceOver 회귀. iPad·Split View는 사용자 결정으로 별도 후순위 |
 | 8 | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | 내부 테스트, 개인정보·연령등급·심사 계정·메타데이터 정합화 후 제출 |
 | 9 | `FAM-013` | Android 자녀 계정 연결 전체 회귀 | `🟠 잔여 QA` | 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
 | 10 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 외부 설정 대기` | Firebase SHA-1·최신 `google-services.json` 반영 후 실제 계정 선택·취소·재로그인 검증 |
@@ -62,6 +62,7 @@
 - PC/Mobile Web: Android 기능 마감 뒤 `PAR-001`, `WEB-006`~`WEB-010`을 재개한다.
 - Google Play 출시 절차: `AND-006`의 등록정보 제작은 진행 중이지만 Console 제출·정책·서명 확인과 `AND-002` 최종 AAB는 기능 안정화 뒤 재개한다.
 - iOS: 현재 `IOS-007`을 시작으로 재개했다. 유료 Apple Developer Team 대기 중에도 시뮬레이터에서 `IOS-008`·`IOS-009` 기반 구현은 진행할 수 있다.
+- 태블릿: 2026-07-27 사용자 결정으로 iPad, Android 태블릿·폴더블의 신규 구현과 시각 QA를 모두 후순위로 둔다. 현재 완료 조건은 iPhone iOS 네이티브 핵심 기능이며, 휴대전화 기능 안정화 뒤 별도 재개한다.
 - Remote Config: `WEB-007`, `AND-009`는 3플랫폼 핵심 기능 파리티와 운영 회귀가 끝난 뒤 재개한다.
 - 장기 후보·외부 본인확인·위치·CRM 채널은 각 항목의 기존 재개 조건을 유지한다.
 
@@ -107,7 +108,7 @@
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
 | [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🟠 진행 중·일정 등록 복구` | 2026-07-16 | — | `SM_F731N`에서 개인 일정 저장 성공 후 활성 공유 공간만 조회해 목록이 비는 결함을 재현·수정. 개인 공간+활성 공유 공간 집계, 저장 응답 즉시 캐시 반영, ISO 시간 정규화, 상세 권한 재조회까지 적용. 제목·날짜·시작·종료 입력→목록·홈→상세 날짜/권한→삭제 실기기 회귀 통과. 남은 가계부 쓰기·가족 전환·삭제 회귀는 계속 진행 |
 | [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | 2026-07-16 | — | 사용자 결정으로 Google Play 출시 구간 후순위. 기능 production build와 핵심 회귀가 끝난 뒤 서명 비밀번호를 확보해 최종 AAB 검증 |
-| [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🟠 진행 중` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과. `SM_F731N` 캘린더 목록 말줄임·단일 선택 역할·하단 시스템 인셋 통과, 실제 TalkBack 음성 탐색 필요 |
+| [ ] | `AND-003` | 휴대전화 접근성 QA / 태블릿·폴더블 | `🟠 휴대전화 접근성·태블릿 보류` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역의 기존 검증 근거는 보존한다. 실제 휴대전화 TalkBack 음성 탐색만 Android 재개 시 수행하며, 태블릿·폴더블 신규 구현·시각 QA는 2026-07-27 사용자 결정으로 후순위 |
 | [x] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 브랜드 고정 다크 XML 예외 승인. 1080×2640·글꼴 1.3배에서 잘림/겹침 없음. 기능·정보 구조 대폭 변경 시 Compose 재평가 |
 | [ ] | `AND-005` | 기기 캘린더 2·3차/가져오기 QA | `🟠 진행 중` | 2026-07-14 | — | WebView 가져오기 경로를 Compose 네이티브 Activity로 교체. `SM_F731N` 권한·캘린더 선택·후보 3개 조회·선택 UI 통과. 격리 일정으로 실제 가져오기→재조회 중복, 자동 생성·수정·삭제 확인 필요 |
 | [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `🟠 진행 중` | 2026-07-16 | — | Android 1.1.5 기준 한국어 등록정보 카피와 익명화된 휴대전화 스크린샷 6장 준비 완료. `docs/25-google-play-release-readiness.md` 기준 1024×500 기능 그래픽 제작, Console 업로드·최신 versionCode·IARC·App access·서명 확인 필요 |
@@ -335,9 +336,9 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | — | — | iOS 기능·실기기 QA 완료 뒤 스크린샷·메타데이터·개인정보·심사 계정 준비 |
 | [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Debug 실기기 통과·Release 계정 대기` | 2026-07-23 | — | Debug 전용 빈 entitlement를 분리해 Personal Team 서명 빌드, iPhone 16 Pro 설치·실행·프로세스 유지 확인. Release의 Apple 로그인·Push·Associated Domains는 유료 Team capability·프로비저닝 필요 |
 | [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 코드·시뮬레이터 완료·외부 설정 대기` | 2026-07-27 | — | Keychain·refresh 기반 13/13과 인증 REST 계약 6/6 통과. AuthenticationServices Apple 로그인, 네이티브 이메일 로그인/가입·필수 동의, 인앱 약관, Supabase ID token/password 세션 통합 구현. Google은 `ASWebAuthenticationSession`의 임시 세션으로 계정 선택·자동 복귀·취소를 검증했으며 GoogleSignIn SDK 마감에는 iOS OAuth Client ID·reversed scheme이 필요. Apple 실인증은 유료 Team capability 필요. 서명된 iPhone arm64 Debug 빌드는 성공했으나 2026-07-27 기기가 CoreDevice `unavailable`이라 재설치만 대기 |
-| [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 전면 재정렬 확정·구현 대기` | 2026-07-27 | — | 코드·iPad 시뮬레이터 감사 결과 현재는 Capacitor root 위 UIKit modal, custom floating tab, 고정 카드 중심이며 `/home` 외 핵심 탭은 WebView이고 Android의 시작 병렬 선조회·공유 캐시가 없다. 인증·Keychain·API 기반은 보존하되 표현 계층 확장을 중단하고 SwiftUI 단일 root, 시스템 탭/내비게이션, 앱 내부 브랜드 전환, `StartupSnapshotStore`로 교체한다. 상세: `docs/28-ios-apple-design-realignment.md` |
-| [ ] | `IOS-010` | 핵심 기능 네이티브화 | `⬜ 대기` | — | — | 홈·일정·공간·가계부·알림·전체 메뉴를 WebView 없이 구현 |
-| [ ] | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | — | — | 기기 크기·Split View·테마·Dynamic Type·VoiceOver·오프라인/세션 회귀 |
+| [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 1차 기반 구현·iPhone 검증` | 2026-07-27 | — | SwiftUI `IOSAppRootView`가 실제 window root를 소유하며 launching/signedOut/authenticated/offline 상태를 단일 관리한다. Launch Screen 단순화, 앱 내부 브랜드 전환, `StartupSnapshotStore`의 account/home/spaces/schedules/notifications 및 capability 조건부 budget 병렬 선조회·5분 캐시·부분 실패, 시스템 `TabView` 5탭, SwiftUI 홈 1차를 구현했다. Capacitor는 지연 생성되는 레거시 화면 폴백으로 축소했다. iPhone 17 Pro iOS 26.5 새 설치에서 브랜드→네이티브 로그인과 폴백 진입, Simulator build 통과. 다음은 탭별 네이티브 화면으로 폴백 제거 |
+| [ ] | `IOS-010` | 핵심 기능 네이티브화 | `🟠 홈 1차·나머지 대기` | 2026-07-27 | — | 홈은 snapshot 기반 SwiftUI·시스템 toolbar·pull-to-refresh·기존 네이티브 일정 생성 sheet 연결까지 구현. 일정→공간→가계부→알림/전체 순서로 WebView 없이 구현하고 각 완료 시 폴백 경로를 제거 |
+| [ ] | `IOS-011` | iPhone·테마·접근성 QA | `⬜ 대기·iPad 후순위` | — | — | 현재 범위는 iPhone 크기·테마·Dynamic Type·VoiceOver·Reduce Motion·오프라인/세션 회귀. iPad·Split View와 Android 태블릿·폴더블은 2026-07-27 사용자 결정으로 휴대전화 기능 마감 뒤 재개 |
 
 상세 계획: `docs/16-ios-native-roadmap.md`, 재개 감사: `docs/27-ios-resumption-readiness.md`
 
@@ -378,6 +379,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-27 | `IOS-009`, `IOS-010`, `IOS-011` | iPhone 우선 SwiftUI 앱 셸 1차 구현 | Capacitor가 앱 root를 소유하던 구조를 종료하고 SwiftUI 상태 머신을 실제 window root로 연결했다. 정적 Launch Screen 뒤 앱 내부 브랜드 전환 중 account/home/spaces/schedules/notifications와 허용 계정의 budget을 병렬 선조회하며, 5분 snapshot·부분 실패·pull-to-refresh를 제공한다. 시스템 `TabView` 5탭과 SwiftUI 홈을 추가하고 Capacitor는 미전환 화면에서만 지연 생성되는 폴백으로 축소했다. iPad와 Android 태블릿·폴더블은 명시적 후순위로 분리했다 | iPhone 17 Pro iOS 26.5 새 설치에서 브랜드→네이티브 로그인 확인, `gleaum://schedules` 폴백 지연 생성 확인, generic iOS Simulator Debug build 통과. 다음은 일정→공간→가계부→알림/전체 순서의 네이티브 전환과 실제 로그인 계정 회귀 |
 | 2026-07-27 | `IOS-009`, `IOS-011` | iOS Apple 디자인·시작 아키텍처 전면 감사 | SwiftUI 사용 0건, UIKit 수동 스타일·카드 중심 화면, Capacitor root 위 modal 홈, `/home` 외 핵심 탭 WebView 전환, 제품 데이터 선조회·공유 캐시 부재를 확인했다. iPad에서는 휴대전화 폭 로그인 카드와 과도한 여백이 노출됐다. Android는 복잡한 로고 애니메이션이 아니라 브랜드 화면+fade 동안 account/home/space/schedule/budget/notification을 병렬 선조회하는 구조가 핵심 차이였다 | 기존 인증·Keychain·API 클라이언트는 보존. UIKit 화면 추가를 중단하고 SwiftUI root 상태 머신 → 앱 내부 브랜드 전환 → 선조회 actor/cache → 시스템 5탭 → 핵심 화면 순으로 재구축. `docs/28-ios-apple-design-realignment.md` |
 | 2026-07-27 | `IOS-008` | 네이티브 인증·세션 통합 구현 | Apple은 `AuthenticationServices`의 nonce/ID token 교환, 이메일은 로그인·가입·필수 동의·인앱 약관 확인, Google은 `ASWebAuthenticationSession` 임시 세션의 계정 선택과 OAuth callback 자동 수신으로 통합했다. 세 인증 결과는 동일한 Supabase 세션 JSON으로 정규화하고 Keychain 저장 실패를 인증 성공으로 오인하지 않도록 브리지까지 보강했다. 법적 문서는 전용 `WKWebView`에서 열고 PWA 설치 배너를 억제한다 | diff/plist/pbx 검사, 세션 13/13·인증 6/6, Simulator Debug build·로그인/이메일/약관 시각 검증, Google 계정 선택 진입·취소 복귀 통과. iPhone arm64 Development 서명 빌드 성공. 실제 설치는 기기 `unavailable`, Apple 실인증은 유료 Team, GoogleSignIn SDK는 iOS OAuth Client ID/reversed scheme 확보 후 검증 |
 | 2026-07-27 | `IOS-007`~`IOS-011`, `REPO-001` | Claude WIP 보존·iOS 안정 기준 재구축 시작 | SSD의 Claude 혼합 WIP 61개 파일은 `b12e0f2`와 `codex/archive-claude-wip-20260727`에 원형 보존하고, 안정 기준 `853c649`에서 `codex/ios-rebuild-20260727`을 생성. 세션을 UserDefaults에서 Keychain으로 이전하고 refresh 오류를 명시적 토큰 거절과 일시장애로 분리했으며, 401 단일 재시도·동시 refresh 병합·로그아웃 경합 차단·앱 시작 단일 상태 조정자를 적용. UIKit 홈·일정 생성의 고정 다크 색을 의미 기반 동적 색상으로 교체하고 시스템/라이트/다크 선택 관리자 추가. 시작 WebView flash를 가리는 네이티브 브랜드 shield와 세션 일시장애 복구 화면 추가 | 세션 시나리오 13/13, pbx/plist lint, diff check, Simulator Debug build·로그인 시각 검증 통과. Personal Team Debug 빌드 후 iPhone 16 Pro 설치·실행·PID 유지 확인. 다음은 실계정 세션 이전·홈 테마 검증과 SwiftUI 단일 root 구축 |

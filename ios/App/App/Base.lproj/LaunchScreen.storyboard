@@ -8,7 +8,6 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
@@ -16,61 +15,25 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Making everyday life shine together" textAlignment="natural" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-sub-01">
-                                <rect key="frame" x="32" y="168" width="350" height="14.5"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.047058823999999999" green="0.78823529000000003" blue="0.70980392000000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="나, 그리고" textAlignment="natural" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-tit-01">
-                                <rect key="frame" x="32" y="194.5" width="162.5" height="50.5"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="42"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="연인/가족의" textAlignment="natural" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-tit-02">
-                                <rect key="frame" x="32" y="245" width="195" height="50.5"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="42"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="일상 네트워크" textAlignment="natural" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-tit-03">
-                                <rect key="frame" x="32" y="295.5" width="227" height="50.5"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="42"/>
-                                <color key="textColor" red="0.047058823999999999" green="0.78823529000000003" blue="0.70980392000000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
+                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="img-logo-01">
+                                <rect key="frame" x="159" y="389" width="96" height="96"/>
+                            </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="gleaum" textAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-brand-01">
-                                <rect key="frame" x="169" y="753.5" width="76" height="26.5"/>
+                                <rect key="frame" x="169" y="501" width="76" height="26.5"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="img-logo-01">
-                                <rect key="frame" x="188" y="430" width="257" height="257"/>
-                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="cGa-bB-1UN"/>
                         <color key="backgroundColor" red="0.039215686" green="0.043137254999999999" blue="0.062745097999999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="lbl-sub-01" firstAttribute="top" secondItem="cGa-bB-1UN" secondAttribute="top" constant="72" id="c001"/>
-                            <constraint firstItem="lbl-sub-01" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c002"/>
-                            <constraint firstItem="lbl-sub-01" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-32" id="c003"/>
-                            <constraint firstItem="lbl-tit-01" firstAttribute="top" secondItem="lbl-sub-01" secondAttribute="bottom" constant="12" id="c004"/>
-                            <constraint firstItem="lbl-tit-01" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c005"/>
-                            <constraint firstItem="lbl-tit-01" firstAttribute="trailing" relation="lessThanOrEqual" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-32" id="c005b"/>
-                            <constraint firstItem="lbl-tit-02" firstAttribute="top" secondItem="lbl-tit-01" secondAttribute="bottom" id="c006"/>
-                            <constraint firstItem="lbl-tit-02" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c007"/>
-                            <constraint firstItem="lbl-tit-02" firstAttribute="trailing" relation="lessThanOrEqual" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-32" id="c007b"/>
-                            <constraint firstItem="lbl-tit-03" firstAttribute="top" secondItem="lbl-tit-02" secondAttribute="bottom" id="c008"/>
-                            <constraint firstItem="lbl-tit-03" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="32" id="c009"/>
-                            <constraint firstItem="lbl-tit-03" firstAttribute="trailing" relation="lessThanOrEqual" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="-32" id="c009b"/>
-                            <constraint firstItem="img-logo-01" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="31" id="c010"/>
-                            <constraint firstItem="img-logo-01" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="110.5" id="c011"/>
-                            <constraint firstItem="img-logo-01" firstAttribute="width" constant="257" id="c012"/>
-                            <constraint firstItem="img-logo-01" firstAttribute="height" constant="257" id="c013"/>
-                            <constraint firstItem="lbl-brand-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c014"/>
-                            <constraint firstItem="lbl-brand-01" firstAttribute="bottom" secondItem="cGa-bB-1UN" secondAttribute="bottom" constant="-48" id="c015"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c001"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-11" id="c002"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="width" constant="96" id="c003"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="height" constant="96" id="c004"/>
+                            <constraint firstItem="lbl-brand-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c005"/>
+                            <constraint firstItem="lbl-brand-01" firstAttribute="top" secondItem="img-logo-01" secondAttribute="bottom" constant="16" id="c006"/>
                         </constraints>
                     </view>
                 </viewController>

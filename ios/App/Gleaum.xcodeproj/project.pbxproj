@@ -35,6 +35,10 @@
 		E822C3252FCD79040032518A /* NativeAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3242FCD79040032518A /* NativeAuthClient.swift */; };
 		E822C3272FCD79040032518A /* NativeAuthenticationCoordinators.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3262FCD79040032518A /* NativeAuthenticationCoordinators.swift */; };
 		E822C3292FCD79040032518A /* LegalDocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3282FCD79040032518A /* LegalDocumentViewController.swift */; };
+		E822C32B2FCD79040032518A /* IOSAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C32A2FCD79040032518A /* IOSAppModel.swift */; };
+		E822C32D2FCD79040032518A /* StartupSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C32C2FCD79040032518A /* StartupSnapshotStore.swift */; };
+		E822C32F2FCD79040032518A /* IOSAppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C32E2FCD79040032518A /* IOSAppRootView.swift */; };
+		E822C3312FCD79040032518A /* IOSHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3302FCD79040032518A /* IOSHomeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -70,6 +74,10 @@
 		E822C3242FCD79040032518A /* NativeAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAuthClient.swift; sourceTree = "<group>"; };
 		E822C3262FCD79040032518A /* NativeAuthenticationCoordinators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAuthenticationCoordinators.swift; sourceTree = "<group>"; };
 		E822C3282FCD79040032518A /* LegalDocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentViewController.swift; sourceTree = "<group>"; };
+		E822C32A2FCD79040032518A /* IOSAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSAppModel.swift; sourceTree = "<group>"; };
+		E822C32C2FCD79040032518A /* StartupSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupSnapshotStore.swift; sourceTree = "<group>"; };
+		E822C32E2FCD79040032518A /* IOSAppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSAppRootView.swift; sourceTree = "<group>"; };
+		E822C3302FCD79040032518A /* IOSHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +112,10 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				E822C32E2FCD79040032518A /* IOSAppRootView.swift */,
+				E822C32A2FCD79040032518A /* IOSAppModel.swift */,
+				E822C32C2FCD79040032518A /* StartupSnapshotStore.swift */,
+				E822C3302FCD79040032518A /* IOSHomeView.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -250,6 +262,10 @@
 				E822C3252FCD79040032518A /* NativeAuthClient.swift in Sources */,
 				E822C3272FCD79040032518A /* NativeAuthenticationCoordinators.swift in Sources */,
 				E822C3292FCD79040032518A /* LegalDocumentViewController.swift in Sources */,
+				E822C32B2FCD79040032518A /* IOSAppModel.swift in Sources */,
+				E822C32D2FCD79040032518A /* StartupSnapshotStore.swift in Sources */,
+				E822C32F2FCD79040032518A /* IOSAppRootView.swift in Sources */,
+				E822C3312FCD79040032518A /* IOSHomeView.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
