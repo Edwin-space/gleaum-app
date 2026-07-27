@@ -71,8 +71,11 @@ final class NativeRouteCoordinator {
 
         DispatchQueue.main.async {
             root.dismiss(animated: false) {
-                root.webView?.isHidden = false
+                root.prepareForNativePresentation()
                 root.webView?.load(URLRequest(url: url))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    root.revealWebContent()
+                }
             }
         }
     }
@@ -90,7 +93,7 @@ final class NativeRouteCoordinator {
         if top is NativeHomeViewController { return }
 
         DispatchQueue.main.async {
-            root.webView?.isHidden = true
+            root.prepareForNativePresentation()
             let home = NativeHomeViewController()
             home.modalPresentationStyle = .fullScreen
             home.modalTransitionStyle = .crossDissolve
@@ -117,13 +120,13 @@ final class NativeRouteCoordinator {
         return url.path.isEmpty ? "/home" : url.path
     }
 
-    private func rootBridgeViewController() -> CAPBridgeViewController? {
+    private func rootBridgeViewController() -> AppBridgeViewController? {
         let root = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .flatMap { $0.windows }
             .first(where: \.isKeyWindow)?
             .rootViewController
-        return root as? CAPBridgeViewController
+        return root as? AppBridgeViewController
     }
 
     private func topMostViewController(from root: UIViewController) -> UIViewController {

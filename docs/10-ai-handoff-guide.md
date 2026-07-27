@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-07-23
+> **최종 업데이트**: 2026-07-27
 >
 > 현재 작업과 다음 우선순위는 `docs/24-project-work-tracker.md`가 단일 기준이다. 이 문서는 아키텍처와 인수인계 맥락을 설명하고, 작업 상태는 트래커에서 관리한다.
 
@@ -34,11 +34,11 @@
 
 ---
 
-## 현재 앱 상태 (2026-07-23 기준)
+## 현재 앱 상태 (2026-07-27 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
-- **GitHub**: `Edwin-space/gleaum-app`; 최신 작업 브랜치는 `codex/platform-parity-sync-20260723`
+- **GitHub**: `Edwin-space/gleaum-app`; 현재 iOS 재구축 브랜치는 `codex/ios-rebuild-20260727`, Claude 혼합 WIP 보존 브랜치는 `codex/archive-claude-wip-20260727`
 - **최신 배포**: 2026-07-23 Vercel Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`. 자녀 선택 이메일·72시간 일회성 토큰 claim·보호자 승인/거절·공유/QR와 Android 초대 로그인 경로 보존까지 반영. 공개 랜딩 200, 신규 API 미인증 401, runtime error 0 확인.
 - **Google Play**: 프로덕션 배포 승인·운영 이력 있음. 로컬 Android 빌드 버전은 `versionCode 26`, `versionName 1.1.5`
 - **Git 기준점**: `codex/platform-parity-sync-20260723`, 원격 기능 기준 `142b1da`.
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-27 | Claude의 iOS·Android·Web 혼합 WIP 61개 파일을 `b12e0f2`/`codex/archive-claude-wip-20260727`에 보존하고 안정 기준 `853c649`에서 iOS를 재구축했다. 세션은 Keychain 저장과 UserDefaults 1회 이전으로 전환했으며, refresh 명시 거절만 로그아웃하고 네트워크·5xx·429·일반 4xx는 세션을 보존한다. 401 API 재시도, 동시 refresh 병합, 로그아웃 경합 차단, 앱 시작 단일 세션 상태 조정자와 일시장애 복구 화면을 적용했다. 홈·일정 생성은 고정 다크 색 대신 시스템/라이트/다크 의미 토큰을 사용하고 시작 WebView flash는 네이티브 브랜드 shield로 차단한다. 시나리오 13/13·Simulator build·로그인 시각 검증, Personal Team Debug 서명 빌드·iPhone 16 Pro 설치·실행을 통과했다. Release capability와 Apple 로그인/APNs/Universal Link는 유료 Team이 필요하며, 다음 작업은 SwiftUI 단일 5탭 root다. |
 | 2026-07-23 | iOS 재개 1단계 `IOS-007`을 진행했다. Xcode가 누락된 개발 구성요소를 설치하고 stale CoreSimulator 1051.54를 1051.55로 교체해 iOS 26.4/26.5 런타임을 복구했으며 iPhone 17 Pro iOS 26.5 시뮬레이터에서 Debug 빌드·설치·콜드 스타트를 확인했다. `App.entitlements`를 실제 타겟에 연결하고 Push Notifications·Associated Domains·Sign in with Apple capability를 구성했으며, Debug/Release APNs 환경을 분리했다. `PrivacyInfo.xcprivacy`가 기존에는 Resources에 없어 앱 번들에 포함되지 않던 결함을 수정하고 실제 수집 범위를 보강했다. 미사용 카메라·사진·마이크·현재 위치·ATT·background fetch 선언을 제거하고 캘린더·Face ID·remote notification만 유지했다. `AppDelegate`는 `UNUserNotificationCenterDelegate` 조건부 캐스팅이 항상 실패하던 문제를 정식 프로토콜 채택으로 수정했다. plist lint, simulator Debug, iphoneOS Release 무서명 build와 번들 manifest 검증은 통과했다. 현재 Xcode 계정은 Personal Development Team이라 Apple 로그인·Push·Associated Domains 프로비저닝을 만들 수 없으므로 유료 Apple Developer Program Team 연결 후 실제 iPhone 서명 빌드가 필요하다. |
 | 2026-07-23 | Android 자녀 연결을 Compose Material 3로 전환했다. `NativeChildAccountActivity`/API/화면에서 보호자 목록·등록·8자리 OTP·필수 동의·초대 공유·후보 승인/거절·자녀 claim을 처리하며, 자녀 API 8개는 Cookie·Bearer 인증을 공통 지원한다. Android Google 로그인은 Credential Manager 계정 선택 → Google ID token → Supabase ID token grant → 기존 `SessionManager` 저장 방식으로 교체했다. debug 서명 SHA-1은 `9D:9E:3B:4F:AB:1C:B3:46:C7:9F:D0:70:F4:A1:07:49:17:7B:64:E2`이므로 Firebase 등록과 최신 `google-services.json` 반영 뒤 실기기 검증해야 한다. 공개 `/`은 실제 Android 정보 구조를 익명화한 PC·태블릿·모바일 반응형 서비스 소개로 재구성했다. iOS 현황과 재개 순서는 `docs/27-ios-resumption-readiness.md`에 기록했다. |
 | 2026-07-23 | 자녀 계정 연결에서 Google 이메일 필수 입력을 제거하고 이름·생년월일·보호자 관계 중심 등록으로 변경했다. 이메일은 선택적인 계정 제한값이며 입력한 경우에만 해당 검증 이메일이 초대를 사용할 수 있다. 72시간 일회성 토큰은 OS 공유·문자·QR로 전달하고, Google/이메일 로그인 계정의 claim은 `candidate_email/provider/claimed_at`만 저장한다. 보호자 본인 claim은 차단되며 최종 승인 전 `space_members`·`account_age_profiles`를 생성하지 않는다. 보호자는 후보 계정을 확인해 승인 또는 거절·재초대할 수 있다. Android는 `NativePendingRouteStore`로 OAuth/이메일 로그인 전후 `/invite/child/[token]`을 보존한다. 운영 migration `20260723053050_child_invite_token_binding.sql`, commit `b124305`, Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`, TypeScript, 자녀 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next/Android build, 공개 랜딩 200·신규 API 401·runtime error 0까지 확인했다. 보호자·자녀 실계정 회귀만 남는다. |

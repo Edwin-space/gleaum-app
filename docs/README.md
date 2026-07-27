@@ -50,7 +50,7 @@
 - **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 구현 체크포인트**: `FAM-013` Android 자녀 등록·보호자 OTP·필수 동의·초대 공유·claim·최종 승인/거절 Compose 전환, Android Credential Manager Google 로그인, 반응형 공개 랜딩 재구성. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
+- **최근 구현 체크포인트**: iOS Claude 혼합 WIP는 `codex/archive-claude-wip-20260727`에 보존. 안정 기준에서 Keychain 세션·refresh-first 상태·동적 테마 기반을 재구축 중이며 현재 작업 브랜치는 `codex/ios-rebuild-20260727`
 
 ---
 
@@ -90,7 +90,7 @@
 ✅ 2026-06-02 공유 테마 모드 시스템 추가
 ✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
-🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. `FAM-012` 보호자/자녀 실계정 회귀 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
+🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. iOS Apple·Google·이메일 네이티브 인증 → SwiftUI 5탭 단일 셸·중앙 Route·선조회 → 핵심 기능 네이티브화
 ```
 
 ---
@@ -108,4 +108,4 @@
 
 ---
 
-마지막 업데이트: 2026-07-23
+마지막 업데이트: 2026-07-27

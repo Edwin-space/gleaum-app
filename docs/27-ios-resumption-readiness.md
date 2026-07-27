@@ -1,6 +1,6 @@
 # iOS 개발 재개 준비 보고서
 
-> 기준일: 2026-07-23  
+> 기준일: 2026-07-27
 > 목적: Android 기능 마감 후 iOS 개발을 재개할 때 기존 구현을 과대평가하거나 Android/Web 작업을 중복하지 않도록 현재 상태와 재개 순서를 고정한다.
 
 ## 1. 결론
@@ -8,6 +8,17 @@
 iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 1차 기반만 존재**한다. 전체 네이티브 앱으로 볼 수 없으며 일정 목록, 공간, 가계부, 알림, 전체 메뉴, 가족·자녀 연결은 대부분 WebView 또는 미구현 상태다.
 
 재개 시 기존 Swift 코드를 폐기하지 않는다. Android에서 확정한 공통 API·권한·오류 계약을 유지하면서 iOS 화면과 OS 기능만 SwiftUI/UIKit으로 구현한다.
+
+### 2026-07-27 재감사 및 재구축 결정
+
+- Claude가 남긴 iOS·Android·Web 혼합 미커밋 작업은 삭제하지 않고 `b12e0f2`와 `codex/archive-claude-wip-20260727`에 별도 보존했다.
+- 안정 기준 `853c649`에서 `codex/ios-rebuild-20260727`을 생성했다. 혼합 WIP 전체를 되살리지 않고 검증된 세션 테스트·capability 분리·의미 기반 토큰만 선별 재구현한다.
+- `SessionManager`는 더 이상 토큰을 UserDefaults에 저장하지 않는다. 앱 전용 Keychain을 사용하고 기존 `gleaum_native_session` 값은 저장 성공 시 한 번만 이전·삭제한다.
+- 만료 세션은 앱 시작 즉시 로그인으로 보내지 않는다. refresh 결과를 `유효 / 갱신 / 일시장애 / 명시적 무효`로 구분하고, 네트워크 오류·5xx·429·일반 4xx에서는 저장 세션을 보존한다.
+- 앱 시작 화면 판정은 `AppSessionStateCoordinator`가 단독 소유한다. 기존 `AppDelegate`와 앱 활성화 콜백이 각각 로그인/홈을 반복 호출하던 구조를 중단하는 첫 단계다.
+- 홈·일정 생성의 고정 다크 색은 `GleaumUIColor` 의미 토큰으로 교체했다. 시스템/라이트/다크 선택은 `GleaumThemeManager`가 모든 window에 적용한다.
+- 세션 시나리오 13/13, plist/pbx lint, Simulator Debug build를 통과했고 최신 Debug 앱을 iPhone 16 Pro에 설치·실행했다.
+- 현재도 완성형 SwiftUI 앱 셸은 아니다. Capacitor root 위에 UIKit modal을 올리는 구조는 다음 단계에서 SwiftUI 단일 root와 5탭 셸로 교체한다.
 
 ### 2026-07-23 실제 감사 기준
 
@@ -19,7 +30,7 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 - Push Notifications·Associated Domains·Sign in with Apple entitlement를 프로젝트 타겟에 연결했다. Debug는 APNs development, Release는 production 값을 사용한다.
 - `PrivacyInfo.xcprivacy`를 앱 Resources에 포함하고 이름·이메일·사용자/기기 ID·가계부·사용자 콘텐츠·자녀 계정 정보·제품 상호작용을 실제 수집 목적에 맞춰 선언했다.
 - 카메라·사진·마이크·현재 위치·ATT와 background fetch 과다 선언을 제거하고 현재 구현된 캘린더·Face ID·remote notification만 유지했다.
-- 현재 Xcode 계정은 Personal Development Team이다. 해당 팀은 Sign in with Apple·Associated Domains·Push Notifications가 포함된 프로비저닝 프로파일을 만들 수 없어 실제 iPhone 서명 빌드가 차단된다.
+- 현재 Xcode 계정은 Personal Development Team이다. Debug는 capability가 없는 전용 entitlement로 분리해 실제 iPhone 서명 빌드·설치가 가능하다. Release의 Sign in with Apple·Associated Domains·Push Notifications capability는 유료 Team 프로비저닝 전까지 차단된다.
 
 ## 2. 구현 원칙
 
@@ -108,14 +119,17 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 - [x] Sign in with Apple·Push Notifications·Associated Domains capability 소스 구성
 - [x] 불필요한 `Info.plist` 권한 문구 제거
 - [x] `PrivacyInfo.xcprivacy`와 실제 앱 수집 항목 대조·타겟 포함
-- [ ] 서명 Debug 빌드의 실제 iPhone 설치·콜드 스타트 확인
+- [x] Personal Team용 Debug entitlement 분리와 실제 iPhone 서명 빌드·설치·실행
+- [x] Simulator 콜드 스타트·네이티브 로그인·브랜드 shield 시각 확인
+- [ ] 실제 계정의 UserDefaults→Keychain 세션 이전과 홈 라이트·다크·시스템 확인
 
-현재 차단 해제 조건은 Xcode의 Apple ID를 유료 Apple Developer Program Team에 연결하고, `com.gleaum.app` App ID에 Sign in with Apple·Push Notifications·Associated Domains를 활성화하는 것이다. 이후 Automatic Signing으로 개발 프로파일을 생성하고 실제 iPhone에서 서명 빌드·APNs entitlement를 확인한다.
+일반 Debug 실기기 개발은 capability 없는 `App.Debug.entitlements`로 계속할 수 있다. Release와 APNs·Universal Link·Apple 로그인 실기기 검증의 차단 해제 조건은 Xcode의 Apple ID를 유료 Apple Developer Program Team에 연결하고, `com.gleaum.app` App ID에 Sign in with Apple·Push Notifications·Associated Domains를 활성화하는 것이다.
 
 ### Phase 1 — 인증·세션·앱 셸
 
 - [ ] SwiftUI 루트 앱 셸, 5개 탭, 탭별 `NavigationStack` 구성
-- [ ] 세션 복원·만료·로그아웃·재로그인 상태 머신 통합
+- [x] Keychain 세션 저장·기존 UserDefaults 이전·만료 refresh·로그아웃 경합 차단
+- [x] 앱 시작 세션 상태 판정 단일화
 - [ ] Sign in with Apple 구현
 - [ ] Google Sign-In 네이티브 SDK 구현과 계정 선택 보장
 - [ ] 네이티브 이메일 로그인·가입·약관 동의 구현

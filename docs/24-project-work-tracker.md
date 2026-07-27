@@ -3,8 +3,8 @@
 > **단일 기준 문서(SSOT)**: 현재 무엇을 해야 하는지, 무엇이 진행 중인지, 무엇이 언제 어떤 근거로 완료됐는지는 이 문서를 기준으로 판단한다.
 >
 > 최초 작성: 2026-07-16
-> 최종 업데이트: 2026-07-23
-> 현재 기능 기준점: `42b53b0` (플랫폼 파리티·공간 수명주기), 최신 문서/스토어 애셋 `564b923`, 작업 브랜치 `codex/platform-parity-sync-20260723`
+> 최종 업데이트: 2026-07-27
+> 현재 iOS 재구축 기준점: `853c649`, Claude 혼합 WIP 보존 `b12e0f2` (`codex/archive-claude-wip-20260727`), 작업 브랜치 `codex/ios-rebuild-20260727`
 
 ## 1. 운영 규칙
 
@@ -34,9 +34,9 @@
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 코드 완료·유료 팀 대기` | CoreSimulator 복구, 시뮬레이터 실행, capability·최소 권한·Privacy Manifest·Debug/Release 빌드 완료. 유료 Apple Developer Team에서 App ID capability·프로비저닝 활성화 후 실제 iPhone 서명 빌드 |
-| 2 | `IOS-008` | 네이티브 인증·세션 마감 | `⬜ 대기` | Sign in with Apple, Google Sign-In SDK, 이메일 로그인/가입/약관, 세션 복원·만료·로그아웃을 단일 상태 머신으로 구현 |
-| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `⬜ 대기` | `TabView` 5개 탭과 탭별 `NavigationStack`, 중앙 Route 계약, 스플래시 선조회·캐시·pull-to-refresh 구현 |
+| 1 | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Debug 실기기 통과·유료 팀 대기` | Personal Team Debug 빌드·iPhone 설치·실행 완료. 유료 Apple Developer Team에서 App ID capability·Release 프로비저닝을 활성화한 뒤 Apple 로그인·APNs·Universal Link 검증 |
+| 2 | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 세션 기반 완료·인증 SDK 대기` | Keychain 이전·refresh 오류 분류·동시 갱신·로그아웃 경합·401 재시도 13개 시나리오와 실기기 실행 통과. 다음은 Apple·Google·이메일 인증을 단일 상태에 연결 |
+| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 시작 상태 기반 완료·셸 대기` | AppDelegate의 시작 판정과 테마 소유권을 단일화하고 WebView flash를 차단. 다음은 modal/WebView 중복 소유를 제거한 SwiftUI 5탭 root·중앙 Route·선조회 |
 | 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `⬜ 대기` | Android 공통 API 계약을 사용해 핵심 기능을 WebView 없이 구현 |
 | 5 | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | 가족 관계·일반 가족/자녀 초대 분리와 자녀 등록→OTP→동의→claim→승인/거절을 iOS 네이티브로 구현 |
 | 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `⬜ 대기` | 캘린더·푸시 토큰/딥링크·AASA를 실제 iPhone에서 검증 |
@@ -333,9 +333,9 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `IOS-004` | Universal Links 재활성화 | `⬜ 대기` | — | — | Associated Domains·AASA·초대/알림 링크 실기기 검증 |
 | [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | — | — | Android 확정 동작과 공통 API를 기준으로 가족 관계·초대 분리·자녀 연결을 iOS에 구현 |
 | [ ] | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | — | — | iOS 기능·실기기 QA 완료 뒤 스크린샷·메타데이터·개인정보·심사 계정 준비 |
-| [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 코드 완료·외부 계정 대기` | 2026-07-23 | — | CoreSimulator 자동 복구, iPhone 17 Pro 시뮬레이터 빌드·설치·콜드 스타트, 최소 권한·Privacy Manifest 타겟 포함, Debug/Release 빌드 통과. Personal Team은 Apple 로그인·Push·Associated Domains 프로파일 생성 불가. 유료 Team 연결 후 실제 iPhone 서명 빌드 |
-| [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `⬜ 대기` | — | — | Sign in with Apple·Google Sign-In SDK·이메일 인증·약관·세션 상태 머신 |
-| [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `⬜ 대기` | — | — | 5탭 `TabView`, 탭별 `NavigationStack`, 중앙 Route, 시작 선조회·캐시·수동 새로고침 |
+| [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Debug 실기기 통과·Release 계정 대기` | 2026-07-23 | — | Debug 전용 빈 entitlement를 분리해 Personal Team 서명 빌드, iPhone 16 Pro 설치·실행·프로세스 유지 확인. Release의 Apple 로그인·Push·Associated Domains는 유료 Team capability·프로비저닝 필요 |
+| [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 세션 기반 완료·인증 SDK 대기` | 2026-07-27 | — | access/refresh token Keychain 이전, UserDefaults 1회 마이그레이션, 단일 refresh·401 재시도·429/일시장애 세션 보존, 앱 시작 세션 상태 조정자 구현. 시나리오 13/13, Simulator build, iPhone 16 Pro 설치·실행 통과. 다음은 Apple·Google SDK·이메일 인증 |
+| [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 시작 상태 기반 완료·셸 대기` | 2026-07-27 | — | 앱 시작 화면 판정을 단일 상태 조정자로 통합하고 의미 기반 동적 테마 토큰, 네이티브 브랜드 shield, 일시장애 복구 화면을 도입. 홈의 라이트·다크 카드·광고 안내·하단 테두리도 동적 색으로 보정. 다음은 modal/WebView 중복 소유를 제거한 SwiftUI 5탭 root와 중앙 Route |
 | [ ] | `IOS-010` | 핵심 기능 네이티브화 | `⬜ 대기` | — | — | 홈·일정·공간·가계부·알림·전체 메뉴를 WebView 없이 구현 |
 | [ ] | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | — | — | 기기 크기·Split View·테마·Dynamic Type·VoiceOver·오프라인/세션 회귀 |
 
@@ -378,6 +378,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-27 | `IOS-007`~`IOS-011`, `REPO-001` | Claude WIP 보존·iOS 안정 기준 재구축 시작 | SSD의 Claude 혼합 WIP 61개 파일은 `b12e0f2`와 `codex/archive-claude-wip-20260727`에 원형 보존하고, 안정 기준 `853c649`에서 `codex/ios-rebuild-20260727`을 생성. 세션을 UserDefaults에서 Keychain으로 이전하고 refresh 오류를 명시적 토큰 거절과 일시장애로 분리했으며, 401 단일 재시도·동시 refresh 병합·로그아웃 경합 차단·앱 시작 단일 상태 조정자를 적용. UIKit 홈·일정 생성의 고정 다크 색을 의미 기반 동적 색상으로 교체하고 시스템/라이트/다크 선택 관리자 추가. 시작 WebView flash를 가리는 네이티브 브랜드 shield와 세션 일시장애 복구 화면 추가 | 세션 시나리오 13/13, pbx/plist lint, diff check, Simulator Debug build·로그인 시각 검증 통과. Personal Team Debug 빌드 후 iPhone 16 Pro 설치·실행·PID 유지 확인. 다음은 실계정 세션 이전·홈 테마 검증과 SwiftUI 단일 root 구축 |
 | 2026-07-23 | `AND-001`, `OPS-004` | Android 일정 등록 긴급 수정 완료 | 일정 생성 POST는 성공했지만 새 개인 일정은 `personalSpaceId`에 저장되고 목록·홈 API는 `activeSpaceId` 한 곳만 조회해 가족/공유 공간 사용자의 일정이 반영되지 않는 것처럼 보이는 원인을 실기기에서 재현. 홈·일정 조회를 개인 공간+활성 공유 공간으로 통합하고 Android 저장 응답 즉시 upsert, BFF ISO 시간 정규화, 생성 응답 권한 포함, 상세 서버 권한 재확인, API 오류 코드 Logcat 기록을 적용 | Next production build 55/55, Android debug assemble·`SM_F731N` 설치 통과. Production `dpl_EpauxB5tc4uQBKcUmp9XCj52yq8Z` READY·`www.gleaum.com` alias. 실기기에서 `QA_schedule_1746` 제목·날짜·시작·종료 입력→등록→목록·홈 노출→상세 `7월 23일 09:00~10:00`·수정 권한→삭제까지 통과하고 QA 데이터 제거 |
 | 2026-07-23 | `IOS-007` | iOS 1단계 코드 완료·외부 계정 대기 | Xcode 누락 구성요소 설치와 stale CoreSimulator 교체로 iOS 26.4/26.5 런타임을 복구. `App.entitlements`를 타겟에 연결해 Push·Associated Domains·Sign in with Apple을 구성하고, 미사용 카메라·사진·마이크·현재 위치·ATT·background fetch 선언을 제거. 빌드에서 누락되던 `PrivacyInfo.xcprivacy`를 Resources에 포함하고 실제 서비스 수집 범위를 보강. 알림 delegate의 실패하는 조건부 캐스팅도 정식 프로토콜 채택으로 수정 | plist 3종 lint, iPhone 17 Pro iOS 26.5 simulator Debug build/install/launch, Release iphoneOS 무서명 build와 번들 Privacy Manifest 확인 통과. 실제 서명은 Personal Team이 3개 capability를 지원하지 않아 프로비저닝 생성 단계에서 차단. 유료 Apple Developer Team 연결·App ID capability 활성화 후 실제 iPhone 검증 |
 | 2026-07-23 | `IOS-007`~`IOS-011` | iOS 재개 감사·실행 순서 확정 | iOS는 홈과 빠른 일정 등록만 네이티브이고 그 외 핵심 경로가 운영 WebView로 이동함을 확인. 기존 modal overlay 라우팅을 확장하지 않고 SwiftUI 단일 탭 셸·중앙 라우터를 먼저 구축한 뒤 Android 공통 API 계약으로 기능을 이식하기로 결정 | 최초 감사에서 CoreSimulator 버전 불일치를 발견했고, 같은 날 `IOS-007` 후속에서 Xcode 구성요소 설치와 stale service 교체로 해소했다. 상세 단계는 `docs/27-ios-resumption-readiness.md` |

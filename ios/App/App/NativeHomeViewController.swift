@@ -4,20 +4,20 @@ import UserNotifications
 final class NativeHomeViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
-    private let bottomNavContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let bottomNavContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
     private let bottomNav = UIStackView()
     private let refreshControl = UIRefreshControl()
     private var summary: NativeHomeSummary?
 
-    private let bg = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1)
-    private let surface = UIColor(red: 0.082, green: 0.118, blue: 0.200, alpha: 1)
-    private let surface2 = UIColor(red: 0.102, green: 0.145, blue: 0.235, alpha: 1)
-    private let text = UIColor.white
-    private let muted = UIColor(red: 0.800, green: 0.835, blue: 0.882, alpha: 1)
-    private let subtle = UIColor(red: 0.580, green: 0.640, blue: 0.720, alpha: 1)
-    private let blue = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 1)
-    private let teal = UIColor(red: 0.047, green: 0.788, blue: 0.710, alpha: 1)
-    private let green = UIColor(red: 0.180, green: 0.910, blue: 0.584, alpha: 1)
+    private let bg = GleaumUIColor.background
+    private let surface = GleaumUIColor.surface
+    private let surface2 = GleaumUIColor.mutedSurface
+    private let text = GleaumUIColor.text
+    private let muted = GleaumUIColor.mutedText
+    private let subtle = GleaumUIColor.subtleText
+    private let blue = GleaumUIColor.brandBlue
+    private let teal = GleaumUIColor.brandTeal
+    private let green = GleaumUIColor.brandGreen
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,7 +27,18 @@ final class NativeHomeViewController: UIViewController {
         loadSummary()
     }
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { .default }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+
+        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else {
+            return
+        }
+        bottomNavContainer.layer.borderColor = GleaumUIColor.border
+            .resolvedColor(with: traitCollection)
+            .cgColor
+    }
 
     private func setupScroll() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -78,9 +89,9 @@ final class NativeHomeViewController: UIViewController {
         bottomNavContainer.layer.cornerRadius = 30
         bottomNavContainer.layer.masksToBounds = true
         bottomNavContainer.layer.borderWidth = 1
-        bottomNavContainer.layer.borderColor = UIColor(white: 1, alpha: 0.10).cgColor
-        bottomNavContainer.layer.shadowColor = UIColor.black.cgColor
-        bottomNavContainer.layer.shadowOpacity = 0.22
+        bottomNavContainer.layer.borderColor = GleaumUIColor.border.resolvedColor(with: traitCollection).cgColor
+        bottomNavContainer.layer.shadowColor = blue.cgColor
+        bottomNavContainer.layer.shadowOpacity = 0.14
         bottomNavContainer.layer.shadowOffset = CGSize(width: 0, height: 10)
         bottomNavContainer.layer.shadowRadius = 24
 
@@ -128,7 +139,7 @@ final class NativeHomeViewController: UIViewController {
 
         let button = UIButton(configuration: config)
         button.layer.cornerRadius = 22
-        button.backgroundColor = active ? UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.22) : .clear
+        button.backgroundColor = active ? GleaumUIColor.activeControl : .clear
         button.accessibilityLabel = title
         button.accessibilityTraits = active ? [.button, .selected] : [.button]
         button.addAction(UIAction { _ in handler() }, for: .touchUpInside)
@@ -312,10 +323,10 @@ final class NativeHomeViewController: UIViewController {
     private func adPlaceholder() -> UIView {
         let view = UILabel()
         view.text = "Making everyday life shine together"
-        view.textColor = UIColor.white
+        view.textColor = blue
         view.font = .systemFont(ofSize: 15, weight: .bold)
         view.textAlignment = .center
-        view.backgroundColor = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.30)
+        view.backgroundColor = blue.withAlphaComponent(0.10)
         view.layer.cornerRadius = 18
         view.clipsToBounds = true
         view.heightAnchor.constraint(equalToConstant: 58).isActive = true
@@ -349,7 +360,7 @@ final class NativeHomeViewController: UIViewController {
 
     private func gradientCard() -> UIStackView {
         let card = baseCard()
-        card.backgroundColor = UIColor(red: 0.105, green: 0.137, blue: 0.260, alpha: 1)
+        card.backgroundColor = GleaumUIColor.heroSurface
         return card
     }
 

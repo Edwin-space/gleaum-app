@@ -9,7 +9,13 @@ import WebKit
  * bridge 로드 직후 명시적으로 등록한다.
  */
 class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
-    private var didRequestInitialNativeHome = false
+    private let launchShield = UIView()
+
+    override open func viewDidLoad() {
+        super.viewDidLoad()
+        installLaunchShield()
+        webView?.isHidden = true
+    }
 
     override open func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
         let configuration = super.webViewConfiguration(for: instanceConfiguration)
@@ -35,18 +41,6 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             name: .capacitorDecidePolicyForNavigationAction,
             object: nil
         )
-    }
-
-    override open func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        guard !didRequestInitialNativeHome,
-              NativeRouteCoordinator.shared.isNativeHomeEnabled,
-              SessionManager.shared.hasValidSession() else { return }
-
-        didRequestInitialNativeHome = true
-        webView?.isHidden = true
-        NativeRouteCoordinator.shared.presentNativeHome()
     }
 
     deinit {
@@ -82,6 +76,69 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
         DispatchQueue.main.async {
             NativeRouteCoordinator.shared.presentNativeHome()
         }
+    }
+
+    func prepareForNativePresentation() {
+        webView?.isHidden = true
+        launchShield.isHidden = false
+        launchShield.alpha = 1
+    }
+
+    func revealWebContent() {
+        webView?.isHidden = false
+        guard !launchShield.isHidden else {
+            return
+        }
+        UIView.animate(
+            withDuration: 0.2,
+            delay: 0,
+            options: [.curveEaseOut, .beginFromCurrentState]
+        ) {
+            self.launchShield.alpha = 0
+        } completion: { _ in
+            self.launchShield.isHidden = true
+        }
+    }
+
+    private func installLaunchShield() {
+        launchShield.translatesAutoresizingMaskIntoConstraints = false
+        launchShield.backgroundColor = UIColor(
+            red: 0.039,
+            green: 0.043,
+            blue: 0.063,
+            alpha: 1
+        )
+        launchShield.isUserInteractionEnabled = true
+
+        let mark = UIImageView(image: UIImage(named: "Splash") ?? UIImage(named: "AppIcon"))
+        mark.translatesAutoresizingMaskIntoConstraints = false
+        mark.contentMode = .scaleAspectFit
+        mark.accessibilityLabel = "글리움"
+
+        let title = UILabel()
+        title.translatesAutoresizingMaskIntoConstraints = false
+        title.text = "gleaum"
+        title.textColor = .white
+        title.font = .systemFont(ofSize: 22, weight: .bold)
+        title.textAlignment = .center
+
+        launchShield.addSubview(mark)
+        launchShield.addSubview(title)
+        view.addSubview(launchShield)
+        NSLayoutConstraint.activate([
+            launchShield.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            launchShield.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            launchShield.topAnchor.constraint(equalTo: view.topAnchor),
+            launchShield.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            mark.centerXAnchor.constraint(equalTo: launchShield.centerXAnchor),
+            mark.centerYAnchor.constraint(equalTo: launchShield.centerYAnchor, constant: -18),
+            mark.widthAnchor.constraint(equalToConstant: 112),
+            mark.heightAnchor.constraint(equalToConstant: 112),
+
+            title.centerXAnchor.constraint(equalTo: launchShield.centerXAnchor),
+            title.topAnchor.constraint(equalTo: mark.bottomAnchor, constant: 16),
+        ])
     }
 
     private static let routeObserverScript = """

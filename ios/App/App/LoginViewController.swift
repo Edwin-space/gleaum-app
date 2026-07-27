@@ -115,7 +115,7 @@ class LoginViewController: UIViewController, SFSafariViewControllerDelegate {
         view.layer.addSublayer(gradientLayer)
 
         // ── 로고 ──────────────────────────────────────────────────────
-        let logo = UIImageView(image: UIImage(named: "AppIcon"))
+        let logo = UIImageView(image: UIImage(named: "Splash"))
         logo.contentMode    = .scaleAspectFit
         logo.layer.cornerRadius = 18
         logo.clipsToBounds  = true
@@ -166,7 +166,7 @@ class LoginViewController: UIViewController, SFSafariViewControllerDelegate {
         let termsLabel = UILabel()
         termsLabel.text          = "로그인 시 이용약관 및 개인정보처리방침에\n동의하는 것으로 간주됩니다."
         termsLabel.font          = .systemFont(ofSize: 11)
-        termsLabel.textColor     = UIColor(white: 1, alpha: 0.28)
+        termsLabel.textColor     = UIColor(white: 1, alpha: 0.60)
         termsLabel.textAlignment = .center
         termsLabel.numberOfLines = 0
         termsLabel.translatesAutoresizingMaskIntoConstraints = false

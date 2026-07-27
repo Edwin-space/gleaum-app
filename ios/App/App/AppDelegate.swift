@@ -10,16 +10,19 @@ import UserNotifications
 class AppDelegate: UIResponder,
                    UIApplicationDelegate,
                    MessagingDelegate,
-                   UNUserNotificationCenterDelegate {
+                   UNUserNotificationCenterDelegate,
+                   AppSessionRouting {
 
     var window: UIWindow?
     private let loginPresentationDelay: TimeInterval = 0.45
+    private lazy var sessionStateCoordinator = AppSessionStateCoordinator(router: self)
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // ── 1. Firebase 초기화 ────────────────────────────────────────────────
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
+        GleaumThemeManager.shared.applyToConnectedWindows()
 
         // ── 2. APNs 토큰 등록 (권한 팝업 없음 — 토큰만 취득) ─────────────────
         //    UNUserNotificationCenter.requestAuthorization 은 앱 설정 화면에서
@@ -29,19 +32,22 @@ class AppDelegate: UIResponder,
         // ── 3. 알림 센터 delegate 설정 ────────────────────────────────────────
         UNUserNotificationCenter.current().delegate = self
 
-        // ── 4. 세션 없으면 LoginViewController 표시 ──────────────────────────
-        if !SessionManager.shared.hasValidSession() {
-            showLoginScreenAfterLaunch()
-        } else {
-            presentNativeHomeAfterLaunch()
-        }
-
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(onNativeSessionSaved),
             name: .gleaumSessionSaved,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onNativeSessionInvalidated),
+            name: .gleaumSessionInvalidated,
+            object: nil
+        )
+
+        // 저장된 access token이 만료되어도 refresh 결과를 확인하기 전 로그인으로
+        // 보내지 않는다. 화면 전환은 sessionStateCoordinator 한 곳에서 결정한다.
+        sessionStateCoordinator.start()
 
         return true
     }
@@ -61,13 +67,11 @@ class AppDelegate: UIResponder,
     }
 
     @objc private func onNativeSessionSaved() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            if let pendingPath = NativeRouteCoordinator.shared.consumePendingPath() {
-                NativeRouteCoordinator.shared.openWebPath(pendingPath)
-            } else if NativeRouteCoordinator.shared.prefersNativeHome {
-                NativeRouteCoordinator.shared.presentNativeHome()
-            }
-        }
+        sessionStateCoordinator.sessionSaved()
+    }
+
+    @objc private func onNativeSessionInvalidated() {
+        sessionStateCoordinator.sessionCleared()
     }
 
     private func presentLoginScreenWhenReady(attempt: Int = 0) {
@@ -258,11 +262,8 @@ class AppDelegate: UIResponder,
 
         // window/rootViewController 준비 타이밍에 따라 didFinishLaunching 시점의
         // 네이티브 로그인 화면 표시가 누락될 수 있어 앱 활성화 시 한 번 더 보장한다.
-        if !SessionManager.shared.hasValidSession() {
-            presentLoginScreenWhenReady()
-        } else if NativeRouteCoordinator.shared.prefersNativeHome {
-            NativeRouteCoordinator.shared.presentNativeHome()
-        }
+        GleaumThemeManager.shared.applyToConnectedWindows()
+        sessionStateCoordinator.resume()
 
         #if targetEnvironment(macCatalyst)
         // Mac Catalyst: 최소/최대 윈도우 크기 설정
@@ -316,7 +317,60 @@ class AppDelegate: UIResponder,
         // WebView 배경: 로드 전 흰 화면 플래시 방지
         // app 배경색 #FAFAFD 와 동일하게 설정
         webView.isOpaque = false
-        webView.backgroundColor = UIColor(red: 0.980, green: 0.980, blue: 0.992, alpha: 1.0)
-        scrollView.backgroundColor = UIColor(red: 0.980, green: 0.980, blue: 0.992, alpha: 1.0)
+        webView.backgroundColor = GleaumUIColor.background
+        scrollView.backgroundColor = GleaumUIColor.background
+    }
+
+    func showSignedOutState() {
+        showLoginScreenAfterLaunch()
+    }
+
+    func showAuthenticatedState() {
+        if let pendingPath = NativeRouteCoordinator.shared.consumePendingPath() {
+            NativeRouteCoordinator.shared.openWebPath(pendingPath)
+        } else if NativeRouteCoordinator.shared.prefersNativeHome {
+            presentNativeHomeAfterLaunch()
+        }
+    }
+
+    func showAuthenticatedOfflineState() {
+        presentSessionRecoveryWhenReady()
+    }
+
+    private func presentSessionRecoveryWhenReady(attempt: Int = 0) {
+        guard let rootVC = currentRootViewController() else {
+            if attempt < 20 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                    self?.presentSessionRecoveryWhenReady(attempt: attempt + 1)
+                }
+            }
+            return
+        }
+
+        guard rootVC.isViewLoaded, rootVC.view.window != nil else {
+            if attempt < 20 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                    self?.presentSessionRecoveryWhenReady(attempt: attempt + 1)
+                }
+            }
+            return
+        }
+
+        let presenter = topMostViewController(from: rootVC)
+        if presenter is SessionRecoveryViewController {
+            return
+        }
+
+        let recovery = SessionRecoveryViewController()
+        recovery.modalPresentationStyle = .fullScreen
+        recovery.modalTransitionStyle = .crossDissolve
+        recovery.onRetry = { [weak self, weak recovery] in
+            recovery?.dismiss(animated: true)
+            self?.sessionStateCoordinator.retry()
+        }
+        recovery.onSignOut = {
+            SessionManager.shared.clearSession()
+        }
+        presenter.present(recovery, animated: true)
     }
 }

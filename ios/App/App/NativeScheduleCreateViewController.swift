@@ -13,11 +13,11 @@ final class NativeScheduleCreateViewController: UIViewController {
     private let saveButton = UIButton(type: .system)
     private let errorLabel = UILabel()
 
-    private let bg = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1)
-    private let surface = UIColor(red: 0.082, green: 0.118, blue: 0.200, alpha: 1)
-    private let text = UIColor.white
-    private let muted = UIColor(red: 0.800, green: 0.835, blue: 0.882, alpha: 1)
-    private let blue = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 1)
+    private let bg = GleaumUIColor.background
+    private let surface = GleaumUIColor.surface
+    private let text = GleaumUIColor.text
+    private let muted = GleaumUIColor.mutedText
+    private let blue = GleaumUIColor.brandBlue
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,7 +25,7 @@ final class NativeScheduleCreateViewController: UIViewController {
         setupUI()
     }
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { .default }
 
     private func setupUI() {
         let nav = UIView()
@@ -129,7 +129,7 @@ final class NativeScheduleCreateViewController: UIViewController {
         field.font = .systemFont(ofSize: 16, weight: .semibold)
         field.attributedPlaceholder = NSAttributedString(
             string: placeholder,
-            attributes: [.foregroundColor: UIColor(white: 1, alpha: 0.36)]
+            attributes: [.foregroundColor: GleaumUIColor.subtleText]
         )
         field.borderStyle = .none
     }
