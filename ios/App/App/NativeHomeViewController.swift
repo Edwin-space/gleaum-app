@@ -4,17 +4,19 @@ import UserNotifications
 final class NativeHomeViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
-    private let bottomNavContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let bottomNavContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialLight))
     private let bottomNav = UIStackView()
     private let refreshControl = UIRefreshControl()
     private var summary: NativeHomeSummary?
 
-    private let bg = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1)
-    private let surface = UIColor(red: 0.082, green: 0.118, blue: 0.200, alpha: 1)
-    private let surface2 = UIColor(red: 0.102, green: 0.145, blue: 0.235, alpha: 1)
-    private let text = UIColor.white
-    private let muted = UIColor(red: 0.800, green: 0.835, blue: 0.882, alpha: 1)
-    private let subtle = UIColor(red: 0.580, green: 0.640, blue: 0.720, alpha: 1)
+    // Light theme (DESIGN.md 라이트 토큰 · Figma 04 Color 기준)
+    private let bg = UIColor(red: 0.980, green: 0.980, blue: 0.992, alpha: 1)      // Canvas #FAFAFD
+    private let surface = UIColor.white                                            // Surface #FFFFFF
+    private let surface2 = UIColor(red: 0.961, green: 0.961, blue: 0.969, alpha: 1) // Control #F5F5F7
+    private let text = UIColor(red: 0.102, green: 0.106, blue: 0.180, alpha: 1)     // Navy #1A1B2E
+    private let muted = UIColor(red: 0.431, green: 0.431, blue: 0.400, alpha: 1)    // Gray600 #6E6E66
+    private let subtle = UIColor(red: 0.557, green: 0.557, blue: 0.576, alpha: 1)   // Muted #8E8E93
+    private let hairline = UIColor(red: 0.102, green: 0.106, blue: 0.180, alpha: 0.08)
     private let blue = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 1)
     private let teal = UIColor(red: 0.047, green: 0.788, blue: 0.710, alpha: 1)
     private let green = UIColor(red: 0.180, green: 0.910, blue: 0.584, alpha: 1)
@@ -27,7 +29,7 @@ final class NativeHomeViewController: UIViewController {
         loadSummary()
     }
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
     private func setupScroll() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -78,10 +80,10 @@ final class NativeHomeViewController: UIViewController {
         bottomNavContainer.layer.cornerRadius = 30
         bottomNavContainer.layer.masksToBounds = true
         bottomNavContainer.layer.borderWidth = 1
-        bottomNavContainer.layer.borderColor = UIColor(white: 1, alpha: 0.10).cgColor
-        bottomNavContainer.layer.shadowColor = UIColor.black.cgColor
-        bottomNavContainer.layer.shadowOpacity = 0.22
-        bottomNavContainer.layer.shadowOffset = CGSize(width: 0, height: 10)
+        bottomNavContainer.layer.borderColor = hairline.cgColor
+        bottomNavContainer.layer.shadowColor = blue.cgColor
+        bottomNavContainer.layer.shadowOpacity = 0.14
+        bottomNavContainer.layer.shadowOffset = CGSize(width: 0, height: 8)
         bottomNavContainer.layer.shadowRadius = 24
 
         bottomNav.translatesAutoresizingMaskIntoConstraints = false
@@ -128,7 +130,7 @@ final class NativeHomeViewController: UIViewController {
 
         let button = UIButton(configuration: config)
         button.layer.cornerRadius = 22
-        button.backgroundColor = active ? UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.22) : .clear
+        button.backgroundColor = active ? UIColor(red: 0.047, green: 0.788, blue: 0.710, alpha: 0.16) : .clear
         button.accessibilityLabel = title
         button.accessibilityTraits = active ? [.button, .selected] : [.button]
         button.addAction(UIAction { _ in handler() }, for: .touchUpInside)
@@ -312,10 +314,10 @@ final class NativeHomeViewController: UIViewController {
     private func adPlaceholder() -> UIView {
         let view = UILabel()
         view.text = "Making everyday life shine together"
-        view.textColor = UIColor.white
+        view.textColor = blue
         view.font = .systemFont(ofSize: 15, weight: .bold)
         view.textAlignment = .center
-        view.backgroundColor = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.30)
+        view.backgroundColor = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.10)
         view.layer.cornerRadius = 18
         view.clipsToBounds = true
         view.heightAnchor.constraint(equalToConstant: 58).isActive = true
@@ -344,12 +346,15 @@ final class NativeHomeViewController: UIViewController {
         card.isLayoutMarginsRelativeArrangement = true
         card.backgroundColor = surface
         card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = hairline.cgColor
         return card
     }
 
     private func gradientCard() -> UIStackView {
         let card = baseCard()
-        card.backgroundColor = UIColor(red: 0.105, green: 0.137, blue: 0.260, alpha: 1)
+        card.backgroundColor = UIColor(red: 0.918, green: 0.953, blue: 0.980, alpha: 1) // subtle brand-blue tint
+        card.layer.borderColor = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 0.12).cgColor
         return card
     }
 

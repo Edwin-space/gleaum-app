@@ -28,6 +28,10 @@
 		E822C3162FCD79040032518A /* NativeRouteCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3172FCD79040032518A /* NativeRouteCoordinator.swift */; };
 		E822C3182FCD79040032518A /* NativeHomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3192FCD79040032518A /* NativeHomeViewController.swift */; };
 		E822C31A2FCD79040032518A /* NativeScheduleCreateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C31B2FCD79040032518A /* NativeScheduleCreateViewController.swift */; };
+		F1A000012FD0000000000001 /* GleaumDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A000022FD0000000000002 /* GleaumDesignSystem.swift */; };
+		F1A000032FD0000000000003 /* GleaumSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A000042FD0000000000004 /* GleaumSymbol.swift */; };
+		F1A000052FD0000000000005 /* GleaumDesignSystemPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A000062FD0000000000006 /* GleaumDesignSystemPreview.swift */; };
+		F1A000072FD0000000000007 /* GleaumAccessViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A000082FD0000000000008 /* GleaumAccessViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +59,10 @@
 		E822C3172FCD79040032518A /* NativeRouteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRouteCoordinator.swift; sourceTree = "<group>"; };
 		E822C3192FCD79040032518A /* NativeHomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeHomeViewController.swift; sourceTree = "<group>"; };
 		E822C31B2FCD79040032518A /* NativeScheduleCreateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeScheduleCreateViewController.swift; sourceTree = "<group>"; };
+		F1A000022FD0000000000002 /* GleaumDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GleaumDesignSystem.swift; sourceTree = "<group>"; };
+		F1A000042FD0000000000004 /* GleaumSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GleaumSymbol.swift; sourceTree = "<group>"; };
+		F1A000062FD0000000000006 /* GleaumDesignSystemPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GleaumDesignSystemPreview.swift; sourceTree = "<group>"; };
+		F1A000082FD0000000000008 /* GleaumAccessViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GleaumAccessViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +97,10 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				F1A000022FD0000000000002 /* GleaumDesignSystem.swift */,
+				F1A000042FD0000000000004 /* GleaumSymbol.swift */,
+				F1A000062FD0000000000006 /* GleaumDesignSystemPreview.swift */,
+				F1A000082FD0000000000008 /* GleaumAccessViews.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -151,17 +163,6 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
-						SystemCapabilities = {
-							com.apple.AssociatedDomains = {
-								enabled = 1;
-							};
-							com.apple.Push = {
-								enabled = 1;
-							};
-							com.apple.SignInWithApple = {
-								enabled = 1;
-							};
-						};
 					};
 				};
 			};
@@ -209,6 +210,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1A000012FD0000000000001 /* GleaumDesignSystem.swift in Sources */,
+				F1A000032FD0000000000003 /* GleaumSymbol.swift in Sources */,
+				F1A000052FD0000000000005 /* GleaumDesignSystemPreview.swift in Sources */,
+				F1A000072FD0000000000007 /* GleaumAccessViews.swift in Sources */,
 				E822C3092FCD79040032518A /* SessionManager.swift in Sources */,
 				E822C30A2FCD79040032518A /* NativeSessionPlugin.swift in Sources */,
 				E822C30C2FCD79040032518A /* NativeBiometricPlugin.swift in Sources */,
@@ -373,7 +378,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				APS_ENVIRONMENT = development;
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/App.Debug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;

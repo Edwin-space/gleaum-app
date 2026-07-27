@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsetsController
@@ -50,6 +51,7 @@ class LoginActivity : AppCompatActivity() {
     private var googleLoading = false
     private var syncingConsentChecks = false
     private var pendingStartPath: String? = null
+    private var routingAfterAuth = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,12 +147,26 @@ class LoginActivity : AppCompatActivity() {
                     )
                 }
                 handleAuthSuccess(response)
-            } catch (_: GetCredentialCancellationException) {
+            } catch (error: GetCredentialCancellationException) {
+                Log.i(
+                    "LoginActivity",
+                    "Google Credential Manager cancelled: type=${error.type}, message=${error.message}",
+                )
                 setGoogleLoading(false)
-            } catch (_: NoCredentialException) {
+            } catch (error: NoCredentialException) {
+                Log.w(
+                    "LoginActivity",
+                    "Google Credential Manager has no credential: type=${error.type}, message=${error.message}",
+                    error,
+                )
                 setGoogleLoading(false)
                 showToast("사용할 Google 계정을 찾지 못했습니다. 기기에 Google 계정을 추가해 주세요.")
             } catch (error: GetCredentialException) {
+                Log.w(
+                    "LoginActivity",
+                    "Google Credential Manager failed: type=${error.type}, message=${error.message}",
+                    error,
+                )
                 setGoogleLoading(false)
                 showToast(mapGoogleCredentialError(error))
             } catch (error: Exception) {
@@ -360,6 +376,18 @@ class LoginActivity : AppCompatActivity() {
 
         SessionManager.save(this, response.toString())
         runOnUiThread {
+            prepareAccountAndGoToMain()
+        }
+    }
+
+    private fun prepareAccountAndGoToMain() {
+        if (routingAfterAuth) return
+        routingAfterAuth = true
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                NativeStartupPrefetcher.prepareAccount(applicationContext)
+            }
+            if (isFinishing || isDestroyed) return@launch
             setEmailLoading(false)
             setGoogleLoading(false)
             goToMain()

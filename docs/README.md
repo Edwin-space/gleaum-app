@@ -28,16 +28,17 @@
 | `11-improvement-audit.md`  | 개선/추가 기능 종합 진단 | 참고 |
 | `12-product-model.md`      | ⭐ 개인 중심 + Space 확장형 제품 모델 재정의 | **최우선** |
 | `13-gcp-account-migration.md` | GCP/Firebase 계정 이관 기록 | 참고 |
-| `14-native-app-plan.md`    | ⭐ **네이티브 앱 확장 계획** (macOS → iOS → Android) | **최우선** |
-| `15-feature-parity-matrix.md` | ⭐ PC Web / Mobile Web / Native App 기능 싱크 기준표 | **최우선** |
+| `14-native-app-plan.md`    | 과거 네이티브 앱 확장 계획. 현재 순서는 트래커 기준 Android → Apple | 참고 |
+| `15-feature-parity-matrix.md` | ⭐ Android / Apple 네이티브 기능 동등화와 Web 지원 표면 기준 | **최우선** |
 | `16-ios-native-roadmap.md` | ⭐ iOS 네이티브 전환 우선순위와 API 계약 | **최우선** |
-| `17-android-native-port.md` | ⭐ Android Web UI Native Port 기준 — 모바일 웹 UI를 정답지로 한 네이티브 이식 원칙 | **최우선** |
+| `17-android-native-port.md` | ⭐ Android Material 3 Native Port와 제한적 WebView fallback 기준 | **최우선** |
 | `18-android-home-port-snapshot.md` | ⭐ Android 홈 Native Port용 Mobile Web UI 스냅샷/구현 체크리스트 | **최우선** |
 | `19-android-material3-redesign-plan.md` | Android Material 3 전환 원칙과 단계별 계획 | 필수 |
 | `20-android-native-release-qa.md` | Android 빌드·권한·실기기·출시 전 QA 체크리스트 | **최우선** |
 | `21-family-child-account-foundation.md` | ⭐ 가족 공간 자녀 사전등록·보호자 동의·계정 연결·연령 전환 기준 | **최우선** |
 | `22-android-material3-ui-audit.md` | ⭐ Android Material 3 화면별 A등급 평가표·공통 UI 규칙·실기기 QA | **최우선** |
-| `27-ios-resumption-readiness.md` | iOS 중단 지점 감사·재개 준비·출시 차단 항목 | iOS 재개 시 필수 |
+| `27-ios-resumption-readiness.md` | Apple 중단 지점 감사·기존 연동·라이선스 후순위·재개 준비 | Apple 재개 시 필수 |
+| `28-apple-liquid-glass-design-plan.md` | ⭐ Android 기준 Apple 이식·iPad 적응형·native macOS·SwiftUI/Liquid Glass 계획 | **Apple 작업 최우선** |
 | `23-external-work-checkpoint.md` | ⭐ 외장 저장장치 이동용 현재 작업 상태·복사·복구 체크리스트 | **최우선** |
 | `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
@@ -47,7 +48,7 @@
 
 - **서비스명**: 글리움 (Gleaum)
 - **성격**: 개인 중심 + 친구/연인/가족 Space 확장형 토털 라이프 관리 서비스
-- **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
+- **현재 단계**: Android Material 3 네이티브 기능·실기기·Google Play 마감 후 Apple(iPhone/iPad/macOS) SwiftUI 구현. Apple 유료 라이선스·실기기·출시는 로컬 구현 완료 후 진행. Web은 마케팅·법적 문서·인증/초대·공통 서버·백오피스 지원 표면으로 운영
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
 - **최근 구현 체크포인트**: `FAM-013` Android 자녀 등록·보호자 OTP·필수 동의·초대 공유·claim·최종 승인/거절 Compose 전환, Android Credential Manager Google 로그인, 반응형 공개 랜딩 재구성. 현재 작업 브랜치는 `codex/platform-parity-sync-20260723`
@@ -90,7 +91,7 @@
 ✅ 2026-06-02 공유 테마 모드 시스템 추가
 ✅ 2026-06-02 PC Web / Mobile Web / Native App 기능 싱크 기준표 추가
 
-🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. `FAM-012` 보호자/자녀 실계정 회귀 → 공간 수명주기·알림·역할별 3플랫폼 회귀 → Android 실기기/릴리즈 QA → iOS 동등 기능 확장
+🔜 다음 단계  `24-project-work-tracker.md` 실행 큐 기준. Android 보호자/자녀·공간·가계부·캘린더·캐시·접근성·로그인 실기기 회귀 → Android 릴리즈/Google Play → Apple shared package·iPhone/iPad/macOS UI·핵심 기능·로컬 QA → 유료 라이선스·실기기·App Store/macOS 배포
 ```
 
 ---

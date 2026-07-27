@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Check,
   CircleDollarSign,
-  Globe2,
   LayoutDashboard,
   ShieldCheck,
   Smartphone,
@@ -60,7 +59,6 @@ export function PcLandingPage() {
           <a href="#platforms">플랫폼</a>
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/login" className={styles.textLink}>웹에서 시작</Link>
           <a href={PLAY_STORE_URL} target="_blank" rel="noreferrer" className={styles.headerCta}>
             Android 앱
           </a>
@@ -88,9 +86,6 @@ export function PcLandingPage() {
               Google Play에서 시작
               <ArrowRight size={18} />
             </a>
-            <Link href="/login" className={styles.secondaryCta}>
-              웹 서비스 이용
-            </Link>
           </div>
           <div className={styles.trustRow}>
             <span><Check size={15} /> 개인·공간 데이터 분리</span>
@@ -194,7 +189,7 @@ export function PcLandingPage() {
         <SectionHeading
           eyebrow="ONE SERVICE, RIGHT EXPERIENCE"
           title="같은 데이터, 플랫폼에 맞는 경험"
-          description="웹과 Android는 같은 서비스 모델을 사용하며, 화면은 각 환경에 맞게 구성합니다."
+          description="Android를 먼저 완성하고, 같은 데이터와 권한 계약을 Apple 네이티브 경험으로 확장합니다."
           align="center"
         />
         <div className={styles.platformGrid}>
@@ -204,14 +199,6 @@ export function PcLandingPage() {
               <small>AVAILABLE NOW</small>
               <h3>Android</h3>
               <p>Material 3 기반 네이티브 화면과 기기 캘린더, 생체인증, 푸시 알림을 지원합니다.</p>
-            </div>
-          </article>
-          <article>
-            <span className={styles.platformIcon}><Globe2 size={26} /></span>
-            <div>
-              <small>AVAILABLE NOW</small>
-              <h3>Web</h3>
-              <p>설치 없이 PC와 모바일 브라우저에서 핵심 서비스를 이어서 사용할 수 있습니다.</p>
             </div>
           </article>
           <article className={styles.platformPending}>
@@ -236,7 +223,6 @@ export function PcLandingPage() {
             Android 앱 다운로드
             <ArrowRight size={18} />
           </a>
-          <Link href="/login" className={styles.secondaryCta}>웹에서 시작</Link>
         </div>
       </section>
 

@@ -1,70 +1,393 @@
 import Foundation
 
+enum SessionValidation: Equatable {
+    case valid
+    case refreshed
+    case temporaryFailure
+    case invalid
+}
+
+enum SessionAccessError: Error {
+    case temporaryFailure
+    case invalid
+}
+
+struct GleaumSupabaseConfiguration: Sendable {
+    let baseURL: URL
+    let anonKey: String
+
+    static let app: GleaumSupabaseConfiguration = {
+        let bundle = Bundle.main
+        let rawURL = bundle.object(
+            forInfoDictionaryKey: "GleaumSupabaseURL"
+        ) as? String ?? "https://tyvjdsescukaeorcuaga.supabase.co"
+        let anonKey = bundle.object(
+            forInfoDictionaryKey: "GleaumSupabaseAnonKey"
+        ) as? String ?? ""
+
+        guard let baseURL = URL(string: rawURL) else {
+            preconditionFailure("GleaumSupabaseURL must be a valid URL.")
+        }
+        return GleaumSupabaseConfiguration(baseURL: baseURL, anonKey: anonKey)
+    }()
+}
+
+enum SessionRefreshResult: Equatable {
+    case success(String)
+    case rejected
+    case temporaryFailure
+}
+
+protocol SessionRefreshTransport: Sendable {
+    func refresh(refreshToken: String) async -> SessionRefreshResult
+}
+
+struct SupabaseSessionRefreshTransport: SessionRefreshTransport {
+    private let configuration: GleaumSupabaseConfiguration
+    private let session: URLSession
+    private let now: @Sendable () -> Date
+
+    init(
+        configuration: GleaumSupabaseConfiguration = .app,
+        session: URLSession = .shared,
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
+        self.configuration = configuration
+        self.session = session
+        self.now = now
+    }
+
+    func refresh(refreshToken: String) async -> SessionRefreshResult {
+        guard !configuration.anonKey.isEmpty,
+              let url = URL(
+                string: "auth/v1/token?grant_type=refresh_token",
+                relativeTo: configuration.baseURL
+              )?.absoluteURL else {
+            return .temporaryFailure
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 7
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue(configuration.anonKey, forHTTPHeaderField: "apikey")
+        request.setValue(
+            "Bearer \(configuration.anonKey)",
+            forHTTPHeaderField: "Authorization"
+        )
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        guard let body = try? JSONSerialization.data(
+            withJSONObject: ["refresh_token": refreshToken]
+        ) else {
+            return .temporaryFailure
+        }
+        request.httpBody = body
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                return .temporaryFailure
+            }
+
+            switch http.statusCode {
+            case 200..<300:
+                guard let normalized = SessionPayload.normalizedRefreshJSON(
+                    from: data,
+                    now: now()
+                ) else {
+                    return .temporaryFailure
+                }
+                return .success(normalized)
+            case 400..<500:
+                return .rejected
+            default:
+                return .temporaryFailure
+            }
+        } catch {
+            return .temporaryFailure
+        }
+    }
+}
+
+enum SessionPayload {
+    static func isUsable(_ raw: String, now: Date = Date()) -> Bool {
+        guard let json = dictionary(from: raw),
+              let accessToken = nonEmptyString(json["access_token"]) else {
+            return false
+        }
+
+        guard !accessToken.isEmpty else {
+            return false
+        }
+
+        if let expiresAt = number(json["expires_at"]),
+           expiresAt > 0,
+           now.timeIntervalSince1970 > expiresAt - 60 {
+            return false
+        }
+        return true
+    }
+
+    static func accessToken(from raw: String) -> String? {
+        guard let json = dictionary(from: raw) else {
+            return nil
+        }
+        return nonEmptyString(json["access_token"])
+    }
+
+    static func refreshToken(from raw: String) -> String? {
+        guard let json = dictionary(from: raw) else {
+            return nil
+        }
+        return nonEmptyString(json["refresh_token"])
+    }
+
+    static func normalizedRefreshJSON(from data: Data, now: Date) -> String? {
+        guard var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              nonEmptyString(json["access_token"]) != nil,
+              nonEmptyString(json["refresh_token"]) != nil else {
+            return nil
+        }
+
+        if number(json["expires_at"]) == nil {
+            let expiresIn = number(json["expires_in"]) ?? 3_600
+            json["expires_at"] = now.timeIntervalSince1970 + expiresIn
+        }
+        if nonEmptyString(json["token_type"]) == nil {
+            json["token_type"] = "bearer"
+        }
+
+        guard let normalized = try? JSONSerialization.data(
+            withJSONObject: json,
+            options: [.sortedKeys]
+        ) else {
+            return nil
+        }
+        return String(data: normalized, encoding: .utf8)
+    }
+
+    private static func dictionary(from raw: String) -> [String: Any]? {
+        guard let data = raw.data(using: .utf8) else {
+            return nil
+        }
+        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    private static func nonEmptyString(_ value: Any?) -> String? {
+        guard let string = value as? String,
+              !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return string
+    }
+
+    private static func number(_ value: Any?) -> TimeInterval? {
+        if let number = value as? NSNumber {
+            return number.doubleValue
+        }
+        if let string = value as? String {
+            return TimeInterval(string)
+        }
+        return nil
+    }
+}
+
+private actor SessionRefreshGate {
+    private var inFlight: Task<SessionValidation, Never>?
+
+    func run(
+        operation: @escaping @Sendable () async -> SessionValidation
+    ) async -> SessionValidation {
+        if let inFlight {
+            return await inFlight.value
+        }
+
+        let task = Task {
+            await operation()
+        }
+        inFlight = task
+        let result = await task.value
+        inFlight = nil
+        return result
+    }
+}
+
 /**
- * SessionManager — Supabase 세션을 UserDefaults에 저장/조회/삭제
- * Android의 SessionManager.kt와 동일한 역할
+ * Supabase 세션의 저장과 refresh-first 복구를 한 경계에서 관리합니다.
+ *
+ * 네트워크·서버 일시 장애는 저장 세션을 유지하고, refresh endpoint가
+ * 4xx로 명시적으로 거절하거나 저장값을 복구할 수 없을 때만 무효화합니다.
  */
-class SessionManager {
-
+final class SessionManager: @unchecked Sendable {
     static let shared = SessionManager()
-    private init() {}
 
-    private let key = "gleaum_native_session"
+    private let defaults: UserDefaults
+    private let key: String
+    private let refresher: SessionRefreshTransport
+    private let now: @Sendable () -> Date
+    private let refreshGate = SessionRefreshGate()
+
+    init(
+        defaults: UserDefaults = .standard,
+        key: String = "gleaum_native_session",
+        refresher: SessionRefreshTransport = SupabaseSessionRefreshTransport(),
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
+        self.defaults = defaults
+        self.key = key
+        self.refresher = refresher
+        self.now = now
+    }
 
     // MARK: - Save
 
     func saveSession(_ json: String) {
-        UserDefaults.standard.set(json, forKey: key)
-        // LoginViewController 에 세션 저장 알림
-        NotificationCenter.default.post(name: .gleaumSessionSaved, object: nil)
+        defaults.set(json, forKey: key)
+        postOnMain(.gleaumSessionSaved)
     }
 
-    // MARK: - Get (유효한 세션만 반환)
+    private func saveRefreshedSession(_ json: String) {
+        defaults.set(json, forKey: key)
+        postOnMain(.gleaumSessionRefreshed)
+    }
+
+    // MARK: - Read
 
     func getSession() -> String? {
-        guard let raw = UserDefaults.standard.string(forKey: key) else { return nil }
-        // 만료 60초 전부터 nil 반환
-        if let data = raw.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let expiresAt = json["expires_at"] as? TimeInterval {
-            let nowSec = Date().timeIntervalSince1970
-            if expiresAt > 0 && nowSec > expiresAt - 60 { return nil }
+        guard let raw = getRawSession(),
+              SessionPayload.isUsable(raw, now: now()) else {
+            return nil
         }
         return raw
     }
 
-    // MARK: - Raw (만료 무관 — 갱신용)
-
     func getRawSession() -> String? {
-        return UserDefaults.standard.string(forKey: key)
+        defaults.string(forKey: key)
     }
-
-    // MARK: - Valid
 
     func hasValidSession() -> Bool {
-        return getSession() != nil
+        getSession() != nil
     }
 
-    // MARK: - Access Token
+    func hasStoredSession() -> Bool {
+        guard let raw = getRawSession() else {
+            return false
+        }
+        return !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
-    func accessToken() -> String? {
-        guard let raw = getSession(),
-              let data = raw.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+    // MARK: - Refresh-first validation
+
+    func validateForLaunch() async -> SessionValidation {
+        if hasValidSession() {
+            return .valid
+        }
+
+        return await refreshGate.run { [weak self] in
+            guard let self else {
+                return .invalid
+            }
+            return await self.performValidation(forceRefresh: false)
+        }
+    }
+
+    func refreshAfterUnauthorized() async -> SessionValidation {
+        await refreshGate.run { [weak self] in
+            guard let self else {
+                return .invalid
+            }
+            return await self.performValidation(forceRefresh: true)
+        }
+    }
+
+    func accessTokenForRequest() async throws -> String {
+        if let token = currentAccessToken() {
+            return token
+        }
+
+        switch await validateForLaunch() {
+        case .valid, .refreshed:
+            guard let token = currentAccessToken() else {
+                invalidateStoredSession()
+                throw SessionAccessError.invalid
+            }
+            return token
+        case .temporaryFailure:
+            throw SessionAccessError.temporaryFailure
+        case .invalid:
+            throw SessionAccessError.invalid
+        }
+    }
+
+    private func performValidation(forceRefresh: Bool) async -> SessionValidation {
+        if !forceRefresh, hasValidSession() {
+            return .valid
+        }
+
+        guard let raw = getRawSession() else {
+            return .invalid
+        }
+        guard let refreshToken = SessionPayload.refreshToken(from: raw) else {
+            invalidateStoredSession()
+            return .invalid
+        }
+
+        let refreshResult = await refresher.refresh(refreshToken: refreshToken)
+
+        // 사용자가 갱신 중 로그아웃하거나 다른 계정으로 로그인했다면 늦게
+        // 도착한 이전 응답이 새 상태를 덮어쓰거나 세션을 되살리지 않게 한다.
+        guard getRawSession() == raw else {
+            if hasValidSession() {
+                return .valid
+            }
+            return hasStoredSession() ? .temporaryFailure : .invalid
+        }
+
+        switch refreshResult {
+        case .success(let refreshedJSON):
+            saveRefreshedSession(refreshedJSON)
+            return .refreshed
+        case .rejected:
+            invalidateStoredSession()
+            return .invalid
+        case .temporaryFailure:
+            return .temporaryFailure
+        }
+    }
+
+    private func currentAccessToken() -> String? {
+        guard let raw = getSession() else {
             return nil
         }
-        return json["access_token"] as? String
+        return SessionPayload.accessToken(from: raw)
     }
 
     // MARK: - Clear
 
     func clearSession() {
-        UserDefaults.standard.removeObject(forKey: key)
+        defaults.removeObject(forKey: key)
+    }
+
+    private func invalidateStoredSession() {
+        defaults.removeObject(forKey: key)
+        postOnMain(.gleaumSessionInvalidated)
+    }
+
+    private func postOnMain(_ name: Notification.Name) {
+        if Thread.isMainThread {
+            NotificationCenter.default.post(name: name, object: nil)
+        } else {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: name, object: nil)
+            }
+        }
     }
 }
 
-// MARK: - Notification
-
 extension Notification.Name {
     static let gleaumSessionSaved = Notification.Name("gleaum_session_saved")
+    static let gleaumSessionRefreshed = Notification.Name("gleaum_session_refreshed")
+    static let gleaumSessionInvalidated = Notification.Name("gleaum_session_invalidated")
 }

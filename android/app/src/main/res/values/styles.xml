@@ -26,11 +26,10 @@
     <style name="AppTheme.Splash" parent="Theme.SplashScreen">
         <!-- 배경: 커스텀 스플래시와 동일한 다크 컬러 -->
         <item name="windowSplashScreenBackground">#0A0B10</item>
-        <!-- 아이콘: 배경과 동일한 색상 → 시각적으로 보이지 않음
-             Android 12+ 시스템 스플래시는 OS 레벨 강제 실행 — 아이콘을 숨겨
-             커스텀 SplashActivity 로의 전환을 자연스럽게 처리 -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_hidden</item>
+        <!-- 시스템 로고를 커스텀 첫 프레임의 중앙 로고와 이어 붙인다. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_system</item>
         <item name="windowSplashScreenIconBackgroundColor">#0A0B10</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 
     <!-- ── 런치 스플래시 테마 (앱 시작 직후) ─────────────────────────────
@@ -40,7 +39,7 @@
         <!-- 스플래시 배경: 다크 네이비 -->
         <item name="windowSplashScreenBackground">@color/gleaum_navy</item>
         <!-- 스플래시 아이콘: 로고 (mipmap-anydpi-v26의 적응형 아이콘) -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_system</item>
         <!-- 아이콘 배경색 (원형 마스크 뒤) -->
         <item name="windowSplashScreenIconBackgroundColor">@color/gleaum_navy</item>
         <!-- 브랜드 로고 하단 표시 (선택) -->

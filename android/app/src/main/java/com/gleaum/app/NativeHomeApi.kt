@@ -10,8 +10,7 @@ object NativeHomeApi {
     private const val SUMMARY_URL = "https://www.gleaum.com/api/native/home-summary"
 
     fun summary(context: Context, source: String = "android-home"): NativeHomePortSummary {
-        val session = SessionManager.get(context) ?: throw IllegalStateException("session_required")
-        val token = JSONObject(session).optString("access_token").takeIf { it.isNotBlank() }
+        val token = SessionManager.accessToken(context)
             ?: throw IllegalStateException("session_required")
         val connection = (URL(SUMMARY_URL).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"

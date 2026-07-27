@@ -43,8 +43,7 @@ object NativeOnboardingApi {
     }
 
     private fun request(context: Context, body: JSONObject): JSONObject {
-        val session = SessionManager.get(context) ?: throw IllegalStateException("session_required")
-        val token = JSONObject(session).optString("access_token").takeIf { it.isNotBlank() }
+        val token = SessionManager.accessToken(context)
             ?: throw IllegalStateException("session_required")
         val connection = (URL(COMPLETE_URL).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"

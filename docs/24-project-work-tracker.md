@@ -3,7 +3,7 @@
 > **단일 기준 문서(SSOT)**: 현재 무엇을 해야 하는지, 무엇이 진행 중인지, 무엇이 언제 어떤 근거로 완료됐는지는 이 문서를 기준으로 판단한다.
 >
 > 최초 작성: 2026-07-16
-> 최종 업데이트: 2026-07-23
+> 최종 업데이트: 2026-07-24
 > 현재 기능 기준점: `42b53b0` (플랫폼 파리티·공간 수명주기), 최신 문서/스토어 애셋 `564b923`, 작업 브랜치 `codex/platform-parity-sync-20260723`
 
 ## 1. 운영 규칙
@@ -30,20 +30,24 @@
 
 ## 2. 현재 실행 큐
 
-위에서부터 순서대로 처리한다. 2026-07-23 사용자 결정으로 **iOS 재개와 핵심 네이티브 기능 동등화**를 다음 주 작업 축으로 전환한다. Android에서 확정한 공통 API·권한·오류 계약을 재사용하되 iOS 화면은 Apple 네이티브 패턴으로 구현한다. 기존 Android 수동 회귀와 외부 콘솔 대기 항목은 별도 잔여 큐로 유지한다.
+위에서부터 순서대로 처리한다. 제품 플랫폼은 **Android App과 Apple App(iPhone/iPad/macOS)** 두 가지다. 구현·검증 우선순위는 **공통 코어 계약 → Android 완료 → Apple의 라이선스 비의존 구현·로컬 검증 → 유료 Apple Developer Program 획득 → Apple 실기기·출시**다. Web은 제품 기능 파리티 대상에서 제외하고 마케팅·랜딩·법적 문서·인증/초대 callback·백오피스·공통 API와 명시적인 시스템 fallback만 유지한다.
 
 | 순서 | ID | 작업 | 상태 | 다음 행동 |
 |---:|---|---|---|---|
-| 1 | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 코드 완료·유료 팀 대기` | CoreSimulator 복구, 시뮬레이터 실행, capability·최소 권한·Privacy Manifest·Debug/Release 빌드 완료. 유료 Apple Developer Team에서 App ID capability·프로비저닝 활성화 후 실제 iPhone 서명 빌드 |
-| 2 | `IOS-008` | 네이티브 인증·세션 마감 | `⬜ 대기` | Sign in with Apple, Google Sign-In SDK, 이메일 로그인/가입/약관, 세션 복원·만료·로그아웃을 단일 상태 머신으로 구현 |
-| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `⬜ 대기` | `TabView` 5개 탭과 탭별 `NavigationStack`, 중앙 Route 계약, 스플래시 선조회·캐시·pull-to-refresh 구현 |
-| 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `⬜ 대기` | Android 공통 API 계약을 사용해 핵심 기능을 WebView 없이 구현 |
-| 5 | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | 가족 관계·일반 가족/자녀 초대 분리와 자녀 등록→OTP→동의→claim→승인/거절을 iOS 네이티브로 구현 |
-| 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `⬜ 대기` | 캘린더·푸시 토큰/딥링크·AASA를 실제 iPhone에서 검증 |
-| 7 | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | 소형/대형 iPhone, iPad/Split View, 라이트·다크·시스템, Dynamic Type·VoiceOver 회귀 |
-| 8 | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | 내부 테스트, 개인정보·연령등급·심사 계정·메타데이터 정합화 후 제출 |
-| 9 | `FAM-013` | Android 자녀 계정 연결 전체 회귀 | `🟠 잔여 QA` | 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
-| 10 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 외부 설정 대기` | Firebase SHA-1·최신 `google-services.json` 반영 후 실제 계정 선택·취소·재로그인 검증 |
+| 1 | `FAM-013` | Android 자녀 계정 연결 전체 회귀 | `🟠 잔여 QA` | 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
+| 2 | `AND-001` | Android 핵심 기능 실기기 회귀 | `🟠 진행 중` | 로그인 직후 5개 탭 회귀는 통과. 가계부 쓰기·가족 공간 전환·안전 삭제를 격리 데이터로 검증 |
+| 3 | `AND-005` | Android 기기 캘린더 회귀 | `🟠 진행 중` | 실제 가져오기·중복 방지·자동 생성/수정/삭제 검증 |
+| 4 | `AND-010` | Android 시작·세션·선조회·캐시 마감 | `🟠 시작·세션·생체 회귀 통과` | pull-to-refresh·mutation 선택 무효화·오프라인/부분 실패 검증 |
+| 5 | `AND-003` | Android TalkBack·적응형 최종 QA | `🟠 진행 중` | 실제 TalkBack 음성 탐색과 잔여 폴더블 회귀 |
+| 6 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 debug 실기기 통과` | 맥북 debug OAuth·재로그인 통과. 사용자 취소와 release·Play App Signing 인증서 조합을 최종 검증 |
+| 7 | `AND-002`, `AND-006` | Android 릴리즈·Google Play 마감 | `⏸ 기능 안정화 대기` | 서명 AAB, 기능 그래픽, Console 정책·메타데이터·서명 확인 |
+| 8 | `IOS-012` | iPhone SwiftUI·Liquid Glass 디자인 시스템 | `🟠 기반 구현·시각 검증 통과` | 검증된 semantic token·SF Symbols·표준 컴포넌트를 iPhone 인증·앱 셸 화면에 적용하며 계약 확장 |
+| 9 | `IOS-008` | Apple 네이티브 인증·세션 마감 | `🟠 refresh·로그인·생체 로컬 완료` | refresh 상태 머신·재시도 UI·API 401 단일 재갱신 검증 완료. iPhone 16 Pro USB 재연결 후 Google OAuth·Face ID 실기기 회귀, 이어서 이메일·Apple 로그인 contract 구현 |
+| 10 | `IOS-009` | iPhone 앱 셸·라우터·선조회 | `⬜ 인증 상태 머신 후` | iPhone 5탭, 중앙 Route, 선조회·캐시·pull-to-refresh 구현 |
+| 11 | `IOS-010`, `IOS-005` | iPhone 핵심 기능·가족/자녀 네이티브화 | `⬜ 대기` | Android 공통 API 계약으로 일정·공간·가계부·알림·메뉴·가족/자녀 기능을 WebView 없이 구현 |
+| 12 | `IOS-002`, `IOS-011` | iPhone OS 기능·라이선스 비의존 QA | `⬜ 대기` | EventKit·생체인증, iPhone simulator·테마·접근성·오프라인 회귀 |
+| 13 | `IOS-013` | iPad 적응형·네이티브 macOS 확장 | `⏸ iPhone 완료 후` | iPhone 기능·로컬 QA 완료 뒤 iPad 다열/Stage Manager, 이후 native macOS window·sidebar·menu·keyboard 구현 |
+| 14 | `IOS-007`, `IOS-003`, `IOS-004`, `IOS-006` | 유료 라이선스·실기기·Apple 출시 | `🟠 Personal Team Debug 실기기 통과` | `Edwin iPhone 16Pro` 자동 서명 build·install·launch 통과. 유료 capability·TestFlight/App Store 검증은 라이선스 비의존 구현 완료 뒤 진행 |
 
 ### 2026-07-23 맥북 작업 대조 결과
 
@@ -52,17 +56,17 @@
 | 보안·DB·백오피스 경계 | 구현·운영 기록 완료 | `8b15af7`, 운영 migration·Advisor·백오피스 build 기록 | 비관리자 403·관리자 2xx 실제 세션은 `OPS-003` |
 | 가족/자녀 기반·account capability | 구현 완료 | `ff43799`, `a30cf60`, `2176a5d`; capability 4/4·데이터 경계 9/9 | assignee/observer, 연령 전환, 약관 운영은 `FAM-003`~`FAM-005` |
 | Android Material 3·캘린더·권한 | 코드·로컬 빌드 완료 | `da2384e`, `bf69e1e`, `5ad7ba0`; 맥미니 debug compile/unit/lint/assemble 성공 | 인증 이후 실기기·TalkBack·캘린더 CRUD는 `AND-001`, `AND-003`, `AND-005` |
-| 공간 수명주기·일정 상세·알림 파리티 | 코드·자동 검증 완료 | `42b53b0`; root production build 54/54, 데이터 경계 9/9, 알림 설정 2/2 | Production 배포와 역할별 Web/Android 실제 계정 회귀 |
-| PC/Mobile Web 마이페이지·설정 | 1차 구현·인증 회귀 완료 | 2026-07-17 동일 계정 홈·일정·알림·마이페이지·공간 확인 | 제한 계정·라이트/다크·키보드/터치 회귀 |
+| 공간 수명주기·일정 상세·알림 공통 계약 | 코드·자동 검증 완료 | `42b53b0`; root production build 54/54, 데이터 경계 9/9, 알림 설정 2/2 | Android 실제 계정 회귀 후 Apple 네이티브 이식 |
+| 기존 PC/Mobile Web 제품 기능 | 유지보수 모드 전환 | 2026-07-17까지의 구현·인증 회귀 기록 보존 | 신규 기능 파리티·시각 회귀 중단. 실제 진입·리다이렉트 정리는 `WEB-013` |
 | Google Play 등록정보 | 카피·폰 이미지 제작 완료 | `564b923`; 1080×1920 RGB PNG 6장과 글자 수 검증 | 1024×500 기능 그래픽, Console 업로드·정책·서명 확인 |
 | 작업 환경 동기화 | 완료 | 맥미니 HEAD와 원격 `564b923` 일치, 최신 lockfile 의존성 복원, root/backoffice/Android 빌드 성공 | 오래된 로컬 `stash@{0}`는 최신 코드에 자동 적용하지 않고 안전 백업으로만 유지 |
 
 ### 명시적 후순위
 
-- PC/Mobile Web: Android 기능 마감 뒤 `PAR-001`, `WEB-006`~`WEB-010`을 재개한다.
+- PC/Mobile Web 제품 기능: 신규 구현과 Android/Apple 기능 파리티를 재개하지 않는다. 기존 인증 사용자 화면은 즉시 삭제하지 않되 신규 진입 홍보를 중단하고 안전한 전환 구현은 `WEB-013`에서 처리한다.
 - Google Play 출시 절차: `AND-006`의 등록정보 제작은 진행 중이지만 Console 제출·정책·서명 확인과 `AND-002` 최종 AAB는 기능 안정화 뒤 재개한다.
-- iOS: 현재 `IOS-007`을 시작으로 재개했다. 유료 Apple Developer Team 대기 중에도 시뮬레이터에서 `IOS-008`·`IOS-009` 기반 구현은 진행할 수 있다.
-- Remote Config: `WEB-007`, `AND-009`는 3플랫폼 핵심 기능 파리티와 운영 회귀가 끝난 뒤 재개한다.
+- Apple: Android 마감 뒤 **iPhone을 먼저 완성**한다. `IOS-012` → `IOS-008` → `IOS-009` → iPhone 핵심 기능·로컬 QA 순이며, 그 뒤 `IOS-013`에서 iPad → macOS 순으로 진행한다. 유료 계정·서명·실제 capability 검증은 모든 라이선스 비의존 구현과 로컬 QA가 끝난 뒤 재개한다.
+- Remote Config: Web 기능이 아니라 Android/Apple 네이티브 안전장치로만 재분류하며 기능 안정화 뒤 `AND-009`에서 재개한다.
 - 장기 후보·외부 본인확인·위치·CRM 채널은 각 항목의 기존 재개 조건을 유지한다.
 
 ## 3. P0 보안·운영
@@ -105,7 +109,7 @@
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
 | [x] | `AND-000` | 주요 화면 Compose Material 3 기반 전환 | `✅ 완료` | 2026-06-24 | 2026-07-14 | 코드 감사 평균 90.8/A, `assembleDebug`·`lintDebug` 통과 기록 |
-| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🟠 진행 중·일정 등록 복구` | 2026-07-16 | — | `SM_F731N`에서 개인 일정 저장 성공 후 활성 공유 공간만 조회해 목록이 비는 결함을 재현·수정. 개인 공간+활성 공유 공간 집계, 저장 응답 즉시 캐시 반영, ISO 시간 정규화, 상세 권한 재조회까지 적용. 제목·날짜·시작·종료 입력→목록·홈→상세 날짜/권한→삭제 실기기 회귀 통과. 남은 가계부 쓰기·가족 전환·삭제 회귀는 계속 진행 |
+| [ ] | `AND-001` | 실기기 시각·핵심 회귀 QA | `🟠 로그인 메뉴 회귀 통과·핵심 쓰기 QA 진행` | 2026-07-16 | — | 일정 등록 회귀 통과. 로그인 완료 전 account context를 준비하고, Compose NavigationSuite가 최초 fail-closed 슬롯을 유지하지 않도록 capability 변경 시 하단 탐색 subtree를 재생성. 맥북 debug OAuth 클라이언트와 최신 `google-services.json`을 반영한 APK를 `SM_F731N`에 설치해 실제 로그아웃→Google 재로그인→다른 메뉴 이동 전 최초 홈 5개 탭, 일정·공간·가계부·전체·홈 왕복 각 5개, 강제 종료·재시작 후 5개와 crash 0건을 확인. 남은 완료 조건은 가계부 쓰기·가족 공간 전환·안전 삭제의 격리 데이터 회귀 |
 | [ ] | `AND-002` | Release AAB 검증 | `⏸ 보류` | 2026-07-16 | — | 사용자 결정으로 Google Play 출시 구간 후순위. 기능 production build와 핵심 회귀가 끝난 뒤 서명 비밀번호를 확보해 최종 AAB 검증 |
 | [ ] | `AND-003` | 태블릿·폴더블·접근성 QA | `🟠 진행 중` | 2026-07-16 | — | compact·글꼴 1.3배·다크·expanded NavigationRail/840dp 폭·UI 의미/터치 영역 통과. `SM_F731N` 캘린더 목록 말줄임·단일 선택 역할·하단 시스템 인셋 통과, 실제 TalkBack 음성 탐색 필요 |
 | [x] | `AND-004` | 로그인/가입 Compose 전환 여부 결정 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 브랜드 고정 다크 XML 예외 승인. 1080×2640·글꼴 1.3배에서 잘림/겹침 없음. 기능·정보 구조 대폭 변경 시 Compose 재평가 |
@@ -113,9 +117,9 @@
 | [ ] | `AND-006` | Play Console 출시 자료·정책 점검 | `🟠 진행 중` | 2026-07-16 | — | Android 1.1.5 기준 한국어 등록정보 카피와 익명화된 휴대전화 스크린샷 6장 준비 완료. `docs/25-google-play-release-readiness.md` 기준 1024×500 기능 그래픽 제작, Console 업로드·최신 versionCode·IARC·App access·서명 확인 필요 |
 | [x] | `AND-007` | Android 백업·컴포넌트·R8·캘린더 변경 경계 하드닝 | `✅ 완료` | 2026-07-16 | 2026-07-16 | `allowBackup=false`, preview Activity 비공개, 광범위 ProGuard keep 제거, 캘린더 표식/대상 검증. debug/test/lint/release package 재통과 |
 | [x] | `AND-008` | Android 권한·개인정보·Data safety 정합성 보완 | `✅ 완료` | 2026-07-16 | 2026-07-16 | 미사용 CAMERA/feature 제거, 캘린더·Firebase·AdMob/AdFit 개인정보처리방침 반영, Play 입력 초안 문서화. release package manifest의 카메라·미디어·외부 저장소 권한 0건·Android debug/test/lint·웹 lint/build 통과 |
-| [ ] | `AND-009` | Remote Config 긴급 차단·필수 업데이트 기반 | `⏸ 보류` | — | — | 사용자 결정으로 3플랫폼 핵심 기능 파리티 이후 재개. 주요 기능 차단·필수 업데이트·API 버전 계약 범위 유지 |
-| [ ] | `AND-010` | 앱 시작 선조회·공유 캐시·새로고침 정책 | `🟠 실기기 검증 중` | 2026-07-23 | — | 스플래시 병렬 선조회 후 `SM_F731N` 홈 즉시 데이터 표시, 핵심 메뉴 왕복과 크래시/ANR 0건 확인. pull-to-refresh·mutation 선택 무효화·오프라인/부분 실패 체감 검증 후 완료 |
-| [ ] | `AND-011` | Credential Manager 네이티브 Google 로그인 | `🟠 코드 완료·외부 설정 대기` | 2026-07-23 | — | Credential Manager 계정 선택 → Google ID token → Supabase `/auth/v1/token?grant_type=id_token` 교환과 기존 SessionManager 저장 구현, Kotlin compile 통과. Firebase/Google Cloud에 debug·release·Play App Signing SHA-1 등록 후 실제 계정 선택·취소·재로그인 검증 필요 |
+| [ ] | `AND-009` | Remote Config 긴급 차단·필수 업데이트 기반 | `⏸ 보류` | — | — | Android 기능 안정화 이후 재개. 주요 기능 차단·필수 업데이트·API 버전 계약을 Android에 먼저 적용하고 Apple 후속 계약을 기록 |
+| [ ] | `AND-010` | 앱 시작·세션 연속성·선조회·공유 캐시 | `🟠 시작·세션·생체 회귀 통과` | 2026-07-23 | — | Android 12 시스템 로고 위치를 이어받는 로고→BI·태그라인 브랜드 모션과 시작 상태 화면 구현. 저장 세션은 access token 만료 시 refresh token으로 먼저 갱신하며 네트워크/5xx는 세션을 지우지 않고 재시도 화면, 명시적 인증 실패만 로그인으로 분기한다. 앱 잠금 사용자는 네이티브 생체인증/기기 PIN을 통과하고 15초 유예로 WebView 이중 인증을 방지한다. Adaptive/legacy 설치 아이콘과 시스템 스플래시 전용 안전영역을 분리해 네이비 배경 중앙에 로고가 잘림 없이 표시되도록 보정. `SM_F731N`에서 Play Console 아이콘과 나란히 비율·마스크, 시작 프레임, 3단계 모션, 로그아웃→로그인, 복원 세션→생체인증, 강제 만료→자동 갱신, 인증 취소→재시도 화면과 최종 APK 재설치·프롬프트를 확인. Kotlin compile·unit·lint·assemble 성공. 남은 완료 조건은 pull-to-refresh·mutation 선택 무효화·오프라인/부분 실패와 딥링크 회귀 |
+| [ ] | `AND-011` | Credential Manager 네이티브 Google 로그인 | `🟠 맥북 debug 실기기 통과` | 2026-07-23 | — | Credential Manager 계정 선택 → Google ID token → Supabase `/auth/v1/token?grant_type=id_token` 교환과 SessionManager 저장 확인. Firebase SHA-1/SHA-256와 Google Cloud Android OAuth 클라이언트 `글리움-안드로이드-맥북-디버그`를 추가하고 최신 `google-services.json` 반영. `SM_F731N`에서 실제 계정 선택·로그아웃·재로그인 성공 및 인증 오류 0건. 사용자 취소 UX와 release·Play App Signing 인증서 조합을 최종 검증한 뒤 완료 |
 
 ### `AND-009` 세부 체크리스트
 
@@ -136,17 +140,16 @@
 
 ### Android 작업의 플랫폼 후속 기록
 
-| Android 기준 기능 | 공통 계약 영향 | PC/Mobile Web 후속 | iOS 후속 |
+| Android 기준 기능 | 공통 계약 영향 | Web 지원 표면 영향 | Apple 후속 |
 |---|---|---|---|
-| 가족 공간 전환 (`FAM-008`) | 기존 공간 ID·데이터 유지, admin 권한, 개인 공간 차단, 오류 코드 계약 유지 | Android 마감 뒤 동일 API의 전환·오류·fallback UX 회귀 | iOS 공간 관리 구현 시 같은 API·오류 계약 적용 |
-| 가족 관계·초대/설정 분리 (`FAM-009`) | `space_members.role`은 권한, `family_role`은 표시 관계. 일반 가족 코드 초대와 자녀 검증 초대 분리 | 가족 멤버 카드 관계 우선 표시, 멤버 탭 전용 초대 유형 선택, 설정의 초대 제거 | Android 확정 정보 구조와 동일하게 네이티브 구현 |
-| 자녀 초대 WebView 경로 유지 (`FAM-010`) | 네이티브 저장 세션 재적용은 현재 기능 경로를 덮어쓰지 않음 | Web 브라우저는 기존 라우팅 유지, 별도 후속 없음 | iOS WebView 기능 진입 시 동일한 세션 재적용 규칙을 사용 |
-| 선택 이메일·토큰 연결 (`FAM-012`) | 자녀 이메일은 선택 제한값, `auth.users.id`가 지속 식별자. claim은 후보만 저장하고 최종 승인 전 멤버십·연령 권한 생성 금지 | PC/Mobile 공통 관리·공유·QR·Google/이메일 claim UI 구현. 운영 실계정 회귀만 남음 | iOS 자녀 초대 진입 시 동일한 pending route·후보 승인 계약 적용 |
-| 자녀 연결 Compose 전환 (`FAM-013`) | 기존 DB/RLS/RPC는 유지하고 자녀 API 8개가 Cookie·Bearer 인증을 공통 지원 | 기존 Web 화면은 브라우저·법적 문서·fallback으로 유지 | 보호자 관리·OTP·동의·claim을 같은 API 계약으로 SwiftUI/UIKit 구현 |
-| 네이티브 Google 로그인 (`AND-011`) | Supabase 세션 토큰 형식은 기존과 동일 | Web OAuth는 현행 유지 | Google 네이티브 로그인과 App Review 4.8 대응 로그인 수단을 함께 구현 |
-| 앱 시작 선조회·캐시 (`AND-010`) | API 응답 계약은 유지하고 Android 클라이언트 요청 정책만 변경 | Android 완료 뒤 Web 라우트 이동 중 중복 fetch와 SWR/캐시 정책 별도 감사 | 앱 시작 시 account/home/space 선조회와 pull-to-refresh 동등 정책 적용 |
+| 가족 공간 전환 (`FAM-008`) | 기존 공간 ID·데이터 유지, admin 권한, 개인 공간 차단, 오류 코드 계약 유지 | Native Bearer API와 오류 관측성만 유지 | Apple 공간 관리 구현 시 같은 API·오류 계약 적용 |
+| 가족 관계·초대/설정 분리 (`FAM-009`) | `space_members.role`은 권한, `family_role`은 표시 관계. 일반 가족 코드 초대와 자녀 검증 초대 분리 | 초대 랜딩·토큰 검증만 유지 | Android 확정 정보 구조와 동일 의미로 네이티브 구현 |
+| 자녀 초대 경로 (`FAM-010`, `FAM-012`) | 세션 재적용은 pending route를 보존하고 승인 전 멤버십·연령 권한 생성 금지 | 앱 미설치·구버전 초대 랜딩과 인증 callback만 유지 | Universal Link·pending route·후보 승인 계약 적용 |
+| 자녀 연결 Compose 전환 (`FAM-013`) | 기존 DB/RLS/RPC는 유지하고 자녀 API 8개가 Bearer 인증을 지원 | 법적 원문·초대 fallback 외 자녀 관리 UI 신규 개발 없음 | 보호자 관리·OTP·동의·claim을 같은 API 계약으로 SwiftUI 구현 |
+| 네이티브 Google 로그인 (`AND-011`) | Supabase 세션 토큰 형식은 기존과 동일 | OAuth/email callback과 복구 경로만 유지 | Google 네이티브 로그인과 Sign in with Apple 구현 |
+| 앱 시작·세션·선조회 (`AND-010`) | Supabase 세션 형식과 API 응답은 유지. 만료 access token은 refresh 우선, 일시적 네트워크 실패는 로컬 세션 보존, 명시적 refresh 거부만 로그인 전환 | 인증 callback·딥링크 fallback만 유지하며 Web 제품 화면 캐시·시작 모션 파리티 없음 | 시스템 Launch Screen→브랜드 모션, refresh 우선 상태 머신, 선택적 Face ID/Touch ID·기기 암호 앱 잠금, 일시 실패 재시도, 선조회·pull-to-refresh를 같은 의미로 구현 |
 
-Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-001` 싱크 보드에 먼저 기록한다. Web/iOS 코드를 같은 작업에서 임의 수정하지 않는다.
+Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 `PAR-002` 싱크 보드에 먼저 기록한다. Web 제품 UI를 후속 구현하지 않고 Apple 영향만 등록한다.
 
 ## 6. 가족·자녀·공간 권한
 
@@ -173,154 +176,65 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 체크 | ID | 작업 | 상태 | 시작일 | 완료일 | 완료 기준·근거 / 다음 행동 |
 |---|---|---|---|---|---|---|
-| [ ] | `WEB-001` | 개인/공유 공간 데이터 경계 자동 회귀 테스트 | `🔴 차단` | 2026-07-16 | — | `3867550`: Node/tsx 접근 매트릭스 8개 통과. 개인 일정·개인 원장 비노출, 공간 데이터 멤버십, admin/editor 쓰기, 개인 일정의 공유 공간 폴백 차단을 운영 코드와 함께 검증. 2차는 Docker CLI만 있고 daemon·Supabase CLI·`config.toml`이 없어 차단. Docker Desktop 실행 후 로컬 Supabase 구성·RLS 역할별 CRUD 테스트 추가 필요 |
-| [ ] | `WEB-002` | 이메일 가입 운영 설정 검증 | `⬜ 대기` | — | — | Custom SMTP, 확인 템플릿, Redirect URL, 만료/재발송 실제 계정 테스트 |
-| [ ] | `WEB-003` | 이미지 첨부 실제 업로드 | `⬜ 대기` | — | — | Storage/RLS/용량·확장자 제한/삭제·실패 UX 구현 |
-| [ ] | `WEB-004` | 통계·분석 확장 | `⬜ 대기` | — | — | 지표 정의 후 웹/백오피스 소유 경계를 확정하고 구현 |
-| [ ] | `WEB-005` | 일정 단건 외부 공유 | `⬜ 대기` | — | — | 만료·취소 가능한 읽기 전용 링크와 개인정보 노출 검토 |
-| [ ] | `WEB-006` | 마이페이지 Desktop/Mobile 기능 일치 | `🟠 진행 중` | 2026-07-16 | — | Android 전체 메뉴를 기준으로 빠른 동작·알림 목록/설정·프로필·계정·약관을 양쪽 Web 레이아웃에서 제공하고 권한별 가계부 노출·다크모드 회귀 검증 |
-| [ ] | `WEB-007` | Remote Config 운영 안전장치·버전 gate | `⏸ 보류` | — | — | 사용자 결정으로 플랫폼 기능 파리티 이후 재개. 현재 `initRemoteConfig()`와 백오피스 편집기는 존재하지만 실제 소비처가 없음 |
-| [ ] | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `🟠 진행 중` | 2026-07-16 | — | PC/Mobile Web에서 네이티브 전용 캘린더·생체인증과 보류된 Apple 로그인·포인트/프리미엄 문구를 제거하거나 실제 지원 플랫폼에만 노출하고 죽은 진입점 제거 |
-| [ ] | `WEB-009` | 일정 장소·지도 기능 완성 | `🟠 진행 중` | 2026-07-16 | — | PC/Mobile의 가짜 지도 준비 영역을 실제 외부 지도 검색 동작으로 교체. 주소 검색·좌표 저장·내장 지도 범위는 아직 미구현 |
-| [ ] | `WEB-010` | 알림 설정 서버 발송 경계 적용 | `🟠 진행 중` | 2026-07-16 | — | 일정 리마인더·재알림·자녀 미완료·결제 초과·주간 소비 요약에서 opt-in을 강제하고 명시적 false 사용자의 FCM/인앱 기록을 차단. 운영 배포 후 실제 수신/비수신 회귀 필요 |
-| [x] | `WEB-011` | 공개 첫 접근 랜딩 크로스 플랫폼 개편 | `✅ 완료` | 2026-07-23 | 2026-07-23 | PC 전용·모바일 로그인 강제 구조를 제거하고 모든 Web 뷰포트에 서비스 소개, 핵심 기능, 플랫폼 상태, Google Play/웹 진입을 제공. 실제 Android 화면의 정보 구조를 개인정보 없이 재구성. PC 1440×900·Mobile 390×844 시각 회귀, SSR 소개 문구, production build·링크 검증 완료 |
-| [ ] | `PAR-001` | PC Web·Mobile Web·Android 3플랫폼 핵심 기능 파리티 회귀 | `🟠 진행 중` | 2026-07-16 | — | 기능별 공통 API·DB·권한 계약 아래 PC Web·Mobile Web·Android 구현과 검증을 각각 관리. 세 플랫폼이 모두 완료되거나 명시적 `N/A` 사유가 있어야 상위 기능을 완료한다. iOS는 현재 완료 조건에서 제외 |
+| [ ] | `WEB-001` | 공통 데이터 경계 자동 회귀 테스트 | `🔴 차단` | 2026-07-16 | — | Web 제품 QA가 아니라 Android/Apple 공통 API·RLS 보증 항목. Node/tsx 접근 매트릭스 8개 통과. Docker Desktop·로컬 Supabase 구성 후 역할별 CRUD 통합 테스트 추가 필요 |
+| [ ] | `WEB-002` | 이메일 인증 지원 표면 운영 검증 | `⬜ 대기` | — | — | Android/Apple 이메일 가입을 지원하는 Custom SMTP, 확인 템플릿, Redirect URL, 만료/재발송 실제 계정 테스트 |
+| [ ] | `WEB-003` | 공통 이미지 첨부 저장 계약 | `⬜ 대기` | — | — | Native API·Storage/RLS·용량·확장자·삭제 계약을 먼저 확정하고 Android, Apple 순으로 UI 구현. 브라우저용 첨부 UI 완성은 범위 제외 |
+| [ ] | `WEB-004` | 운영 통계·분석 확장 | `⬜ 대기` | — | — | 앱 지표 정의 후 공통 수집과 백오피스 소유 경계를 확정. 사용자 Web 제품 화면은 추가하지 않음 |
+| [ ] | `WEB-005` | 일정 단건 외부 공유 지원 표면 | `⬜ 대기` | — | — | Android/Apple에서 공유가 필요할 때만 만료·취소 가능한 읽기 전용 Web 랜딩과 개인정보 노출 정책 구현 |
+| [x] | `WEB-006` | 마이페이지 Desktop/Mobile 기능 일치 | `⏹ 정책 종료` | 2026-07-16 | 2026-07-23 | 1차 구현·인증 회귀 기록은 보존한다. Web이 제품 플랫폼에서 제외되어 추가 기능 동등화·테마·키보드/터치 회귀는 진행하지 않는다 |
+| [x] | `WEB-007` | Web Remote Config 소비 | `⏹ 정책 종료` | — | 2026-07-23 | Web 제품 기능 gate는 구현하지 않는다. 네이티브 긴급 차단·최소 버전·점진 배포는 `AND-009`와 Apple 후속 항목이 소유한다 |
+| [x] | `WEB-008` | Web 설정·준비 중 기능 노출 정합화 | `⏹ 정책 종료` | 2026-07-16 | 2026-07-23 | 기존 죽은 진입점 정리까지만 보존하고 Android/Apple 설정과 Web 기능을 맞추는 후속 작업은 중단한다 |
+| [x] | `WEB-009` | Web 일정 장소·지도 기능 완성 | `⏹ 정책 종료` | 2026-07-16 | 2026-07-23 | PC/Mobile Web 사용자 기능을 완성하지 않는다. 지도 UX가 필요하면 Android와 Apple 네이티브 항목에서 각각 구현한다 |
+| [ ] | `WEB-010` | 알림 설정 서버 발송 경계 적용 | `🟠 공통 코어로 유지` | 2026-07-16 | — | Web UI 파리티가 아니라 Android/Apple이 공통으로 사용하는 서버 Cron·FCM·인앱 기록의 opt-in 강제 항목이다. 운영에서 실제 수신/비수신 회귀 후 완료 |
+| [x] | `WEB-011` | 공개 첫 접근 마케팅 랜딩 개편 | `✅ 완료` | 2026-07-23 | 2026-07-23 | 모든 Web 뷰포트에 서비스 소개, 핵심 기능, 플랫폼 상태와 스토어 안내를 제공. 실제 Android 화면의 정보 구조를 개인정보 없이 재구성. PC 1440×900·Mobile 390×844 시각 회귀, SSR 소개 문구, production build·링크 검증 완료. 로그인형 Web 제품 홍보 제거는 `WEB-013`에서 처리 |
+| [x] | `WEB-012` | Web 지원 표면 경계 확정 | `✅ 완료` | 2026-07-23 | 2026-07-23 | Web 유지 범위를 마케팅·랜딩·다운로드 안내·법적 문서·인증/이메일/초대 callback·앱 미설치/구버전 fallback·공통 API·Cron·백오피스로 고정. 로그인 후 홈·일정·가계부·공간·알림·마이페이지는 신규 구현·기능 파리티·QA 대상에서 제외 |
+| [ ] | `WEB-013` | Web 지원 표면 전환 구현 | `🟠 공개 랜딩 정리 완료·전환 설계 중` | 2026-07-23 | — | 공개 랜딩의 `웹에서 시작`·`웹 서비스 이용` CTA와 Web 플랫폼 제공 문구를 제거하고 Android·Apple 2개 플랫폼 안내로 전환. 대상 ESLint·production build 55/55와 생성된 루트 HTML 문구 검증 통과. 기존 인증 Web 진입 사용량 확인, 사용자 공지·리다이렉트·데이터 접근 정책 수립 후 안전하게 지원 표면만 남긴다. 인증/초대 callback·법적 문서·API·Cron·백오피스는 제거 금지 |
+| [x] | `PAR-001` | PC Web·Mobile Web·Android 3플랫폼 파리티 | `⏹ 정책 종료` | 2026-07-16 | 2026-07-23 | 2026-07-23 제품 플랫폼을 Android/Apple 두 가지로 재정의하면서 종료. 기존 구현·검증 기록은 작업 일지와 Git 이력에 보존 |
+| [ ] | `PAR-002` | Android·Apple 네이티브 기능 동등화 | `🟠 진행 중` | 2026-07-23 | — | 공통 API·DB·RLS·capability·오류 계약을 기준으로 Android를 먼저 마감하고 Apple에 후속 구현. Web은 기능 동등화 완료 조건에 포함하지 않는다 |
 
-### `PAR-001` 3플랫폼 운영 규칙
+### `PAR-002` Android·Apple 운영 규칙
 
-- 현재 지원 플랫폼은 `PC Web`, `Mobile Web`, `Android App` 3개로 고정한다.
-- API·DB·RLS·capability·오류 코드는 Web 플랫폼 작업이 아닌 **공통 코어 계약**으로 관리한다.
-- 기본 실행 순서는 **공통 코어 영향 확인·계약 확정 → Android App 구현·검증 → PC Web 구현·검증 → Mobile Web 구현·검증 → 3플랫폼 통합 회귀**로 고정한다.
-- Android App을 기준 동작과 최우선 구현 대상으로 삼되, Android 전용 제약을 공통 API·DB 계약으로 확대하지 않는다.
-- 긴급한 운영 오류·보안·데이터 손실 위험은 플랫폼 순서보다 우선하며, 예외 순서와 사유를 작업 일지에 남긴다.
-- 플랫폼 하나의 구현이 완료돼도 상위 기능은 계속 `🟠 진행 중`으로 두고, 나머지 플랫폼을 완료하거나 `N/A — 사유`를 기록한 뒤 닫는다.
-- Android 또는 Web 작업을 시작할 때 아래 **플랫폼 영향 확인**을 먼저 수행하고 해당 기능 체크리스트에 반영한다.
-- iOS는 현재 지원 플랫폼과 `PAR-001` 완료 조건에서 제외하고 8절의 후순위로 관리한다.
+- 정식 제품 플랫폼은 `Android App`과 `Apple App(iPhone/iPad/macOS)` 두 가지다.
+- 구현·검증 순서는 **공통 코어 영향 확인·계약 확정 → Android App 구현·실기기·출시 마감 → Apple App 구현·실기기·출시 마감**으로 고정한다.
+- Android를 기준 동작과 최우선 구현 대상으로 삼되 Android 전용 UI/OS 제약을 공통 계약으로 확대하지 않는다.
+- Apple은 같은 데이터·권한·오류 의미를 유지하되 SwiftUI·Apple 플랫폼 UX로 구현한다.
+- Web은 제품 기능 파리티 대상이 아니다. 기존 인증 사용자 화면을 신규 개발하지 않고, 유지가 필요한 지원 표면만 보안·접근성·링크 정상 동작을 보수한다.
+- 긴급한 운영 오류·보안·데이터 손실 위험은 플랫폼 순서보다 우선하며 사유를 작업 일지에 남긴다.
 
-#### 플랫폼 영향 확인 체크리스트
+#### Web 지원 표면
 
-> 아래는 일회성 완료 항목이 아니라 **변경 작업마다 해당 기능 아래에 복사해 사용하는 템플릿**이다. 영향이 없는 플랫폼도 비워두지 말고 `N/A — 사유`를 기록한다.
+| 유지 | 범위 | 완료 기준 |
+|---|---|---|
+| 마케팅 | 루트 랜딩, 기능 소개, 스토어/다운로드 안내 | 공개 접근·반응형·SEO·스토어 링크 정상 |
+| 법적 문서 | 이용약관, 개인정보처리방침, 계정 삭제 안내 | 앱 인앱 문서 뷰와 외부 브라우저에서 열림 |
+| 인증·링크 | OAuth/email callback, 비밀번호 재설정, 일반/자녀 초대 랜딩, 앱 미설치·구버전 fallback | 토큰 검증·만료·복귀 경로·개인정보 최소 노출 |
+| 공통 서버 | Native Bearer API, 필요한 Cookie callback, Cron, 알림 발송, DB/RLS 경계 | Android/Apple 공통 계약과 운영 관측성 유지 |
+| 운영 도구 | `admins.gleaum.com` 백오피스 | 관리자 인증·권한·감사 경계 유지 |
+
+다음은 Web 신규 구현 대상이 아니다: 브라우저용 홈·일정·가계부·공간·알림·마이페이지의 기능 추가, Android/Apple UI 동등화, Desktop/Mobile Web 별도 시각 회귀, Web 전용 네이티브 기능 대체 구현.
+
+#### 변경 작업 영향 확인 체크리스트
 
 - [ ] 공통 API 요청·응답·오류 코드가 변경되는가?
 - [ ] DB·RLS·capability·개인/공간 데이터 경계가 변경되는가?
-- [ ] Android에 같은 기능·권한·실패 UX가 필요한가?
-- [ ] PC Web에 같은 기능·권한·실패 UX가 필요한가?
-- [ ] Mobile Web에 같은 기능·권한·실패 UX가 필요한가?
-- [ ] 네이티브 전용 기능이면 Web에서 숨김·앱 전용 안내·`N/A` 중 어느 처리가 필요한가?
-- [ ] 알림·딥링크·오류 메시지가 세 플랫폼에서 같은 의미를 갖는가?
-- [ ] 적용하지 않는 플랫폼에 `N/A` 사유를 기록했는가?
+- [ ] Android 구현·실기기·출시 영향은 무엇인가?
+- [ ] Apple 구현·실기기·출시 후속은 무엇인가?
+- [ ] Web 지원 표면의 인증·초대·법적 문서·API·백오피스에 영향이 있는가?
+- [ ] Web 제품 기능 구현을 실수로 추가하거나 파리티 완료 조건에 포함하지 않았는가?
+- [ ] 알림·딥링크·오류 메시지가 Android와 Apple에서 같은 의미를 갖는가?
 
-#### 3플랫폼 싱크 보드
+#### 네이티브 2플랫폼 싱크 보드
 
-| 기능 | 공통 코어 계약 | Android App | PC Web | Mobile Web | 상위 상태·다음 행동 |
-|---|---|---|---|---|---|
-| 핵심 내비게이션 | capability 기준 메뉴 노출 | `✅` | `✅` | `✅` | `✅ 완료` |
-| 마이페이지·설정 | 계정 capability·플랫폼 지원 범위 | `✅` | `🟠` | `🟠` | PC/Mobile 시각·제한 계정 회귀 |
-| 홈 | 계정 모드·홈 구성·개인 원장·빈/오류 상태 | `⬜` | `✅` | `✅` | Android 동일 계정 집계·자녀 계정 비교 |
-| 일정 목록 | 개인/공간 경계·역할·필터 | `⬜` | `⬜` | `⬜` | 공간 전환·권한·빈/오류 상태 비교 |
-| 일정 생성·수정 | 저장 필드·참여자·알림·반복 계약 | `⬜` | `⬜` | `⬜` | 플랫폼별 지원 필드 감사 |
-| 일정 상세 | 소속 공간·private 생성자·admin/editor/viewer 권한 | `🟠` | `🟠` | `🟠` | 3플랫폼 구현과 SDK 36 빌드 완료. admin/editor/viewer/private 생성자 실제 계정 회귀 후 완료 |
-| 공간 | 선택·초대·역할·가족 전환·안전 삭제 | `🟠` | `🟠` | `🟠` | Preview/Production 배포 후 동일 계정 검증 |
-| 가계부 | 개인/공간 원장·권한·반복 지출 | `⬜` | `⬜` | `⬜` | CRUD·개인/공간 경계 비교 |
-| 알림 | 설정·발송 경계·읽음·이동 대상 | `🟠` | `🟠` | `🟠` | Android 서버 설정 동기화·딥링크와 SDK 36 빌드 완료. 설정별 FCM·Web 읽음/이동 실계정 회귀 대기 |
-| 로그인·세션 | Cookie/Bearer·OAuth 복귀·capability | `🟠` | `✅` | `✅` | Android 재로그인·세션 복귀 실기기 검증 |
-| 초대·딥링크 | 동일 초대 코드·권한·만료 계약 | `⬜` | `⬜` | `⬜` | Web link·App Link·custom scheme 회귀 |
-
-#### 기능별 세부 체크리스트
-
-##### 마이페이지·설정
-
-- 공통 코어
-  - [x] 가계부·공간 진입을 계정 capability로 제한
-  - [x] 생체인증·기기 캘린더를 네이티브 전용으로 분류
-- Android App
-  - [x] 빠른 실행·알림·계정·약관·네이티브 전용 설정 분리
-  - [ ] 재로그인 후 capability·메뉴 노출 실기기 회귀
-- PC Web
-  - [x] 빠른 실행·알림 목록/설정·약관 동선·권한별 노출 1차
-  - [ ] 라이트/다크·성인/제한 계정·키보드 시각 회귀
-- Mobile Web
-  - [x] 미구현 Apple 로그인·포인트·프리미엄·Web 미지원 네이티브 진입점 정리
-  - [x] 개인 공간을 무료 공유 공간 한도에서 제외하고 `공유 공간 n/2`로 표시
-  - [ ] 라이트/다크·성인/제한 계정·터치 영역·뒤로가기 회귀
-
-##### 홈
-
-- 공통 코어
-  - [x] PC/Mobile Web이 동일한 개인 공간 원장과 월간 지출 집계 계약 사용
-  - [x] 로딩 중 Mobile Web이 `0원`을 확정값처럼 노출하지 않도록 PC와 표시 시점 통일
-- Android App
-  - [ ] 동일 계정에서 오늘 일정·개인 가계부 월간 합계·빈/오류 상태 실기기 회귀
-- PC Web
-  - [x] 인증 계정 이름·오늘 일정·월간 개인 가계부 `320,000원` 표시 확인
-- Mobile Web
-  - [x] 인증 계정 이름·오늘 일정·월간 개인 가계부 `320,000원` 표시 확인
-
-##### 일정 상세
-
-- 공통 코어
-  - [x] 일정 소속 공간 기준 멤버·역할 조회
-  - [x] private 생성자/admin/editor만 변경 허용, viewer 직접 편집 차단
-  - [x] 참여자를 멤버십 ID가 아닌 사용자 ID로 연결
-  - [x] 자녀 일정·재알림 대상을 `family_dependents.linked_user_id`로 계산
-- Android App
-  - [x] 서버 계산 `permissions`로 수정·삭제·상태 변경·재알림 노출 제어
-  - [x] viewer의 직접 편집 딥링크 진입·저장 차단
-  - [x] 참여자 ID 응답 파싱·인원 표시, 장소 표시·외부 지도 열기, Bearer 재알림 연결
-  - [x] MacBook CLI 환경에 Android SDK Platform 36·Build-Tools 36.0.0·Platform-Tools 설치 후 `compileDebugKotlin`·unit test·lint·assemble 통과
-  - [ ] admin/editor/viewer/private 생성자 실기기 회귀
-- PC Web
-  - [x] Android과 동일한 `canWriteScheduleBoundary` 공통 권한 함수로 판정 통합
-  - [x] 권한별 변경 동작 노출·재알림 API·외부 지도 열기 구현
-  - [ ] editor/viewer/private 생성자 계정별 수정·삭제·상태 전환·재알림 회귀
-- Mobile Web
-  - [x] PC와 공유하는 상세 컨트롤러에 동일 공통 권한 함수 반영
-  - [x] 권한별 변경 동작 노출·재알림 API·외부 지도 열기 구현
-  - [ ] editor/viewer/private 생성자 계정별 터치·뒤로가기·오류 UX 회귀
-
-##### 공간
-
-- 공통 코어
-  - [x] 개인 공간 가족 전환·삭제 차단
-  - [x] 멤버 잔존·자녀 이력·관리자 권한·미존재 오류 계약 구분
-  - [x] 안전 삭제 후 fallback 공간·사용자 컨텍스트 갱신 계약 구현
-- Android App
-  - [x] 가족 전환·안전 삭제·mutation 오류 복구 UX 구현
-  - [ ] 운영 API 배포·재로그인 후 공간 전환·삭제 실기기 회귀
-- PC Web
-  - [x] 관리자 공유 공간의 `/space/settings?sid=...` 진입·가족 전환·삭제 UX
-  - [ ] Preview/Production에서 가족 전환·삭제·fallback 회귀
-- Mobile Web
-  - [x] 고급 설정 진입·가족 전환·삭제·오류별 안내
-  - [ ] Preview/Production에서 터치·뒤로가기·fallback 회귀
-
-##### 알림
-
-- 공통 코어
-  - [x] 일정·자녀·가계부 알림의 명시적 `false` 설정을 서버 발송·인앱 기록에서 강제
-  - [x] 설정이 없는 기존 사용자는 호환을 위해 활성으로 처리
-- Android App
-  - [x] 알림 목록·개별/전체 읽음·일정 딥링크 동작 코드 감사
-  - [x] 일정·루틴·가계부 알림 설정을 Android 로컬에서 서버 `profiles.notification_settings`로 전환·동기화
-  - [x] Cookie/Bearer 공통 인증으로 재알림 API 연결, 구버전 API 응답은 저장 성공으로 오인하지 않게 차단
-  - [x] MacBook CLI 환경에 Android SDK Platform 36·Build-Tools 36.0.0·Platform-Tools 설치 후 `compileDebugKotlin`·unit test·lint·assemble 통과
-  - [ ] Web과 동일 계정으로 설정별 FCM 수신/비수신 실기기 회귀
-- PC Web
-  - [x] 알림 카드 키보드 접근·읽음 처리·연결 일정 상세 이동
-  - [ ] 설정별 실제 수신/비수신·키보드·오류 UX 회귀
-- Mobile Web
-  - [x] 알림 카드 터치·읽음 처리·연결 일정 상세 이동
-  - [ ] 설정별 실제 수신/비수신·터치·뒤로가기 회귀
-
-##### 나머지 기능 확장 대기
-
-- [x] 홈: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
-- [ ] 일정 목록: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
-- [ ] 일정 생성·수정: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
-- [ ] 가계부: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
-- [ ] 로그인·세션: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
-- [ ] 초대·딥링크: 공통 계약 → Android → PC Web → Mobile Web 체크리스트 추가
-- [ ] 공통 회귀: Web production build, Android production build, 동일 테스트 계정의 PC/Mobile 브라우저·Android 실기기 검증
+| 기능 | 공통 코어 계약 | Android App | Apple App | 다음 행동 |
+|---|---|---|---|---|
+| 로그인·세션 | Bearer token·capability·refresh 우선·명시적 만료/로그아웃 | `🟠 시작·갱신·생체 통과` | `⬜ 기존 browser OAuth·브리지 존재` | 기존 Google OAuth·이메일을 SwiftUI 상태 머신에 연결하고 Apple 로그인은 mock 가능한 contract부터 구현 |
+| 홈·캐시 | 계정 모드·개인 원장·빈/오류·새로고침 | `🟠` | `⬜` | Android 캐시/오프라인 회귀 후 SwiftUI 셸 선조회 |
+| 일정 | 개인/공간 경계·역할·참여자·알림 | `🟠` | `⬜` | Android 역할별 회귀 후 Apple 목록/상세/폼 |
+| 공간·가족·자녀 | 선택·초대·관계·권한·승인·안전 삭제 | `🟠` | `⬜` | Android 보호자/자녀·전환/삭제 회귀 후 Apple 이식 |
+| 가계부 | 개인/공간 원장·반복 항목·권한 | `🟠` | `⬜` | Android 쓰기 회귀 후 Apple 이식 |
+| 알림 | 서버 opt-in·목록·읽음·딥링크 | `🟠` | `⬜` | Android FCM 회귀와 서버 경계 완료 후 APNs 구현 |
+| OS 연동 | 캘린더·생체인증·딥링크·접근성 | `🟠` | `🟡 EventKit·LocalAuthentication·FCM·AASA 기반 존재` | 로컬 기능을 먼저 완성하고 실제 APNs/Universal Links만 유료 계정 이후 검증 |
+| 디자인 시스템 | 플랫폼별 네이티브 정보 구조·브랜드 의미만 공유 | `✅ Material 3` | `🟡 Liquid Glass·적응형 기준 확정` | semantic token·SF Symbols·iPhone 5탭·iPad split view·macOS sidebar/window 구현 |
 
 ## 8. iOS·Apple 플랫폼
 
@@ -329,17 +243,19 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [x] | `IOS-000` | iOS 네이티브 셸·홈·일정 등록 1차 기반 | `✅ 완료` | 2026-06-18 | 2026-06-18 | Swift 네이티브 API client, 홈, 일정 Sheet, 라우팅 기반 |
 | [ ] | `IOS-001` | 운영 API 실제 계정 회귀 | `⬜ 대기` | — | — | 네이티브 셸 전환 뒤 홈 요약·일정 등록·세션 유지와 공통 API 오류 계약 검증 |
 | [ ] | `IOS-002` | EventKit 캘린더 UX | `⬜ 대기` | — | — | 캘린더 선택·내보내기·가져오기·중복 정책 구현 |
-| [ ] | `IOS-003` | APNs·알림 운영 설정 | `⬜ 대기` | — | — | APNs Auth Key·Firebase·Xcode capability·실기기 토큰·알림 딥링크 검증 |
-| [ ] | `IOS-004` | Universal Links 재활성화 | `⬜ 대기` | — | — | Associated Domains·AASA·초대/알림 링크 실기기 검증 |
+| [ ] | `IOS-003` | APNs·알림 운영 설정 | `⏸ 유료 라이선스 단계` | — | — | Firebase Messaging SDK·plist·APNs/FCM callback은 존재. 로컬 token 등록·딥링크 코드 완료 뒤 APNs Auth Key·capability·실기기 수신 검증 |
+| [ ] | `IOS-004` | Universal Links 운영 검증 | `⏸ 유료 라이선스 단계` | — | — | Associated Domains entitlement·AASA·URL 처리 기반은 존재. 중앙 Route 구현 뒤 운영 Team capability·초대/알림 링크 실기기 검증 |
 | [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | — | — | Android 확정 동작과 공통 API를 기준으로 가족 관계·초대 분리·자녀 연결을 iOS에 구현 |
-| [ ] | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | — | — | iOS 기능·실기기 QA 완료 뒤 스크린샷·메타데이터·개인정보·심사 계정 준비 |
-| [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 코드 완료·외부 계정 대기` | 2026-07-23 | — | CoreSimulator 자동 복구, iPhone 17 Pro 시뮬레이터 빌드·설치·콜드 스타트, 최소 권한·Privacy Manifest 타겟 포함, Debug/Release 빌드 통과. Personal Team은 Apple 로그인·Push·Associated Domains 프로파일 생성 불가. 유료 Team 연결 후 실제 iPhone 서명 빌드 |
-| [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `⬜ 대기` | — | — | Sign in with Apple·Google Sign-In SDK·이메일 인증·약관·세션 상태 머신 |
-| [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `⬜ 대기` | — | — | 5탭 `TabView`, 탭별 `NavigationStack`, 중앙 Route, 시작 선조회·캐시·수동 새로고침 |
+| [ ] | `IOS-006` | TestFlight/App Store·macOS 출시 | `⏸ 유료 라이선스 단계` | — | — | 라이선스 비의존 구현·로컬 QA 완료 뒤 스크린샷·메타데이터·개인정보·심사 계정·macOS 서명/공증 준비 |
+| [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Personal Team Debug 실기기 통과` | 2026-07-23 | — | 대상 `Edwin iPhone 16Pro`(iPhone 16 Pro, iOS 26.5.2)의 USB/Xcode 연결을 복구. Debug는 빈 entitlement, Release는 Push·Associated Domains·Sign in with Apple 운영 entitlement를 유지하도록 분리하고 Personal Team 자동 서명 build·install·launch 통과. 유료 Team capability·운영 서명 검증은 라이선스 단계에 유지 |
+| [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 refresh·로그인·생체 로컬 완료` | 2026-07-24 | — | UIKit 고정 로그인 화면을 SwiftUI·Apple semantic color·Dynamic Type·SF Symbols·시스템 prominent button으로 교체. Capacitor Preferences와 동일 키를 읽는 앱 시작/포그라운드 복귀 Face ID·Touch ID·기기 암호 gate, 재잠금 간격, OAuth 직후 15초 중복 방지, 다른 계정 확인 dialog를 연결했다. Android와 같은 refresh 우선 상태 머신을 앱 시작·복귀·Native API에 적용해 동시 갱신 합치기, 회전 token 저장, 네트워크·5xx 세션 보존, refresh 4xx만 무효화, API 401 단일 재갱신, 갱신 중 로그아웃 세션 부활 방지를 구현. Swift 6 시나리오 13/13, simulator light/dark/최대 접근성 글꼴, simulator Debug·generic iPhone arm64 무서명 build 통과. 실제 iPhone Face ID·Google OAuth 회귀와 이메일·Apple 로그인 contract 구현 필요 |
+| [ ] | `IOS-009` | SwiftUI iPhone 앱 셸·라우터·선조회 | `⬜ Android 후속 등록` | — | — | Launch Screen→SwiftUI 모션, iPhone 5탭/탭별 `NavigationStack`, 중앙 Route, 시작 선조회·캐시·수동 새로고침 구현. iPad shell은 `IOS-013`에서 후속 |
 | [ ] | `IOS-010` | 핵심 기능 네이티브화 | `⬜ 대기` | — | — | 홈·일정·공간·가계부·알림·전체 메뉴를 WebView 없이 구현 |
-| [ ] | `IOS-011` | iPhone/iPad·테마·접근성 QA | `⬜ 대기` | — | — | 기기 크기·Split View·테마·Dynamic Type·VoiceOver·오프라인/세션 회귀 |
+| [ ] | `IOS-011` | iPhone 우선·후속 iPad/macOS 테마·접근성 QA | `⬜ 대기` | — | — | 1차로 iPhone 크기·테마·Dynamic Type·VoiceOver·오프라인/세션 회귀 완료. 이후 `IOS-013`과 함께 iPad Split View/Stage Manager·macOS 창/키보드 QA |
+| [ ] | `IOS-012` | iPhone SwiftUI·Liquid Glass 디자인 시스템 전환 | `🟠 기반 구현·시각 검증 통과` | 2026-07-23 | — | `GleaumColors` semantic token, spacing/radius/layout, card·status badge·section header, 5개 섹션 SF Symbols, DEBUG 전용 카탈로그를 Xcode target에 연결. iPhone 17 Pro iOS 26.4.1에서 무서명 Debug build, 라이트·다크 렌더링, 카탈로그 종료 후 기존 로그인 흐름 복원을 확인. 다음은 `IOS-008` 인증 상태 화면부터 실제 제품 화면에 계약 적용 |
+| [ ] | `IOS-013` | iPad 적응형·네이티브 macOS 확장 | `⏸ iPhone 완료 후` | 2026-07-24 | — | 사용자 결정으로 iPhone 기능·로컬 QA 완료 후 재개. 그다음 iPad regular width sidebar·list-detail·inspector·다열 dashboard를 구현하고, iPad 완료 후 native macOS window·sidebar·toolbar·menu·keyboard·Settings 구현 |
 
-상세 계획: `docs/16-ios-native-roadmap.md`, 재개 감사: `docs/27-ios-resumption-readiness.md`
+상세 계획: `docs/16-ios-native-roadmap.md`, 재개 감사: `docs/27-ios-resumption-readiness.md`, 디자인 교체: `docs/28-apple-liquid-glass-design-plan.md`
 
 ## 9. 백오피스·CRM·광고
 
@@ -359,7 +275,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | 체크 | ID | 작업 | 상태 | 재개 조건 |
 |---|---|---|---|---|
 | [ ] | `LONG-001` | Apple/Kakao 소셜 로그인 | `⏸ 보류` | 사용자 요구·전환율 근거와 운영 계정 준비 |
-| [ ] | `LONG-002` | macOS/Catalyst 앱 | `⏸ 보류` | Android·iOS 안정화와 데스크톱 수요 확인 |
+| [x] | `LONG-002` | macOS/Catalyst 앱 후보 | `✅ 정식 Apple 범위로 승격` | 2026-07-24 사용자 결정으로 `IOS-013` 네이티브 macOS 작업에 이관. Catalyst/Designed for iPad는 최종 제품 경로로 사용하지 않음 |
 | [ ] | `LONG-003` | Space 타입·템플릿 고도화 | `⏸ 보류` | 가족 capability 안정화 후 연인/모임 요구사항 확정 |
 
 ## 11. 완료된 기반 요약
@@ -378,6 +294,17 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-24 | `IOS-008` | refresh 우선 세션 상태 머신 완료 | Android 기준 계약을 iPhone 앱 시작·포그라운드·Native API에 적용. access token 만료 시 refresh token을 먼저 교환하고 동시 갱신 요청을 하나로 합치며, 회전 refresh token을 저장한다. 네트워크·5xx·정상 응답 파싱 실패는 로컬 세션을 보존한 SwiftUI 재시도 상태로 처리하고, refresh 4xx 또는 복구 불가능한 저장값에서만 로그인으로 전환한다. API 401은 강제 refresh 후 한 번만 재요청하며 갱신 중 로그아웃·계정 변경 시 늦은 응답이 세션을 되살리지 못한다 | Swift 6 독립 시나리오 13/13(유효·만료 성공·일시 실패 보존·4xx 무효화·5xx/네트워크·동시 갱신·로그아웃 race·응답 정규화), iPhone 17 Pro simulator Debug build/install/launch, 복구 화면 light/dark·최대 접근성 글꼴 스크롤, generic iPhone arm64 Debug 무서명 build, plist·pbxproj lint·`git diff --check` 통과. 실제 iPhone 16 Pro OAuth·Face ID는 USB 재연결 후 회귀 |
+| 2026-07-24 | `IOS-008`, `IOS-012` | SwiftUI 로그인·생체인증 1차 교체 완료 | 기존 UIKit/WebView 화면을 부분 보정하지 않고 iPhone 핵심 경로 전체를 SwiftUI·Apple 표준 탐색/입력/피드백으로 교체하기로 확정. 첫 범위의 UIKit 로그인 UI를 SwiftUI 브랜드 hero·system material·prominent button·법적 링크로 교체하고, WebView 이후가 아닌 앱 시작/복귀 단계에서 동작하는 Face ID·Touch ID·기기 암호 gate를 구현. Capacitor Preferences 앱 잠금/범위/재잠금 설정과 기존 Google browser OAuth·세션 계약은 유지 | iPhone 17 Pro simulator Debug build/install/launch, 로그인 light/dark·접근성 대형 글꼴, 생체 gate light/dark Debug preview, 실제 LocalAuthentication 기기 암호 fallback 호출, generic iPhone arm64 Debug 무서명 build, plist·pbxproj lint·`git diff --check` 통과. iPhone 16 Pro는 현재 USB bus에서 사라져 CoreDevice `unavailable`; 케이블 재연결 뒤 자동 서명 install·Face ID·Google OAuth 복귀를 검증하고 `IOS-008` refresh 우선 세션으로 계속 |
+| 2026-07-24 | `IOS-007` | iPhone 16 Pro Personal Team Debug 설치·실행 통과 | 최초 잘못 선택한 `SJ iPhone`(iPhone 13 mini)은 빌드를 중단해 설치하지 않았고 실제 대상 `Edwin iPhone 16Pro`의 USB/Xcode 연결을 복구. 유료 Team이 필요한 Push·Associated Domains·Sign in with Apple 때문에 Personal Team 서명이 막히지 않도록 Debug/Release entitlement를 구성별로 분리 | iPhone 16 Pro(iOS 26.5.2) 고정 대상으로 `xcodebuild` 자동 서명 성공, `com.gleaum.app` 설치·launch 성공. Debug 서명에는 application/team identifier와 `get-task-allow`만 포함되고 유료 capability는 제외됨. Release 운영 entitlement는 보존했으며 유료 Team 검증은 최종 라이선스 단계 |
+| 2026-07-24 | `IOS-012`, `IOS-013` | Apple 장치 구현 순서 확정·iPhone 디자인 기반 검증 | Apple 구현 순서를 iPhone 완성 → iPad → macOS로 고정하고 iPad/macOS를 `IOS-013` 후순위로 전환. iPhone semantic color·spacing/radius·card·status badge·section header·5개 섹션 SF Symbols와 DEBUG 카탈로그를 구현 | iPhone 17 Pro iOS 26.4.1 무서명 Debug build 성공. 라이트·다크 카탈로그를 실제 시뮬레이터에서 확인하고 검증 환경변수 제거 후 기존 로그인 화면 복원 확인. 다음은 `IOS-008` refresh 우선 세션·인증 AppState |
+| 2026-07-24 | `IOS-003`, `IOS-004`, `IOS-006`~`IOS-013`, `LONG-002` | Apple 라이선스 순서·iPad/macOS 범위 재정의 | 유료 Apple Developer Program은 SwiftUI 화면·세션·공통 API·iPad/macOS 적응형 UI·시뮬레이터/로컬 Mac 검증을 모두 완료한 뒤 획득하기로 결정. iPad는 확대형 iPhone이 아니라 sidebar·list-detail·inspector·다열 dashboard를 사용하고, macOS는 공통 Swift Package를 공유하는 native SwiftUI target으로 정식 범위에 포함 | 저장소 감사에서 Firebase Messaging SDK/plist, APNs/FCM callback, Supabase Google browser OAuth, custom scheme, LocalAuthentication, EventKit, Associated Domains/AASA가 이미 존재함을 확인해 외부 준비에서 제외. Google native Sign-In SDK와 Apple 로그인 실행 코드는 없으며 macOS target은 비활성 상태. 다음 Apple 작업은 `IOS-012` shared package·디자인 시스템 골격이며 운영 Team·APNs·실기기·TestFlight/공증은 최종 라이선스 단계 |
+| 2026-07-23 | `IOS-008`~`IOS-012`, `PAR-002` | Android 기준 Apple 준비·Liquid Glass 디자인 교체 결정 | Android에서 확정한 시작 모션·refresh 우선 세션·생체 잠금·5탭·캐시·기능/권한/오류 계약을 Apple 이식 체크리스트로 정리. 기존 iOS 세션/API/OS 브리지 기반은 재사용하되 UIKit 고정 색상·수동 하단 바·커스텀 카드 디자인은 확장하지 않고 SwiftUI·Apple HIG로 교체한다. Liquid Glass는 앱 전체 장식이 아니라 탭·내비게이션·toolbar 등 기능 계층에만 적용 | 공식 Apple HIG·Materials·Liquid Glass·SwiftUI·Icon Composer 기준과 현재 iOS 15 타겟/Swift 5/AppDelegate modal 구조를 대조. `docs/28-apple-liquid-glass-design-plan.md`에 외부 준비, iOS 17+ 권장 baseline/iOS 26 enhancement, Figma semantic token↔SwiftUI 계약, 단계별 완료 기준을 등록. Android 마감 후 `IOS-012` 디자인 골격부터 구현 |
+| 2026-07-23 | `AND-010` | Android 설치 아이콘·시스템 스플래시 로고 안전영역 보정 | 기존 adaptive icon 전경 PNG가 108dp 캔버스 끝까지 차 있어 Samsung 스쿼클 마스크에서 상단·좌우가 잘리는 현상을 실기기 앱 서랍에서 확인. 설치 아이콘은 48dp 중앙 전경+네이비 배경, Android 12 시스템 스플래시는 288dp 캔버스 안 132dp 중앙 심볼로 분리하고 API 24~25 legacy 아이콘에도 동일 정책 적용 | `SM_F731N`에 최종 APK를 덮어 설치해 Play Console 아이콘과 나란히 비교. 로고 전체 외곽 노출·중앙 정렬·배경색 일치와 앱 시작 첫 프레임→BI 애니메이션 연결 확인. `testDebugUnitTest`·`lintDebug`·`assembleDebug`, `git diff --check` 통과 |
+| 2026-07-23 | `AND-010`, `IOS-008`, `IOS-009` | Android 브랜드 시작·세션 연속성·생체인증 앱 잠금 구현 | Android 12 시스템 로고와 같은 중심에서 로고가 확장되고 BI·태그라인·시작 상태가 순차 노출되는 네이티브 모션을 구현. Router를 저장 세션 확인→만료 token refresh→선택적 생체인증/기기 PIN→홈 또는 로그인 상태 머신으로 정리하고, 네트워크·5xx에서는 세션을 지우지 않는 재시도 화면을 제공. 네이티브 잠금 직후 WebView 이중 프롬프트는 15초 유예로 방지 | `SM_F731N`에서 0.35/0.9/1.55초 모션 단계, 로그아웃 로그인 화면, 복원 세션 생체 프롬프트, 강제 만료 access token 자동 갱신, 인증 취소 재시도 화면, 최종 APK 재설치 후 `RouterActivity`·생체인증/`PIN 사용`을 확인. `compileDebugKotlin`·`testDebugUnitTest`·`lintDebug`·`assembleDebug` 성공. Apple은 같은 세션 의미와 Face ID/Touch ID 후속을 등록했고 Android에는 오프라인·딥링크·캐시 무효화 회귀가 남음 |
+| 2026-07-23 | `AND-001`, `AND-011` | 맥북 debug Google 로그인·최초 홈 5개 탭 실기기 회귀 | 맥북 debug SHA-1/SHA-256를 Firebase에 등록하고 같은 SHA-1의 Android OAuth 클라이언트를 Google Cloud에 생성해 최신 `google-services.json`에 반영. 로그인 완료 전 account context 준비에 더해 Compose `NavigationSuiteScaffold`가 최초 4개 destination 슬롯을 유지하던 문제를 capability key 기반 subtree 재생성으로 수정 | Android debug assemble 성공. `SM_F731N`에서 실제 앱 로그아웃→Credential Manager 계정 선택→Google/Supabase 로그인→다른 메뉴 이동 전 최초 홈의 `홈·일정·공간·가계부·전체` 5개 확인. 5개 메뉴 왕복마다 5개 유지, 강제 종료·재시작 후 5개 유지, 인증 오류·FATAL EXCEPTION 0건. 사용자 취소와 release·Play App Signing 조합은 `AND-011` 잔여 |
+| 2026-07-23 | `AND-001`, `WEB-013` | 로그인 직후 가계부 탭 복구·공개 랜딩 Web 제품 홍보 제거 | 새 로그인 시 `SessionManager`가 이전 capability를 비운 직후 홈 셸이 fail-closed 4개 탭으로 먼저 렌더링되는 레이스를 확인. 로그인 성공 후 account context 준비를 기다린 뒤 메인으로 이동하도록 공통 선조회 진입점을 추가하고 cold start 라우터도 같은 경로로 통합. 공개 홈페이지에서는 `/login` CTA 3개와 Web 플랫폼 카드를 제거하고 Android 우선·Apple 후속 2플랫폼 안내로 전환 | Android `compileDebugKotlin`·unit test·lint·assemble 성공, debug APK 29MB 생성. `SM_F731N` 설치 앱과 MacBook APK 모두 debug 빌드지만 Mac별 자동 생성 debug 인증서가 달라 데이터 보존 설치가 차단됨. 사무실 debug keystore 복사 또는 테스트 앱 초기화 후 재로그인 회귀 필요. 랜딩 대상 ESLint·Next production build 55/55·루트 생성 HTML의 제거/대체 문구 검증 통과 |
+| 2026-07-23 | `PAR-001`, `PAR-002`, `WEB-006`~`WEB-012` | 제품 플랫폼 정책 전환 | PC Web·Mobile Web·Android 3플랫폼 기능 파리티를 종료하고 정식 제품 플랫폼을 Android와 Apple 두 가지로 재정의. Android를 최우선으로 마감한 뒤 Apple 네이티브 구현을 진행하며, Web은 마케팅·랜딩·법적 문서·인증/초대 callback·앱 미설치/구버전 fallback·공통 API/Cron·백오피스만 유지 | `PAR-001`과 Web 제품 기능 후속을 정책 종료 처리하고 `PAR-002` 네이티브 2플랫폼 싱크 보드 및 `WEB-012` 지원 표면 경계를 추가. 다음 구현은 `FAM-013`부터 Android 잔여 회귀 순서로 진행 |
 | 2026-07-23 | `AND-001`, `OPS-004` | Android 일정 등록 긴급 수정 완료 | 일정 생성 POST는 성공했지만 새 개인 일정은 `personalSpaceId`에 저장되고 목록·홈 API는 `activeSpaceId` 한 곳만 조회해 가족/공유 공간 사용자의 일정이 반영되지 않는 것처럼 보이는 원인을 실기기에서 재현. 홈·일정 조회를 개인 공간+활성 공유 공간으로 통합하고 Android 저장 응답 즉시 upsert, BFF ISO 시간 정규화, 생성 응답 권한 포함, 상세 서버 권한 재확인, API 오류 코드 Logcat 기록을 적용 | Next production build 55/55, Android debug assemble·`SM_F731N` 설치 통과. Production `dpl_EpauxB5tc4uQBKcUmp9XCj52yq8Z` READY·`www.gleaum.com` alias. 실기기에서 `QA_schedule_1746` 제목·날짜·시작·종료 입력→등록→목록·홈 노출→상세 `7월 23일 09:00~10:00`·수정 권한→삭제까지 통과하고 QA 데이터 제거 |
 | 2026-07-23 | `IOS-007` | iOS 1단계 코드 완료·외부 계정 대기 | Xcode 누락 구성요소 설치와 stale CoreSimulator 교체로 iOS 26.4/26.5 런타임을 복구. `App.entitlements`를 타겟에 연결해 Push·Associated Domains·Sign in with Apple을 구성하고, 미사용 카메라·사진·마이크·현재 위치·ATT·background fetch 선언을 제거. 빌드에서 누락되던 `PrivacyInfo.xcprivacy`를 Resources에 포함하고 실제 서비스 수집 범위를 보강. 알림 delegate의 실패하는 조건부 캐스팅도 정식 프로토콜 채택으로 수정 | plist 3종 lint, iPhone 17 Pro iOS 26.5 simulator Debug build/install/launch, Release iphoneOS 무서명 build와 번들 Privacy Manifest 확인 통과. 실제 서명은 Personal Team이 3개 capability를 지원하지 않아 프로비저닝 생성 단계에서 차단. 유료 Apple Developer Team 연결·App ID capability 활성화 후 실제 iPhone 검증 |
 | 2026-07-23 | `IOS-007`~`IOS-011` | iOS 재개 감사·실행 순서 확정 | iOS는 홈과 빠른 일정 등록만 네이티브이고 그 외 핵심 경로가 운영 WebView로 이동함을 확인. 기존 modal overlay 라우팅을 확장하지 않고 SwiftUI 단일 탭 셸·중앙 라우터를 먼저 구축한 뒤 Android 공통 API 계약으로 기능을 이식하기로 결정 | 최초 감사에서 CoreSimulator 버전 불일치를 발견했고, 같은 날 `IOS-007` 후속에서 Xcode 구성요소 설치와 stale service 교체로 해소했다. 상세 단계는 `docs/27-ios-resumption-readiness.md` |

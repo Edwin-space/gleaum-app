@@ -1,6 +1,6 @@
 # iOS 네이티브 전환 로드맵
 
-> 2026-07-23 재감사 결과와 실제 재개 순서는 `docs/27-ios-resumption-readiness.md`를 우선 기준으로 삼는다. 이 문서는 초기 네이티브 전환 배경과 1차 구현 기록을 보존한다.
+> 2026-07-24 재감사 결과와 실제 재개 순서는 `docs/27-ios-resumption-readiness.md`, iPhone·iPad·macOS 디자인/구조 기준은 `docs/28-apple-liquid-glass-design-plan.md`를 우선으로 삼는다. 이 문서는 초기 iOS 네이티브 전환 배경과 1차 구현 기록을 보존한다.
 
 > 기준일: 2026-06-18
 > 목적: 회원가입/로그인 외 iOS 네이티브 전환 대상을 정리하고, WebView와 SwiftUI 화면이 같은 데이터 계약을 쓰도록 한다.
@@ -14,7 +14,7 @@
 
 ## 전환 원칙
 
-- 전체 앱을 한 번에 SwiftUI로 재작성하지 않는다.
+- 기능 이식은 단계적으로 진행하되 새 제품 화면의 디자인은 기존 UIKit을 확장하지 않고 SwiftUI·Apple HIG 기준으로 교체한다.
 - 앱 품질에 직접 영향을 주는 첫 화면, 고빈도 입력, OS 권한, 보안, 딥링크부터 네이티브화한다.
 - Swift/iOS 화면은 Supabase를 직접 많이 조회하지 않고, Next.js Route Handler를 BFF처럼 사용한다.
 - DB 쿼리 로직은 `src/lib/db.ts`에 모으고, Route Handler는 인증/HTTP 입출력만 담당한다.

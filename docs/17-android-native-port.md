@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-07-14
 >
-> 목적: Android 앱을 단순 WebView 앱처럼 보이지 않게 단계적으로 네이티브화하되, 기존 Mobile Web UI를 임의 변경하지 않기 위한 기준 문서.
+> 목적: Android 앱을 WebView 중심 구조에서 Compose Material 3 네이티브 제품으로 전환하고, 공통 API·권한·정보 구조를 안정적으로 유지하기 위한 기준 문서.
 
 ---
 
@@ -10,15 +10,15 @@
 
 Android Native Port는 **기능과 정보 구조를 임의로 재설계하는 작업이 아니다.**
 
-Android Native Port는 현재 운영 중인 Mobile Web의 기능·문구·데이터 계약·정보 순서를 정답지로 삼되, Android UI는 공식 Jetpack Compose Material 3로 구현하는 작업이다.
+Android Native Port는 기존 Mobile Web에서 검증된 기능·문구·정보 순서를 참고하되, 공통 데이터 계약과 현재 제품 요구사항을 기준으로 공식 Jetpack Compose Material 3 UI를 구현하는 작업이다.
 
 ### 목표
 
-- 사용자는 WebView 일부를 쓰는 앱인지, Android Native 앱인지 구분하지 못해야 한다.
-- 화면의 정보 구조, 문구, 컴포넌트 순서와 행동 의미는 Mobile Web과 동일해야 한다.
+- 핵심 제품 화면은 WebView에 의존하지 않는 Android Native 앱이어야 한다.
+- 화면의 정보 구조와 행동 의미는 공통 코어 계약을 유지해야 한다.
 - 색상·타이포·Shape·Navigation은 `GleaumTheme`와 Material 3 공통 컴포넌트를 사용한다.
 - Android 특유의 네이티브 기능은 자연스럽게 붙이되, UI를 새로 디자인하지 않는다.
-- 전환하지 않은 화면은 기존 WebView fallback을 유지한다.
+- 전환하지 않은 핵심 화면은 Android 작업 큐에 남기고, WebView fallback은 명시된 보조 화면에만 유지한다.
 
 ### 비목표
 
@@ -34,13 +34,12 @@ Android Native Port는 현재 운영 중인 Mobile Web의 기능·문구·데이
 
 | 플랫폼 | 전략 |
 |---|---|
-| PC Web | 운영 기준 UI/기능 유지 |
-| Mobile Web | Android Native Port의 시각/흐름 기준 원본 |
-| Android App | Mobile Web UI를 정답지로 한 단계적 Native Port |
-| iOS App | 별도 네이티브 UX로 진행 가능 |
-| macOS | iOS 계열 네이티브 UX를 확장 |
+| PC Web | 제품 기능 신규 구현·파리티 대상에서 제외. 마케팅·지원 표면만 유지 |
+| Mobile Web | 과거 정보 구조를 참고할 수 있으나 신규 구현·파리티 대상에서 제외 |
+| Android App | 공통 계약과 Material 3를 기준으로 한 최우선 Native Port |
+| Apple App | Android 공통 데이터·권한 계약을 사용하는 SwiftUI/UIKit 네이티브 제품 |
 
-Android는 Web과 함께 움직인다. iOS/macOS는 별도 네이티브 제품군으로 발전할 수 있다.
+Android를 먼저 마감한 뒤 Apple 네이티브 구현을 진행한다. 기존 Mobile Web은 Android 포팅 당시의 정보 구조 참고 자료로만 사용하며 Android/Apple 변경을 Web 제품 기능에 후속 반영하지 않는다.
 
 ---
 
@@ -48,9 +47,9 @@ Android는 Web과 함께 움직인다. iOS/macOS는 별도 네이티브 제품�
 
 ### 반드시 지킬 것
 
-- Port 대상 화면의 Mobile Web 파일을 먼저 읽는다.
-- Android 구현 전 현재 Mobile Web의 화면 순서를 문서/체크리스트로 적는다.
-- Android Native 구현은 그 순서를 그대로 따른다.
+- 기존 Mobile Web 파일이 있으면 누락된 기능·문구·정보 구조를 확인하는 참고 자료로 읽는다.
+- Android 구현 전 현재 제품 요구사항과 공통 API 계약을 문서/체크리스트로 적는다.
+- Android Native 구현은 확정된 요구사항과 Material 3 정보 구조를 따른다.
 - 색상은 `DESIGN.md`와 Android `GleaumTheme.kt`의 Material ColorScheme 역할에 맞춘다.
 - 카드·칩·내비게이션은 `docs/22-android-material3-ui-audit.md`의 Material 3 역할 규칙을 우선한다.
 - Web과 Android가 같은 API/DB 정책을 사용하게 한다.
@@ -70,7 +69,7 @@ Android는 Web과 함께 움직인다. iOS/macOS는 별도 네이티브 제품�
 
 ### 권장 단계
 
-1. **Web UI Snapshot 작성**
+1. **기존 정보 구조 Snapshot 확인**
    - 대상 화면의 섹션 순서
    - 주요 컴포넌트
    - 버튼/탭/모달 동작
@@ -80,16 +79,16 @@ Android는 Web과 함께 움직인다. iOS/macOS는 별도 네이티브 제품�
    - Feature flag 또는 별도 Activity/Fragment로 준비
    - 공통 theme/scaffold/state/badge/adaptive content 사용
 
-3. **비교 검증**
-   - Mobile Web 화면과 Android Native 화면을 나란히 비교
-   - 차이가 있으면 Android를 Web에 맞춤
+3. **계약·정보 구조 검증**
+   - 기존 Mobile Web snapshot은 정보 누락 여부를 확인하는 참고 자료로만 사용
+   - 최종 UI 판정은 Android Material 3, 공통 API·권한 계약, 현재 제품 요구사항을 기준으로 수행
 
 4. **부분 활성화**
    - 내부 테스트 빌드에서만 활성
    - 로그인/복귀/뒤로가기/딥링크/푸시 탭 이동 회귀 테스트
 
-5. **기존 WebView fallback 유지**
-   - Native 화면 실패 시 WebView 경로로 열 수 있어야 함
+5. **제한된 WebView fallback 유지**
+   - 법적 원문·외부 인증·초대의 앱 미설치/구버전 등 사전에 정의된 보조 경로만 허용
 
 ### 현재 활성 상태
 
@@ -105,7 +104,7 @@ Android는 Web과 함께 움직인다. iOS/macOS는 별도 네이티브 제품�
 | 우선순위 | 화면/기능 | 이유 |
 |---|---|---|
 | P0 | 로그인/세션/딥링크/푸시/생체인증/캘린더 브리지 | 앱 기반 기능. UI 변경 없이 네이티브 안정성 확보 가능 |
-| P1 | 홈 | 앱 첫인상. 단, Mobile Web UI와 동일한 Native Port 필요 |
+| P1 | 홈 | 앱 첫인상. 공통 데이터 의미를 유지하는 Material 3 Native Port 필요 |
 | P1 | 일정 등록/수정 | 사용자 핵심 행동. Android 입력/날짜/알림 권한과 연결 필요 |
 | P1 | 가계부 등록/목록 | 돈 흐름 입력 안정성이 중요 |
 | P2 | 공간/초대/멤버 관리 | 데이터 경계와 역할 권한 검증 필요 |

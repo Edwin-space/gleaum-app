@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon foreground canvas: 108dp.
+  The brand symbol stays inside a 48dp center safe area so Samsung/Pixel
+  squircle, circle, and rounded-square masks never crop the stacked mark.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <size
+                android:width="108dp"
+                android:height="108dp" />
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <item
+        android:width="48dp"
+        android:height="48dp"
+        android:gravity="center">
+        <bitmap
+            android:gravity="fill"
+            android:src="@drawable/splash_icon" />
+    </item>
+</layer-list>

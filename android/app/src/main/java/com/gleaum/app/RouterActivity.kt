@@ -1,9 +1,18 @@
 package com.gleaum.app
 
 import android.content.Intent
+import android.content.Context
+import android.graphics.Color
+import android.hardware.biometrics.BiometricPrompt
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.os.CancellationSignal
+import android.view.View
+import android.view.WindowInsetsController
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.gleaum.app.databinding.ActivityStartGateBinding
 import org.json.JSONObject
 import java.net.URLDecoder
 
@@ -20,33 +29,169 @@ import java.net.URLDecoder
  */
 class RouterActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityStartGateBinding
+    private var biometricPromptOpen = false
+    private var oauthCallback = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.statusBarColor = Color.parseColor("#080B12")
+        window.navigationBarColor = Color.parseColor("#080B12")
+        binding = ActivityStartGateBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.setSystemBarsAppearance(
+                0,
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+            )
+        }
 
-        val isOAuthCallback = intent?.data?.let { uri ->
+        oauthCallback = intent?.data?.let { uri ->
             uri.scheme == "gleaum" && uri.host == "auth"
         } ?: false
 
-        if (isOAuthCallback) {
+        if (oauthCallback) {
             saveImplicitSession(intent?.data)
         }
 
         NativeFirebase.syncSession(this, "router_entry")
+        prepareStart()
+    }
 
-        if (SessionManager.hasValid(this)) {
-            Thread {
-                NativeStartupPrefetcher.start(applicationContext)
-                NativeStartupPrefetcher.awaitAccount()
-                if (NativeAccountContextStore.current(this) == null) {
-                    runCatching { NativeAccountContextStore.refresh(this) }
+    private fun prepareStart() {
+        showLoading()
+        Thread {
+            when (SessionManager.validateForLaunch(applicationContext)) {
+                SessionManager.Validation.VALID,
+                SessionManager.Validation.REFRESHED -> {
+                    NativeStartupPrefetcher.prepareAccount(applicationContext)
+                    (application as? GleaumApp)?.syncAdvertisingEligibility()
+                    runOnUiThread {
+                        if (
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+                            shouldUseStartupBiometric() &&
+                            !oauthCallback
+                        ) {
+                            showBiometricGate()
+                        } else {
+                            route(oauthCallback)
+                        }
+                    }
                 }
-                (application as? GleaumApp)?.syncAdvertisingEligibility()
-                runOnUiThread { route(isOAuthCallback) }
-            }.start()
-            return
+                SessionManager.Validation.INVALID -> runOnUiThread { route(oauthCallback) }
+                SessionManager.Validation.TEMPORARY_FAILURE -> runOnUiThread { showSessionRecovery() }
+            }
+        }.start()
+    }
+
+    private fun shouldUseStartupBiometric(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
+        val prefs = getSharedPreferences(CAPACITOR_PREFS_NAME, Context.MODE_PRIVATE)
+        if (prefs.getString(BIOMETRIC_LOCK_ENABLED_KEY, "false") != "true") return false
+        val scopes = prefs.getString(BIOMETRIC_LOCK_SCOPES_KEY, "[\"app\"]").orEmpty()
+        return runCatching {
+            val array = org.json.JSONArray(scopes)
+            (0 until array.length()).any { array.optString(it) == "app" }
+        }.getOrDefault(true)
+    }
+
+    private fun showLoading() {
+        binding.startGateTitle.setText(R.string.startup_preparing)
+        binding.startGateMessage.setText(R.string.startup_session_check)
+        binding.startGateProgress.visibility = View.VISIBLE
+        binding.startGatePrimary.visibility = View.GONE
+        binding.startGateSecondary.visibility = View.GONE
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun showBiometricGate() {
+        binding.startGateTitle.setText(R.string.startup_unlock_title)
+        binding.startGateMessage.setText(R.string.startup_unlock_message)
+        binding.startGateProgress.visibility = View.GONE
+        binding.startGatePrimary.apply {
+            setText(R.string.startup_unlock)
+            visibility = View.VISIBLE
+            isEnabled = true
+            setOnClickListener { requestBiometricUnlock() }
+        }
+        binding.startGateSecondary.apply {
+            setText(R.string.startup_login_again)
+            visibility = View.VISIBLE
+            setOnClickListener {
+                SessionManager.clear(this@RouterActivity)
+                route(false)
+            }
+        }
+        binding.startGateRoot.postDelayed({ requestBiometricUnlock() }, 220L)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun requestBiometricUnlock() {
+        if (biometricPromptOpen || isFinishing || isDestroyed) return
+        biometricPromptOpen = true
+
+        val builder = BiometricPrompt.Builder(this)
+            .setTitle(getString(R.string.startup_unlock))
+            .setSubtitle(getString(R.string.startup_unlock_subtitle))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            builder.setDeviceCredentialAllowed(true)
+        } else {
+            builder.setNegativeButton(getString(R.string.common_cancel), mainExecutor) { _, _ ->
+                biometricPromptOpen = false
+                showBiometricCancelled()
+            }
         }
 
-        route(isOAuthCallback)
+        builder.build().authenticate(
+            CancellationSignal(),
+            mainExecutor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
+                    biometricPromptOpen = false
+                    markBiometricUnlockedNow()
+                    route(oauthCallback)
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                    biometricPromptOpen = false
+                    showBiometricCancelled()
+                }
+            },
+        )
+    }
+
+    private fun showBiometricCancelled() {
+        if (isFinishing || isDestroyed) return
+        binding.startGateMessage.setText(R.string.startup_unlock_cancelled)
+        binding.startGatePrimary.isEnabled = true
+    }
+
+    private fun markBiometricUnlockedNow() {
+        getSharedPreferences(CAPACITOR_PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(BIOMETRIC_UNLOCKED_AT_KEY, System.currentTimeMillis().toString())
+            .apply()
+    }
+
+    private fun showSessionRecovery() {
+        binding.startGateTitle.setText(R.string.startup_network_title)
+        binding.startGateMessage.setText(R.string.startup_network_message)
+        binding.startGateProgress.visibility = View.GONE
+        binding.startGatePrimary.apply {
+            setText(R.string.startup_retry)
+            visibility = View.VISIBLE
+            isEnabled = true
+            setOnClickListener { prepareStart() }
+        }
+        binding.startGateSecondary.apply {
+            setText(R.string.startup_login_again)
+            visibility = View.VISIBLE
+            setOnClickListener {
+                SessionManager.clear(this@RouterActivity)
+                route(false)
+            }
+        }
     }
 
     private fun route(isOAuthCallback: Boolean) {
@@ -117,5 +262,12 @@ class RouterActivity : AppCompatActivity() {
         SessionManager.save(this, session.toString())
         NativeFirebase.syncSession(this, "oauth_callback")
         android.util.Log.d("GleaumRouter", "OAuth implicit 세션 저장 완료")
+    }
+
+    companion object {
+        private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
+        private const val BIOMETRIC_LOCK_ENABLED_KEY = "gleaum:biometric-lock-enabled"
+        private const val BIOMETRIC_LOCK_SCOPES_KEY = "gleaum:biometric-lock-scopes"
+        private const val BIOMETRIC_UNLOCKED_AT_KEY = "gleaum:biometric-unlocked-at"
     }
 }

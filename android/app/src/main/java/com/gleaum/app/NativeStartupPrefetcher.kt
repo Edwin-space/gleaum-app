@@ -66,6 +66,25 @@ object NativeStartupPrefetcher {
         accountReady.await(timeoutMs, TimeUnit.MILLISECONDS)
     }
 
+    /**
+     * Fresh login entry point.
+     *
+     * SessionManager intentionally clears the previous capability snapshot when
+     * the authenticated user changes. Do not route to the native shell until a
+     * new account context is available, otherwise the first navigation frame
+     * renders the fail-closed four-tab layout and only corrects after another
+     * Activity is opened.
+     */
+    fun prepareAccount(context: Context, timeoutMs: Long = 2500L): NativeAccountContext? {
+        val appContext = context.applicationContext
+        start(appContext)
+        awaitAccount(timeoutMs)
+        return NativeAccountContextStore.current(appContext)
+            ?: runCatching { NativeAccountContextStore.refresh(appContext) }
+                .onFailure { Log.w(TAG, "account context recovery failed", it) }
+                .getOrNull()
+    }
+
     fun reset() {
         started.set(false)
         accountReady = CountDownLatch(1)

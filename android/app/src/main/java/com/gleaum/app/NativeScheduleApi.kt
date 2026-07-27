@@ -163,8 +163,7 @@ object NativeScheduleApi {
     }
 
     private fun accessToken(context: Context): String {
-        val session = SessionManager.get(context) ?: throw IllegalStateException("session_required")
-        return JSONObject(session).optString("access_token").takeIf { it.isNotBlank() }
+        return SessionManager.accessToken(context)
             ?: throw IllegalStateException("session_required")
     }
 

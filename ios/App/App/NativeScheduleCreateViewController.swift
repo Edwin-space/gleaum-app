@@ -13,11 +13,13 @@ final class NativeScheduleCreateViewController: UIViewController {
     private let saveButton = UIButton(type: .system)
     private let errorLabel = UILabel()
 
-    private let bg = UIColor(red: 0.059, green: 0.090, blue: 0.165, alpha: 1)
-    private let surface = UIColor(red: 0.082, green: 0.118, blue: 0.200, alpha: 1)
-    private let text = UIColor.white
-    private let muted = UIColor(red: 0.800, green: 0.835, blue: 0.882, alpha: 1)
+    // Light theme (DESIGN.md 라이트 토큰 · Figma 04 Color 기준)
+    private let bg = UIColor(red: 0.960, green: 0.960, blue: 0.976, alpha: 1)       // Form bg #F5F5F9
+    private let surface = UIColor.white                                             // Surface #FFFFFF
+    private let text = UIColor(red: 0.102, green: 0.106, blue: 0.180, alpha: 1)      // Navy #1A1B2E
+    private let muted = UIColor(red: 0.431, green: 0.431, blue: 0.400, alpha: 1)     // Gray600 #6E6E66
     private let blue = UIColor(red: 0.000, green: 0.518, blue: 0.800, alpha: 1)
+    private let hairline = UIColor(red: 0.102, green: 0.106, blue: 0.180, alpha: 0.08)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,7 +27,7 @@ final class NativeScheduleCreateViewController: UIViewController {
         setupUI()
     }
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { .darkContent }
 
     private func setupUI() {
         let nav = UIView()
@@ -87,7 +89,7 @@ final class NativeScheduleCreateViewController: UIViewController {
             labeled("메모", memoField),
         ]))
 
-        errorLabel.textColor = UIColor(red: 0.961, green: 0.384, blue: 0.384, alpha: 1)
+        errorLabel.textColor = UIColor(red: 0.937, green: 0.267, blue: 0.267, alpha: 1) // #EF4444
         errorLabel.font = .systemFont(ofSize: 13, weight: .semibold)
         errorLabel.numberOfLines = 0
         errorLabel.isHidden = true
@@ -129,7 +131,7 @@ final class NativeScheduleCreateViewController: UIViewController {
         field.font = .systemFont(ofSize: 16, weight: .semibold)
         field.attributedPlaceholder = NSAttributedString(
             string: placeholder,
-            attributes: [.foregroundColor: UIColor(white: 1, alpha: 0.36)]
+            attributes: [.foregroundColor: UIColor(red: 0.557, green: 0.557, blue: 0.576, alpha: 1)]
         )
         field.borderStyle = .none
     }
@@ -142,6 +144,8 @@ final class NativeScheduleCreateViewController: UIViewController {
         card.isLayoutMarginsRelativeArrangement = true
         card.backgroundColor = surface
         card.layer.cornerRadius = 24
+        card.layer.borderWidth = 1
+        card.layer.borderColor = hairline.cgColor
         return card
     }
 

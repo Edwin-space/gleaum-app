@@ -129,10 +129,14 @@ export async function setBiometricRelockInterval(interval: BiometricRelockInterv
 }
 
 export async function shouldRequireBiometricUnlock(): Promise<boolean> {
+  const unlockedAt = await getBiometricUnlockedAt();
+  // Android의 네이티브 시작 게이트가 방금 인증한 뒤 WebView 보호
+  // 경로로 연결될 때 같은 프롬프트가 연속으로 뜨지 않게 한다.
+  if (unlockedAt && Date.now() - unlockedAt < 15_000) return false;
+
   const interval = await getBiometricRelockInterval();
   if (interval === 'always') return true;
 
-  const unlockedAt = await getBiometricUnlockedAt();
   if (!unlockedAt) return true;
 
   const minutes = interval === '5m' ? 5 : interval === '15m' ? 15 : 30;

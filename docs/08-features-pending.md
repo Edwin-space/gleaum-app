@@ -2,22 +2,22 @@
 
 > 최종 업데이트: 2026-07-23
 >
-> **작업 상태의 단일 기준은 `docs/24-project-work-tracker.md`다.** 이 문서는 기능별 상세 후보와 배경을 보관한다. 현재 우선순위는 공간 수명주기 운영 마감 → 공통 코어 계약 확정 → Android → PC Web → Mobile Web 순의 3플랫폼 핵심 기능 파리티 → 통합 회귀다. Remote Config, Google Play 출시 절차와 iOS는 후순위다.
+> **작업 상태의 단일 기준은 `docs/24-project-work-tracker.md`다.** 이 문서는 기능별 상세 후보와 배경을 보관한다. 현재 제품 플랫폼은 Android와 Apple 두 가지이며, 우선순위는 공통 코어 계약 → Android 구현·실기기·Google Play 마감 → Apple 구현·실기기·App Store 마감이다. Web은 마케팅·랜딩·법적 문서·인증/초대 callback·fallback·공통 API·Cron·백오피스만 유지한다.
 
 ## 지금 바로 남은 작업
 
 | 우선순위 | 작업 | 완료 기준 |
 |---|---|---|
-| 🔴 | 기존 공간 승격·삭제 운영 마감 | Preview/Production API 배포 후 Android/Web에서 가족 전환·안전 삭제·fallback을 실제 계정으로 검증 |
+| 🔴 | 기존 공간 승격·삭제 운영 마감 | Production 공통 API 기준 Android에서 가족 전환·안전 삭제·fallback을 실제 계정으로 검증 |
 | 🔴 | 자녀 선택 이메일·토큰 연결 운영 회귀 | 운영 DB·Web 배포 완료. 보호자·자녀 실계정으로 이메일 제한 없음/있음, 승인/거절, 링크 재사용 차단 확인 |
-| 🔴 | Android·PC Web·Mobile Web 3플랫폼 핵심 기능 파리티 | 공통 API·DB·권한 계약 확정 후 Android 기준 구현, PC Web, Mobile Web, 통합 회귀 순으로 마감 |
+| 🔴 | Android 핵심 기능 마감 | 자녀 연결·공간 수명주기·가계부·캘린더·캐시·접근성·로그인을 실기기에서 마감 |
+| 🔴 | Apple 네이티브 기능 동등화 | Android 마감 뒤 같은 공통 계약으로 인증·셸·일정·공간·가계부·알림·가족/자녀 구현 |
 | 🔴 | 알림 설정 발송 경계 | 사용자의 일정·가계부 알림 선택을 Cron/FCM이 실제로 준수하도록 서버에서 강제 |
 | 🟡 | 일정 첨부 완성 | 현재 로컬 미리보기를 Storage 업로드·일정 연결·삭제·RLS까지 완성 |
-| 🟡 | Web 설정·기능 노출 정합화 | PC/Mobile에서 네이티브 전용·보류·준비 중 기능의 문구와 진입 정책 통일 |
 | 🟡 | Android production build 기능 반영 | 위 공통 계약을 Compose에 연결하고 debug/release production build와 실기기 회귀 |
 | 🔴 | Android 네이티브 Google 외부 설정 | Firebase/Google Cloud에 debug·release·Play App Signing SHA-1 등록, 최신 `google-services.json` 반영, 계정 선택·취소·재로그인 실기기 확인 |
-| ⏸ | Remote Config 운영 안전장치 | 핵심 기능 파리티와 운영 회귀가 끝난 뒤 기존 초기화·백오피스 편집기를 실제 차단 계약에 연결 |
-| ⏸ | Google Play 출시·iOS | 현재 기능 안정화와 Web/API 운영 반영이 끝난 뒤 재개 |
+| ⏸ | Remote Config 운영 안전장치 | Android 핵심 기능 마감 뒤 네이티브 차단·최소 버전 계약으로 연결하고 Apple 후속 반영 |
+| ⏸ | Google Play·Apple 출시 | Android 기능 안정화 후 Google Play를 먼저 마감하고 Apple 구현·출시 진행 |
 
 ## 우선순위 기준
 
@@ -84,24 +84,24 @@
 
 ---
 
-## 🔴 기능 싱크 / 플랫폼 파리티
+## 🔴 Android·Apple 기능 동등화
 
 > 상세 기준표: `docs/15-feature-parity-matrix.md` 참조
 
-현재 글리움은 PC Web / Mobile Web / Android App / iOS 예정 앱이 하나의 제품으로 운영되어야 한다. UI 모양은 달라도 기능 상태, 진입 경로, 데이터 경계, 권한 정책은 동일한 의미를 가져야 한다.
+현재 글리움의 제품 플랫폼은 Android App과 Apple App이다. Android를 먼저 마감한 뒤 Apple에 같은 데이터 경계·권한·오류 의미를 이식한다. Web은 제품 기능 동등화 대상이 아니며 앱과 운영에 필요한 지원 표면만 유지한다.
 
 ### 우선 점검 대상
 
 | 우선순위 | 항목 | 내용 |
 |---|---|---|
-| 🔴 | 로그인/세션 복귀 | Android Google OAuth 후 앱 세션으로 정상 복귀하는지 배포 버전 회귀 테스트 |
-| 🔴 | 초대 링크/코드 | 웹 링크, Android App Link, 커스텀 스킴에서 같은 초대 코드가 유효하게 처리되는지 검증 |
+| 🔴 | 로그인/세션 복귀 | Android Credential Manager를 먼저 마감하고 Apple 로그인 상태 머신에 같은 세션 계약 적용 |
+| 🔴 | 초대 링크/코드 | Android App Link와 Apple Universal Link가 Web 초대 fallback을 거쳐도 같은 토큰·만료 계약을 유지하는지 검증 |
 | 🔴 | 개인/공간 데이터 경계 | `015_harden_private_schedule_rls.sql` Supabase 실행 후 회귀 테스트 |
-| 🟡 | 설정 항목 노출 | 테마, 생체인증, 알림, 캘린더, 홈 구성의 웹/앱 노출 정책 통일 |
-| 🟡 | 준비 중 기능 표시 | iOS 앱, 기기 캘린더, 지도 API, 이미지 첨부 문구/비활성 상태 통일 (애플·카카오 로그인은 2026-06-15 UI에서 제외) |
+| 🟡 | OS 기능 동등화 | 테마, 생체인증, 알림, 캘린더, 홈 구성의 Android/Apple 의미 통일 |
+| 🟡 | Web 지원 표면 | 마케팅·법적 문서·인증/초대 callback·fallback·API·Cron·백오피스만 유지 |
 | 🟡 | 운영/관리 경계 | 사용자 앱 `/admin/*`와 별도 백오피스 기능 역할 분리 |
 
-## 웹 서비스 잔여 과제
+## Web 지원 표면·공통 서버 잔여 과제
 
 ### 🔴 가족 공간 자녀 계정 후속 구현
 

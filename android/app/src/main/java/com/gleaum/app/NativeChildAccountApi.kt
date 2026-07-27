@@ -158,8 +158,7 @@ object NativeChildAccountApi {
         url: String,
         body: JSONObject? = null,
     ): JSONObject {
-        val session = SessionManager.get(context) ?: throw IllegalStateException("session_required")
-        val token = JSONObject(session).optString("access_token").takeIf { it.isNotBlank() }
+        val token = SessionManager.accessToken(context)
             ?: throw IllegalStateException("session_required")
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = method

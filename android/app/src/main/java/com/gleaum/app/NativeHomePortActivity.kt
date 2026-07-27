@@ -28,6 +28,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.key
 import com.kakao.adfit.ads.popup.AdFitPopupAd
 import com.kakao.adfit.ads.popup.AdFitPopupAdDialogFragment
 import com.kakao.adfit.ads.popup.AdFitPopupAdLoader
@@ -191,43 +192,51 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun renderComposeHome() {
         setContent {
             GleaumTheme {
-                GleaumScaffold(
-                    title = "gleaum",
-                    selectedDestination = GleaumDestination.HOME,
-                    onDestinationSelected = ::handleComposeDestination,
-                    onNotificationClick = { openWebPath("/notifications") },
-                    onFabClick = { openWebPath("/schedules/new") },
-                ) { innerPadding ->
-                    PullToRefreshBox(
-                        isRefreshing = loading && summary != null,
-                        onRefresh = {
-                            loading = true
-                            errorMessage = null
-                            render()
-                            loadHomeSummary(force = true)
-                        },
-                    ) {
-                        ComposeHomeScreen(
-                            innerPadding = innerPadding,
-                            summary = summary,
-                            loading = loading,
-                            errorMessage = errorMessage,
-                            selectedDateKey = selectedDateKey,
-                            onRetry = {
+                val canViewHouseholdBudget =
+                    summary?.account?.capabilities?.canViewHouseholdBudget
+                        ?: NativeAccountContextStore.capabilities(this@NativeHomePortActivity).canViewHouseholdBudget
+
+                // NavigationSuiteScaffold retains its initial destination slots.
+                // Recreate that subtree when the post-login capability changes.
+                key(canViewHouseholdBudget) {
+                    GleaumScaffold(
+                        title = "gleaum",
+                        selectedDestination = GleaumDestination.HOME,
+                        onDestinationSelected = ::handleComposeDestination,
+                        onNotificationClick = { openWebPath("/notifications") },
+                        onFabClick = { openWebPath("/schedules/new") },
+                    ) { innerPadding ->
+                        PullToRefreshBox(
+                            isRefreshing = loading && summary != null,
+                            onRefresh = {
                                 loading = true
                                 errorMessage = null
                                 render()
                                 loadHomeSummary(force = true)
                             },
-                            onSelectDate = { date ->
-                                selectedDateKey = date
-                                render()
-                            },
-                            onAddSchedule = { openWebPath("/schedules/new") },
-                            onOpenSchedule = { id -> openWebPath("/schedules/$id") },
-                            onOpenSchedules = { openWebPath("/schedules") },
-                            onOpenBudget = { openWebPath("/budget") },
-                        )
+                        ) {
+                            ComposeHomeScreen(
+                                innerPadding = innerPadding,
+                                summary = summary,
+                                loading = loading,
+                                errorMessage = errorMessage,
+                                selectedDateKey = selectedDateKey,
+                                onRetry = {
+                                    loading = true
+                                    errorMessage = null
+                                    render()
+                                    loadHomeSummary(force = true)
+                                },
+                                onSelectDate = { date ->
+                                    selectedDateKey = date
+                                    render()
+                                },
+                                onAddSchedule = { openWebPath("/schedules/new") },
+                                onOpenSchedule = { id -> openWebPath("/schedules/$id") },
+                                onOpenSchedules = { openWebPath("/schedules") },
+                                onOpenBudget = { openWebPath("/budget") },
+                            )
+                        }
                     }
                 }
             }

@@ -43,8 +43,7 @@
   gap: 34px;
 }
 
-.nav a,
-.textLink {
+.nav a {
   color: var(--landing-muted);
   font-size: 14px;
   font-weight: 700;
@@ -52,8 +51,7 @@
   transition: color 160ms ease;
 }
 
-.nav a:hover,
-.textLink:hover {
+.nav a:hover {
   color: var(--landing-ink);
 }
 
@@ -65,8 +63,7 @@
 }
 
 .headerCta,
-.primaryCta,
-.secondaryCta {
+.primaryCta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -87,16 +84,8 @@
   box-shadow: 0 12px 30px rgba(0, 132, 204, 0.22);
 }
 
-.secondaryCta {
-  color: var(--landing-ink);
-  border: 1px solid var(--landing-line);
-  background: var(--theme-surface-glass);
-  backdrop-filter: blur(16px);
-}
-
 .headerCta:hover,
-.primaryCta:hover,
-.secondaryCta:hover {
+.primaryCta:hover {
   transform: translateY(-2px);
 }
 
@@ -941,7 +930,7 @@
 
 .platformGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -1010,12 +999,6 @@
 
 .ctaSection p {
   color: rgba(255,255,255,0.63);
-}
-
-.ctaSection .secondaryCta {
-  color: white;
-  border-color: rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
 }
 
 .footer {
@@ -1098,10 +1081,6 @@
   .header {
     min-height: 68px;
     padding: 0 20px;
-  }
-
-  .textLink {
-    display: none;
   }
 
   .headerCta {
@@ -1279,8 +1258,7 @@
 
   .featureCard,
   .headerCta,
-  .primaryCta,
-  .secondaryCta {
+  .primaryCta {
     transition: none;
   }
 }

@@ -1,126 +1,104 @@
-# 15. 기능 싱크 매트릭스
+# 15. 네이티브 플랫폼 기능 동등화 매트릭스
 
-> 최종 업데이트: 2026-07-23
+> 최종 업데이트: 2026-07-24
 >
-> 목적: 현재 지원 플랫폼인 PC Web / Mobile Web / Android App 사이의 기능 상태와 노출 정책을 통일한다. 작업 상태·완료 판정의 단일 기준은 `docs/24-project-work-tracker.md`의 `PAR-001` 3플랫폼 싱크 보드다.
+> 목적: Android App과 Apple App(iPhone/iPad/macOS)의 기능·데이터·권한 의미를 통일하고 Web 유지 범위를 지원 표면으로 제한한다. 작업 상태와 완료 판정의 단일 기준은 `docs/24-project-work-tracker.md`의 `PAR-002`다.
 
 ---
 
-## 핵심 원칙
+## 제품 플랫폼 정책
 
-글리움의 기능 싱크는 모든 플랫폼이 네이티브 기능까지 100% 동일해야 한다는 뜻이 아니다.
-
-- **공통 기능**은 동일한 정책과 동일한 데이터 경계를 가져야 한다.
-- **플랫폼 전용 기능**은 해당 플랫폼에서만 동작해도 되지만, 다른 플랫폼에서는 숨기거나 `앱 전용`, `준비 중`, `지원 예정`으로 명확히 안내해야 한다.
-- **개인 데이터와 공간 데이터는 절대 섞이면 안 된다.** 개인 가계부/개인 일정은 개인 공간에만, 공유 공간 데이터는 해당 공유 공간에만 표시한다.
-- **PC Web / Mobile Web / Native App은 같은 제품이어야 한다.** UI 형태는 달라도 진입 경로, 권한, 기능 상태, 실패 메시지는 같은 의미를 가져야 한다.
-- 기본 구현 순서는 **공통 코어 계약 확정 → Android App → PC Web → Mobile Web → 3플랫폼 통합 회귀**다. Android를 기준 동작으로 삼지만 공통 데이터·권한 계약은 플랫폼에 종속시키지 않는다.
-
----
+- 정식 제품 플랫폼은 **Android App**과 **Apple App(iPhone/iPad/macOS)** 두 가지다.
+- 구현 우선순위는 **공통 코어 계약 → Android 구현·실기기·출시 마감 → Apple 구현·실기기·출시 마감**이다.
+- Android를 기준 동작으로 삼되 Apple 화면은 SwiftUI와 Apple 플랫폼 UX로 구현한다.
+- API·DB·RLS·capability·오류 코드는 두 앱이 공유하는 공통 코어 계약이다.
+- PC Web과 Mobile Web은 제품 기능 파리티 대상이 아니다. Android/Apple 기능을 Web에 맞추거나 Web 기능을 두 앱에 맞추는 작업을 진행하지 않는다.
 
 ## 플랫폼 구분
 
-| 플랫폼 | 의미 | 현재 상태 |
+| 구분 | 역할 | 운영 정책 |
 |---|---|---|
-| PC Web | 데스크톱 브라우저에서 사용하는 웹 | 현재 지원·운영 중 |
-| Mobile Web | 모바일 브라우저에서 사용하는 웹 | 현재 지원·운영 중 |
-| Android App | Compose Material 3 + Capacitor bridge/fallback Android 앱 | 현재 지원·Google Play 배포 이력 |
+| Android App | 최우선 제품 플랫폼 | Compose Material 3, 실기기·Play 출시까지 먼저 마감 |
+| Apple App | 두 번째 제품 플랫폼 | Android 공통 계약을 사용해 SwiftUI로 구현. iPhone 5탭, iPad 적응형, native macOS UX |
+| Web 지원 표면 | 앱과 운영을 지원하는 시스템 표면 | 마케팅·랜딩·법적 문서·인증/초대 callback·fallback·공통 API·Cron·백오피스만 유지 |
 
-iOS App은 기반 코드는 있지만 현재 지원 플랫폼·파리티 완료 조건에서 제외한다. Android/Web 기능과 정책이 확정된 뒤 별도 `IOS-*` 후순위로 재구현한다.
+## Web 유지 범위
 
----
+### 유지
 
-## 공통 기능 매트릭스
+- 루트 마케팅 랜딩, 기능 소개, Google Play/App Store 및 다운로드 안내
+- 이용약관, 개인정보처리방침, 계정 삭제 안내
+- OAuth·이메일 인증 callback, 비밀번호 재설정
+- 일반 공간·자녀 초대 랜딩과 앱 미설치·구버전 fallback
+- Android/Apple이 호출하는 Native Bearer API
+- 알림·정기 작업 Cron과 서버 검증
+- `admins.gleaum.com` 백오피스
+- 장애 대응을 위해 네이티브 앱에 미리 정의된 제한적 Web fallback
 
-| 기능 | PC Web | Mobile Web | Android App | 싱크 기준 |
+### 신규 구현하지 않음
+
+- 브라우저용 홈·일정·가계부·공간·알림·마이페이지 기능 추가
+- PC Web과 Mobile Web 간 기능·레이아웃 동등화
+- Android 또는 Apple 기능을 Web에 후속 구현
+- Desktop/Mobile Web 역할별·테마별·키보드/터치 전체 회귀
+- Web 전용 생체인증·기기 캘린더 등 네이티브 기능 대체 구현
+
+기존 로그인형 Web 화면은 즉시 삭제하지 않고 유지보수 모드로 둔다. 보안·개인정보·데이터 손실·인증/초대 장애만 수정하며 신규 제품 기능을 추가하지 않는다.
+
+## WebView와 브리지 허용 범위
+
+- 핵심 화면인 홈·일정·공간·가계부·알림·마이페이지·가족/자녀 관리는 Android/Apple 네이티브 화면이 소유한다.
+- WebView는 이용약관·개인정보처리방침 원문, 외부 인증 fallback, 앱 미설치·구버전 초대 fallback처럼 명시된 보조 화면에만 허용한다.
+- 네이티브 화면은 WebView cookie에 의존하지 않고 Bearer token으로 공통 API를 호출한다.
+- 새 Web fallback은 긴급 수정 가능성이 높고 개인정보 노출이 제한적인 비핵심 화면에만 추가한다.
+- WebView 사용 여부와 관계없이 권한과 데이터 변경은 API·DB에서 다시 검증한다.
+
+## Android → Apple 동등화 매트릭스
+
+| 기능 | 공통 코어 계약 | Android | Apple | Web 지원 표면 |
 |---|---|---|---|---|
-| Google 로그인 | 지원 | 지원 | Credential Manager 네이티브 코드 완료·서명 SHA 실기기 검증 대기 | 로그인 후 항상 앱/웹의 원래 세션으로 복귀해야 함 |
-| 로그아웃 | 지원 | 지원 | 지원 | 웹 세션 + 네이티브 세션 정리 정책 통일 |
-| 온보딩 | 지원 | 지원 | Compose 지원 | 신규 사용자는 개인화/보안 설정 흐름을 동일한 의미로 거쳐야 함 |
-| 홈 화면 구성 | 지원 | 지원 | Compose 지원 | 사용자 선호 기반 홈 구성 정책 통일 |
-| 테마 설정 | 지원 | 지원 | 지원 | `light/dark/system` 3모드 동일 적용 |
-| 개인 가계부 | 지원 | 지원 | Compose 지원 | 개인 공간 데이터만 사용. 공유 공간 지출 자동 혼입 금지 |
-| 공간 지출 | 지원 | 지원 | 지원 | 공유 공간 내부 전용. 개인 가계부 반영은 명시 액션으로만 처리 |
-| 개인 일정 | 지원 | 지원 | 지원 | 개인 공간/개인 visibility 데이터만 사용 |
-| 공간 일정 | 지원 | 지원 | Compose 지원 | 공간 멤버/역할 기준으로 생성·조회·수정 제한 |
-| 공간 초대 | 지원 | 지원 | 지원 | 초대 코드/링크 유효성 검증 및 재발급 정책 통일 |
-| 가족 공간 초대 | 후속 반영 | 후속 반영 | Compose 지원 | 공간 설정과 분리. `일반 가족 구성원`은 코드/링크, `자녀`는 보호자 확인·동의·일회성 초대 흐름 사용 |
-| 자녀 계정 연결 | 지원 | 지원 | WebView 경로 보존 지원 | 자녀 이메일은 선택 제한값. Google/이메일 검증 계정의 72시간 토큰 claim은 후보만 저장하고 보호자 승인 전 멤버십·연령 권한 생성 금지 |
-| 공간 멤버/권한 | 지원 | 지원 | Compose 지원 | 공간 지기/공간 운영자/공간 멤버 명칭 통일 |
-| 가족 관계 표시 | 후속 반영 | 후속 반영 | Compose 지원 | `space_members.role` 권한과 `family_role` 관계를 분리하고 가족 공간에서 관계를 주 배지로 표시 |
-| 알림 목록 | 지원 | 지원 | Compose 지원 | in-app 알림 조회 정책 통일 |
-| 푸시 알림 | 웹 FCM | 웹 FCM | 네이티브 FCM | 권한 요청 타이밍과 실패 안내 통일 |
-| 마이페이지 | 지원 | 지원 | Compose 전체 메뉴 지원 | 프로필, 설정, 계정 관리 항목 노출 정책 통일 |
-| 광고 | Web AdSense/자체 광고 | Web AdSense/자체 광고 | AdMob 기반 + Kakao AdFit SDK 팝업 | 광고 슬롯/플랫폼 타겟 정책 통일 |
+| 로그인·세션 | Supabase access/refresh token, capability, 만료·로그아웃 | Credential Manager 실기기 마감 | 기존 Google browser OAuth·이메일·Sign in with Apple 상태 머신 | callback·재설정·법적 문서 |
+| 홈·캐시 | 계정 모드, 개인 원장, 빈/오류, 새로고침 | 선조회·캐시·오프라인 회귀 | SwiftUI 셸 선조회·프로세스 캐시 | 없음 |
+| 일정 | 개인/공간 경계, 역할, 참여자, 알림 | 목록·상세·폼·역할별 회귀 | 목록·상세·폼 이식 | 초대/딥링크 fallback만 |
+| 공간 | 개인/공유 경계, 역할, 가족 전환, 안전 삭제 | 전환·삭제 실기기 회귀 | 공간 관리 이식 | 관련 Native API |
+| 가족·자녀 | 관계/권한 분리, OTP, 동의, claim, 최종 승인 | 보호자·자녀 2계정 회귀 | SwiftUI 보호자·자녀 흐름 | 초대 랜딩·인증 callback·법적 원문 |
+| 가계부 | 개인/공간 원장, 반복 항목, 쓰기 권한 | 쓰기·갱신 회귀 | 목록·등록·수정 이식 | 관련 Native API |
+| 알림 | 서버 opt-in, 목록, 읽음, 목적지 | FCM 수신/비수신·딥링크 | APNs/FCM·딥링크 | Cron·발송 서버 |
+| 캘린더 | 일정 ID·중복·동기화 의미 | Calendar Provider 회귀 | EventKit 구현 | 없음 |
+| 생체인증 | 잠금 설정 의미·세션 보호 | BiometricPrompt | LocalAuthentication | 없음 |
+| 광고 | 계정 capability·플랫폼 타겟 | AdMob·AdFit | Apple용 광고 구현 시 동일 제한 | 백오피스 캠페인 관리 |
 
----
+## 변경 영향 체크리스트
 
-## 플랫폼 전용 기능
+- [ ] 공통 API 요청·응답·오류 코드가 변경되는가?
+- [ ] DB·RLS·capability·개인/공간 데이터 경계가 변경되는가?
+- [ ] Android 구현·실기기·출시 영향은 무엇인가?
+- [ ] Android 완료 후 Apple 후속 항목을 등록했는가?
+- [ ] Web 지원 표면의 인증·초대·법적 문서·API·Cron·백오피스에 영향이 있는가?
+- [ ] Web 사용자 제품 기능을 실수로 신규 구현하거나 완료 조건에 포함하지 않았는가?
+- [ ] Android와 Apple의 권한·오류·딥링크 의미가 같은가?
 
-| 기능 | 적용 플랫폼 | 다른 플랫폼 노출 정책 | 현재 판단 |
-|---|---|---|---|
-| 생체인증 앱 잠금 | Android App, iOS App 예정 | Web에서는 숨김 또는 `앱 전용` 안내 | Android/iOS 네이티브 플러그인 기반 추가 완료. 웹 기능으로 오해시키면 안 됨 |
-| 기기 캘린더 연동 | Android App 지원, iOS 예정 | Web에서는 `Android 앱 우선 지원` 안내 | Android 30일 내보내기·자동 반영·선택 가져오기 완료. iOS EventKit은 후속 |
-| 앱 버전/스토어 업데이트 | Native App | Web에서는 숨김 | 앱 내부 마이페이지/설정에서만 노출하는 것이 적절 |
-| Universal Link / App Link | Native App + Web 라우트 | Web에서는 일반 링크로 동작 | 초대 링크, OAuth callback, logout callback은 회귀 테스트 필요 |
-| iOS 앱 다운로드 | iOS App | `/download`에서 `준비 중` 표시 | App Store 등록 전까지 동일 문구 유지 |
-| Apple 로그인 | iOS/Web 예정 | 준비 중이면 모든 화면에서 같은 상태 표시 | 현재 일부 설정/마이페이지 중심으로 보일 수 있어 점검 필요 |
+## 구현 순서
 
----
-
-## 현재 확인된 불일치/점검 대상
-
-| 우선순위 | 대상 | 파일 | 조치 |
-|---|---|---|---|
-| P0 | 로그인 후 복귀 | `src/components/NativeAppProvider.tsx`, Android `LoginActivity`, `RouterActivity`, `MainActivity` | Android Credential Manager → Google ID token → Supabase 세션 저장 구현. Firebase SHA 등록 후 실제 계정 선택·취소·재로그인 회귀 필요. iOS는 `IOS-*` 후순위에서 별도 검증 |
-| P0 | 개인/공간 데이터 경계 | `src/lib/db.ts`, `supabase/migrations/015_harden_private_schedule_rls.sql`, `tests/data-boundaries.test.ts` | 강화 SQL 실행·정책 확인 이력과 코드 접근 매트릭스 9/9 존재. Docker/로컬 Supabase 역할별 CRUD 통합 회귀는 `WEB-001` |
-| P0 | 공간 초대 링크/코드 | `src/app/invite/[code]`, `src/app/api/invite/info/route.ts`, `src/components/NativeAppProvider.tsx` | 링크/코드/앱링크/웹링크 모두 같은 초대 코드로 진입하는지 검증 필요 |
-| P1 | 가족 관계·초대 UX | Android `ComposeSpaceScreen`, `NativeSpaceActivity`, Web 공간 멤버/설정 화면 | Android는 관계/권한 분리와 초대/설정 분리 완료. PC/Mobile Web은 같은 API 계약과 정보 구조로 후속 반영하고 iOS는 Android 확정 동작을 기준으로 재구현 |
-| P1 | 자녀 계정 연결 | Android `NativeChildAccountActivity`, `ComposeChildAccountScreen`, 공통 `/api/spaces/children/*` | Android 보호자 관리·OTP·동의·초대·승인/거절·claim Compose 구현. Web은 기존 반응형 흐름 유지, iOS는 동일 Bearer API 계약으로 후속 구현 |
-| P1 | 기기 캘린더 설정 | `src/app/settings/calendar/page.tsx`, `src/lib/native-calendar.ts`, Android `NativeCalendarPlugin` | Android 내보내기·자동 반영·가져오기 완료. iOS EventKit 확장 필요 |
-| P1 | 생체인증 설정 노출 | `src/app/mypage/*`, `src/components/NativeBiometricGate.tsx` | Web에서는 앱 전용으로 오해되지 않게 숨김/안내 기준 필요 |
-| P1 | 광고 플랫폼 타겟 | `src/components/AdSlot.tsx`, Android AdFit/AdMob 코드, `backoffice/*` | 웹/Android 타겟과 AdFit 실패 fallback 실기기 검증 필요 |
-| 완료 | 관리자/백오피스 경계 | `backoffice/*`, `next.config.ts` | 공식 콘솔은 `admins.gleaum.com` 단일화, 메인 `/admin`은 리다이렉트 |
-| P2 | 지도 API 안내 | 일정 상세 화면 | 지도 미연동 상태 문구를 PC/Mobile 동일하게 정리 필요 |
-| P2 | 이미지 첨부 | 일정 생성/수정 화면 | UI만 있는 경우 모든 플랫폼에서 같은 `준비 중` 또는 비활성 처리 필요 |
-
----
-
-## 다음 구현 순서
-
-### 1단계 — P0 기능 회귀 안정화
-
-- Android 앱 Google 로그인 후 모바일 웹 로그인 화면으로 되돌아가지 않는지 실제 배포 버전 확인
-- 초대 링크 `https://gleaum.com/invite/{code}`가 웹/Android 앱에서 모두 유효한 코드로 진입하는지 확인
-- 운영 RLS 정책이 authenticated 역할과 개인/공간 경계를 유지하는지 재확인하고, 로컬 Supabase 준비 후 역할별 CRUD 자동 회귀 추가
-- 개인 가계부 입력이 공유 공간에 표시되지 않는지 확인
-- 공유 공간 지출이 개인 가계부에 자동 섞이지 않는지 확인
-- 공간 멤버/역할 표시가 실제 `space_members` 기준과 일치하는지 확인
-
-### 2단계 — 설정 기능 싱크
-
-- 마이페이지 설정 항목을 PC Web / Mobile Web / Android App 기준으로 재분류
-- Web 미지원 네이티브 기능은 숨기거나 `앱 전용`으로 표시
-- 준비 중 기능은 모든 화면에서 같은 문구와 같은 상태 배지를 사용
-- 캘린더, 생체인증, 알림, 테마, 홈 화면 구성의 진입 경로를 통일
-
-### 3단계 — 운영/관리 기능 경계 정리
-
-- 사용자 앱 `/admin/*`와 별도 `backoffice/*`의 역할 분리
-- 광고 관리가 사용자 앱에 남아야 하는지, 백오피스로 완전히 이관할지 결정
-- Firebase App Distribution/Remote Config는 백오피스 기준으로 관리하는 것을 기본값으로 둔다
-
-### 4단계 — 플랫폼별 출시 준비
-
-- Android: Play Console 정식 출시 전 R8, 데이터 안전, 스토어 등록정보, 릴리즈 SHA-1 확인
-- iOS: Apple Developer 유료 계정, Associated Domains, APNs, App Store URL 확보
-- Web: PWA/다운로드/앱 설치 안내 문구 정리
-
----
+1. Android 자녀 계정·가계부·공간 전환/삭제·캘린더·캐시·TalkBack·로그인 실기기 회귀
+2. Android 서명 AAB·Google Play 정책·스토어 자료 마감
+3. Apple shared Swift Package·Liquid Glass 디자인 시스템
+4. Apple 인증·세션 상태 머신
+5. iPhone 5탭 앱 셸·라우터·선조회
+6. 일정·공간·가계부·알림·전체 메뉴·가족/자녀 이식
+7. EventKit·생체인증과 iPhone simulator 로컬 QA
+8. iPad sidebar/list-detail·Stage Manager 적응형 UX와 simulator QA
+9. native macOS window·sidebar·menu·keyboard UX와 로컬 Mac QA
+10. 유료 Apple Developer Program 획득
+11. Apple 로그인·APNs·Universal Links·실기기·TestFlight·macOS 공증·App Store 출시
 
 ## 작업 시 주의
 
-- 기능 싱크 작업 중 DB 구조 변경이 필요하면 먼저 문서와 SQL 파일을 작성하고, 사용자에게 Supabase SQL Editor 실행 SQL을 명확히 안내한다.
-- 컴포넌트에서 Supabase 쿼리를 직접 작성하지 않는다. 모든 쿼리는 `src/lib/db.ts`를 통한다.
-- 기능을 숨기는 것과 삭제하는 것은 다르다. 준비 중 기능은 운영상 필요한 경우 숨기고, 사용자에게 약속해야 하는 경우에만 안내한다.
-- Native-only 기능은 웹에서 실패하는 버튼으로 두지 않는다.
+- Web 서버를 중단하는 정책이 아니다. 앱과 운영에 필요한 공통 API·인증·링크·문서·백오피스는 계속 운영한다.
+- 기존 Web 사용자 화면을 제거하려면 사용 현황·데이터 내보내기·공지·리다이렉트 정책을 별도 승인받아야 한다.
+- API·DB 변경은 Android 한 화면에 맞춘 임시 계약으로 만들지 않는다.
+- Apple은 Android UI를 복제하지 않고 같은 기능 의미만 유지한다.
+- iPad는 iPhone 화면을 확대하지 않고 창 폭에 따라 sidebar·list-detail·다열 배치를 사용한다.
+- macOS는 `Designed for iPad`가 아닌 native SwiftUI 앱으로 제공한다.
+- 유료 Apple 계정은 라이선스 비의존 구현과 로컬 검증을 모두 마친 뒤 획득한다.
+- Native-only 기능을 마케팅 Web에서 사용할 수 있는 기능처럼 안내하지 않는다.

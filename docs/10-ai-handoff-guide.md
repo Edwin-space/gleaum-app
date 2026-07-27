@@ -30,11 +30,11 @@
 13. **Space 용어 통일** — 코드/문서에서 "가족(family)" → "공간(space)" 용어 사용. DB 테이블명(`family_groups`)은 하위 호환으로 유지.
 14. **개인 공간 / 공유 공간 구분** — 모든 사용자는 `preferences.personalSpaceId`로 개인 공간을 식별. 공유 공간은 `sharedSpaceId`/현재 `family_group_id`로 분리 판단. 자세한 내용은 아래 "공간 아키텍처" 섹션 참고.
 15. **공간 데이터 경계 절대 보장** — 개인 일정/지출은 반드시 개인 공간에만 저장하고, 공유 공간 화면은 `visibility='private'` 데이터를 절대 표시하지 않음.
-16. **Android Native Port는 Web 정보 구조 + Material 3 구현** — Mobile Web의 기능·문구·정보 순서·데이터 계약을 유지하되, Android 컴포넌트는 공식 Compose Material 3와 `GleaumTheme` 공통 컴포넌트로 구현한다. 임의 그라데이션, iOS 스타일 복제, 화면별 별도 하단 네비게이션 금지. `docs/17-android-native-port.md`, `docs/19-android-material3-redesign-plan.md`, `docs/22-android-material3-ui-audit.md`를 먼저 읽는다.
+16. **제품 플랫폼은 Android와 Apple 두 가지** — 공통 API·DB·RLS·capability 계약을 확정한 뒤 Android를 먼저 구현·실기기·Google Play까지 마감하고 Apple(iPhone/iPad/macOS)을 SwiftUI로 후속 구현한다. Apple은 기존 UIKit 시각 디자인을 확장하지 않고 Human Interface Guidelines와 Liquid Glass 기반으로 교체하되 glass는 탐색·컨트롤 계층에만 사용한다. iPad는 적응형 sidebar/list-detail, macOS는 native SwiftUI window/menu/keyboard UX를 제공한다. 유료 Apple Developer Program은 라이선스 비의존 구현·시뮬레이터·로컬 Mac 검증을 모두 마친 뒤 획득한다. Web은 마케팅·랜딩·법적 문서·인증/초대 callback·fallback·공통 API/Cron·백오피스만 유지하며 제품 기능 파리티를 진행하지 않는다. `docs/15-feature-parity-matrix.md`, `docs/17-android-native-port.md`, `docs/27-ios-resumption-readiness.md`, `docs/28-apple-liquid-glass-design-plan.md`를 먼저 읽는다.
 
 ---
 
-## 현재 앱 상태 (2026-07-23 기준)
+## 현재 앱 상태 (2026-07-24 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
@@ -49,6 +49,8 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-24 | Apple 범위를 iPhone·iPad·macOS로 확장하고 유료 Apple Developer Program은 마지막 단계로 미뤘다. 저장소 재감사에서 Firebase Messaging SDK/plist, APNs/FCM callback, Supabase Google browser OAuth, custom scheme, LocalAuthentication, EventKit, Associated Domains/AASA는 이미 존재해 외부 준비에서 제외했다. Google native Sign-In SDK와 Apple 로그인 실행 코드는 없고 macOS target은 비활성 상태다. 먼저 SwiftUI shared package·iPhone 5탭·iPad sidebar/list-detail·native macOS window/menu/keyboard를 구현하고 simulator/로컬 Mac QA를 마친 뒤 운영 Team·Apple 로그인·APNs·Universal Links·TestFlight·공증을 처리한다. |
+| 2026-07-23 | 제품 플랫폼 정책을 Android와 Apple 두 가지로 재정의했다. 구현 우선순위는 공통 코어 → Android 기능·실기기·Google Play 마감 → Apple 인증·셸·핵심 기능·OS 연동·App Store다. PC/Mobile Web은 제품 기능 파리티에서 제외하며 마케팅·랜딩·법적 문서·인증/초대 callback·앱 미설치/구버전 fallback·공통 API/Cron·백오피스만 유지한다. 기존 로그인형 Web 화면은 즉시 삭제하지 않고 유지보수 모드로 두며, 신규 진입 홍보 제거와 안전한 리다이렉트는 사용 현황·공지·데이터 접근 정책을 확인한 뒤 `WEB-013`에서 처리한다. |
 | 2026-07-23 | iOS 재개 1단계 `IOS-007`을 진행했다. Xcode가 누락된 개발 구성요소를 설치하고 stale CoreSimulator 1051.54를 1051.55로 교체해 iOS 26.4/26.5 런타임을 복구했으며 iPhone 17 Pro iOS 26.5 시뮬레이터에서 Debug 빌드·설치·콜드 스타트를 확인했다. `App.entitlements`를 실제 타겟에 연결하고 Push Notifications·Associated Domains·Sign in with Apple capability를 구성했으며, Debug/Release APNs 환경을 분리했다. `PrivacyInfo.xcprivacy`가 기존에는 Resources에 없어 앱 번들에 포함되지 않던 결함을 수정하고 실제 수집 범위를 보강했다. 미사용 카메라·사진·마이크·현재 위치·ATT·background fetch 선언을 제거하고 캘린더·Face ID·remote notification만 유지했다. `AppDelegate`는 `UNUserNotificationCenterDelegate` 조건부 캐스팅이 항상 실패하던 문제를 정식 프로토콜 채택으로 수정했다. plist lint, simulator Debug, iphoneOS Release 무서명 build와 번들 manifest 검증은 통과했다. 현재 Xcode 계정은 Personal Development Team이라 Apple 로그인·Push·Associated Domains 프로비저닝을 만들 수 없으므로 유료 Apple Developer Program Team 연결 후 실제 iPhone 서명 빌드가 필요하다. |
 | 2026-07-23 | Android 자녀 연결을 Compose Material 3로 전환했다. `NativeChildAccountActivity`/API/화면에서 보호자 목록·등록·8자리 OTP·필수 동의·초대 공유·후보 승인/거절·자녀 claim을 처리하며, 자녀 API 8개는 Cookie·Bearer 인증을 공통 지원한다. Android Google 로그인은 Credential Manager 계정 선택 → Google ID token → Supabase ID token grant → 기존 `SessionManager` 저장 방식으로 교체했다. debug 서명 SHA-1은 `9D:9E:3B:4F:AB:1C:B3:46:C7:9F:D0:70:F4:A1:07:49:17:7B:64:E2`이므로 Firebase 등록과 최신 `google-services.json` 반영 뒤 실기기 검증해야 한다. 공개 `/`은 실제 Android 정보 구조를 익명화한 PC·태블릿·모바일 반응형 서비스 소개로 재구성했다. iOS 현황과 재개 순서는 `docs/27-ios-resumption-readiness.md`에 기록했다. |
 | 2026-07-23 | 자녀 계정 연결에서 Google 이메일 필수 입력을 제거하고 이름·생년월일·보호자 관계 중심 등록으로 변경했다. 이메일은 선택적인 계정 제한값이며 입력한 경우에만 해당 검증 이메일이 초대를 사용할 수 있다. 72시간 일회성 토큰은 OS 공유·문자·QR로 전달하고, Google/이메일 로그인 계정의 claim은 `candidate_email/provider/claimed_at`만 저장한다. 보호자 본인 claim은 차단되며 최종 승인 전 `space_members`·`account_age_profiles`를 생성하지 않는다. 보호자는 후보 계정을 확인해 승인 또는 거절·재초대할 수 있다. Android는 `NativePendingRouteStore`로 OAuth/이메일 로그인 전후 `/invite/child/[token]`을 보존한다. 운영 migration `20260723053050_child_invite_token_binding.sql`, commit `b124305`, Production `dpl_G4kCYuzC2Cjz79LAtbVUzXiKELJN`, TypeScript, 자녀 테스트 3/3, 데이터 경계 9/9, capability 4/4, Next/Android build, 공개 랜딩 200·신규 API 401·runtime error 0까지 확인했다. 보호자·자녀 실계정 회귀만 남는다. |
@@ -187,7 +189,7 @@ page.tsx (thin router — 상태 + 핸들러)
 | 이미지 첨부 실제 업로드 | 🟡 | UI만 있음, Supabase Storage 연동 필요 |
 | 기기 캘린더 연동 | 🟡 | Google Calendar/Drive 연동은 제거됨. 네이티브 기기 캘린더 방식으로 재설계 필요 |
 | 통계/분석 페이지 | 🟢 | 신규 개발 필요 |
-| 네이티브 앱 출시 마무리 | 🔴 | Android 내부 테스트 업로드 완료. iOS는 APNs/유료 Apple Developer/Associated Domains 재활성화 필요 |
+| 네이티브 앱 출시 마무리 | 🔴 | Android 내부 테스트 업로드 완료. Apple은 로컬 구현 완료 뒤 APNs·유료 Apple Developer·Associated Domains·App Store/macOS 배포 검증 필요 |
 | Space 타입 확장 | 🟢 | `family_groups.type` 컬럼 추가 → 개인/연인/가족/모임 구분 |
 | 일정 단건 외부 공유 | 🟢 | `/share/[scheduleId]` 공개 읽기 전용 뷰 |
 
@@ -232,14 +234,18 @@ Claude가 진행한 뒤 문서 반영이 누락되어 있던 핵심 변경입니
 ### 지출 카테고리 가이드
 - `docs/Guide/expenses.md`: 고정지출/변동지출 1~3차 카테고리 설계 초안
 
-## 🔴 기능 싱크 기준 (2026-06-02 추가)
+## 🔴 Android·Apple 기능 동등화 기준
 
 상세 기준표는 `docs/15-feature-parity-matrix.md`를 먼저 확인한다.
 
-- PC Web / Mobile Web / Android App / iOS 예정 앱은 같은 제품이어야 한다. UI 형태는 달라도 기능 상태, 진입 경로, 권한 정책, 데이터 경계는 동일한 의미를 가져야 한다.
-- 네이티브 전용 기능은 웹에서 억지로 동작시키지 않는다. 대신 숨기거나 `앱 전용`, `준비 중`, `지원 예정`으로 명확히 안내한다.
-- P0 회귀 대상은 로그인 세션 복귀, 초대 링크/코드, 개인/공간 데이터 경계, 공간 멤버/역할, 가계부/공간 지출 분리다.
-- 설정 항목은 테마, 생체인증, 알림, 캘린더, 홈 화면 구성의 노출 정책을 웹/앱 기준으로 통일해야 한다.
+- 제품 플랫폼은 Android App과 Apple App(iPhone/iPad/macOS)이다.
+- Android를 최우선으로 마감한 뒤 Apple에 같은 데이터·권한·오류 의미를 이식한다.
+- Web은 제품 플랫폼이 아니며 마케팅·법적 문서·인증/초대·fallback·공통 서버·백오피스만 유지한다.
+- 홈·일정·공간·가계부·알림·마이페이지·가족/자녀는 Android/Apple 네이티브 화면이 소유한다.
+- iPad는 iPhone 확대형이 아니라 적응형 sidebar/list-detail·다열 화면, macOS는 native SwiftUI window·menu·keyboard UX를 사용한다.
+- 유료 Apple 계정과 배포 capability 검증은 Apple의 모든 로컬 구현·검증 이후에만 재개한다.
+- WebView는 법적 원문·외부 인증 fallback·앱 미설치/구버전 초대 fallback처럼 명시된 보조 화면에만 허용한다.
+- P0 공통 회귀 대상은 로그인 세션, 초대 링크/토큰, 개인/공간 데이터 경계, 공간 멤버/역할, 가계부/공간 지출 분리다.
 - 기능 싱크 작업 후에는 이 문서와 `docs/15-feature-parity-matrix.md`를 같이 업데이트한다.
 
 ## 핵심 파일 맵
@@ -686,11 +692,11 @@ git add [파일들] && git commit -m "feat: ..." && git push origin main
 
 | 플랫폼 | 상태 | 비고 |
 |--------|------|------|
-| iOS | Capacitor 기반 및 WKWebView 최적화 완료 | 무료 Apple Developer 계정에서는 Associated Domains 불가. 유료 계정 전환 후 Push Notifications/Associated Domains 재활성화 필요 |
+| iPhone/iPad | Capacitor·UIKit 1차 기반, SwiftUI 교체 예정 | Firebase·Google browser OAuth·EventKit·생체·AASA 기반 존재. iPad 적응형 UI는 미구현 |
 | Android | Google Play 내부 테스트 업로드 완료 | 정식 출시 전 R8 매핑, 네이티브 디버그 기호, 데이터 안전/스토어 등록정보 필요 |
-| macOS | "Designed for iPad" 방식 | Mac Catalyst 대신 |
+| macOS | 현재 build target 없음 | shared Swift Package를 사용하는 native SwiftUI target으로 신규 구현 |
 
-- **기술**: Capacitor.js (`server.url = 'https://www.gleaum.com'` — 웹 래핑 방식)
+- **Apple 목표 기술**: SwiftUI shared packages + iOS/iPadOS·native macOS platform adapters. Capacitor/WebView는 법적 원문·외부 인증 fallback 등 지원 표면으로 축소
 - **DB**: 웹과 동일한 Supabase 공유, 별도 백엔드 불필요
 
 ---
