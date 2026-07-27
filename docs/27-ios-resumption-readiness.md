@@ -25,6 +25,14 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 - 2026-07-27 iPhone용 arm64 Development 서명 빌드는 성공했지만 대상 iPhone이 CoreDevice에서 `unavailable` 상태라 최신 인증 빌드 재설치·실행은 대기한다.
 - 현재도 완성형 SwiftUI 앱 셸은 아니다. Capacitor root 위에 UIKit modal을 올리는 구조는 다음 단계에서 SwiftUI 단일 root와 5탭 셸로 교체한다.
 
+### 2026-07-27 Apple 디자인·시작 흐름 감사
+
+- 현재 iOS 앱에는 SwiftUI 화면이 없고 로그인·홈·일정 등록이 모두 수동 UIKit으로 구성되어 있다. `NativeRouteCoordinator`는 `/`와 `/home`만 네이티브로 처리하며 일정·공간·가계부·전체 메뉴는 WebView로 전환한다.
+- `AppBridgeViewController`의 정적 브랜드 shield와 `LaunchScreen.storyboard`의 마케팅 문구 화면은 Apple의 launch screen 원칙 및 이후 첫 화면과 자연스럽게 이어지는 구조에 맞지 않는다.
+- iPad 시뮬레이터에서 휴대전화 폭 로그인 카드를 중앙에 둔 채 넓은 여백이 남아 adaptive Apple UI로 보기 어려웠다.
+- Android의 의미 있는 차이는 복잡한 로고 애니메이션이 아니라 브랜드 화면이 보이는 동안 account/home/space/schedule/budget/notification을 병렬 선조회하고 프로세스 캐시를 재사용한다는 점이다. iOS `NativeAPIClient`에는 홈 요약·일정 생성만 있고 공용 캐시가 없다.
+- 따라서 기존 인증·Keychain·세션·공통 API 계약은 보존하지만 UIKit 카드·custom floating tab·Capacitor modal 화면 확장은 중단한다. 상세 교체 기준은 `docs/28-ios-apple-design-realignment.md`를 따른다.
+
 ### 2026-07-23 실제 감사 기준
 
 - `Gleaum` 스킴의 서명 제외 iPhoneOS Debug 빌드는 성공했다.

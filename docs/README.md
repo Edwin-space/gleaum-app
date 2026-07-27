@@ -38,6 +38,7 @@
 | `21-family-child-account-foundation.md` | ⭐ 가족 공간 자녀 사전등록·보호자 동의·계정 연결·연령 전환 기준 | **최우선** |
 | `22-android-material3-ui-audit.md` | ⭐ Android Material 3 화면별 A등급 평가표·공통 UI 규칙·실기기 QA | **최우선** |
 | `27-ios-resumption-readiness.md` | iOS 중단 지점 감사·재개 준비·출시 차단 항목 | iOS 재개 시 필수 |
+| `28-ios-apple-design-realignment.md` | ⭐ iOS Apple 디자인 감사·SwiftUI 셸·시작 선조회 재정렬 기준 | **iOS UI 작업 전 필수** |
 | `23-external-work-checkpoint.md` | ⭐ 외장 저장장치 이동용 현재 작업 상태·복사·복구 체크리스트 | **최우선** |
 | `Guide/expenses.md` | 지출 카테고리 설계 가이드 (고정/변동, 1~3차 분류) | 참고 |
 
@@ -50,7 +51,7 @@
 - **현재 단계**: 웹 서비스 운영 + Android Google Play 배포 + Android Material 3 네이티브 고도화 + 가족/자녀 기반 후속 설계
 - **프로덕션 URL**: https://www.gleaum.com
 - **GitHub**: https://github.com/Edwin-space/gleaum-app
-- **최근 구현 체크포인트**: iOS Claude 혼합 WIP는 `codex/archive-claude-wip-20260727`에 보존. `codex/ios-rebuild-20260727`에서 Keychain 세션·refresh-first 상태·동적 테마와 Apple/Google/이메일 네이티브 인증 코드까지 재구축했다. 다음은 SwiftUI 단일 5탭 root다.
+- **최근 구현 체크포인트**: iOS Claude 혼합 WIP는 `codex/archive-claude-wip-20260727`에 보존. `codex/ios-rebuild-20260727`에서 Keychain 세션·refresh-first 상태와 Apple/Google/이메일 네이티브 인증 기반을 재구축했다. UI 감사 결과 UIKit 카드·Capacitor modal 확장을 중단하고 `28-ios-apple-design-realignment.md` 기준 SwiftUI root·브랜드 전환·선조회 캐시·시스템 5탭 순으로 재정렬한다.
 
 ---
 

@@ -1,0 +1,169 @@
+# iOS Apple 디자인·시작 아키텍처 재정렬
+
+> 기준일: 2026-07-27  
+> 대상: `IOS-009`, `IOS-010`, `IOS-011`  
+> 결론: 인증·세션 기반은 보존하고 현재 UIKit 표현 계층과 Capacitor 중심 화면 소유권은 교체한다.
+
+## 1. 감사 결론
+
+사용자의 문제 제기는 맞다. 현재 구현은 Apple 네이티브 앱의 완성 방향이 아니라 **Capacitor WebView를 루트로 유지한 채 UIKit 화면을 modal로 덧씌운 과도기 구조**다.
+
+### 확인된 P0 문제
+
+1. SwiftUI 화면이 없고 로그인·홈·일정 등록이 수동 UIKit이다.
+2. `/home` 외 일정·공간·가계부·전체 메뉴는 WebView로 이동한다.
+3. 앱의 실제 root는 Capacitor이며 네이티브 홈은 full-screen modal이다.
+4. 홈 하단 내비게이션은 시스템 `TabView`가 아닌 수동 floating pill이다.
+5. 시작 시 세션만 판정하고 홈·공간·일정·가계부·알림을 선조회하지 않는다.
+6. 공용 제품 데이터 캐시가 없어 홈이 다시 표시될 때 요약을 재요청한다.
+7. Launch Screen은 문구와 로고가 많은 정적 마케팅 화면이고, 이후에도 별도 정적 shield가 이어진다.
+
+### 확인된 P1 문제
+
+1. 카드·큰 corner radius·고정 point font 사용이 많아 Apple의 정보 계층과 Dynamic Type을 충분히 활용하지 못한다.
+2. iPad에서 휴대전화 폭 로그인 카드를 중앙에 두어 넓은 공간을 낭비한다.
+3. SF Symbols, system list/form/sheet, semantic background, sidebar/split navigation 사용이 부족하다.
+4. 테마 토큰은 일부 도입됐지만 UIKit 수동 값이 많아 다크 모드·대비·접근성 검증 비용이 크다.
+
+## 2. 보존과 폐기 경계
+
+### 보존
+
+- `SessionManager` Keychain 저장·refresh 정책
+- `AppSessionStateCoordinator`의 인증 상태 판정 계약
+- Apple·Google·이메일 인증 클라이언트와 Supabase 세션 정규화
+- Firebase/APNs/Universal Link 서비스 코드
+- 공통 API·RLS·capability·오류 코드
+- EventKit·생체인증 플러그인의 기능 계약
+
+### 확장 중단 후 교체
+
+- Capacitor root 위 full-screen modal 홈
+- `NativeHomeViewController`의 custom floating tab
+- 화면마다 반복되는 UIKit 카드·버튼·고정 font 구성
+- `LaunchScreen.storyboard`의 마케팅 문구
+- 정적 `launchShield`를 로딩 화면처럼 사용하는 흐름
+- 핵심 탭의 WebView 라우팅
+
+## 3. 목표 시작 흐름
+
+```text
+System Launch Screen
+  → SwiftUI BrandTransitionView
+      ├─ 세션/계정 판정
+      ├─ 홈 요약
+      ├─ 공간
+      ├─ 일정
+      ├─ 알림
+      └─ capability 확인 후 가계부
+  → SwiftUI App Root
+      ├─ signedOut
+      ├─ authenticated
+      ├─ offlineCached
+      └─ recoverableError
+```
+
+### Launch Screen
+
+- 첫 앱 화면과 같은 단순 배경·고정 로고 정도만 사용한다.
+- 마케팅 문구, 진행 상태, 임의 대기 시간은 넣지 않는다.
+- Launch Screen 자체에 애니메이션을 넣지 않는다.
+
+### 앱 내부 브랜드 전환
+
+- SwiftUI `BrandTransitionView`에서만 0.8~1.2초의 절제된 로고 opacity/scale/layer 전환을 사용한다.
+- Reduce Motion에서는 crossfade만 사용한다.
+- 데이터 선조회와 동시에 실행하며 애니메이션 때문에 3초를 강제로 기다리지 않는다.
+- 1.5~2초 안에 선조회가 끝나지 않으면 셸로 이동하고 각 화면은 skeleton 또는 캐시 데이터를 표시한다.
+
+## 4. 데이터 선조회·캐시 계약
+
+`StartupSnapshotStore`를 actor로 구현한다.
+
+1. 콜드 스타트에서 세션·계정 상태를 먼저 판정한다.
+2. `async let` 또는 task group으로 홈·공간·일정·알림을 병렬 조회한다.
+3. 계정 capability가 가계부를 허용할 때만 가계부를 조회한다.
+4. 성공한 도메인은 부분 실패와 무관하게 캐시에 저장한다.
+5. 탭 이동은 캐시를 우선 표시하고 매번 전체 재호출하지 않는다.
+6. 사용자의 pull-to-refresh와 foreground TTL 만료에서만 재검증한다.
+7. 생성·수정·삭제 후 관련 도메인만 선택 무효화하고 응답 데이터는 즉시 캐시에 반영한다.
+8. 오프라인에서는 마지막 snapshot을 표시하고 오래된 데이터임을 알린다.
+
+Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 참고 대상**이며 Kotlin 구조를 그대로 복제하지 않는다.
+
+## 5. Apple 네이티브 셸
+
+### iPhone
+
+- `TabView`: 홈, 일정, 공간, 가계부, 전체
+- 각 탭은 독립 `NavigationStack`과 navigation path를 소유한다.
+- 시스템 tab bar와 SF Symbols를 사용하고 custom floating pill을 사용하지 않는다.
+- 생성·필터·선택은 toolbar, sheet, menu, confirmation dialog의 플랫폼 패턴을 따른다.
+
+### iPad
+
+- 지원 OS와 정보 구조에 따라 `NavigationSplitView` 또는 sidebar-adaptable tab 구성을 사용한다.
+- 목록-상세 화면은 2열을 기본으로 하고 로그인은 고정 휴대전화 카드가 아닌 화면 폭에 맞는 안내/폼 구성을 사용한다.
+- Split View와 키보드 사용을 완료 조건에 포함한다.
+
+## 6. 시각 디자인 기준
+
+1. Android Material 3의 기능·정보 구조는 공유하지만 외형을 복제하지 않는다.
+2. 배경·텍스트·separator는 Apple semantic color를 우선한다.
+3. 브랜드 Green/Teal/Blue는 선택 상태·주요 액션·강조에 제한한다.
+4. SF Symbols를 기본 아이콘으로 사용하고 브랜드 로고만 전용 자산을 사용한다.
+5. `largeTitle`, `title`, `headline`, `body`, `caption`과 Dynamic Type을 사용한다.
+6. 모든 정보를 둥근 카드에 넣지 않는다. `List`, `Form`, `Section`, plain grouping과 여백을 우선한다.
+7. 커스텀 blur/gradient/glass는 정보 계층을 해치지 않는 제한된 브랜드 영역에서만 사용한다.
+8. 라이트·다크·시스템, increased contrast, Reduce Motion, VoiceOver를 같은 컴포넌트에서 검증한다.
+
+## 7. 구현 순서
+
+### 1단계 — root와 시작 흐름
+
+- [ ] SwiftUI `AppRootView`와 앱 상태 enum
+- [ ] `UIHostingController`를 사용자 화면의 단일 root로 전환
+- [ ] 단순 Launch Screen + 앱 내부 `BrandTransitionView`
+- [ ] `StartupSnapshotStore` 병렬 선조회·부분 실패·캐시
+- [ ] 기존 세션·인증 서비스를 SwiftUI environment에 연결
+
+### 2단계 — 시스템 내비게이션
+
+- [ ] 시스템 `TabView` 5탭
+- [ ] 탭별 `NavigationStack`
+- [ ] 중앙 Route와 Universal Link/푸시 목적지 연결
+- [ ] iPad `NavigationSplitView` 적응
+- [ ] Capacitor modal 홈·custom floating tab 제거
+
+### 3단계 — 핵심 화면
+
+- [ ] 홈
+- [ ] 일정 목록·상세·생성/수정
+- [ ] 공간 목록·상세·멤버·초대
+- [ ] 개인 가계부
+- [ ] 알림·전체 메뉴·설정
+
+### 4단계 — 품질 마감
+
+- [ ] iPhone 소형/표준/대형
+- [ ] iPad portrait/landscape/Split View
+- [ ] 라이트/다크/시스템
+- [ ] Dynamic Type/VoiceOver/Reduce Motion
+- [ ] 오프라인/부분 실패/세션 갱신/딥링크 회귀
+
+## 8. 다음 작업의 금지 사항
+
+- UIKit 카드 화면을 신규 핵심 기능에 추가하지 않는다.
+- Android Compose 화면을 iOS에 픽셀 단위로 복제하지 않는다.
+- 핵심 탭을 WebView fallback으로 완료 처리하지 않는다.
+- 시작 애니메이션을 데이터 로딩 완료를 숨기는 강제 대기로 사용하지 않는다.
+- root·modal·WebView가 동시에 내비게이션 상태를 소유하게 두지 않는다.
+
+## 9. 완료 판정
+
+- 앱 시작 후 WebView 또는 UIKit modal이 번쩍이지 않는다.
+- 브랜드 전환 중 선조회가 동작하고 홈 첫 표시가 캐시 또는 snapshot 기반이다.
+- 5개 탭이 시스템 내비게이션에서 상태를 유지한다.
+- 핵심 탭 사이 이동 시 같은 데이터를 매번 전체 재요청하지 않는다.
+- iPhone/iPad에서 Apple 플랫폼 패턴과 접근성 기준을 충족한다.
+- 법적 문서·명시된 외부 인증 fallback을 제외한 핵심 사용자 흐름이 WebView로 전환되지 않는다.
