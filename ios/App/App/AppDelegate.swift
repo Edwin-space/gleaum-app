@@ -151,10 +151,11 @@ class AppDelegate: UIResponder,
     func application(_ app: UIApplication, open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
 
-        // OAuth implicit 콜백: gleaum://auth/callback#access_token=...
+        // ASWebAuthenticationSession 외부 복귀나 이메일 확인 링크의 세션을
+        // 네이티브 인증과 동일한 형식으로 저장한다.
         if url.scheme == "gleaum", url.host == "auth",
-           let fragment = url.fragment, fragment.contains("access_token") {
-            handleOAuthCallback(fragment: fragment)
+           let sessionJSON = NativeAuthClient.sessionJSON(fromOAuthCallback: url) {
+            SessionManager.shared.saveSession(sessionJSON)
             dismissAuthPresentation()
         }
 
@@ -170,34 +171,6 @@ class AppDelegate: UIResponder,
         }
 
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
-    }
-
-    /// OAuth 콜백 fragment 파싱 → SessionManager 저장
-    private func handleOAuthCallback(fragment: String) {
-        var params: [String: String] = [:]
-        for pair in fragment.components(separatedBy: "&") {
-            let kv = pair.components(separatedBy: "=")
-            if kv.count == 2 {
-                params[kv[0]] = kv[1].removingPercentEncoding ?? kv[1]
-            }
-        }
-        guard let accessToken  = params["access_token"],
-              let refreshToken = params["refresh_token"] else { return }
-
-        let expiresIn = TimeInterval(params["expires_in"] ?? "3600") ?? 3600
-        let expiresAt = Date().timeIntervalSince1970 + expiresIn
-
-        let sessionDict: [String: Any] = [
-            "access_token":  accessToken,
-            "refresh_token": refreshToken,
-            "token_type":    params["token_type"] ?? "bearer",
-            "expires_in":    expiresIn,
-            "expires_at":    expiresAt,
-        ]
-        if let data = try? JSONSerialization.data(withJSONObject: sessionDict),
-           let json = String(data: data, encoding: .utf8) {
-            SessionManager.shared.saveSession(json)
-        }
     }
 
     /// OAuth 성공 후 SFSafariViewController / LoginViewController 스택을 자동으로 닫는다.

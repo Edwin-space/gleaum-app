@@ -18,6 +18,11 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 - 앱 시작 화면 판정은 `AppSessionStateCoordinator`가 단독 소유한다. 기존 `AppDelegate`와 앱 활성화 콜백이 각각 로그인/홈을 반복 호출하던 구조를 중단하는 첫 단계다.
 - 홈·일정 생성의 고정 다크 색은 `GleaumUIColor` 의미 토큰으로 교체했다. 시스템/라이트/다크 선택은 `GleaumThemeManager`가 모든 window에 적용한다.
 - 세션 시나리오 13/13, plist/pbx lint, Simulator Debug build를 통과했고 최신 Debug 앱을 iPhone 16 Pro에 설치·실행했다.
+- Apple 로그인은 `AuthenticationServices` nonce와 Supabase ID token grant, 이메일은 네이티브 로그인·가입·필수 동의, Google은 계정 선택이 가능한 `ASWebAuthenticationSession` 임시 세션으로 구현했다. 세 인증 결과는 동일한 Keychain 세션으로 저장한다.
+- 인앱 약관·개인정보 문서 뷰어를 추가하고 Web PWA 설치 배너가 겹치지 않도록 초기 스크립트에서 억제했다.
+- 인증 REST 계약 6/6, Google 계정 선택 화면 진입과 취소 복귀, 인앱 약관의 상·하단 닫기와 PWA 배너 미노출을 Simulator에서 확인했다.
+- 순수 GoogleSignIn SDK 마감에는 Google Cloud의 iOS OAuth Client ID와 reversed URL scheme이 필요하다. 현재 `GoogleService-Info.plist`에는 두 값이 없으며 Android용 Web Client ID만 존재한다.
+- 2026-07-27 iPhone용 arm64 Development 서명 빌드는 성공했지만 대상 iPhone이 CoreDevice에서 `unavailable` 상태라 최신 인증 빌드 재설치·실행은 대기한다.
 - 현재도 완성형 SwiftUI 앱 셸은 아니다. Capacitor root 위에 UIKit modal을 올리는 구조는 다음 단계에서 SwiftUI 단일 root와 5탭 셸로 교체한다.
 
 ### 2026-07-23 실제 감사 기준
@@ -54,7 +59,9 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 | 구간 | 현재 상태 | 판정 |
 |---|---|---|
 | 앱 셸·세션 | `SessionManager`, `NativeSessionPlugin`, `AppBridgeViewController` 존재 | 기반 재사용 |
-| Google 로그인 | `LoginViewController`가 `SFSafariViewController`로 Supabase OAuth 호출 | 네이티브 SDK 아님, 교체 필요 |
+| Apple 로그인 | `AuthenticationServices` nonce + Supabase ID token grant | 코드 완료, 유료 Team capability 실인증 대기 |
+| Google 로그인 | `ASWebAuthenticationSession` 임시 세션 + Supabase OAuth callback 자동 수신 | 계정 선택·취소 복귀 완료, GoogleSignIn SDK는 iOS OAuth 설정 대기 |
+| 이메일 로그인·가입 | 네이티브 폼 + Supabase password/signup + 필수 동의 + 인앱 약관 | 코드·시뮬레이터 완료, 실계정 메일 확인 회귀 필요 |
 | 네이티브 홈 | `NativeHomeViewController` + `/api/native/home-summary` | 1차 구현, 실제 계정 회귀 필요 |
 | 일정 등록 | `NativeScheduleCreateViewController` + `/api/native/schedules` | 빠른 등록만 존재 |
 | 일정·공간·가계부·전체 메뉴 | 네이티브 홈 하단에서 WebView 경로로 이동 | 네이티브 전환 필요 |
@@ -72,6 +79,7 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 - Push Notifications·Associated Domains·Sign in with Apple capability 활성화
 - APNs Auth Key를 Firebase에 연결하고 실기기 APNs/FCM 토큰 발급 확인
 - `gleaum.com`과 `www.gleaum.com`의 AASA 파일에 운영 Team ID + Bundle ID 반영
+- Google Cloud/Firebase에 Bundle ID `com.gleaum.app`용 iOS OAuth Client ID 생성, `GoogleService-Info.plist`의 `CLIENT_ID`·`REVERSED_CLIENT_ID` 반영
 - App Store Connect 앱, 테스트 계정, 개인정보·연령등급·심사 메모 준비
 
 ## 5. 필수 선행 수정
@@ -125,14 +133,16 @@ iOS는 **로그인·세션 브리지, 네이티브 홈, 일정 빠른 등록의 
 
 일반 Debug 실기기 개발은 capability 없는 `App.Debug.entitlements`로 계속할 수 있다. Release와 APNs·Universal Link·Apple 로그인 실기기 검증의 차단 해제 조건은 Xcode의 Apple ID를 유료 Apple Developer Program Team에 연결하고, `com.gleaum.app` App ID에 Sign in with Apple·Push Notifications·Associated Domains를 활성화하는 것이다.
 
+Google 인증은 현재 앱 이탈 없이 동작하는 시스템 인증 세션을 사용하며 매 요청에서 계정 선택을 보장한다. App Store 출시 전 순수 GoogleSignIn SDK로 마감하려면 iOS OAuth Client ID와 reversed URL scheme을 먼저 확보한다. 외부 설정 전에는 현재 구현을 제거하거나 임의 Client ID를 넣지 않는다.
+
 ### Phase 1 — 인증·세션·앱 셸
 
 - [ ] SwiftUI 루트 앱 셸, 5개 탭, 탭별 `NavigationStack` 구성
 - [x] Keychain 세션 저장·기존 UserDefaults 이전·만료 refresh·로그아웃 경합 차단
 - [x] 앱 시작 세션 상태 판정 단일화
-- [ ] Sign in with Apple 구현
+- [x] Sign in with Apple 코드 구현
 - [ ] Google Sign-In 네이티브 SDK 구현과 계정 선택 보장
-- [ ] 네이티브 이메일 로그인·가입·약관 동의 구현
+- [x] 네이티브 이메일 로그인·가입·약관 동의 구현
 - [ ] Universal Link·custom scheme·푸시 목적지의 단일 Route 계약 구현
 - [ ] 스플래시 선조회·캐시·수동 새로고침 정책 적용
 

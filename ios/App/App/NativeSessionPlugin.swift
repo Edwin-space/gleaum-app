@@ -34,7 +34,10 @@ public class NativeSessionPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("session parameter required")
             return
         }
-        SessionManager.shared.saveSession(sessionJson)
+        guard SessionManager.shared.saveSession(sessionJson) else {
+            call.reject("invalid or unsaved session")
+            return
+        }
         call.resolve()
     }
 

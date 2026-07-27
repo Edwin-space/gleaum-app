@@ -32,6 +32,9 @@
 		E822C31F2FCD79040032518A /* GleaumTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C31E2FCD79040032518A /* GleaumTheme.swift */; };
 		E822C3212FCD79040032518A /* AppSessionStateCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3202FCD79040032518A /* AppSessionStateCoordinator.swift */; };
 		E822C3232FCD79040032518A /* SessionRecoveryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3222FCD79040032518A /* SessionRecoveryViewController.swift */; };
+		E822C3252FCD79040032518A /* NativeAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3242FCD79040032518A /* NativeAuthClient.swift */; };
+		E822C3272FCD79040032518A /* NativeAuthenticationCoordinators.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3262FCD79040032518A /* NativeAuthenticationCoordinators.swift */; };
+		E822C3292FCD79040032518A /* LegalDocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3282FCD79040032518A /* LegalDocumentViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +67,9 @@
 		E822C31E2FCD79040032518A /* GleaumTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GleaumTheme.swift; sourceTree = "<group>"; };
 		E822C3202FCD79040032518A /* AppSessionStateCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionStateCoordinator.swift; sourceTree = "<group>"; };
 		E822C3222FCD79040032518A /* SessionRecoveryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecoveryViewController.swift; sourceTree = "<group>"; };
+		E822C3242FCD79040032518A /* NativeAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAuthClient.swift; sourceTree = "<group>"; };
+		E822C3262FCD79040032518A /* NativeAuthenticationCoordinators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAuthenticationCoordinators.swift; sourceTree = "<group>"; };
+		E822C3282FCD79040032518A /* LegalDocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +118,9 @@
 				E822C31E2FCD79040032518A /* GleaumTheme.swift */,
 				E822C3202FCD79040032518A /* AppSessionStateCoordinator.swift */,
 				E822C3222FCD79040032518A /* SessionRecoveryViewController.swift */,
+				E822C3242FCD79040032518A /* NativeAuthClient.swift */,
+				E822C3262FCD79040032518A /* NativeAuthenticationCoordinators.swift */,
+				E822C3282FCD79040032518A /* LegalDocumentViewController.swift */,
 				E822C3082FCD79040032518A /* SessionManager.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -238,6 +247,9 @@
 				E822C31F2FCD79040032518A /* GleaumTheme.swift in Sources */,
 				E822C3212FCD79040032518A /* AppSessionStateCoordinator.swift in Sources */,
 				E822C3232FCD79040032518A /* SessionRecoveryViewController.swift in Sources */,
+				E822C3252FCD79040032518A /* NativeAuthClient.swift in Sources */,
+				E822C3272FCD79040032518A /* NativeAuthenticationCoordinators.swift in Sources */,
+				E822C3292FCD79040032518A /* LegalDocumentViewController.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

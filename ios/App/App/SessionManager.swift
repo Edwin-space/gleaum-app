@@ -154,7 +154,7 @@ enum SessionPayload {
         return nonEmptyString(json["refresh_token"])
     }
 
-    static func normalizedRefreshJSON(from data: Data, now: Date) -> String? {
+    static func normalizedSessionJSON(from data: Data, now: Date) -> String? {
         guard var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               nonEmptyString(json["access_token"]) != nil,
               nonEmptyString(json["refresh_token"]) != nil else {
@@ -176,6 +176,10 @@ enum SessionPayload {
             return nil
         }
         return String(data: normalized, encoding: .utf8)
+    }
+
+    static func normalizedRefreshJSON(from data: Data, now: Date) -> String? {
+        normalizedSessionJSON(from: data, now: now)
     }
 
     private static func dictionary(from raw: String) -> [String: Any]? {
@@ -246,13 +250,15 @@ final class SessionManager: @unchecked Sendable {
         }
     }
 
-    func saveSession(_ json: String) {
+    @discardableResult
+    func saveSession(_ json: String) -> Bool {
         guard SessionPayload.accessToken(from: json) != nil,
               SessionPayload.refreshToken(from: json) != nil,
               store.save(json) else {
-            return
+            return false
         }
         postOnMain(.gleaumSessionSaved)
+        return true
     }
 
     func getSession() -> String? {
