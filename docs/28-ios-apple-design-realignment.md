@@ -14,6 +14,7 @@
 - 현재 제품 우선순위는 iPhone이다. iPad·Split View와 Android 태블릿·폴더블은 휴대전화 기능 마감 뒤 재개한다.
 - 네이티브 로그인은 Apple·Google·기존 이메일 로그인만 제공하며 별도 회원가입 UI를 두지 않는다. Apple 공식 시스템 버튼과 Google 공식 G 자산/버튼 규격, Dynamic Type, 공식 BI를 적용했다. 정적 Launch Screen·브랜드 전환·로그인의 로고/BI 규격과 중앙 축을 통일하고 인증 액션은 하단 엄지 접근 영역에 배치했다. 신규 소셜 사용자는 인증 후 네이티브 온보딩으로 분기한다.
 - 일정 탭은 WebView 폴백을 제거했다. 시스템 `List`·검색·유형/기간 필터, 상세, `Form` 기반 생성/수정, 상태 변경, 삭제 확인과 시작 snapshot 캐시를 연결했다.
+- 공간 탭은 WebView 폴백을 제거했다. 시스템 `List`·toolbar·menu·sheet·confirmation dialog로 개인/공유/가족 공간 전환, 다가오는 일정, 소식, 멤버, 초대, 공간 생성·참여·설정을 연결했다. 개인 공간은 커뮤니티·초대·관리 액션을 노출하지 않으며 공유 공간 역할과 가족 관계 표시값을 분리한다.
 
 ## 1. 감사 결론
 
@@ -142,7 +143,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 ### 2단계 — 시스템 내비게이션
 
 - [x] 시스템 `TabView` 5탭
-- [ ] 탭별 `NavigationStack`
+- [x] 홈·일정·공간 탭 `NavigationStack` (가계부·전체는 각 네이티브 전환 시 완료)
 - [ ] 중앙 Route와 Universal Link/푸시 목적지 연결
 - [ ] iPad `NavigationSplitView` 적응 — 후순위
 - [x] Capacitor modal 홈·custom floating tab을 실제 앱 root에서 제거
@@ -152,7 +153,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - [x] 홈 1차 — snapshot 요약·오늘 일정·가계부 요약·새 일정 sheet·pull-to-refresh
 - [x] 신규 사용자 온보딩 1차 — 이름/표시 방식·중심 기능·홈 구성·알림, 프로필 완료 여부 기반 분기
 - [x] 일정 목록·상세·생성/수정
-- [ ] 공간 목록·상세·멤버·초대
+- [x] 공간 목록·전환·상세·일정·소식·멤버·초대·설정 1차
 - [ ] 개인 가계부
 - [ ] 알림·전체 메뉴·설정
 
@@ -160,8 +161,8 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 - [ ] iPhone 소형/표준/대형
 - [ ] iPad portrait/landscape/Split View
-- [ ] 라이트/다크/시스템
-- [ ] Dynamic Type/VoiceOver/Reduce Motion
+- [ ] 라이트/다크/시스템 — 일정·공간 화면별 통과, 나머지 핵심 화면 대기
+- [ ] Dynamic Type/VoiceOver/Reduce Motion — 일정·공간 Dynamic Type/VoiceOver 구조 통과, 전체 회귀 대기
 - [ ] 오프라인/부분 실패/세션 갱신/딥링크 회귀
 
 ## 8. 다음 작업의 금지 사항

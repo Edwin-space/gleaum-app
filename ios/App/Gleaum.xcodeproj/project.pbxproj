@@ -41,6 +41,9 @@
 		E822C3312FCD79040032518A /* IOSHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3302FCD79040032518A /* IOSHomeView.swift */; };
 		E822C3412FCD79040032518A /* IOSOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3402FCD79040032518A /* IOSOnboardingView.swift */; };
 		E822C3432FCD79040032518A /* IOSScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3422FCD79040032518A /* IOSScheduleView.swift */; };
+		E822C3452FCD79040032518A /* IOSSpaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3442FCD79040032518A /* IOSSpaceView.swift */; };
+		E822C3472FCD79040032518A /* IOSSpaceSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3462FCD79040032518A /* IOSSpaceSheets.swift */; };
+		E822C3492FCD79040032518A /* IOSSpaceComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3482FCD79040032518A /* IOSSpaceComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +85,9 @@
 		E822C3302FCD79040032518A /* IOSHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHomeView.swift; sourceTree = "<group>"; };
 		E822C3402FCD79040032518A /* IOSOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSOnboardingView.swift; sourceTree = "<group>"; };
 		E822C3422FCD79040032518A /* IOSScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSScheduleView.swift; sourceTree = "<group>"; };
+		E822C3442FCD79040032518A /* IOSSpaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSpaceView.swift; sourceTree = "<group>"; };
+		E822C3462FCD79040032518A /* IOSSpaceSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSpaceSheets.swift; sourceTree = "<group>"; };
+		E822C3482FCD79040032518A /* IOSSpaceComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSpaceComponents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +128,9 @@
 				E822C3302FCD79040032518A /* IOSHomeView.swift */,
 				E822C3402FCD79040032518A /* IOSOnboardingView.swift */,
 				E822C3422FCD79040032518A /* IOSScheduleView.swift */,
+				E822C3442FCD79040032518A /* IOSSpaceView.swift */,
+				E822C3462FCD79040032518A /* IOSSpaceSheets.swift */,
+				E822C3482FCD79040032518A /* IOSSpaceComponents.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -274,6 +283,9 @@
 				E822C3312FCD79040032518A /* IOSHomeView.swift in Sources */,
 				E822C3412FCD79040032518A /* IOSOnboardingView.swift in Sources */,
 				E822C3432FCD79040032518A /* IOSScheduleView.swift in Sources */,
+				E822C3452FCD79040032518A /* IOSSpaceView.swift in Sources */,
+				E822C3472FCD79040032518A /* IOSSpaceSheets.swift in Sources */,
+				E822C3492FCD79040032518A /* IOSSpaceComponents.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

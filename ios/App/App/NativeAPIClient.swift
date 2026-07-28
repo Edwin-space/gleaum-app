@@ -82,6 +82,126 @@ final class NativeAPIClient: @unchecked Sendable {
         )
     }
 
+    func fetchSpaceSummary() async throws -> NativeSpaceSummary {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/spaces/summary",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeSpaceSummary.self, from: data)
+    }
+
+    func createSpace(name: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces",
+            method: "POST",
+            payload: NativeSpaceNameRequest(name: name)
+        )
+    }
+
+    func joinSpace(code: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/join",
+            method: "POST",
+            payload: NativeSpaceJoinRequest(code: code)
+        )
+    }
+
+    func activateSpace(id: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(id)/activate",
+            method: "POST"
+        )
+    }
+
+    func updateSpaceName(id: String, name: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(id)",
+            method: "PATCH",
+            payload: NativeSpaceNameRequest(name: name)
+        )
+    }
+
+    func regenerateInviteCode(spaceId: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(spaceId)/invite-code",
+            method: "POST"
+        )
+    }
+
+    func createSpacePost(spaceId: String, content: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(spaceId)/posts",
+            method: "POST",
+            payload: NativeSpacePostRequest(content: content)
+        )
+    }
+
+    func updateSpaceMemberRole(
+        spaceId: String,
+        userId: String,
+        role: String
+    ) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(spaceId)/members/\(userId)",
+            method: "PATCH",
+            payload: NativeSpaceMemberUpdateRequest(role: role, familyRole: nil)
+        )
+    }
+
+    func updateSpaceMemberFamilyRole(
+        spaceId: String,
+        userId: String,
+        familyRole: String
+    ) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(spaceId)/members/\(userId)",
+            method: "PATCH",
+            payload: NativeSpaceMemberUpdateRequest(role: nil, familyRole: familyRole)
+        )
+    }
+
+    func removeSpaceMember(spaceId: String, userId: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(spaceId)/members/\(userId)",
+            method: "DELETE"
+        )
+    }
+
+    func convertSpaceToFamily(id: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(id)/family",
+            method: "POST"
+        )
+    }
+
+    func deleteSpace(id: String) async throws -> NativeSpaceSummary {
+        try await performSpaceMutation(
+            path: "/api/native/spaces/\(id)",
+            method: "DELETE"
+        )
+    }
+
+    private func performSpaceMutation<Payload: Encodable>(
+        path: String,
+        method: String,
+        payload: Payload
+    ) async throws -> NativeSpaceSummary {
+        let data = try await performAuthorizedRequest(
+            path: path,
+            method: method,
+            body: try JSONEncoder().encode(payload)
+        )
+        return try JSONDecoder().decode(NativeSpaceSummary.self, from: data)
+    }
+
+    private func performSpaceMutation(
+        path: String,
+        method: String
+    ) async throws -> NativeSpaceSummary {
+        let data = try await performAuthorizedRequest(path: path, method: method)
+        return try JSONDecoder().decode(NativeSpaceSummary.self, from: data)
+    }
+
     private func performAuthorizedRequest(
         path: String,
         method: String,
@@ -178,6 +298,45 @@ enum NativeAPIError: LocalizedError {
             }
             if body.contains("schedule_not_found") {
                 return "일정을 찾을 수 없습니다."
+            }
+            if body.contains("space_name_required") {
+                return "공간 이름을 입력해 주세요."
+            }
+            if body.contains("space_name_too_long") {
+                return "공간 이름은 40자 이내로 입력해 주세요."
+            }
+            if body.contains("shared_space_limit_reached") {
+                return "무료 계정은 공유 공간을 최대 2개까지 사용할 수 있어요."
+            }
+            if body.contains("space_access_denied") || body.contains("space_admin_required") {
+                return "이 공간을 관리할 권한이 없습니다."
+            }
+            if body.contains("personal_space_locked") {
+                return "개인 공간에서는 이 작업을 할 수 없어요."
+            }
+            if body.contains("invite_code_required") {
+                return "초대 코드를 입력해 주세요."
+            }
+            if body.contains("invalid_code") {
+                return "유효한 초대 코드를 찾을 수 없습니다."
+            }
+            if body.contains("expired_code") {
+                return "만료된 초대 코드입니다. 공간 지기에게 새 코드를 요청해 주세요."
+            }
+            if body.contains("content_required") {
+                return "공간에 공유할 내용을 입력해 주세요."
+            }
+            if body.contains("content_too_long") {
+                return "소식은 2,000자 이내로 작성해 주세요."
+            }
+            if body.contains("space_has_other_members") {
+                return "다른 멤버가 있는 공간은 바로 삭제할 수 없습니다."
+            }
+            if body.contains("family_space_has_dependents") {
+                return "연결된 가족 구성원이 있어 공간을 삭제할 수 없습니다."
+            }
+            if body.contains("cannot_remove_self") {
+                return "공간 지기 본인은 멤버 목록에서 제거할 수 없습니다."
             }
             return "서버 요청에 실패했습니다. (\(status))"
         }

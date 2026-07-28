@@ -89,7 +89,7 @@ struct IOSMainTabView: View {
                 }
                 .tag(IOSMainTab.schedules)
 
-            LegacyRouteLaunchView(tab: .space, model: model)
+            IOSSpaceNavigationView(store: model.startupStore)
                 .tabItem {
                     Label("공간", systemImage: "person.2")
                 }

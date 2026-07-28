@@ -95,6 +95,69 @@ struct NativeScheduleResponse: Codable, Sendable {
     let schedule: NativeScheduleItem
 }
 
+struct NativeSpaceListItem: Codable, Identifiable, Sendable, Equatable {
+    let id: String
+    let name: String
+    let role: String
+    let familyRole: String?
+    let memberCount: Int
+    let inviteCode: String?
+    let spaceKind: String
+    let purpose: String?
+    let isPersonal: Bool
+    let isActive: Bool
+}
+
+struct NativeSpaceMemberItem: Codable, Identifiable, Sendable, Equatable {
+    let id: String
+    let userId: String
+    let displayName: String
+    let email: String
+    let avatar: String?
+    let role: String
+    let familyRole: String?
+    let isMe: Bool
+}
+
+struct NativeSpacePostItem: Codable, Identifiable, Sendable, Equatable {
+    let id: String
+    let type: String
+    let content: String
+    let pinned: Bool
+    let authorId: String
+    let authorName: String
+    let commentCount: Int
+    let createdAt: String
+}
+
+struct NativeSpaceSummary: Codable, Sendable {
+    let serverTime: String
+    let personalSpaceId: String?
+    let activeSpaceId: String?
+    let activeSpace: NativeSpaceListItem?
+    let spaces: [NativeSpaceListItem]
+    let members: [NativeSpaceMemberItem]
+    let recentPosts: [NativeSpacePostItem]
+    let upcomingSchedules: [NativeScheduleItem]
+}
+
+struct NativeSpaceNameRequest: Codable, Sendable {
+    let name: String
+}
+
+struct NativeSpaceJoinRequest: Codable, Sendable {
+    let code: String
+}
+
+struct NativeSpacePostRequest: Codable, Sendable {
+    let content: String
+}
+
+struct NativeSpaceMemberUpdateRequest: Codable, Sendable {
+    let role: String?
+    let familyRole: String?
+}
+
 struct NativeCreateScheduleRequest: Codable, Sendable {
     let title: String
     let type: String

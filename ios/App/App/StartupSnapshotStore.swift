@@ -31,6 +31,7 @@ final class StartupSnapshotStore: ObservableObject {
     @Published private(set) var state: StartupLoadState = .idle
     @Published private(set) var homeSummary: NativeHomeSummary?
     @Published private(set) var accountContext: NativeAccountContext?
+    @Published private(set) var spaceSummary: NativeSpaceSummary?
     @Published private(set) var schedules: [NativeScheduleItem] = []
     @Published private(set) var domainErrors: [StartupDomain: String] = [:]
     @Published private(set) var lastUpdatedAt: Date?
@@ -92,6 +93,16 @@ final class StartupSnapshotStore: ObservableObject {
 
     func removeSchedule(id: String) {
         schedules.removeAll { $0.id == id }
+    }
+
+    func applySpaceSummary(_ summary: NativeSpaceSummary) {
+        spaceSummary = summary
+        domainErrors[.spaces] = nil
+        if let data = try? JSONEncoder().encode(summary) {
+            rawSnapshots[.spaces] = data
+        }
+        lastUpdatedAt = Date()
+        state = domainErrors.isEmpty ? .ready : .partialFailure
     }
 
 #if DEBUG
@@ -207,6 +218,114 @@ final class StartupSnapshotStore: ObservableObject {
         domainErrors = [:]
         lastUpdatedAt = now
     }
+
+    func loadSpacePreview() {
+        loadSchedulePreview()
+        let personal = NativeSpaceListItem(
+            id: "preview-personal-space",
+            name: "나의 공간",
+            role: "admin",
+            familyRole: nil,
+            memberCount: 1,
+            inviteCode: nil,
+            spaceKind: "personal",
+            purpose: nil,
+            isPersonal: true,
+            isActive: false
+        )
+        let family = NativeSpaceListItem(
+            id: "preview-family-space",
+            name: "우리 가족",
+            role: "admin",
+            familyRole: "father",
+            memberCount: 4,
+            inviteCode: "GLEAUM-7R2K9M",
+            spaceKind: "family",
+            purpose: "family",
+            isPersonal: false,
+            isActive: true
+        )
+        let previewSchedules = schedules.filter { $0.id != "preview-personal" }
+        spaceSummary = NativeSpaceSummary(
+            serverTime: ISO8601DateFormatter.gleaum.string(from: Date()),
+            personalSpaceId: personal.id,
+            activeSpaceId: family.id,
+            activeSpace: family,
+            spaces: [personal, family],
+            members: [
+                NativeSpaceMemberItem(
+                    id: "member-me",
+                    userId: "preview",
+                    displayName: "글리움 관리자",
+                    email: "preview@gleaum.com",
+                    avatar: nil,
+                    role: "admin",
+                    familyRole: "father",
+                    isMe: true
+                ),
+                NativeSpaceMemberItem(
+                    id: "member-2",
+                    userId: "preview-member",
+                    displayName: "해나",
+                    email: "member@gleaum.com",
+                    avatar: nil,
+                    role: "editor",
+                    familyRole: "mother",
+                    isMe: false
+                ),
+                NativeSpaceMemberItem(
+                    id: "member-3",
+                    userId: "preview-child",
+                    displayName: "도윤",
+                    email: "child@gleaum.com",
+                    avatar: nil,
+                    role: "viewer",
+                    familyRole: "son",
+                    isMe: false
+                ),
+            ],
+            recentPosts: [
+                NativeSpacePostItem(
+                    id: "post-pinned",
+                    type: "general",
+                    content: "이번 주말 가족 일정은 토요일 오전에 함께 확인해요.",
+                    pinned: true,
+                    authorId: "preview",
+                    authorName: "글리움 관리자",
+                    commentCount: 2,
+                    createdAt: ISO8601DateFormatter.gleaum.string(from: Date())
+                ),
+                NativeSpacePostItem(
+                    id: "post-recent",
+                    type: "general",
+                    content: "저녁 장보기 목록을 업데이트했어요.",
+                    pinned: false,
+                    authorId: "preview-member",
+                    authorName: "해나",
+                    commentCount: 0,
+                    createdAt: ISO8601DateFormatter.gleaum.string(
+                        from: Calendar.current.date(byAdding: .hour, value: -3, to: Date()) ?? Date()
+                    )
+                ),
+            ],
+            upcomingSchedules: previewSchedules
+        )
+        accountContext = NativeAccountContext(
+            accountMode: "standard",
+            capabilities: NativeAccountCapabilities(
+                canManageSpaces: true,
+                canInviteMembers: true,
+                canViewHouseholdBudget: true,
+                canCompleteRoutine: true,
+                canUseCheckIn: true,
+                canRequestLocationPermission: true,
+                canShowAds: true
+            )
+        )
+        state = .ready
+        domainErrors = [:]
+        lastUpdatedAt = Date()
+    }
 #endif
 
     func clear() {
@@ -215,6 +334,7 @@ final class StartupSnapshotStore: ObservableObject {
         state = .idle
         homeSummary = nil
         accountContext = nil
+        spaceSummary = nil
         schedules = []
         domainErrors = [:]
         lastUpdatedAt = nil
@@ -329,7 +449,9 @@ final class StartupSnapshotStore: ObservableObject {
                     schedules = try JSONDecoder().decode(NativeSchedulesResponse.self, from: data)
                         .schedules
                         .sorted { $0.startTime < $1.startTime }
-                case .spaces, .budget, .notifications:
+                case .spaces:
+                    spaceSummary = try JSONDecoder().decode(NativeSpaceSummary.self, from: data)
+                case .budget, .notifications:
                     break
                 }
             } catch {
