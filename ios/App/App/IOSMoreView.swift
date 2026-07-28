@@ -82,6 +82,7 @@ struct IOSMoreNavigationView: View {
         }
         .listStyle(.insetGrouped)
         .dynamicTypeSize(.small ... .accessibility2)
+        .gleaumTabBarScrollTracking(for: .more)
         .navigationTitle("전체")
         .navigationBarTitleDisplayMode(.large)
         .refreshable {

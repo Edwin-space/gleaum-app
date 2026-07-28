@@ -39,6 +39,7 @@ struct IOSHomeNavigationView: View {
             .padding(.vertical, 18)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .gleaumTabBarScrollTracking(for: .home)
         .navigationTitle("홈")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {

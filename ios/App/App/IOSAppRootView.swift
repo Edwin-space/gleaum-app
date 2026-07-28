@@ -83,17 +83,20 @@ private struct BrandTransitionView: View {
 struct IOSMainTabView: View {
     @ObservedObject var model: IOSAppModel
     @ObservedObject var store: StartupSnapshotStore
+    @StateObject private var tabBarState = IOSFloatingTabBarState()
 
     var body: some View {
         Group {
-            if #available(iOS 26.0, *) {
-                tabs
-                    .tabBarMinimizeBehavior(.onScrollDown)
+            if #available(iOS 18.0, *) {
+                adaptiveTabs
             } else {
                 tabs
             }
         }
         .tint(Color(uiColor: GleaumUIColor.brandTeal))
+        .onChange(of: model.selectedTab) { selectedTab in
+            tabBarState.activate(selectedTab)
+        }
         .onChange(of: store.accountContext?.capabilities.canViewHouseholdBudget) { canViewBudget in
             if canViewBudget != true, model.selectedTab == .budget {
                 model.selectedTab = .home
@@ -119,23 +122,51 @@ struct IOSMainTabView: View {
         .sheet(item: $model.presentedFamilyFlow) { route in
             IOSFamilyRouteContainer(route: route, appModel: model, store: store)
         }
+        .onAppear {
+            tabBarState.activate(model.selectedTab, expandsBar: false)
+        }
+    }
+
+    @available(iOS 18.0, *)
+    private var adaptiveTabs: some View {
+        tabs
+            .environmentObject(tabBarState)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                IOSFloatingTabBar(
+                    tabs: availableTabs,
+                    selection: $model.selectedTab,
+                    state: tabBarState
+                )
+            }
+    }
+
+    private var availableTabs: [IOSMainTab] {
+        var result: [IOSMainTab] = [.home, .schedules, .space]
+        if store.accountContext?.capabilities.canViewHouseholdBudget == true {
+            result.append(.budget)
+        }
+        result.append(.more)
+        return result
     }
 
     private var tabs: some View {
         TabView(selection: $model.selectedTab) {
             IOSHomeNavigationView(model: model, store: model.startupStore)
+                .gleaumSystemTabBarHidden()
                 .tabItem {
                     Label("홈", systemImage: "house")
                 }
                 .tag(IOSMainTab.home)
 
             IOSScheduleNavigationView(store: model.startupStore)
+                .gleaumSystemTabBarHidden()
                 .tabItem {
                     Label("일정", systemImage: "calendar")
                 }
                 .tag(IOSMainTab.schedules)
 
             IOSSpaceNavigationView(store: model.startupStore)
+                .gleaumSystemTabBarHidden()
                 .tabItem {
                     Label("공간", systemImage: "person.2")
                 }
@@ -143,6 +174,7 @@ struct IOSMainTabView: View {
 
             if store.accountContext?.capabilities.canViewHouseholdBudget == true {
                 IOSBudgetNavigationView(store: store)
+                    .gleaumSystemTabBarHidden()
                     .tabItem {
                         Label("가계부", systemImage: "creditcard")
                     }
@@ -150,11 +182,213 @@ struct IOSMainTabView: View {
             }
 
             IOSMoreNavigationView(appModel: model, store: store)
+                .gleaumSystemTabBarHidden()
                 .tabItem {
                     Label("전체", systemImage: "line.3.horizontal")
                 }
                 .tag(IOSMainTab.more)
         }
+    }
+}
+
+@MainActor
+final class IOSFloatingTabBarState: ObservableObject {
+    @Published private(set) var isCompact = false
+
+    private var activeTab: IOSMainTab = .home
+    private var lastOffset: CGFloat = 0
+    private var compactTravel: CGFloat = 0
+    private var expandTravel: CGFloat = 0
+
+    func activate(_ tab: IOSMainTab, expandsBar: Bool = true) {
+        activeTab = tab
+        lastOffset = 0
+        compactTravel = 0
+        expandTravel = 0
+        if expandsBar {
+            setCompact(false)
+        }
+    }
+
+    func update(offset: CGFloat, for tab: IOSMainTab) {
+        guard tab == activeTab else { return }
+
+        let normalizedOffset = max(0, offset)
+        if normalizedOffset <= 2 {
+            lastOffset = normalizedOffset
+            compactTravel = 0
+            expandTravel = 0
+            setCompact(false)
+            return
+        }
+
+        let delta = normalizedOffset - lastOffset
+        lastOffset = normalizedOffset
+        guard abs(delta) >= 0.75 else { return }
+
+        if delta > 0 {
+            compactTravel += delta
+            expandTravel = 0
+            if compactTravel >= 14 {
+                setCompact(true)
+                compactTravel = 0
+            }
+        } else {
+            expandTravel += -delta
+            compactTravel = 0
+            if expandTravel >= 10 {
+                setCompact(false)
+                expandTravel = 0
+            }
+        }
+    }
+
+    private func setCompact(_ compact: Bool) {
+        guard isCompact != compact else { return }
+        isCompact = compact
+    }
+}
+
+private struct IOSFloatingTabBar: View {
+    let tabs: [IOSMainTab]
+    @Binding var selection: IOSMainTab
+    @ObservedObject var state: IOSFloatingTabBarState
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.sizeCategory) private var sizeCategory
+
+    private var isCompact: Bool {
+        state.isCompact && !sizeCategory.isAccessibilityCategory
+    }
+
+    private var compactWidth: CGFloat {
+        CGFloat(tabs.count) * 50 + 16
+    }
+
+    var body: some View {
+        HStack(spacing: isCompact ? 2 : 4) {
+            ForEach(tabs, id: \.self) { tab in
+                Button {
+                    selection = tab
+                } label: {
+                    VStack(spacing: isCompact ? 0 : 2) {
+                        Image(systemName: selection == tab ? tab.selectedSymbol : tab.symbol)
+                            .font(.system(
+                                size: isCompact ? 17 : 20,
+                                weight: selection == tab ? .semibold : .regular
+                            ))
+                            .frame(height: isCompact ? 22 : 25)
+
+                        if !isCompact {
+                            Text(tab.title)
+                                .font(.caption2.weight(selection == tab ? .semibold : .regular))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.82)
+                                .transition(.opacity.combined(with: .scale(scale: 0.86)))
+                        }
+                    }
+                    .foregroundStyle(
+                        selection == tab
+                            ? Color(uiColor: GleaumUIColor.brandTeal)
+                            : Color.primary
+                    )
+                    .frame(maxWidth: isCompact ? nil : .infinity)
+                    .frame(width: isCompact ? 46 : nil, height: isCompact ? 42 : 56)
+                    .background {
+                        if selection == tab {
+                            RoundedRectangle(cornerRadius: isCompact ? 21 : 15, style: .continuous)
+                                .fill(Color(uiColor: GleaumUIColor.brandTeal).opacity(0.13))
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tab.title)
+                .accessibilityAddTraits(selection == tab ? .isSelected : [])
+            }
+        }
+        .padding(isCompact ? 4 : 6)
+        .frame(maxWidth: isCompact ? compactWidth : .infinity)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay {
+            Capsule()
+                .stroke(Color(uiColor: .separator).opacity(0.28), lineWidth: 0.5)
+        }
+        .shadow(color: Color.black.opacity(0.10), radius: isCompact ? 10 : 14, y: 5)
+        .padding(.horizontal, isCompact ? 44 : 14)
+        .padding(.top, 4)
+        .padding(.bottom, isCompact ? 3 : 5)
+        .animation(
+            reduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.86),
+            value: isCompact
+        )
+    }
+}
+
+private extension IOSMainTab {
+    var title: String {
+        switch self {
+        case .home: return "홈"
+        case .schedules: return "일정"
+        case .space: return "공간"
+        case .budget: return "가계부"
+        case .more: return "전체"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .home: return "house"
+        case .schedules: return "calendar"
+        case .space: return "person.2"
+        case .budget: return "creditcard"
+        case .more: return "line.3.horizontal"
+        }
+    }
+
+    var selectedSymbol: String {
+        switch self {
+        case .home: return "house.fill"
+        case .schedules: return "calendar"
+        case .space: return "person.2.fill"
+        case .budget: return "creditcard.fill"
+        case .more: return "line.3.horizontal"
+        }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func gleaumSystemTabBarHidden() -> some View {
+        if #available(iOS 18.0, *) {
+            toolbar(.hidden, for: .tabBar)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func gleaumTabBarScrollTracking(for tab: IOSMainTab) -> some View {
+        if #available(iOS 18.0, *) {
+            modifier(IOSFloatingTabBarScrollModifier(tab: tab))
+        } else {
+            self
+        }
+    }
+}
+
+@available(iOS 18.0, *)
+private struct IOSFloatingTabBarScrollModifier: ViewModifier {
+    let tab: IOSMainTab
+    @EnvironmentObject private var tabBarState: IOSFloatingTabBarState
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, newOffset in
+                tabBarState.update(offset: newOffset, for: tab)
+            }
     }
 }
 

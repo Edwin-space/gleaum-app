@@ -81,6 +81,7 @@ struct IOSBudgetNavigationView: View {
         // Preserve Dynamic Type without allowing the largest sizes to collapse
         // the monthly summary into unreadable single-character columns.
         .dynamicTypeSize(.small ... .accessibility2)
+        .gleaumTabBarScrollTracking(for: .budget)
         .navigationTitle("가계부")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "항목 또는 카테고리 검색")

@@ -99,6 +99,7 @@ struct IOSScheduleNavigationView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .gleaumTabBarScrollTracking(for: .schedules)
         .navigationTitle("일정")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "제목 또는 메모 검색")

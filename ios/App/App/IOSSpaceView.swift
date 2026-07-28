@@ -80,6 +80,7 @@ struct IOSSpaceNavigationView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .gleaumTabBarScrollTracking(for: .space)
         .navigationTitle("공간")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {

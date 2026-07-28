@@ -113,8 +113,8 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 - `TabView`: 홈, 일정, 공간, 가계부, 전체
 - 각 탭은 독립 `NavigationStack`과 navigation path를 소유한다.
-- 시스템 tab bar와 SF Symbols를 사용하고 custom floating pill을 사용하지 않는다.
-- iOS 26 이상은 Apple 공식 `tabBarMinimizeBehavior(.onScrollDown)`로 콘텐츠 스크롤 중 tab bar를 축소한다. iOS 15~25는 접근성·상태 보존을 위해 시스템 기본 tab bar를 유지한다.
+- `TabView`의 선택·탭 상태와 SF Symbols는 유지한다. iOS 18 이상은 사용자 제공 Instagram iOS 영상처럼 전체 메뉴를 유지하며 폭·높이·아이콘·레이블을 전환하는 적응형 플로팅 컨테이너를 사용하고, iOS 15~17은 시스템 tab bar를 사용한다.
+- 콘텐츠 오프셋 증가 14pt에서 축소, 역방향 10pt 또는 목록 상단에서 확장한다. 탭 전환 시 확장하고 Reduce Motion과 접근성 글자 크기를 존중한다.
 - 홈·일정·공간·가계부·전체의 루트 제목은 모두 `largeTitle`, 상세·설정·편집 화면은 `inline`을 사용한다.
 - 생성·필터·선택은 toolbar, sheet, menu, confirmation dialog의 플랫폼 패턴을 따른다.
 
@@ -149,7 +149,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 ### 2단계 — 시스템 내비게이션
 
-- [x] 시스템 `TabView` 5탭 + iOS 26 스크롤 축소, 구버전 시스템 기본 fallback
+- [x] 시스템 `TabView` 5탭 상태 + iOS 18 적응형 플로팅 탭 바, iOS 15~17 시스템 fallback
 - [x] 홈·일정·공간·가계부·전체 탭 `NavigationStack` + 루트 Large Title 통일
 - [x] 중앙 Route와 푸시 목적지 연결 — 홈·알림·일정 단건·공간·가계부의 네이티브 목적지 판정
 - [ ] Universal Link 실기기 검증 — 유료 Team·Associated Domains 활성화 뒤 완료

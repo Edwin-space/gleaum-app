@@ -1996,4 +1996,5 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 화면 모드는 시스템/라이트/다크 각각 Blue/Orange/Indigo SF Symbol과 설명을 사용한다. 기능 화면의 배경·본문은 계속 Apple semantic color를 사용하며 역할 색을 전역 테마 색으로 오용하지 않는다.
 - 라이트/다크 미리보기는 현재 앱의 trait에 의존하지 않고 두 팔레트를 독립 렌더링한다. 한쪽 모드에서 두 미리보기가 같은 모습으로 보이던 기존 구조를 복원하지 않는다.
 - 홈·일정·공간·가계부·전체 루트는 모두 Apple Large Title, 상세·설정·편집은 inline title이 기준이다.
-- iOS 26 이상은 시스템 `tabBarMinimizeBehavior(.onScrollDown)`를 사용한다. 커스텀 Instagram 모방 tab bar를 만들지 않으며 iOS 15~25는 시스템 기본 tab bar를 유지한다. 실제 축소 애니메이션은 iPhone 손가락 스크롤에서 최종 회귀한다.
+- 사용자 제공 Instagram iOS 녹화 대조 후 이전 `tabBarMinimizeBehavior` 해석은 폐기했다. iOS 18 이상은 5개 메뉴를 모두 유지하는 `IOSFloatingTabBar`를 사용한다. 스크롤 시 캡슐·아이콘을 비례 축소하고 레이블만 숨기며, 역방향·상단·탭 전환에서 복원한다. iOS 15~17은 시스템 탭 바 fallback이다.
+- `IOSFloatingTabBarState`의 전환 임계값은 축소 14pt, 확장 10pt다. 접근성 글자 크기에서는 축소를 막고 Reduce Motion에서는 spring을 사용하지 않는다. 화면별 별도 하단 바를 추가하거나 선택 탭 하나만 남기는 시스템 최소화를 다시 적용하지 않는다.
