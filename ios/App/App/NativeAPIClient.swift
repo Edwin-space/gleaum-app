@@ -82,6 +82,53 @@ final class NativeAPIClient: @unchecked Sendable {
         )
     }
 
+    func fetchBudgetSummary(month: String? = nil) async throws -> NativeBudgetSummary {
+        let query = month.map { "?month=\($0)" } ?? ""
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/budget/summary\(query)",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeBudgetSummary.self, from: data)
+    }
+
+    func fetchLedgerEntry(id: String) async throws -> NativeLedgerItem {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/budget/entries/\(id)",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeLedgerResponse.self, from: data).entry
+    }
+
+    func createLedgerEntry(
+        _ payload: NativeCreateLedgerRequest
+    ) async throws -> NativeLedgerItem {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/budget/entries",
+            method: "POST",
+            body: try JSONEncoder().encode(payload)
+        )
+        return try JSONDecoder().decode(NativeLedgerResponse.self, from: data).entry
+    }
+
+    func updateLedgerEntry(
+        id: String,
+        payload: NativeUpdateLedgerRequest
+    ) async throws -> NativeLedgerItem {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/budget/entries/\(id)",
+            method: "PATCH",
+            body: try JSONEncoder().encode(payload)
+        )
+        return try JSONDecoder().decode(NativeLedgerResponse.self, from: data).entry
+    }
+
+    func deleteLedgerEntry(id: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/native/budget/entries/\(id)",
+            method: "DELETE"
+        )
+    }
+
     func fetchSpaceSummary() async throws -> NativeSpaceSummary {
         let data = try await performAuthorizedRequest(
             path: "/api/native/spaces/summary",
@@ -285,7 +332,19 @@ enum NativeAPIError: LocalizedError {
                 return "로그인이 만료되었습니다. 다시 로그인해 주세요."
             }
             if body.contains("title_required") {
-                return "일정 제목을 입력해 주세요."
+                return "제목을 입력해 주세요."
+            }
+            if body.contains("amount_required") {
+                return "0원보다 큰 금액을 입력해 주세요."
+            }
+            if body.contains("invalid_occurred_at") {
+                return "거래 날짜를 다시 확인해 주세요."
+            }
+            if body.contains("personal_space_required") {
+                return "개인 가계부 공간을 찾지 못했습니다."
+            }
+            if body.contains("ledger_entry_not_found") {
+                return "가계부 내역을 찾을 수 없습니다."
             }
             if body.contains("invalid_start_time") || body.contains("invalid_end_time") {
                 return "일정 날짜와 시간을 다시 확인해 주세요."

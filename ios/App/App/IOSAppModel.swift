@@ -52,6 +52,13 @@ final class IOSAppModel: ObservableObject {
 
     func apply(sessionState: AppSessionState) {
 #if DEBUG
+        if CommandLine.arguments.contains("-GLEAUMPreviewBudget") {
+            startupStore.loadBudgetPreview()
+            selectedTab = .budget
+            screen = .authenticated
+            return
+        }
+
         if CommandLine.arguments.contains("-GLEAUMPreviewSpaces") {
             startupStore.loadSpacePreview()
             selectedTab = .space

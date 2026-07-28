@@ -34,7 +34,7 @@
 
 ---
 
-## 현재 앱 상태 (2026-07-27 기준)
+## 현재 앱 상태 (2026-07-28 기준)
 
 ### 서비스 현황
 - **프로덕션 URL**: `https://www.gleaum.com`
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-28 | iOS 개인 가계부 탭의 WebView 폴백을 제거했다. 기존 공통 native API와 개인 원장 경계를 그대로 사용해 월간 순수익·수입·지출·예정, 검색·카테고리 분석·정기 항목·최근 내역과 수입/지출 생성·상세·편집·삭제·상태 변경을 SwiftUI 시스템 `List`·`Form`에 연결했다. capability가 제한된 자녀 계정은 가계부 탭을 노출하지 않고 공유 공간 원장을 선택할 수 없게 했다. 시작 snapshot 캐시를 우선 사용하고 pull-to-refresh 또는 쓰기 작업 뒤 현재 월과 홈만 선택 갱신한다. iPhone 17 Pro iOS 26.5 라이트·다크·접근성 최대 글자 화면과 Simulator Debug·Release build를 통과했다. 실제 로그인 계정 CRUD·정기 발생 결과는 `IOS-001`, 다음 화면은 알림→전체 메뉴다. |
 | 2026-07-28 | iOS 신규 사용자 흐름을 네이티브화했다. 인증 세션 확정 뒤 `/api/native/profile`의 `onboardingCompleted`로 기존 사용자와 신규 사용자를 분리하며, 신규 사용자는 별도 회원가입 화면 없이 이름/표시 방식→중심 기능→홈 구성→알림의 4단계 SwiftUI 온보딩을 진행한다. 공통 완료 API는 기존 개인 공간을 재사용하거나 개인 공간·관리자 멤버십·`preferences.personalSpaceId`를 생성한 뒤에만 온보딩 완료를 기록한다. iPhone 17 Pro iOS 26.5 Debug 미리보기로 4단계 화면·VoiceOver 선택 상태를 확인했고 iOS Simulator build와 Next.js production build 55/55를 통과했다. 운영 API 배포와 실제 신규 소셜 계정 완료 회귀는 남아 있다. |
 | 2026-07-28 | iOS 인증 화면 기준을 확정했다. 사용자 노출 회원가입 UI를 제거하고 Apple·Google·기존 이메일 로그인만 제공한다. Apple 공식 시스템 로그인 버튼과 Google 공식 G 자산/버튼 규격을 적용했으며, 정적 Launch Screen·앱 내부 브랜드 전환·로그인의 로고 `76×76pt`, BI `140×35pt`, 간격 `12pt`를 공통화했다. 브랜드는 중앙 축, 인증 버튼은 하단 엄지 접근 영역으로 정렬했다. 신규 소셜 사용자는 인증 뒤 별도 가입 화면이 아니라 네이티브 온보딩으로 분기해야 한다. iPhone 17 Pro iOS 26.5 시뮬레이터에서 provider/email 화면·접근성·서버 오류 응답과 Debug build를 확인했다. |
 | 2026-07-28 | iOS 전용 범위에서 공식 BI·로그인·Debug 통신을 보정했다. `img/gleaum_bi.svg`를 원본으로 일반/반전 vector asset을 구성해 Launch Screen·`BrandTransitionView`·네이티브 로그인에 적용하고 수동 시스템 폰트 BI를 제거했다. 로그인은 소셜 우선 정보 계층과 Dynamic Type 기준으로 정리했다. iOS 번들의 잘못된 Supabase 공개 키와 `Refresh token is not valid` 미분류 때문에 Debug에서 네트워크 오류가 보이던 문제를 수정했다. iPhone 17 Pro iOS 26.5 fresh Debug build/install/launch 및 잘못된 테스트 계정의 정상 서버 인증 거절 응답을 확인했다. Android Studio 변경 파일은 건드리거나 스테이징하지 않는다. |

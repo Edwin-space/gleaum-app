@@ -33,6 +33,7 @@ final class StartupSnapshotStore: ObservableObject {
     @Published private(set) var accountContext: NativeAccountContext?
     @Published private(set) var spaceSummary: NativeSpaceSummary?
     @Published private(set) var schedules: [NativeScheduleItem] = []
+    @Published private(set) var budgetSummary: NativeBudgetSummary?
     @Published private(set) var domainErrors: [StartupDomain: String] = [:]
     @Published private(set) var lastUpdatedAt: Date?
 
@@ -100,6 +101,16 @@ final class StartupSnapshotStore: ObservableObject {
         domainErrors[.spaces] = nil
         if let data = try? JSONEncoder().encode(summary) {
             rawSnapshots[.spaces] = data
+        }
+        lastUpdatedAt = Date()
+        state = domainErrors.isEmpty ? .ready : .partialFailure
+    }
+
+    func applyBudgetSummary(_ summary: NativeBudgetSummary) {
+        budgetSummary = summary
+        domainErrors[.budget] = nil
+        if let data = try? JSONEncoder().encode(summary) {
+            rawSnapshots[.budget] = data
         }
         lastUpdatedAt = Date()
         state = domainErrors.isEmpty ? .ready : .partialFailure
@@ -326,6 +337,106 @@ final class StartupSnapshotStore: ObservableObject {
         domainErrors = [:]
         lastUpdatedAt = Date()
     }
+
+    func loadBudgetPreview() {
+        let calendar = Calendar.current
+        let now = Date()
+        let month = IOSBudgetFormat.monthKey(now)
+        let salaryDate = calendar.date(bySetting: .day, value: 25, of: now) ?? now
+        let housingDate = calendar.date(bySetting: .day, value: 10, of: now) ?? now
+        let groceryDate = calendar.date(byAdding: .day, value: -1, to: now) ?? now
+        let transitDate = calendar.date(byAdding: .day, value: -3, to: now) ?? now
+
+        let salary = NativeLedgerItem(
+            id: "preview-income",
+            kind: "income",
+            title: "7월 급여",
+            amount: 3_800_000,
+            category: "salary",
+            method: nil,
+            occurredAt: ISO8601DateFormatter.gleaum.string(from: salaryDate),
+            status: "completed",
+            recurFreq: "monthly",
+            memo: "매월 급여"
+        )
+        let housing = NativeLedgerItem(
+            id: "preview-housing",
+            kind: "expense",
+            title: "월세",
+            amount: 850_000,
+            category: "housing",
+            method: "auto",
+            occurredAt: ISO8601DateFormatter.gleaum.string(from: housingDate),
+            status: "pending",
+            recurFreq: "monthly",
+            memo: nil
+        )
+        let grocery = NativeLedgerItem(
+            id: "preview-grocery",
+            kind: "expense",
+            title: "주말 장보기",
+            amount: 128_400,
+            category: "daily",
+            method: "card",
+            occurredAt: ISO8601DateFormatter.gleaum.string(from: groceryDate),
+            status: "completed",
+            recurFreq: "none",
+            memo: nil
+        )
+        let transit = NativeLedgerItem(
+            id: "preview-transit",
+            kind: "expense",
+            title: "교통카드 충전",
+            amount: 50_000,
+            category: "transport",
+            method: "card",
+            occurredAt: ISO8601DateFormatter.gleaum.string(from: transitDate),
+            status: "completed",
+            recurFreq: "none",
+            memo: nil
+        )
+
+        budgetSummary = NativeBudgetSummary(
+            serverTime: ISO8601DateFormatter.gleaum.string(from: now),
+            month: month,
+            personalSpaceId: "preview-personal-space",
+            incomeTotal: 3_800_000,
+            expenseTotal: 1_028_400,
+            net: 2_771_600,
+            savingsRate: 73,
+            fixedExpenseTotal: 850_000,
+            variableExpenseTotal: 178_400,
+            recurringIncomeTotal: 3_800_000,
+            onceIncomeTotal: 0,
+            pendingExpenseCount: 1,
+            pendingIncomeCount: 0,
+            completedExpenseCount: 2,
+            completedIncomeCount: 1,
+            recentEntries: [grocery, transit, salary, housing],
+            recurringEntries: [housing, salary],
+            categoryTotals: [
+                NativeBudgetCategoryTotal(category: "salary", kind: "income", amount: 3_800_000),
+                NativeBudgetCategoryTotal(category: "housing", kind: "expense", amount: 850_000),
+                NativeBudgetCategoryTotal(category: "daily", kind: "expense", amount: 128_400),
+                NativeBudgetCategoryTotal(category: "transport", kind: "expense", amount: 50_000),
+            ]
+        )
+        accountContext = NativeAccountContext(
+            accountMode: "standard",
+            capabilities: NativeAccountCapabilities(
+                canManageSpaces: true,
+                canInviteMembers: true,
+                canViewHouseholdBudget: true,
+                canCompleteRoutine: true,
+                canUseCheckIn: true,
+                canRequestLocationPermission: true,
+                canShowAds: true
+            )
+        )
+        state = .ready
+        domainErrors = [:]
+        lastUpdatedAt = now
+    }
 #endif
 
     func clear() {
@@ -336,6 +447,7 @@ final class StartupSnapshotStore: ObservableObject {
         accountContext = nil
         spaceSummary = nil
         schedules = []
+        budgetSummary = nil
         domainErrors = [:]
         lastUpdatedAt = nil
         rawSnapshots = [:]
@@ -451,7 +563,9 @@ final class StartupSnapshotStore: ObservableObject {
                         .sorted { $0.startTime < $1.startTime }
                 case .spaces:
                     spaceSummary = try JSONDecoder().decode(NativeSpaceSummary.self, from: data)
-                case .budget, .notifications:
+                case .budget:
+                    budgetSummary = try JSONDecoder().decode(NativeBudgetSummary.self, from: data)
+                case .notifications:
                     break
                 }
             } catch {

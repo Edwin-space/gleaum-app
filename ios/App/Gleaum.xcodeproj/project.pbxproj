@@ -44,6 +44,9 @@
 		E822C3452FCD79040032518A /* IOSSpaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3442FCD79040032518A /* IOSSpaceView.swift */; };
 		E822C3472FCD79040032518A /* IOSSpaceSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3462FCD79040032518A /* IOSSpaceSheets.swift */; };
 		E822C3492FCD79040032518A /* IOSSpaceComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3482FCD79040032518A /* IOSSpaceComponents.swift */; };
+		E822C34B2FCD79040032518A /* IOSBudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C34A2FCD79040032518A /* IOSBudgetView.swift */; };
+		E822C34D2FCD79040032518A /* IOSBudgetSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C34C2FCD79040032518A /* IOSBudgetSheets.swift */; };
+		E822C34F2FCD79040032518A /* IOSBudgetComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C34E2FCD79040032518A /* IOSBudgetComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -88,6 +91,9 @@
 		E822C3442FCD79040032518A /* IOSSpaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSpaceView.swift; sourceTree = "<group>"; };
 		E822C3462FCD79040032518A /* IOSSpaceSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSpaceSheets.swift; sourceTree = "<group>"; };
 		E822C3482FCD79040032518A /* IOSSpaceComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSpaceComponents.swift; sourceTree = "<group>"; };
+		E822C34A2FCD79040032518A /* IOSBudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBudgetView.swift; sourceTree = "<group>"; };
+		E822C34C2FCD79040032518A /* IOSBudgetSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBudgetSheets.swift; sourceTree = "<group>"; };
+		E822C34E2FCD79040032518A /* IOSBudgetComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBudgetComponents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +137,9 @@
 				E822C3442FCD79040032518A /* IOSSpaceView.swift */,
 				E822C3462FCD79040032518A /* IOSSpaceSheets.swift */,
 				E822C3482FCD79040032518A /* IOSSpaceComponents.swift */,
+				E822C34A2FCD79040032518A /* IOSBudgetView.swift */,
+				E822C34C2FCD79040032518A /* IOSBudgetSheets.swift */,
+				E822C34E2FCD79040032518A /* IOSBudgetComponents.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -286,6 +295,9 @@
 				E822C3452FCD79040032518A /* IOSSpaceView.swift in Sources */,
 				E822C3472FCD79040032518A /* IOSSpaceSheets.swift in Sources */,
 				E822C3492FCD79040032518A /* IOSSpaceComponents.swift in Sources */,
+				E822C34B2FCD79040032518A /* IOSBudgetView.swift in Sources */,
+				E822C34D2FCD79040032518A /* IOSBudgetSheets.swift in Sources */,
+				E822C34F2FCD79040032518A /* IOSBudgetComponents.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

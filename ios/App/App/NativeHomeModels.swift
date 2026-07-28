@@ -82,9 +82,67 @@ struct NativeLedgerItem: Codable, Identifiable, Sendable {
     let title: String
     let amount: Int
     let category: String
+    let method: String?
     let occurredAt: String
     let status: String
     let recurFreq: String
+    let memo: String?
+}
+
+struct NativeBudgetCategoryTotal: Codable, Identifiable, Sendable {
+    let category: String
+    let kind: String
+    let amount: Int
+
+    var id: String { "\(kind)-\(category)" }
+}
+
+struct NativeBudgetSummary: Codable, Sendable {
+    let serverTime: String
+    let month: String
+    let personalSpaceId: String?
+    let incomeTotal: Int
+    let expenseTotal: Int
+    let net: Int
+    let savingsRate: Double
+    let fixedExpenseTotal: Int
+    let variableExpenseTotal: Int
+    let recurringIncomeTotal: Int
+    let onceIncomeTotal: Int
+    let pendingExpenseCount: Int
+    let pendingIncomeCount: Int
+    let completedExpenseCount: Int
+    let completedIncomeCount: Int
+    let recentEntries: [NativeLedgerItem]
+    let recurringEntries: [NativeLedgerItem]
+    let categoryTotals: [NativeBudgetCategoryTotal]
+}
+
+struct NativeLedgerResponse: Codable, Sendable {
+    let entry: NativeLedgerItem
+}
+
+struct NativeCreateLedgerRequest: Codable, Sendable {
+    let kind: String
+    let title: String
+    let amount: Int
+    let category: String
+    let method: String?
+    let occurredAt: String
+    let recurFreq: String?
+    let memo: String?
+}
+
+struct NativeUpdateLedgerRequest: Codable, Sendable {
+    let kind: String?
+    let title: String?
+    let amount: Int?
+    let category: String?
+    let method: String?
+    let occurredAt: String?
+    let recurFreq: String?
+    let memo: String?
+    let status: String?
 }
 
 struct NativeSchedulesResponse: Codable, Sendable {

@@ -17,7 +17,7 @@ struct IOSAppRootView: View {
                     await model.completeOnboarding(with: profile)
                 }
             case .authenticated:
-                IOSMainTabView(model: model)
+                IOSMainTabView(model: model, store: model.startupStore)
             case .offline:
                 OfflineRecoveryView(model: model)
             }
@@ -74,6 +74,7 @@ private struct BrandTransitionView: View {
 
 struct IOSMainTabView: View {
     @ObservedObject var model: IOSAppModel
+    @ObservedObject var store: StartupSnapshotStore
 
     var body: some View {
         TabView(selection: $model.selectedTab) {
@@ -95,11 +96,13 @@ struct IOSMainTabView: View {
                 }
                 .tag(IOSMainTab.space)
 
-            LegacyRouteLaunchView(tab: .budget, model: model)
-                .tabItem {
-                    Label("가계부", systemImage: "creditcard")
-                }
-                .tag(IOSMainTab.budget)
+            if store.accountContext?.capabilities.canViewHouseholdBudget == true {
+                IOSBudgetNavigationView(store: store)
+                    .tabItem {
+                        Label("가계부", systemImage: "creditcard")
+                    }
+                    .tag(IOSMainTab.budget)
+            }
 
             LegacyRouteLaunchView(tab: .more, model: model)
                 .tabItem {
@@ -108,6 +111,11 @@ struct IOSMainTabView: View {
                 .tag(IOSMainTab.more)
         }
         .tint(Color(uiColor: GleaumUIColor.brandTeal))
+        .onChange(of: store.accountContext?.capabilities.canViewHouseholdBudget) { canViewBudget in
+            if canViewBudget != true, model.selectedTab == .budget {
+                model.selectedTab = .home
+            }
+        }
     }
 }
 
