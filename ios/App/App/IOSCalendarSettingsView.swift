@@ -8,13 +8,10 @@ struct IOSCalendarSettingsView: View {
 
     var body: some View {
         List {
-            introductionSection
-            permissionSection
+            connectionSection
 
             if calendarStore.permission.canSynchronize {
-                calendarSelectionSection
-                exportSection
-                importSection
+                synchronizationSection
             }
         }
         .listStyle(.insetGrouped)
@@ -29,8 +26,8 @@ struct IOSCalendarSettingsView: View {
                 calendarStore.load()
             }
         }
-        .alert("캘린더 동기화", isPresented: $showsSyncConfirmation) {
-            Button("동기화") {
+        .alert("iPhone 캘린더에 반영할까요?", isPresented: $showsSyncConfirmation) {
+            Button("반영") {
                 Task {
                     await snapshotStore.refresh(domains: [.schedules])
                     await calendarStore.synchronize(schedules: snapshotStore.schedules)
@@ -38,7 +35,7 @@ struct IOSCalendarSettingsView: View {
             }
             Button("취소", role: .cancel) {}
         } message: {
-            Text("선택한 캘린더의 앞으로 30일을 글리움 일정과 맞춥니다. 글리움이 만든 일정만 업데이트하거나 정리합니다.")
+            Text("‘\(selectedCalendarName)’ 캘린더의 앞으로 30일을 글리움 일정과 맞춥니다. 글리움이 만든 일정만 업데이트하거나 정리합니다.")
         }
         .alert("캘린더 작업을 완료하지 못했어요", isPresented: errorBinding) {
             if calendarStore.permission == .denied || calendarStore.permission == .writeOnly {
@@ -54,36 +51,26 @@ struct IOSCalendarSettingsView: View {
         }
     }
 
-    private var introductionSection: some View {
+    private var connectionSection: some View {
         Section {
-            Label {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("iPhone 캘린더와 연결")
-                        .font(.headline)
-                    Text("선택한 캘린더와 글리움 일정을 사용자가 요청할 때만 주고받습니다.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            } icon: {
-                Image(systemName: "calendar.badge.checkmark")
-                    .font(.title2)
-                    .foregroundStyle(Color(uiColor: GleaumUIColor.brandTeal))
-            }
-            .padding(.vertical, 6)
-        } footer: {
-            Text("기기 일정은 이 화면에서 확인하고, 사용자가 선택한 일정만 글리움 개인 일정으로 저장합니다.")
-        }
-    }
-
-    private var permissionSection: some View {
-        Section {
-            HStack {
-                Label("캘린더 접근", systemImage: permissionSymbol)
-                Spacer()
-                Text(calendarStore.permission.title)
-                    .font(.subheadline)
+            HStack(spacing: 12) {
+                Image(systemName: permissionSymbol)
+                    .font(.title3)
                     .foregroundStyle(permissionTint)
+                    .frame(width: 28)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("iPhone 캘린더")
+                        .font(.body.weight(.semibold))
+                    Text(calendarStore.permission.title)
+                        .font(.subheadline)
+                        .foregroundStyle(permissionTint)
+                }
+
+                Spacer(minLength: 8)
             }
+            .padding(.vertical, 2)
 
             switch calendarStore.permission {
             case .prompt, .unknown, .writeOnly:
@@ -114,26 +101,30 @@ struct IOSCalendarSettingsView: View {
             }
 
             if calendarStore.isLoading {
-                HStack {
+                HStack(spacing: 10) {
                     ProgressView()
                     Text("캘린더 정보를 확인하는 중이에요")
                         .foregroundStyle(.secondary)
                 }
             }
         } header: {
-            Text("접근 권한")
+            Text("연결 상태")
         } footer: {
-            Text("가져오기와 중복 확인을 위해 iOS의 ‘전체 접근’ 권한이 필요합니다.")
+            if calendarStore.permission.canSynchronize {
+                Text("동기화는 자동으로 실행되지 않으며, 아래에서 사용자가 직접 시작합니다.")
+            } else {
+                Text("일정 가져오기와 중복 확인을 위해 iOS의 ‘전체 접근’ 권한이 필요합니다.")
+            }
         }
     }
 
-    private var calendarSelectionSection: some View {
+    private var synchronizationSection: some View {
         Section {
             if writableCalendars.isEmpty {
                 Label("일정을 저장할 수 있는 캘린더가 없습니다.", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
             } else {
-                Picker("기기 캘린더", selection: selectedCalendarBinding) {
+                Picker("대상 캘린더", selection: selectedCalendarBinding) {
                     ForEach(writableCalendars) { calendar in
                         Label {
                             Text(calendar.name)
@@ -148,69 +139,55 @@ struct IOSCalendarSettingsView: View {
                 if let selected = calendarStore.selectedCalendar {
                     IOSCalendarValueRow(title: "계정", value: selected.accountName)
                 }
-            }
-        } header: {
-            Text("사용할 캘린더")
-        } footer: {
-            Text("읽기 전용 캘린더는 선택할 수 없습니다.")
-        }
-    }
 
-    private var exportSection: some View {
-        Section {
-            IOSCalendarValueRow(title: "동기화 대상", value: "앞으로 30일")
-            IOSCalendarValueRow(title: "예상 일정", value: "\(exportableScheduleCount)개")
-
-            Button {
-                showsSyncConfirmation = true
-            } label: {
-                if calendarStore.isSynchronizing {
-                    HStack {
-                        ProgressView()
-                        Text("동기화하는 중이에요")
+                Button {
+                    showsSyncConfirmation = true
+                } label: {
+                    if calendarStore.isSynchronizing {
+                        IOSCalendarSyncActionRow(
+                            title: "iPhone 캘린더에 반영 중",
+                            subtitle: "글리움 일정을 안전하게 맞추고 있어요",
+                            symbol: "arrow.triangle.2.circlepath",
+                            tint: Color(uiColor: GleaumUIColor.brandTeal),
+                            showsProgress: true
+                        )
+                    } else {
+                        IOSCalendarSyncActionRow(
+                            title: "글리움 일정을 iPhone에 반영",
+                            subtitle: "앞으로 30일 · \(exportableScheduleCount)개 일정",
+                            symbol: "arrow.up.circle.fill",
+                            tint: Color(uiColor: GleaumUIColor.brandTeal)
+                        )
                     }
-                } else {
-                    Label("글리움 일정 동기화", systemImage: "arrow.up.circle")
+                }
+                .buttonStyle(.plain)
+                .disabled(calendarStore.isSynchronizing || calendarStore.selectedCalendarId == nil)
+
+                NavigationLink {
+                    IOSCalendarImportView(
+                        snapshotStore: snapshotStore,
+                        calendarStore: calendarStore
+                    )
+                } label: {
+                    IOSCalendarSyncActionRow(
+                        title: "iPhone 일정을 글리움에 추가",
+                        subtitle: "일정을 선택해 개인 일정으로 저장",
+                        symbol: "arrow.down.circle.fill",
+                        tint: Color(uiColor: GleaumUIColor.brandBlue)
+                    )
+                }
+                .disabled(calendarStore.selectedCalendarId == nil || calendarStore.isSynchronizing)
+
+                if let result = calendarStore.lastSyncResult {
+                    Label(result.summary, systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.green)
                 }
             }
-            .disabled(
-                calendarStore.isSynchronizing
-                    || calendarStore.selectedCalendarId == nil
-                    || writableCalendars.isEmpty
-            )
-
-            if let result = calendarStore.lastSyncResult {
-                Label(result.summary, systemImage: "checkmark.circle.fill")
-                    .font(.subheadline)
-                    .foregroundStyle(.green)
-            }
         } header: {
-            Text("글리움 → iPhone")
+            Text("일정 동기화")
         } footer: {
-            Text("지출 일정은 제외합니다. 기기에서 직접 만든 일정은 수정하거나 삭제하지 않습니다.")
-        }
-    }
-
-    private var importSection: some View {
-        Section {
-            NavigationLink {
-                IOSCalendarImportView(
-                    snapshotStore: snapshotStore,
-                    calendarStore: calendarStore
-                )
-            } label: {
-                IOSCalendarSettingsRow(
-                    title: "기기 일정 가져오기",
-                    subtitle: "선택한 캘린더의 앞으로 30일",
-                    symbol: "arrow.down.circle",
-                    tint: Color(uiColor: GleaumUIColor.brandBlue)
-                )
-            }
-            .disabled(calendarStore.selectedCalendarId == nil)
-        } header: {
-            Text("iPhone → 글리움")
-        } footer: {
-            Text("개인 일정으로만 저장합니다. 같은 제목과 시작 시각의 일정, 글리움이 내보낸 일정은 자동으로 제외합니다.")
+            Text("앞으로 30일만 처리합니다. iPhone 일정은 선택한 항목만 개인 일정에 추가하며, 지출 일정은 내보내지 않습니다.")
         }
     }
 
@@ -223,6 +200,10 @@ struct IOSCalendarSettingsView: View {
             get: { calendarStore.selectedCalendarId },
             set: { calendarStore.selectedCalendarId = $0 }
         )
+    }
+
+    private var selectedCalendarName: String {
+        calendarStore.selectedCalendar?.name ?? "선택한 캘린더"
     }
 
     private var exportableScheduleCount: Int {
@@ -440,25 +421,40 @@ private struct IOSCalendarValueRow: View {
     }
 }
 
-private struct IOSCalendarSettingsRow: View {
+private struct IOSCalendarSyncActionRow: View {
     let title: String
     let subtitle: String
     let symbol: String
     let tint: Color
+    var showsProgress = false
 
     var body: some View {
-        Label {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 12) {
+            Group {
+                if showsProgress {
+                    ProgressView()
+                } else {
+                    Image(systemName: symbol)
+                        .font(.title3)
+                        .foregroundStyle(tint)
+                }
+            }
+            .frame(width: 28, height: 28)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-        } icon: {
-            Image(systemName: symbol)
-                .foregroundStyle(tint)
+            .multilineTextAlignment(.leading)
+
+            Spacer(minLength: 8)
         }
+        .padding(.vertical, 3)
     }
 }
 
