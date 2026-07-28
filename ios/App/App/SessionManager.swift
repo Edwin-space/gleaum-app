@@ -117,8 +117,10 @@ struct SupabaseSessionRefreshTransport: SessionRefreshTransport {
         return [
             "refresh_token_not_found",
             "invalid_refresh_token",
+            "refresh_token_already_used",
             "invalid_grant",
             "invalid refresh token",
+            "refresh token is not valid",
             "refresh token not found",
             "refresh token has already been used",
         ].contains { message.contains($0) }

@@ -42,11 +42,13 @@ private struct BrandTransitionView: View {
                     .opacity(appeared ? 1 : 0)
                     .accessibilityLabel("글리움")
 
-                Text("gleaum")
-                    .font(.system(.title2, design: .rounded).weight(.bold))
-                    .foregroundStyle(.white)
+                Image("GleaumBIInverse")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 144, height: 36)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared || reduceMotion ? 0 : 8)
+                    .accessibilityLabel("gleaum")
             }
         }
         .onAppear {

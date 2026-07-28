@@ -18,12 +18,9 @@
                             <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="img-logo-01">
                                 <rect key="frame" x="159" y="389" width="96" height="96"/>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="gleaum" textAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lbl-brand-01">
-                                <rect key="frame" x="169" y="501" width="76" height="26.5"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
+                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="GleaumBIInverse" translatesAutoresizingMaskIntoConstraints="NO" id="img-bi-01">
+                                <rect key="frame" x="135" y="501" width="144" height="36"/>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="cGa-bB-1UN"/>
                         <color key="backgroundColor" red="0.039215686" green="0.043137254999999999" blue="0.062745097999999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -32,8 +29,10 @@
                             <constraint firstItem="img-logo-01" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-11" id="c002"/>
                             <constraint firstItem="img-logo-01" firstAttribute="width" constant="96" id="c003"/>
                             <constraint firstItem="img-logo-01" firstAttribute="height" constant="96" id="c004"/>
-                            <constraint firstItem="lbl-brand-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c005"/>
-                            <constraint firstItem="lbl-brand-01" firstAttribute="top" secondItem="img-logo-01" secondAttribute="bottom" constant="16" id="c006"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c005"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="top" secondItem="img-logo-01" secondAttribute="bottom" constant="16" id="c006"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="width" constant="144" id="c007"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="height" constant="36" id="c008"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -43,6 +42,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="GleaumBIInverse" width="360" height="90"/>
         <image name="Splash" width="512" height="512"/>
     </resources>
 </document>

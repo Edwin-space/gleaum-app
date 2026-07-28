@@ -1,17 +1,18 @@
 # iOS Apple 디자인·시작 아키텍처 재정렬
 
-> 기준일: 2026-07-27  
+> 기준일: 2026-07-28
 > 대상: `IOS-009`, `IOS-010`, `IOS-011`  
 > 결론: 인증·세션 기반은 보존하고 현재 UIKit 표현 계층과 Capacitor 중심 화면 소유권은 교체한다.
 
-## 0. 2026-07-27 구현 상태
+## 0. 2026-07-28 구현 상태
 
 - SwiftUI `IOSAppRootView`가 실제 window root를 소유하도록 전환했다.
-- Launch Screen은 브랜드 배경·로고로 단순화하고 앱 내부 `BrandTransitionView`에서만 절제된 전환을 사용한다.
+- Launch Screen은 브랜드 배경·로고로 단순화하고 앱 내부 `BrandTransitionView`에서만 절제된 전환을 사용한다. 두 화면과 네이티브 로그인은 `img/gleaum_bi.svg`에서 만든 vector asset을 사용하며 수동 텍스트 BI를 금지한다.
 - `StartupSnapshotStore`가 account/home/spaces/schedules/notifications와 capability 조건부 budget을 병렬 선조회하고 5분 프로세스 캐시·부분 실패를 관리한다.
 - 시스템 `TabView` 5탭과 snapshot 기반 SwiftUI 홈 1차를 구현했다.
 - Capacitor는 앱 시작 때 WebView를 만들지 않으며, 네이티브 전환 전 화면에서만 지연 생성되는 폴백으로 축소했다.
 - 현재 제품 우선순위는 iPhone이다. iPad·Split View와 Android 태블릿·폴더블은 휴대전화 기능 마감 뒤 재개한다.
+- 네이티브 로그인은 소셜 계정 우선 구조·Dynamic Type·공식 BI로 재정렬했다. iOS Debug Supabase 키와 오래된 refresh token 판정을 보정했으며, 시뮬레이터에서 실제 인증 서버 응답을 확인했다.
 
 ## 1. 감사 결론
 
@@ -121,7 +122,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 1. Android Material 3의 기능·정보 구조는 공유하지만 외형을 복제하지 않는다.
 2. 배경·텍스트·separator는 Apple semantic color를 우선한다.
 3. 브랜드 Green/Teal/Blue는 선택 상태·주요 액션·강조에 제한한다.
-4. SF Symbols를 기본 아이콘으로 사용하고 브랜드 로고만 전용 자산을 사용한다.
+4. SF Symbols를 기본 아이콘으로 사용하고 브랜드 로고·BI만 전용 vector asset을 사용한다. `gleaum`을 시스템 폰트로 다시 조판하지 않는다.
 5. `largeTitle`, `title`, `headline`, `body`, `caption`과 Dynamic Type을 사용한다.
 6. 모든 정보를 둥근 카드에 넣지 않는다. `List`, `Form`, `Section`, plain grouping과 여백을 우선한다.
 7. 커스텀 blur/gradient/glass는 정보 계층을 해치지 않는 제한된 브랜드 영역에서만 사용한다.

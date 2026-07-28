@@ -9,11 +9,11 @@ final class LoginViewController: UIViewController {
     }
 
     private let backgroundColor = UIColor(red: 0.039, green: 0.043, blue: 0.063, alpha: 1)
-    private let panelColor = UIColor(red: 0.071, green: 0.082, blue: 0.118, alpha: 0.96)
     private let textColor = UIColor.white
-    private let mutedTextColor = UIColor(white: 1, alpha: 0.66)
+    private let mutedTextColor = UIColor(white: 1, alpha: 0.72)
     private let borderColor = UIColor(white: 1, alpha: 0.14)
     private let tealColor = GleaumUIColor.brandTeal
+    private let blueColor = GleaumUIColor.brandBlue
 
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
@@ -124,7 +124,7 @@ final class LoginViewController: UIViewController {
 
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.axis = .vertical
-        contentStack.spacing = 20
+        contentStack.spacing = 24
         contentStack.alignment = .fill
 
         socialStack.axis = .vertical
@@ -135,7 +135,7 @@ final class LoginViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentStack)
 
-        let readableWidth = contentStack.widthAnchor.constraint(lessThanOrEqualToConstant: 520)
+        let readableWidth = contentStack.widthAnchor.constraint(lessThanOrEqualToConstant: 440)
         readableWidth.priority = .required
         NSLayoutConstraint.activate([
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -143,8 +143,8 @@ final class LoginViewController: UIViewController {
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 34),
-            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -32),
+            contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 52),
+            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -28),
             contentStack.centerXAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerXAnchor),
             contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 24),
             contentStack.trailingAnchor.constraint(lessThanOrEqualTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -24),
@@ -159,7 +159,7 @@ final class LoginViewController: UIViewController {
         preferredWidth.isActive = true
 
         contentStack.addArrangedSubview(brandHeader())
-        contentStack.setCustomSpacing(30, after: contentStack.arrangedSubviews.last!)
+        contentStack.setCustomSpacing(38, after: contentStack.arrangedSubviews.last!)
         let socialPanel = socialPanel()
         let emailPanel = emailPanel()
         emailPanel.isHidden = true
@@ -172,45 +172,50 @@ final class LoginViewController: UIViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.alignment = .center
-        stack.spacing = 8
+        stack.spacing = 12
 
         let logo = UIImageView(image: UIImage(named: "Splash"))
         logo.contentMode = .scaleAspectFit
         logo.accessibilityLabel = "글리움"
         NSLayoutConstraint.activate([
-            logo.widthAnchor.constraint(equalToConstant: 70),
-            logo.heightAnchor.constraint(equalToConstant: 70),
+            logo.widthAnchor.constraint(equalToConstant: 78),
+            logo.heightAnchor.constraint(equalToConstant: 78),
         ])
 
-        let title = UILabel()
-        title.text = "gleaum"
-        title.font = .systemFont(ofSize: 34, weight: .black)
-        title.textColor = textColor
-
-        let subtitle = UILabel()
-        subtitle.text = "Making everyday life shine together"
-        subtitle.font = .systemFont(ofSize: 12, weight: .semibold)
-        subtitle.textColor = tealColor
+        let bi = UIImageView(image: UIImage(named: "GleaumBIInverse"))
+        bi.contentMode = .scaleAspectFit
+        bi.accessibilityLabel = "gleaum"
+        NSLayoutConstraint.activate([
+            bi.widthAnchor.constraint(equalToConstant: 152),
+            bi.heightAnchor.constraint(equalToConstant: 38),
+        ])
 
         let tagline = UILabel()
-        tagline.text = "나, 그리고 연인/가족의 일상 네트워크"
-        tagline.font = .systemFont(ofSize: 15, weight: .medium)
+        tagline.text = "나와 소중한 사람의 하루를 연결하세요"
+        tagline.font = .preferredFont(forTextStyle: .subheadline)
+        tagline.adjustsFontForContentSizeCategory = true
         tagline.textColor = mutedTextColor
         tagline.textAlignment = .center
         tagline.numberOfLines = 0
 
-        [logo, title, subtitle, tagline].forEach(stack.addArrangedSubview)
-        stack.setCustomSpacing(14, after: subtitle)
+        [logo, bi, tagline].forEach(stack.addArrangedSubview)
+        stack.setCustomSpacing(16, after: bi)
         return stack
     }
 
     private func socialPanel() -> UIView {
         let panel = panelContainer()
         socialPanelContainer = panel
-        let title = sectionTitle("계정으로 계속하기")
+        let title = sectionTitle("글리움 시작하기")
+        let description = UILabel()
+        description.text = "사용할 계정을 선택해 주세요"
+        description.textColor = mutedTextColor
+        description.font = .preferredFont(forTextStyle: .subheadline)
+        description.adjustsFontForContentSizeCategory = true
+        description.textAlignment = .center
 
         appleButton.cornerRadius = 14
-        appleButton.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        appleButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
         appleButton.addTarget(self, action: #selector(startAppleSignIn), for: .touchUpInside)
 
         configureGoogleButton()
@@ -223,10 +228,11 @@ final class LoginViewController: UIViewController {
         legal.textAlignment = .center
         legal.numberOfLines = 0
 
-        [title, appleButton, googleButton, emailEntryButton, legal, legalLinksRow()]
+        [title, description, appleButton, googleButton, emailEntryButton, legal, legalLinksRow()]
             .forEach(socialStack.addArrangedSubview)
-        socialStack.setCustomSpacing(18, after: title)
-        socialStack.setCustomSpacing(18, after: emailEntryButton)
+        socialStack.setCustomSpacing(4, after: title)
+        socialStack.setCustomSpacing(22, after: description)
+        socialStack.setCustomSpacing(20, after: emailEntryButton)
         panel.addArrangedSubview(socialStack)
         return panel
     }
@@ -247,7 +253,7 @@ final class LoginViewController: UIViewController {
         backButton.addTarget(self, action: #selector(showSocialPanel), for: .touchUpInside)
 
         modeControl.selectedSegmentIndex = 0
-        modeControl.selectedSegmentTintColor = tealColor
+        modeControl.selectedSegmentTintColor = blueColor
         modeControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         modeControl.setTitleTextAttributes([.foregroundColor: mutedTextColor], for: .normal)
         modeControl.addTarget(self, action: #selector(emailModeChanged), for: .valueChanged)
@@ -282,23 +288,26 @@ final class LoginViewController: UIViewController {
         configuration.baseForegroundColor = UIColor(red: 0.102, green: 0.106, blue: 0.180, alpha: 1)
         configuration.cornerStyle = .fixed
         configuration.background.cornerRadius = 14
+        configuration.background.strokeColor = UIColor(white: 0, alpha: 0.08)
+        configuration.background.strokeWidth = 1
         googleButton.configuration = configuration
-        googleButton.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        googleButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
         googleButton.addTarget(self, action: #selector(startGoogleSignIn), for: .touchUpInside)
     }
 
     private func configureEmailEntryButton() {
-        var configuration = UIButton.Configuration.bordered()
+        var configuration = UIButton.Configuration.filled()
         configuration.title = "이메일로 계속하기"
         configuration.image = UIImage(systemName: "envelope")
         configuration.imagePadding = 10
         configuration.baseForegroundColor = .white
+        configuration.baseBackgroundColor = UIColor(white: 1, alpha: 0.08)
         configuration.cornerStyle = .fixed
         configuration.background.cornerRadius = 14
         configuration.background.strokeColor = borderColor
         configuration.background.strokeWidth = 1
         emailEntryButton.configuration = configuration
-        emailEntryButton.heightAnchor.constraint(equalToConstant: 54).isActive = true
+        emailEntryButton.heightAnchor.constraint(equalToConstant: 52).isActive = true
         emailEntryButton.addTarget(self, action: #selector(showEmailPanel), for: .touchUpInside)
     }
 
@@ -372,8 +381,8 @@ final class LoginViewController: UIViewController {
     private func configureSubmitButton() {
         var configuration = UIButton.Configuration.filled()
         configuration.title = "로그인"
-        configuration.baseBackgroundColor = tealColor
-        configuration.baseForegroundColor = UIColor(red: 0.039, green: 0.043, blue: 0.063, alpha: 1)
+        configuration.baseBackgroundColor = blueColor
+        configuration.baseForegroundColor = .white
         configuration.cornerStyle = .fixed
         configuration.background.cornerRadius = 14
         submitButton.configuration = configuration
@@ -427,12 +436,7 @@ final class LoginViewController: UIViewController {
     private func panelContainer() -> UIStackView {
         let panel = UIStackView()
         panel.axis = .vertical
-        panel.layoutMargins = UIEdgeInsets(top: 22, left: 20, bottom: 22, right: 20)
-        panel.isLayoutMarginsRelativeArrangement = true
-        panel.backgroundColor = panelColor
-        panel.layer.cornerRadius = 24
-        panel.layer.borderWidth = 1
-        panel.layer.borderColor = borderColor.cgColor
+        panel.backgroundColor = .clear
         return panel
     }
 
@@ -440,7 +444,9 @@ final class LoginViewController: UIViewController {
         let label = UILabel()
         label.text = text
         label.textColor = textColor
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .preferredFont(forTextStyle: .title2)
+        label.adjustsFontForContentSizeCategory = true
+        label.textAlignment = .center
         return label
     }
 
@@ -725,11 +731,12 @@ private final class LoginTextField: UITextField {
         isSecureTextEntry = secure
         textColor = .white
         tintColor = GleaumUIColor.brandTeal
-        backgroundColor = UIColor(white: 1, alpha: 0.07)
+        backgroundColor = UIColor(white: 1, alpha: 0.09)
         layer.cornerRadius = 14
         layer.borderWidth = 1
         layer.borderColor = UIColor(white: 1, alpha: 0.12).cgColor
-        font = .systemFont(ofSize: 15, weight: .medium)
+        font = .preferredFont(forTextStyle: .body)
+        adjustsFontForContentSizeCategory = true
         attributedPlaceholder = NSAttributedString(
             string: title,
             attributes: [.foregroundColor: UIColor(white: 1, alpha: 0.43)]

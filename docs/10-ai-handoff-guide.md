@@ -1,7 +1,7 @@
 # 10. AI 인수인계 가이드 (AI Handoff Guide)
 
 > 이 문서는 어떤 AI(Claude, Gemini, GPT 등)라도 이 프로젝트를 이어받아 즉시 작업할 수 있도록 작성된 **최우선 참고 문서**입니다.
-> **최종 업데이트**: 2026-07-27
+> **최종 업데이트**: 2026-07-28
 >
 > 현재 작업과 다음 우선순위는 `docs/24-project-work-tracker.md`가 단일 기준이다. 이 문서는 아키텍처와 인수인계 맥락을 설명하고, 작업 상태는 트래커에서 관리한다.
 
@@ -49,6 +49,7 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-07-28 | iOS 전용 범위에서 공식 BI·로그인·Debug 통신을 보정했다. `img/gleaum_bi.svg`를 원본으로 일반/반전 vector asset을 구성해 Launch Screen·`BrandTransitionView`·네이티브 로그인에 적용하고 수동 시스템 폰트 BI를 제거했다. 로그인은 소셜 우선 정보 계층과 Dynamic Type 기준으로 정리했다. iOS 번들의 잘못된 Supabase 공개 키와 `Refresh token is not valid` 미분류 때문에 Debug에서 네트워크 오류가 보이던 문제를 수정했다. iPhone 17 Pro iOS 26.5 fresh Debug build/install/launch 및 잘못된 테스트 계정의 정상 서버 인증 거절 응답을 확인했다. Android Studio 변경 파일은 건드리거나 스테이징하지 않는다. |
 | 2026-07-27 | iOS 앱 화면 소유권을 Capacitor root에서 SwiftUI `IOSAppRootView`로 전환했다. launching/signedOut/authenticated/offline 상태, 단순 Launch Screen과 앱 내부 브랜드 전환, account/home/spaces/schedules/notifications 및 capability 조건부 budget 병렬 선조회·5분 캐시·부분 실패, 시스템 `TabView` 5탭, snapshot 기반 SwiftUI 홈 1차를 구현했다. Capacitor WebView는 앱 시작 때 생성하지 않고 아직 네이티브화하지 않은 경로에서만 지연 생성한다. iPhone 17 Pro iOS 26.5 새 설치에서 브랜드→네이티브 로그인과 딥링크 폴백, generic Simulator Debug build를 확인했다. 다음 작업은 일정→공간→가계부→알림/전체 순서의 네이티브 전환이다. iPad·Split View와 Android 태블릿·폴더블은 사용자 결정으로 휴대전화 기능 마감 뒤 재개한다. |
 | 2026-07-27 | iOS 네이티브 인증을 하나의 Supabase/Keychain 세션 계약으로 통합했다. Apple은 AuthenticationServices nonce·ID token, 이메일은 네이티브 로그인/가입·필수 동의, Google은 ASWebAuthenticationSession 임시 세션의 계정 선택·OAuth callback 자동 수신을 사용한다. 법적 문서는 전용 인앱 WKWebView에서 열며 PWA 설치 배너를 억제했다. 세션 13/13·인증 6/6, Simulator build와 Google 계정 선택/취소 복귀·약관 시각 회귀를 통과했다. iPhone arm64 Development 서명 빌드는 성공했지만 현재 기기가 CoreDevice `unavailable`이라 최신 빌드 설치만 대기한다. Apple 실인증은 유료 Team, 순수 GoogleSignIn SDK는 iOS OAuth Client ID·reversed scheme이 필요하다. 다음 구현 단계는 SwiftUI 단일 5탭 root·중앙 Route·시작 선조회다. |
 | 2026-07-27 | Claude의 iOS·Android·Web 혼합 WIP 61개 파일을 `b12e0f2`/`codex/archive-claude-wip-20260727`에 보존하고 안정 기준 `853c649`에서 iOS를 재구축했다. 세션은 Keychain 저장과 UserDefaults 1회 이전으로 전환했으며, refresh 명시 거절만 로그아웃하고 네트워크·5xx·429·일반 4xx는 세션을 보존한다. 401 API 재시도, 동시 refresh 병합, 로그아웃 경합 차단, 앱 시작 단일 세션 상태 조정자와 일시장애 복구 화면을 적용했다. 홈·일정 생성은 고정 다크 색 대신 시스템/라이트/다크 의미 토큰을 사용하고 시작 WebView flash는 네이티브 브랜드 shield로 차단한다. 시나리오 13/13·Simulator build·로그인 시각 검증, Personal Team Debug 서명 빌드·iPhone 16 Pro 설치·실행을 통과했다. Release capability와 Apple 로그인/APNs/Universal Link는 유료 Team이 필요하며, 다음 작업은 SwiftUI 단일 5탭 root다. |

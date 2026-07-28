@@ -34,7 +34,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GleaumSupabaseAnonKey</key>
-	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InR5dmpkc2VzY3VrYWVvcmN1YWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUxNDksImV4cCI6MjA5MzA2MTE0OX0.oFPpDadJIGbEe7du222Wr0ZdRnBJp46-v7oQbBfszqE</string>
+	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dmpkc2VzY3VrYWVvcmN1YWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUxNDksImV4cCI6MjA5MzA2MTE0OX0.oFPpDadJIGbEe7du222Wr0ZdRnBJp46-v7oQbBfszqE</string>
 	<key>GleaumSupabaseURL</key>
 	<string>https://tyvjdsescukaeorcuaga.supabase.co</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
