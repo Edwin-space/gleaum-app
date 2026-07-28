@@ -38,13 +38,48 @@ final class NativeAPIClient: @unchecked Sendable {
         return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
     }
 
+    func fetchSchedules() async throws -> [NativeScheduleItem] {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/schedules",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeSchedulesResponse.self, from: data).schedules
+    }
+
+    func fetchSchedule(id: String) async throws -> NativeScheduleItem {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/schedules/\(id)",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeScheduleResponse.self, from: data).schedule
+    }
+
     func createSchedule(_ payload: NativeCreateScheduleRequest) async throws -> NativeScheduleItem {
         let data = try await performAuthorizedRequest(
             path: "/api/native/schedules",
             method: "POST",
             body: try JSONEncoder().encode(payload)
         )
-        return try JSONDecoder().decode(NativeCreateScheduleResponse.self, from: data).schedule
+        return try JSONDecoder().decode(NativeScheduleResponse.self, from: data).schedule
+    }
+
+    func updateSchedule(
+        id: String,
+        payload: NativeUpdateScheduleRequest
+    ) async throws -> NativeScheduleItem {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/schedules/\(id)",
+            method: "PATCH",
+            body: try JSONEncoder().encode(payload)
+        )
+        return try JSONDecoder().decode(NativeScheduleResponse.self, from: data).schedule
+    }
+
+    func deleteSchedule(id: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/native/schedules/\(id)",
+            method: "DELETE"
+        )
     }
 
     private func performAuthorizedRequest(
@@ -126,7 +161,24 @@ enum NativeAPIError: LocalizedError {
         case .invalidURL:
             return "요청 주소를 만들 수 없습니다."
         case .http(let status, let body):
-            if body.contains("Unauthorized") { return "로그인이 만료되었습니다. 다시 로그인해 주세요." }
+            if body.contains("Unauthorized") {
+                return "로그인이 만료되었습니다. 다시 로그인해 주세요."
+            }
+            if body.contains("title_required") {
+                return "일정 제목을 입력해 주세요."
+            }
+            if body.contains("invalid_start_time") || body.contains("invalid_end_time") {
+                return "일정 날짜와 시간을 다시 확인해 주세요."
+            }
+            if body.contains("space_required") {
+                return "일정을 저장할 공간을 찾지 못했습니다."
+            }
+            if body.contains("space_editor_required") {
+                return "공유 일정은 공간 운영자 이상만 변경할 수 있어요."
+            }
+            if body.contains("schedule_not_found") {
+                return "일정을 찾을 수 없습니다."
+            }
             return "서버 요청에 실패했습니다. (\(status))"
         }
     }

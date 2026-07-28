@@ -31,6 +31,7 @@ final class StartupSnapshotStore: ObservableObject {
     @Published private(set) var state: StartupLoadState = .idle
     @Published private(set) var homeSummary: NativeHomeSummary?
     @Published private(set) var accountContext: NativeAccountContext?
+    @Published private(set) var schedules: [NativeScheduleItem] = []
     @Published private(set) var domainErrors: [StartupDomain: String] = [:]
     @Published private(set) var lastUpdatedAt: Date?
 
@@ -64,12 +65,157 @@ final class StartupSnapshotStore: ObservableObject {
         activeTask = nil
     }
 
+    /// 사용자 새로고침이나 mutation 이후 필요한 도메인만 다시 확인합니다.
+    func refresh(domains: Set<StartupDomain>) async {
+        guard !domains.isEmpty else { return }
+        if let activeTask {
+            await activeTask.value
+        }
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performTargetedRefresh(domains: domains)
+        }
+        activeTask = task
+        await task.value
+        activeTask = nil
+    }
+
+    func upsertSchedule(_ schedule: NativeScheduleItem) {
+        if let index = schedules.firstIndex(where: { $0.id == schedule.id }) {
+            schedules[index] = schedule
+        } else {
+            schedules.append(schedule)
+        }
+        schedules.sort { $0.startTime < $1.startTime }
+    }
+
+    func removeSchedule(id: String) {
+        schedules.removeAll { $0.id == id }
+    }
+
+#if DEBUG
+    func loadSchedulePreview() {
+        let calendar = Calendar.current
+        let now = Date()
+        let todayMorning = calendar.date(bySettingHour: 9, minute: 30, second: 0, of: now) ?? now
+        let todayAfternoon = calendar.date(bySettingHour: 15, minute: 0, second: 0, of: now) ?? now
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: todayMorning) ?? now
+        let nextWeek = calendar.date(byAdding: .day, value: 6, to: todayMorning) ?? now
+        let editable = NativeSchedulePermissions(
+            canEdit: true,
+            canDelete: true,
+            canChangeStatus: true,
+            canRenotify: true
+        )
+
+        schedules = [
+            NativeScheduleItem(
+                id: "preview-personal",
+                title: "주간 계획 정리",
+                type: "personal",
+                category: "routine",
+                visibility: "private",
+                automationPolicy: "reminder_only",
+                startTime: ISO8601DateFormatter.gleaum.string(from: todayMorning),
+                endTime: ISO8601DateFormatter.gleaum.string(from: calendar.date(byAdding: .hour, value: 1, to: todayMorning) ?? todayMorning),
+                allDay: false,
+                status: "in_progress",
+                repeat: "weekly",
+                reminder: 15,
+                memo: "이번 주 중요한 일정을 먼저 확인해요.",
+                locationAddress: nil,
+                locationLat: nil,
+                locationLng: nil,
+                referenceUrl: nil,
+                spaceId: "preview-personal-space",
+                createdBy: "preview",
+                participantIds: ["preview"],
+                permissions: editable
+            ),
+            NativeScheduleItem(
+                id: "preview-shared",
+                title: "가족 저녁 식사",
+                type: "shared",
+                category: "event",
+                visibility: "space",
+                automationPolicy: "reminder_only",
+                startTime: ISO8601DateFormatter.gleaum.string(from: todayAfternoon),
+                endTime: ISO8601DateFormatter.gleaum.string(from: calendar.date(byAdding: .hour, value: 2, to: todayAfternoon) ?? todayAfternoon),
+                allDay: false,
+                status: "pending",
+                repeat: "none",
+                reminder: 30,
+                memo: nil,
+                locationAddress: "서울특별시 중구 세종대로 110",
+                locationLat: nil,
+                locationLng: nil,
+                referenceUrl: nil,
+                spaceId: "preview-shared-space",
+                createdBy: "preview",
+                participantIds: ["preview"],
+                permissions: editable
+            ),
+            NativeScheduleItem(
+                id: "preview-child",
+                title: "학원 준비물 확인",
+                type: "child",
+                category: "routine",
+                visibility: "space",
+                automationPolicy: "auto_progress",
+                startTime: ISO8601DateFormatter.gleaum.string(from: tomorrow),
+                endTime: ISO8601DateFormatter.gleaum.string(from: calendar.date(byAdding: .minute, value: 30, to: tomorrow) ?? tomorrow),
+                allDay: false,
+                status: "pending",
+                repeat: "weekly",
+                reminder: 60,
+                memo: "교재와 필기도구를 챙겨요.",
+                locationAddress: nil,
+                locationLat: nil,
+                locationLng: nil,
+                referenceUrl: nil,
+                spaceId: "preview-shared-space",
+                createdBy: "preview",
+                participantIds: ["preview-child-user"],
+                permissions: editable
+            ),
+            NativeScheduleItem(
+                id: "preview-all-day",
+                title: "가족 기념일",
+                type: "shared",
+                category: "event",
+                visibility: "space",
+                automationPolicy: "reminder_only",
+                startTime: ISO8601DateFormatter.gleaum.string(from: nextWeek),
+                endTime: nil,
+                allDay: true,
+                status: "pending",
+                repeat: "yearly",
+                reminder: 1_440,
+                memo: nil,
+                locationAddress: nil,
+                locationLat: nil,
+                locationLng: nil,
+                referenceUrl: nil,
+                spaceId: "preview-shared-space",
+                createdBy: "preview",
+                participantIds: ["preview"],
+                permissions: editable
+            ),
+        ]
+        state = .ready
+        domainErrors = [:]
+        lastUpdatedAt = now
+    }
+#endif
+
     func clear() {
         activeTask?.cancel()
         activeTask = nil
         state = .idle
         homeSummary = nil
         accountContext = nil
+        schedules = []
         domainErrors = [:]
         lastUpdatedAt = nil
         rawSnapshots = [:]
@@ -85,11 +231,11 @@ final class StartupSnapshotStore: ObservableObject {
         domainErrors = [:]
 
         await withTaskGroup(of: StartupFetchResult.self) { group in
-            addFetch(.account, path: "/api/session/context", to: &group)
-            addFetch(.home, path: "/api/native/home-summary", to: &group)
-            addFetch(.spaces, path: "/api/native/spaces/summary", to: &group)
-            addFetch(.schedules, path: "/api/native/schedules", to: &group)
-            addFetch(.notifications, path: "/api/native/notifications", to: &group)
+            addFetch(.account, to: &group)
+            addFetch(.home, to: &group)
+            addFetch(.spaces, to: &group)
+            addFetch(.schedules, to: &group)
+            addFetch(.notifications, to: &group)
 
             var budgetScheduled = false
             for await result in group {
@@ -98,12 +244,39 @@ final class StartupSnapshotStore: ObservableObject {
                 if result.domain == .account, !budgetScheduled {
                     budgetScheduled = true
                     if accountContext?.capabilities.canViewHouseholdBudget == true {
-                        addFetch(.budget, path: "/api/native/budget/summary", to: &group)
+                        addFetch(.budget, to: &group)
                     }
                 }
             }
         }
 
+        finishRefresh()
+    }
+
+    private func performTargetedRefresh(domains: Set<StartupDomain>) async {
+        let shouldShowLoading = !hasCachedData
+        if shouldShowLoading {
+            state = .loading
+        }
+        domains.forEach { domainErrors[$0] = nil }
+
+        await withTaskGroup(of: StartupFetchResult.self) { group in
+            for domain in domains {
+                if domain == .budget,
+                   accountContext?.capabilities.canViewHouseholdBudget != true {
+                    continue
+                }
+                addFetch(domain, to: &group)
+            }
+            for await result in group {
+                apply(result)
+            }
+        }
+
+        finishRefresh()
+    }
+
+    private func finishRefresh() {
         lastUpdatedAt = Date()
         state = domainErrors.isEmpty ? .ready : .partialFailure
         logger.info(
@@ -113,9 +286,9 @@ final class StartupSnapshotStore: ObservableObject {
 
     private func addFetch(
         _ domain: StartupDomain,
-        path: String,
         to group: inout TaskGroup<StartupFetchResult>
     ) {
+        guard let path = path(for: domain) else { return }
         group.addTask {
             do {
                 let data = try await NativeAPIClient.shared.fetchSnapshot(path: path)
@@ -130,6 +303,17 @@ final class StartupSnapshotStore: ObservableObject {
         }
     }
 
+    private func path(for domain: StartupDomain) -> String? {
+        switch domain {
+        case .account: return "/api/session/context"
+        case .home: return "/api/native/home-summary"
+        case .spaces: return "/api/native/spaces/summary"
+        case .schedules: return "/api/native/schedules"
+        case .budget: return "/api/native/budget/summary"
+        case .notifications: return "/api/native/notifications"
+        }
+    }
+
     private func apply(_ result: StartupFetchResult) {
         if let data = result.data {
             rawSnapshots[result.domain] = data
@@ -141,7 +325,11 @@ final class StartupSnapshotStore: ObservableObject {
                     accountContext = try JSONDecoder().decode(NativeAccountContext.self, from: data)
                 case .home:
                     homeSummary = try JSONDecoder().decode(NativeHomeSummary.self, from: data)
-                case .spaces, .schedules, .budget, .notifications:
+                case .schedules:
+                    schedules = try JSONDecoder().decode(NativeSchedulesResponse.self, from: data)
+                        .schedules
+                        .sorted { $0.startTime < $1.startTime }
+                case .spaces, .budget, .notifications:
                     break
                 }
             } catch {

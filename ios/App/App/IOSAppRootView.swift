@@ -83,7 +83,7 @@ struct IOSMainTabView: View {
                 }
                 .tag(IOSMainTab.home)
 
-            LegacyRouteLaunchView(tab: .schedules, model: model)
+            IOSScheduleNavigationView(store: model.startupStore)
                 .tabItem {
                     Label("일정", systemImage: "calendar")
                 }

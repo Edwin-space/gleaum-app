@@ -52,6 +52,13 @@ final class IOSAppModel: ObservableObject {
 
     func apply(sessionState: AppSessionState) {
 #if DEBUG
+        if CommandLine.arguments.contains("-GLEAUMPreviewSchedules") {
+            startupStore.loadSchedulePreview()
+            selectedTab = .schedules
+            screen = .authenticated
+            return
+        }
+
         if CommandLine.arguments.contains("-GLEAUMPreviewOnboarding") {
             onboardingProfile = NativeProfileSummary(
                 id: "preview",

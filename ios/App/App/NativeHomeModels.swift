@@ -30,8 +30,18 @@ struct NativeHomeSpaces: Codable, Sendable {
 struct NativeHomeSchedules: Codable, Sendable {
     let today: [NativeScheduleItem]
     let upcoming: [NativeScheduleItem]
+    let range: [NativeScheduleItem]?
     let todayCount: Int
+    let completedCount: Int?
+    let pendingCount: Int?
     let upcomingCount: Int
+}
+
+struct NativeSchedulePermissions: Codable, Sendable {
+    let canEdit: Bool
+    let canDelete: Bool
+    let canChangeStatus: Bool
+    let canRenotify: Bool
 }
 
 struct NativeScheduleItem: Codable, Identifiable, Sendable {
@@ -48,9 +58,14 @@ struct NativeScheduleItem: Codable, Identifiable, Sendable {
     let `repeat`: String
     let reminder: Int
     let memo: String?
+    let locationAddress: String?
+    let locationLat: Double?
+    let locationLng: Double?
+    let referenceUrl: String?
     let spaceId: String
     let createdBy: String
     let participantIds: [String]
+    let permissions: NativeSchedulePermissions?
 }
 
 struct NativeHomeLedger: Codable, Sendable {
@@ -72,6 +87,14 @@ struct NativeLedgerItem: Codable, Identifiable, Sendable {
     let recurFreq: String
 }
 
+struct NativeSchedulesResponse: Codable, Sendable {
+    let schedules: [NativeScheduleItem]
+}
+
+struct NativeScheduleResponse: Codable, Sendable {
+    let schedule: NativeScheduleItem
+}
+
 struct NativeCreateScheduleRequest: Codable, Sendable {
     let title: String
     let type: String
@@ -85,8 +108,15 @@ struct NativeCreateScheduleRequest: Codable, Sendable {
     let visibility: String?
 }
 
-struct NativeCreateScheduleResponse: Codable, Sendable {
-    let schedule: NativeScheduleItem
+struct NativeUpdateScheduleRequest: Codable, Sendable {
+    let title: String
+    let startTime: String
+    let endTime: String?
+    let allDay: Bool
+    let reminder: Int
+    let `repeat`: String
+    let memo: String?
+    let status: String?
 }
 
 struct NativeAccountContext: Codable, Sendable {

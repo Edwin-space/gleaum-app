@@ -56,11 +56,7 @@ struct IOSHomeNavigationView: View {
             await store.prefetch()
         }
         .sheet(isPresented: $isPresentingSchedule) {
-            ScheduleCreateControllerContainer(isPresented: $isPresentingSchedule) {
-                Task {
-                    await store.prefetch(force: true)
-                }
-            }
+            IOSScheduleEditorNavigationView(store: store, schedule: nil)
         }
     }
 
@@ -123,7 +119,11 @@ struct IOSHomeNavigationView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(summary.schedules.today.prefix(5).enumerated()), id: \.element.id) { index, item in
-                        scheduleRow(item)
+                        NavigationLink {
+                            IOSScheduleDetailView(store: store, initialSchedule: item)
+                        } label: {
+                            scheduleRow(item)
+                        }
                         if index < min(summary.schedules.today.count, 5) - 1 {
                             Divider()
                         }
@@ -269,23 +269,4 @@ private struct ContentUnavailableFallback: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 34)
     }
-}
-
-private struct ScheduleCreateControllerContainer: UIViewControllerRepresentable {
-    @Binding var isPresented: Bool
-    let onCreated: () -> Void
-
-    func makeUIViewController(context: Context) -> NativeScheduleCreateViewController {
-        let controller = NativeScheduleCreateViewController()
-        controller.onCreated = { _ in
-            onCreated()
-            isPresented = false
-        }
-        return controller
-    }
-
-    func updateUIViewController(
-        _ uiViewController: NativeScheduleCreateViewController,
-        context: Context
-    ) {}
 }
