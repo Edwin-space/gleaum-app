@@ -21,10 +21,13 @@ public class NativeCalendarPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "listCalendars",     returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "createEvent",       returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateEvent",       returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "deleteEvent",       returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "listEvents",        returnType: CAPPluginReturnPromise),
     ]
 
     private let eventStore = EKEventStore()
+    private let gleaumEventMarker = "gleaum:schedule:"
 
     @objc public override func checkPermissions(_ call: CAPPluginCall) {
         call.resolve(permissionResult())
@@ -102,6 +105,12 @@ public class NativeCalendarPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
+        let description = call.getString("description") ?? ""
+        guard description.contains(gleaumEventMarker) else {
+            call.reject("gleaum_event_marker_required")
+            return
+        }
+
         let endTime = millisValue(call, "endTime") ?? (startTime + 60 * 60 * 1000)
         let event = EKEvent(eventStore: eventStore)
         event.calendar = calendar
@@ -110,7 +119,7 @@ public class NativeCalendarPlugin: CAPPlugin, CAPBridgedPlugin {
         event.endDate = Date(timeIntervalSince1970: TimeInterval(endTime) / 1000.0)
         event.isAllDay = call.getBool("allDay") ?? false
         event.location = call.getString("location")
-        event.notes = call.getString("description")
+        event.notes = description
         if let timezone = call.getString("timezone") {
             event.timeZone = TimeZone(identifier: timezone)
         }
@@ -120,6 +129,81 @@ public class NativeCalendarPlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve(["eventId": event.eventIdentifier ?? event.calendarItemIdentifier])
         } catch {
             call.reject("event_create_failed", error.localizedDescription)
+        }
+    }
+
+    @objc func updateEvent(_ call: CAPPluginCall) {
+        guard calendarPermissionState() == "granted" else {
+            call.reject("calendar_permission_required")
+            return
+        }
+
+        guard let eventId = call.getString("eventId"),
+              let event = eventStore.event(withIdentifier: eventId) else {
+            call.reject("gleaum_event_not_found")
+            return
+        }
+        guard event.notes?.contains(gleaumEventMarker) == true else {
+            call.reject("gleaum_event_not_found")
+            return
+        }
+        guard let calendarId = call.getString("calendarId"),
+              event.calendar.calendarIdentifier == calendarId,
+              event.calendar.allowsContentModifications else {
+            call.reject("calendar_read_only")
+            return
+        }
+        guard let title = call.getString("title")?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !title.isEmpty else {
+            call.reject("title_required")
+            return
+        }
+        guard let startTime = millisValue(call, "startTime") else {
+            call.reject("start_time_required")
+            return
+        }
+        let description = call.getString("description") ?? ""
+        guard description.contains(gleaumEventMarker) else {
+            call.reject("gleaum_event_marker_required")
+            return
+        }
+
+        let endTime = millisValue(call, "endTime") ?? (startTime + 60 * 60 * 1000)
+        event.title = title
+        event.startDate = Date(timeIntervalSince1970: TimeInterval(startTime) / 1000.0)
+        event.endDate = Date(timeIntervalSince1970: TimeInterval(endTime) / 1000.0)
+        event.isAllDay = call.getBool("allDay") ?? false
+        event.location = call.getString("location")
+        event.notes = description
+        if let timezone = call.getString("timezone") {
+            event.timeZone = TimeZone(identifier: timezone)
+        }
+
+        do {
+            try eventStore.save(event, span: .thisEvent, commit: true)
+            call.resolve(["eventId": event.eventIdentifier ?? event.calendarItemIdentifier])
+        } catch {
+            call.reject("event_update_failed", error.localizedDescription)
+        }
+    }
+
+    @objc func deleteEvent(_ call: CAPPluginCall) {
+        guard calendarPermissionState() == "granted" else {
+            call.reject("calendar_permission_required")
+            return
+        }
+        guard let eventId = call.getString("eventId"),
+              let event = eventStore.event(withIdentifier: eventId),
+              event.notes?.contains(gleaumEventMarker) == true else {
+            call.reject("gleaum_event_not_found")
+            return
+        }
+
+        do {
+            try eventStore.remove(event, span: .thisEvent, commit: true)
+            call.resolve(["deleted": true])
+        } catch {
+            call.reject("event_delete_failed", error.localizedDescription)
         }
     }
 
@@ -167,7 +251,7 @@ public class NativeCalendarPlugin: CAPPlugin, CAPBridgedPlugin {
             case .fullAccess:
                 return "granted"
             case .writeOnly:
-                return "granted"
+                return "denied"
             case .notDetermined:
                 return "prompt"
             case .denied, .restricted:

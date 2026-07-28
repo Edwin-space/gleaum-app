@@ -39,7 +39,7 @@
 | 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 핵심 5탭 완료·실계정 회귀 대기` | SwiftUI 단일 root, 브랜드 전환·병렬 snapshot·시스템 5탭과 홈·일정·공간·가계부·전체 메뉴를 모두 네이티브 화면으로 연결했다. 다음은 실제 계정에서 탭별 상태 보존·딥링크·세션 만료 회귀 |
 | 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `✅ 완료` | 2026-07-28 전체 메뉴·프로필 수정·테마·Face ID/Touch ID 앱 잠금·비밀번호·탈퇴/복원·로그아웃을 Apple `NavigationStack`·`List`·`Form`으로 구현했다. 법적 원문만 전용 인앱 `WKWebView`를 유지하며 죽은 기능과 중복 탭 링크는 노출하지 않는다 |
 | 5 | `IOS-005` | 가족·자녀 capability 동등화 | `🟠 코드 완료·실계정 회귀 대기` | 가족 관계·일반 가족/자녀 초대 분리와 보호자 등록→8자리 OTP→필수 동의→72시간 초대→자녀 claim→보호자 승인/거절을 SwiftUI로 구현했다. 다음은 보호자·자녀 실계정 2개 전체 회귀 |
-| 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `⬜ 대기` | 캘린더·푸시 토큰/딥링크·AASA를 실제 iPhone에서 검증 |
+| 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `🟠 EventKit 코드 완료` | EventKit 실기기 회귀 후 APNs·Universal Links를 실제 iPhone에서 검증 |
 | 7 | `IOS-011` | iPhone·테마·접근성 QA | `🟠 핵심 화면 통과·기기 회귀 대기` | 일정·공간·가계부·알림·전체 메뉴·가족/자녀를 iPhone 17 Pro 라이트·다크·접근성 큰 글자에서 확인했다. 다음은 소형/대형 iPhone, Reduce Motion·VoiceOver 실음성·오프라인/세션 회귀이며 iPad·Split View는 후순위 |
 | 8 | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | 내부 테스트, 개인정보·연령등급·심사 계정·메타데이터 정합화 후 제출 |
 | 9 | `FAM-013` | Android 자녀 계정 연결 전체 회귀 | `🟠 잔여 QA` | 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
@@ -329,7 +329,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 |---|---|---|---|---|---|---|
 | [x] | `IOS-000` | iOS 네이티브 셸·홈·일정 등록 1차 기반 | `✅ 완료` | 2026-06-18 | 2026-06-18 | Swift 네이티브 API client, 홈, 일정 Sheet, 라우팅 기반 |
 | [ ] | `IOS-001` | 운영 API 실제 계정 회귀 | `⬜ 대기` | — | — | 네이티브 셸 전환 뒤 홈 요약·일정 등록·세션 유지와 공통 API 오류 계약 검증 |
-| [ ] | `IOS-002` | EventKit 캘린더 UX | `⬜ 대기` | — | — | 캘린더 선택·내보내기·가져오기·중복 정책 구현 |
+| [ ] | `IOS-002` | EventKit 캘린더 UX | `🟠 코드·시뮬레이터 완료·실기기 회귀 대기` | 2026-07-28 | — | 전체 접근 권한·쓰기 가능 캘린더 선택, 글리움→iPhone 30일 수동 동기화, iPhone→개인 일정 선택 가져오기, `gleaum:schedule:{id}` 소유 마커와 제목+시작시각 60초 중복 정책을 SwiftUI로 구현했다. 마커 없는 기기 일정은 수정·삭제하지 않는다. Debug·Release와 라이트·다크·큰 글자 화면 QA 통과. 실제 iPhone에서 권한 거절/허용, 생성·수정·삭제·중복 가져오기를 회귀한 뒤 완료 처리 |
 | [ ] | `IOS-003` | APNs·알림 운영 설정 | `⬜ 대기` | — | — | APNs Auth Key·Firebase·Xcode capability·실기기 토큰·알림 딥링크 검증 |
 | [ ] | `IOS-004` | Universal Links 재활성화 | `⬜ 대기` | — | — | Associated Domains·AASA·초대/알림 링크 실기기 검증 |
 | [ ] | `IOS-005` | 가족·자녀 capability 동등화 | `🟠 코드 완료·실계정 회귀 대기` | 2026-07-28 | — | 기존 가족 관계/권한 분리를 재사용하고 가족 초대 유형 선택, 자녀 목록·등록, 보호자 8자리 OTP·필수 동의, 일회성 링크 공유, 로그인 전 경로 보존, 자녀 claim, 보호자 승인/거절을 SwiftUI와 공통 API 8개에 연결했다. Debug·Release와 화면 QA 통과. 보호자·자녀 실계정 전체 회귀 후 완료 처리 |
@@ -379,6 +379,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-28 | `IOS-002`, `IOS-010`, `IOS-011` | iOS EventKit 캘린더 네이티브 UX 코드 완료 | 전체 메뉴에 Apple 시스템 목록 기반 기기 캘린더 설정을 추가했다. 전체 접근 권한과 쓰기 가능 캘린더를 명시적으로 선택하고, 글리움 개인/공유 일정의 앞으로 30일 내보내기와 iPhone 일정의 선택 가져오기를 제공한다. 내보낸 이벤트에는 `gleaum:schedule:{id}` 마커를 기록해 앱 소유 이벤트만 갱신·삭제하며, 가져오기는 제목 정규화+시작시각 60초 기준으로 개인 일정 중복을 차단한다. 지출 일정은 내보내지 않고 종일 일정의 EventKit 종료일 규칙을 보존한다 | iPhone 17 Pro iOS 26.5 DEBUG fixture에서 라이트·다크·접근성 큰 글자 화면을 확인하고 generic Simulator Debug·Release build 및 diff check를 통과했다. 검증용 window 우회가 만든 검은 화면은 제거해 기존 AppDelegate 진입 흐름을 보존했다. 실제 iPhone의 iCloud/Google 캘린더 권한·계정별 CRUD·중복 회귀 뒤 `IOS-002` 완료 처리 |
 | 2026-07-28 | `IOS-005`, `IOS-009`, `IOS-011`, `FAM-012` | iOS 가족·자녀 계정 연결 네이티브화 | 가족 공간의 초대 동선을 일반 가족/자녀 선택으로 분리하고 기존 `family_role` 표시와 공간 권한 분리를 유지했다. 자녀 목록·DatePicker 기반 등록, 보호자 이메일 8자리 OTP·재발송·3종 필수 동의·인앱 약관, 72시간 일회성 초대 공유, 자녀 계정 claim, 보호자 최종 승인/거절을 공통 API 8개에 연결했다. 로그인 전 `/invite/child/{token}` 경로와 `/space/children?sid=`, 보호자 동의 쿼리를 네이티브 라우터가 보존하며 승인 전에는 가족 공간 정보를 열지 않는다. 위치 수집은 명시적으로 제외했다 | iPhone 17 Pro iOS 26.5 DEBUG fixture에서 라이트·다크·접근성 큰 글자의 목록·상태·액션 배치를 확인했다. generic Simulator Debug·Release build와 diff check 통과. 보호자 실메일 OTP, 자녀 다른 계정 claim, 승인/거절 후 capability·멤버십 반영은 실제 계정 2개로 회귀한 뒤 `IOS-005` 완료 처리 |
 | 2026-07-28 | `IOS-009`, `IOS-010`, `IOS-011` | iOS 전체 메뉴·계정·보안 네이티브화 완료 | 전체 탭의 레거시 WebView 진입을 제거하고 Apple inset grouped `List`와 `Form`으로 프로필 표시 방식, 알림, 시스템/라이트/다크, Face ID/Touch ID 앱 잠금, 비밀번호 변경, 계정 탈퇴·복원, 로그아웃을 구현했다. 앱이 비활성화되면 잠금 상태로 전환하고 복귀 시 `LocalAuthentication`의 기기 소유자 인증을 사용한다. 법적 원문만 사용자 이탈 없는 전용 인앱 `WKWebView`를 유지한다. 미구현 홈 레이아웃·EventKit 설정과 중복 핵심 탭 링크는 노출하지 않았다 | iPhone 17 Pro iOS 26.5 DEBUG fixture에서 라이트·다크·접근성 큰 글자 확인, 중복 disclosure 제거와 실명 빈 값 서버 초기화 계약 보정. generic iOS Simulator Debug·Release build와 `git diff --check` 통과. 다음은 `IOS-005` 가족·자녀 네이티브화 후 `IOS-002` EventKit·실기기 운영 회귀 |
 | 2026-07-28 | `IOS-003`, `IOS-009`, `IOS-010`, `IOS-011` | iOS 알림 센터·권한·푸시 라우팅 네이티브화 | 홈 toolbar의 읽지 않은 알림 배지에서 SwiftUI 알림 센터를 열고 전체/읽지 않음 필터, 새/이전 알림 섹션, 개별·전체 읽음, 연결 일정 상세와 공간 탭 이동을 구현했다. `Form` 기반 설정에서 iOS 시스템 권한 상태·설정 앱 이동과 일정/루틴/가계부/공간 서버 설정을 함께 관리한다. APNs/FCM 토큰은 Cookie·Bearer 공통 인증 API로 `profiles.fcm_token`과 `fcm_tokens`를 동기화하고, 푸시 탭의 `url`·`link`·`deep_link`를 중앙 네이티브 라우터가 처리한다 | iPhone 17 Pro iOS 26.5 DEBUG fixture의 라이트·다크·접근성 최대 글자에서 대비·필터 적응·행 줄바꿈을 확인했다. generic iOS Simulator Debug·Release와 Next production build 55/55 통과. 실제 푸시 송수신은 유료 Apple Team의 APNs capability·Firebase 설정·실기기 토큰과 운영 API 배포가 필요한 `IOS-003`; 다음은 전체 메뉴 네이티브화 |

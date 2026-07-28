@@ -1980,3 +1980,13 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - `/invite/child/{token}`은 로그아웃 상태에서도 네이티브 로그인 뒤 복원한다. `/space/children?sid=`와 `/family/guardian/verify?token=`의 쿼리값도 iOS 라우터가 보존한다.
 - 보호자 승인 전에는 자녀 계정에 가족 공간 멤버십이나 연령 capability를 만들지 않는 서버 계약을 그대로 유지한다. 위치 수집·공유는 이번 범위에 포함하지 않았다.
 - iPhone 17 Pro iOS 26.5 라이트·다크·접근성 큰 글자와 Simulator Debug·Release 빌드는 통과했다. `IOS-005` 완료 판정에는 보호자 실메일 OTP, 별도 자녀 계정 claim, 승인/거절 뒤 멤버십·capability 반영의 실계정 회귀가 필요하다.
+
+### 2026-07-28 추가 — iOS EventKit 기기 캘린더 네이티브화
+
+- 전체 메뉴의 `기기 캘린더`에서 EventKit 권한, 쓰기 가능한 대상 캘린더·계정, 글리움→iPhone 30일 동기화, iPhone→글리움 선택 가져오기를 SwiftUI 시스템 `List`와 `Section`으로 제공한다.
+- iOS 17 이상은 전체 접근 권한을 요구한다. 쓰기 전용 권한만 있으면 가져오기·중복 확인을 할 수 없으므로 설정 화면에서 전체 접근 필요성을 명확히 안내한다.
+- 글리움이 만든 이벤트에는 메모에 `gleaum:schedule:{scheduleId}` 마커를 기록한다. 자동 갱신·삭제와 레거시 Capacitor `updateEvent`/`deleteEvent`는 이 마커가 있는 이벤트에만 허용되어 사용자의 기존 캘린더를 건드리지 않는다.
+- 내보내기는 앞으로 30일의 지출 외 일정만 처리한다. 종일 일정은 EventKit의 exclusive end date를 보존하고, 사라진 글리움 일정은 선택한 캘린더·기간 안의 앱 소유 이벤트만 제거한다.
+- 가져오기는 어제부터 앞으로 30일까지 후보를 표시하고 사용자가 고른 이벤트만 개인 공간의 `private` 일정으로 생성한다. 앱 소유 이벤트와 제목 정규화+시작시각 60초 기준 기존 개인 일정 중복은 비활성화한다.
+- iPhone 17 Pro iOS 26.5 Debug fixture의 라이트·다크·접근성 큰 글자 화면과 generic Simulator Debug·Release 빌드가 통과했다. 시뮬레이터 반복 실행 중 추가했던 임시 `UIWindow` 우회는 검은 화면 원인이어서 제거하고 기존 `AppDelegate` 진입 흐름을 유지했다.
+- `IOS-002` 완료 전 실제 iPhone에서 iCloud/Google 캘린더 권한 허용·거절, 내보내기 생성→수정→삭제, 가져오기→재조회 중복 차단을 검증해야 한다.

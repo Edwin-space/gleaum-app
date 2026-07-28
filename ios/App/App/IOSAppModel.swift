@@ -91,7 +91,8 @@ final class IOSAppModel: ObservableObject {
             return
         }
 
-        if CommandLine.arguments.contains("-GLEAUMPreviewMore") {
+        if CommandLine.arguments.contains("-GLEAUMPreviewMore")
+            || CommandLine.arguments.contains("-GLEAUMPreviewCalendar") {
             startupStore.loadNotificationPreview()
             onboardingProfile = NativeProfileSummary(
                 id: "preview",

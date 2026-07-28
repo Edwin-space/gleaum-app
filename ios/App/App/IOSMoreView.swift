@@ -16,11 +16,11 @@ struct IOSMoreNavigationView: View {
         Group {
             if #available(iOS 16.0, *) {
                 NavigationStack {
-                    content
+                    rootContent
                 }
             } else {
                 NavigationView {
-                    content
+                    rootContent
                 }
                 .navigationViewStyle(.stack)
             }
@@ -51,6 +51,19 @@ struct IOSMoreNavigationView: View {
         .onReceive(NotificationCenter.default.publisher(for: .gleaumThemeChanged)) { _ in
             themePreference = GleaumThemeManager.shared.preference
         }
+    }
+
+    @ViewBuilder
+    private var rootContent: some View {
+#if DEBUG
+        if CommandLine.arguments.contains("-GLEAUMPreviewCalendar") {
+            IOSCalendarSettingsView(snapshotStore: store)
+        } else {
+            content
+        }
+#else
+        content
+#endif
     }
 
     private var content: some View {
@@ -140,6 +153,18 @@ struct IOSMoreNavigationView: View {
                     subtitle: IOSAppearanceSettingsView.title(for: themePreference),
                     symbol: "circle.lefthalf.filled",
                     tint: Color(uiColor: GleaumUIColor.brandBlue),
+                    showsChevron: false
+                )
+            }
+
+            NavigationLink {
+                IOSCalendarSettingsView(snapshotStore: store)
+            } label: {
+                IOSMoreRow(
+                    title: "기기 캘린더",
+                    subtitle: "iPhone 일정 가져오기와 내보내기",
+                    symbol: "calendar.badge.checkmark",
+                    tint: Color(uiColor: GleaumUIColor.brandTeal),
                     showsChevron: false
                 )
             }

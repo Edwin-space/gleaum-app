@@ -54,6 +54,8 @@
 		E822C3592FCD79040032518A /* IOSAppSecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */; };
 		E822C35B2FCD79040032518A /* IOSFamilyChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C35A2FCD79040032518A /* IOSFamilyChildView.swift */; };
 		E822C35D2FCD79040032518A /* IOSFamilyChildSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C35C2FCD79040032518A /* IOSFamilyChildSheets.swift */; };
+		E822C35F2FCD79040032518A /* IOSDeviceCalendarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C35E2FCD79040032518A /* IOSDeviceCalendarStore.swift */; };
+		E822C3612FCD79040032518A /* IOSCalendarSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3602FCD79040032518A /* IOSCalendarSettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -108,6 +110,8 @@
 		E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSAppSecurityManager.swift; sourceTree = "<group>"; };
 		E822C35A2FCD79040032518A /* IOSFamilyChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFamilyChildView.swift; sourceTree = "<group>"; };
 		E822C35C2FCD79040032518A /* IOSFamilyChildSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFamilyChildSheets.swift; sourceTree = "<group>"; };
+		E822C35E2FCD79040032518A /* IOSDeviceCalendarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDeviceCalendarStore.swift; sourceTree = "<group>"; };
+		E822C3602FCD79040032518A /* IOSCalendarSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCalendarSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +165,8 @@
 				E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */,
 				E822C35A2FCD79040032518A /* IOSFamilyChildView.swift */,
 				E822C35C2FCD79040032518A /* IOSFamilyChildSheets.swift */,
+				E822C35E2FCD79040032518A /* IOSDeviceCalendarStore.swift */,
+				E822C3602FCD79040032518A /* IOSCalendarSettingsView.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -326,6 +332,8 @@
 				E822C3592FCD79040032518A /* IOSAppSecurityManager.swift in Sources */,
 				E822C35B2FCD79040032518A /* IOSFamilyChildView.swift in Sources */,
 				E822C35D2FCD79040032518A /* IOSFamilyChildSheets.swift in Sources */,
+				E822C35F2FCD79040032518A /* IOSDeviceCalendarStore.swift in Sources */,
+				E822C3612FCD79040032518A /* IOSCalendarSettingsView.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

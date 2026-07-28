@@ -163,6 +163,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - [x] 알림 — 목록·필터·읽음·연결 목적지·서버 설정·iOS 권한·FCM 토큰
 - [x] 전체 메뉴·프로필·보안·법적 문서 설정 — 법적 원문은 전용 인앱 HTML 컨테이너
 - [x] 가족·자녀 계정 연결 — 초대 유형·보호자 OTP/동의·claim·최종 승인/거절, 실계정 회귀만 대기
+- [x] 기기 캘린더 — EventKit 전체 접근 권한·쓰기 캘린더 선택·30일 내보내기·선택 가져오기·앱 소유 마커·중복 차단, 실기기 회귀만 대기
 
 ### 4단계 — 품질 마감
 
@@ -171,6 +172,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - [ ] 라이트/다크/시스템 — 일정·공간·가계부·알림·전체 메뉴·가족/자녀 화면별 통과, 소형/대형 iPhone 전체 회귀 대기
 - [ ] Dynamic Type/VoiceOver/Reduce Motion — 일정·공간·가계부·알림·전체 메뉴·가족/자녀 Dynamic Type/VoiceOver 구조 통과, 실음성·Reduce Motion 전체 회귀 대기
 - [ ] 오프라인/부분 실패/세션 갱신/딥링크 회귀
+- [ ] EventKit 실기기 회귀 — iCloud/Google 캘린더 전체 접근 허용·거절, 글리움 일정 생성/수정/삭제, 기기 일정 선택 가져오기·중복 차단
 
 ## 8. 다음 작업의 금지 사항
 
