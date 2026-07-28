@@ -19,6 +19,25 @@ final class NativeAPIClient: @unchecked Sendable {
         try await performAuthorizedRequest(path: path, method: "GET")
     }
 
+    func fetchProfile() async throws -> NativeProfileSummary {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/profile",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
+    }
+
+    func completeOnboarding(
+        _ payload: NativeCompleteOnboardingRequest
+    ) async throws -> NativeProfileSummary {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/onboarding/complete",
+            method: "POST",
+            body: try JSONEncoder().encode(payload)
+        )
+        return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
+    }
+
     func createSchedule(_ payload: NativeCreateScheduleRequest) async throws -> NativeScheduleItem {
         let data = try await performAuthorizedRequest(
             path: "/api/native/schedules",

@@ -149,6 +149,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 ### 3단계 — 핵심 화면
 
 - [x] 홈 1차 — snapshot 요약·오늘 일정·가계부 요약·새 일정 sheet·pull-to-refresh
+- [x] 신규 사용자 온보딩 1차 — 이름/표시 방식·중심 기능·홈 구성·알림, 프로필 완료 여부 기반 분기
 - [ ] 일정 목록·상세·생성/수정
 - [ ] 공간 목록·상세·멤버·초대
 - [ ] 개인 가계부
@@ -176,5 +177,6 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - 브랜드 전환 중 선조회가 동작하고 홈 첫 표시가 캐시 또는 snapshot 기반이다.
 - 5개 탭이 시스템 내비게이션에서 상태를 유지한다.
 - 핵심 탭 사이 이동 시 같은 데이터를 매번 전체 재요청하지 않는다.
+- 신규 소셜 인증 사용자는 별도 회원가입 화면이나 WebView 없이 네이티브 온보딩을 완료하고 개인 공간을 확보한다.
 - iPhone/iPad에서 Apple 플랫폼 패턴과 접근성 기준을 충족한다.
 - 법적 문서·명시된 외부 인증 fallback을 제외한 핵심 사용자 흐름이 WebView로 전환되지 않는다.

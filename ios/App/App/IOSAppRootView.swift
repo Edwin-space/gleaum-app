@@ -12,6 +12,10 @@ struct IOSAppRootView: View {
                 BrandTransitionView(reduceMotion: reduceMotion)
             case .signedOut:
                 IOSLoginView()
+            case .onboarding:
+                IOSOnboardingView(profile: model.onboardingProfile) { profile in
+                    await model.completeOnboarding(with: profile)
+                }
             case .authenticated:
                 IOSMainTabView(model: model)
             case .offline:

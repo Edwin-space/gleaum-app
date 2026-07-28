@@ -103,3 +103,42 @@ struct NativeAccountCapabilities: Codable, Sendable {
     let canRequestLocationPermission: Bool
     let canShowAds: Bool
 }
+
+struct NativeNotificationSettings: Codable, Sendable {
+    let scheduleReminders: Bool
+    let routineReminders: Bool
+    let expenseReminders: Bool
+    let spaceUpdates: Bool
+}
+
+struct NativeProfileSummary: Codable, Sendable {
+    let id: String
+    let email: String
+    let name: String
+    let displayName: String
+    let realName: String?
+    let nameDisplayMode: String
+    let avatar: String?
+    let timezone: String
+    let locale: String
+    let onboardingCompleted: Bool
+    let notificationSettings: NativeNotificationSettings
+}
+
+struct NativeProfileResponse: Codable, Sendable {
+    let profile: NativeProfileSummary
+}
+
+struct NativeCompleteOnboardingRequest: Codable, Sendable {
+    let displayName: String
+    let realName: String?
+    let nameDisplayMode: String
+    let primaryGoal: String
+    let homeLayout: String
+    let enabledModules: [String]
+    let defaultReminderMinutes: Int
+    let spaceIntent: [String]
+    let notificationSettings: NativeNotificationSettings
+    let timezone: String
+    let locale: String
+}

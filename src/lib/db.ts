@@ -2255,7 +2255,7 @@ export async function completeNativeOnboarding(
 
   const { data: existingProfile } = await supabase
     .from('profiles')
-    .select('preferences')
+    .select('family_group_id,preferences')
     .eq('id', userId)
     .single();
 
@@ -2269,20 +2269,69 @@ export async function completeNativeOnboarding(
     spaceIntent: input.spaceIntent,
   };
 
+  let personalSpaceId = (
+    existingProfile?.preferences as Partial<OnboardingPreferences> | null
+  )?.personalSpaceId ?? null;
+
+  if (!personalSpaceId) {
+    const { data: existingPersonalSpace } = await supabase
+      .from('family_groups')
+      .select('id')
+      .eq('created_by', userId)
+      .eq('space_type', 'personal')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    personalSpaceId = (existingPersonalSpace as { id?: string } | null)?.id ?? null;
+  }
+
+  if (!personalSpaceId) {
+    const { data: personalSpace, error: personalSpaceError } = await supabase
+      .from('family_groups')
+      .insert({
+        name: `${displayName}의 공간`,
+        invite_code: generateInviteCode(),
+        created_by: userId,
+        space_type: 'personal',
+        settings: { purpose: 'personal' },
+      })
+      .select('id')
+      .single();
+
+    if (personalSpaceError || !personalSpace) {
+      throw new Error(personalSpaceError?.message ?? 'personal_space_create_failed');
+    }
+    personalSpaceId = (personalSpace as { id: string }).id;
+  }
+
+  const { error: membershipError } = await supabase
+    .from('space_members')
+    .upsert(
+      { space_id: personalSpaceId, user_id: userId, role: 'admin' },
+      { onConflict: 'space_id,user_id' },
+    );
+  if (membershipError) throw new Error(membershipError.message);
+
+  const profileSpaceUpdates: Record<string, unknown> = {
+    name: displayName,
+    display_name: displayName,
+    real_name: input.realName?.trim() || null,
+    name_display_mode: input.nameDisplayMode,
+    onboarding_completed_at: new Date().toISOString(),
+    timezone: input.timezone ?? 'Asia/Seoul',
+    locale: input.locale ?? 'ko-KR',
+    preferences: { ...preferences, personalSpaceId },
+    notification_settings: input.notificationSettings,
+    updated_at: new Date().toISOString(),
+  };
+  if (!existingProfile?.family_group_id) {
+    profileSpaceUpdates.family_group_id = personalSpaceId;
+  }
+
   const { data, error } = await supabase
     .from('profiles')
-    .update({
-      name: displayName,
-      display_name: displayName,
-      real_name: input.realName?.trim() || null,
-      name_display_mode: input.nameDisplayMode,
-      onboarding_completed_at: new Date().toISOString(),
-      timezone: input.timezone ?? 'Asia/Seoul',
-      locale: input.locale ?? 'ko-KR',
-      preferences,
-      notification_settings: input.notificationSettings,
-      updated_at: new Date().toISOString(),
-    })
+    .update(profileSpaceUpdates)
     .eq('id', userId)
     .select('id,name,display_name,real_name,name_display_mode,email,avatar,timezone,locale,onboarding_completed_at,notification_settings')
     .single();

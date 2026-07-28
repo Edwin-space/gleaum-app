@@ -5,6 +5,7 @@ import UIKit
 enum IOSAppScreen: Equatable {
     case launching
     case signedOut
+    case onboarding
     case authenticated
     case offline
 }
@@ -39,6 +40,7 @@ final class IOSAppModel: ObservableObject {
 
     @Published private(set) var screen: IOSAppScreen = .launching
     @Published var selectedTab: IOSMainTab = .home
+    @Published private(set) var onboardingProfile: NativeProfileSummary?
 
     let startupStore = StartupSnapshotStore.shared
 
@@ -49,6 +51,31 @@ final class IOSAppModel: ObservableObject {
     private init() {}
 
     func apply(sessionState: AppSessionState) {
+#if DEBUG
+        if CommandLine.arguments.contains("-GLEAUMPreviewOnboarding") {
+            onboardingProfile = NativeProfileSummary(
+                id: "preview",
+                email: "preview@gleaum.com",
+                name: "글리움 사용자",
+                displayName: "글리움 사용자",
+                realName: nil,
+                nameDisplayMode: "nickname",
+                avatar: nil,
+                timezone: "Asia/Seoul",
+                locale: "ko-KR",
+                onboardingCompleted: false,
+                notificationSettings: NativeNotificationSettings(
+                    scheduleReminders: true,
+                    routineReminders: true,
+                    expenseReminders: true,
+                    spaceUpdates: true
+                )
+            )
+            screen = .onboarding
+            return
+        }
+#endif
+
         transitionTask?.cancel()
         transitionGeneration = UUID()
         let generation = transitionGeneration
@@ -61,6 +88,7 @@ final class IOSAppModel: ObservableObject {
             prefetchTask?.cancel()
             prefetchTask = nil
             startupStore.clear()
+            onboardingProfile = nil
             transitionTask = Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 550_000_000)
                 guard !Task.isCancelled, self?.transitionGeneration == generation else { return }
@@ -70,14 +98,33 @@ final class IOSAppModel: ObservableObject {
         case .authenticated:
             selectedTab = .home
             screen = .launching
+            let profileTask = Task {
+                try? await NativeAPIClient.shared.fetchProfile()
+            }
             prefetchTask = Task { [weak self] in
                 guard let self else { return }
                 await self.startupStore.prefetch()
             }
             transitionTask = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: 900_000_000)
+                async let minimumBrandTime: Void = Task.sleep(nanoseconds: 900_000_000)
+                let profile = await profileTask.value
+                try? await minimumBrandTime
                 guard !Task.isCancelled, self?.transitionGeneration == generation else { return }
-                self?.screen = .authenticated
+                guard let self else { return }
+
+                self.onboardingProfile = profile
+                if let profile {
+                    self.screen = profile.onboardingCompleted ? .authenticated : .onboarding
+                    return
+                }
+
+                if let completed = self.startupStore.homeSummary?.user.onboardingCompleted {
+                    self.screen = completed ? .authenticated : .onboarding
+                } else if self.startupStore.hasCachedData {
+                    self.screen = .authenticated
+                } else {
+                    self.screen = .offline
+                }
             }
 
         case .authenticatedOffline:
@@ -100,6 +147,14 @@ final class IOSAppModel: ObservableObject {
     }
 
     func showNativeHome() {
+        selectedTab = .home
+        screen = .authenticated
+    }
+
+    func completeOnboarding(with profile: NativeProfileSummary) async {
+        onboardingProfile = profile
+        startupStore.clear()
+        await startupStore.prefetch(force: true)
         selectedTab = .home
         screen = .authenticated
     }

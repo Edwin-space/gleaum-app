@@ -39,6 +39,7 @@
 		E822C32D2FCD79040032518A /* StartupSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C32C2FCD79040032518A /* StartupSnapshotStore.swift */; };
 		E822C32F2FCD79040032518A /* IOSAppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C32E2FCD79040032518A /* IOSAppRootView.swift */; };
 		E822C3312FCD79040032518A /* IOSHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3302FCD79040032518A /* IOSHomeView.swift */; };
+		E822C3412FCD79040032518A /* IOSOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3402FCD79040032518A /* IOSOnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,6 +79,7 @@
 		E822C32C2FCD79040032518A /* StartupSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupSnapshotStore.swift; sourceTree = "<group>"; };
 		E822C32E2FCD79040032518A /* IOSAppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSAppRootView.swift; sourceTree = "<group>"; };
 		E822C3302FCD79040032518A /* IOSHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHomeView.swift; sourceTree = "<group>"; };
+		E822C3402FCD79040032518A /* IOSOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSOnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +118,7 @@
 				E822C32A2FCD79040032518A /* IOSAppModel.swift */,
 				E822C32C2FCD79040032518A /* StartupSnapshotStore.swift */,
 				E822C3302FCD79040032518A /* IOSHomeView.swift */,
+				E822C3402FCD79040032518A /* IOSOnboardingView.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -266,6 +269,7 @@
 				E822C32D2FCD79040032518A /* StartupSnapshotStore.swift in Sources */,
 				E822C32F2FCD79040032518A /* IOSAppRootView.swift in Sources */,
 				E822C3312FCD79040032518A /* IOSHomeView.swift in Sources */,
+				E822C3412FCD79040032518A /* IOSOnboardingView.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
