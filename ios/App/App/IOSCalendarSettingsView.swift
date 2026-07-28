@@ -338,6 +338,7 @@ private struct IOSCalendarImportView: View {
         .navigationTitle("기기 일정 가져오기")
         .navigationBarTitleDisplayMode(.inline)
         .dynamicTypeSize(.small ... .accessibility2)
+        .gleaumFloatingTabBarHidden()
         .refreshable {
             await loadCandidates()
         }

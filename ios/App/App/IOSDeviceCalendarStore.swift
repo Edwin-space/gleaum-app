@@ -173,6 +173,12 @@ final class IOSDeviceCalendarStore: ObservableObject {
             errorMessage = "기기 캘린더 전체 접근을 먼저 허용해 주세요."
             return
         }
+
+        // iCloud/CalDAV가 직전 저장 뒤 EventKit 식별자를 갱신할 수 있으므로
+        // 동기화마다 저장소 객체를 새로 읽어 중복 생성을 막는다.
+        eventStore.reset()
+        reloadCalendars()
+
         guard let calendar = selectedEventCalendar(), calendar.allowsContentModifications else {
             errorMessage = "일정을 저장할 수 있는 캘린더를 선택해 주세요."
             return
@@ -200,10 +206,10 @@ final class IOSDeviceCalendarStore: ObservableObject {
             end: rangeEnd,
             includesGleaumEvents: true
         )
-        var eventByScheduleId: [String: EKEvent] = [:]
+        var eventsByScheduleId: [String: [EKEvent]] = [:]
         for event in existing {
             guard let scheduleId = Self.markerScheduleId(in: event.notes) else { continue }
-            eventByScheduleId[scheduleId] = event
+            eventsByScheduleId[scheduleId, default: []].append(event)
         }
 
         var created = 0
@@ -213,16 +219,25 @@ final class IOSDeviceCalendarStore: ObservableObject {
 
         do {
             for schedule in exportable {
-                let event = eventByScheduleId[schedule.id] ?? EKEvent(eventStore: eventStore)
+                let matchingEvents = eventsByScheduleId[schedule.id, default: []]
+                let event = matchingEvents.first ?? EKEvent(eventStore: eventStore)
                 let isNew = event.eventIdentifier == nil
                 apply(schedule: schedule, to: event, calendar: calendar)
                 try eventStore.save(event, span: .thisEvent, commit: false)
                 if isNew { created += 1 } else { updated += 1 }
+
+                // 과거 지연 동기화로 같은 마커가 중복 생성된 경우 대표 1개만 남긴다.
+                for duplicate in matchingEvents.dropFirst() {
+                    try eventStore.remove(duplicate, span: .thisEvent, commit: false)
+                    deleted += 1
+                }
             }
 
-            for (scheduleId, event) in eventByScheduleId where !activeIds.contains(scheduleId) {
-                try eventStore.remove(event, span: .thisEvent, commit: false)
-                deleted += 1
+            for (scheduleId, events) in eventsByScheduleId where !activeIds.contains(scheduleId) {
+                for event in events {
+                    try eventStore.remove(event, span: .thisEvent, commit: false)
+                    deleted += 1
+                }
             }
 
             try eventStore.commit()

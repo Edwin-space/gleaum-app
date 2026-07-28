@@ -175,7 +175,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - [ ] 라이트/다크/시스템 — 일정·공간·가계부·알림·전체 메뉴·가족/자녀 화면별 통과, 소형/대형 iPhone 전체 회귀 대기
 - [ ] Dynamic Type/VoiceOver/Reduce Motion — 일정·공간·가계부·알림·전체 메뉴·가족/자녀 Dynamic Type/VoiceOver 구조 통과, 실음성·Reduce Motion 전체 회귀 대기
 - [ ] 오프라인/부분 실패/세션 갱신/딥링크 회귀
-- [ ] EventKit 실기기 회귀 — iCloud/Google 캘린더 전체 접근 허용·거절, 글리움 일정 생성/수정/삭제, 기기 일정 선택 가져오기·중복 차단
+- [ ] EventKit 실기기 회귀 — iPhone 16 Pro에서 iCloud 전체 접근 허용과 글리움 일정 생성/수정/삭제·재동기화 0건 통과. 실제 기기 일정 선택 가져오기→재조회 중복 차단과 권한 거절 UX가 남음
 
 ## 8. 다음 작업의 금지 사항
 

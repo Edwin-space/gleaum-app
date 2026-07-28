@@ -93,6 +93,7 @@ struct IOSMainTabView: View {
                 tabs
             }
         }
+        .environmentObject(tabBarState)
         .tint(Color(uiColor: GleaumUIColor.brandTeal))
         .onChange(of: model.selectedTab) { selectedTab in
             tabBarState.activate(selectedTab)
@@ -130,13 +131,15 @@ struct IOSMainTabView: View {
     @available(iOS 18.0, *)
     private var adaptiveTabs: some View {
         tabs
-            .environmentObject(tabBarState)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                IOSFloatingTabBar(
-                    tabs: availableTabs,
-                    selection: $model.selectedTab,
-                    state: tabBarState
-                )
+                if !tabBarState.isHidden {
+                    IOSFloatingTabBar(
+                        tabs: availableTabs,
+                        selection: $model.selectedTab,
+                        state: tabBarState
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
     }
 
@@ -194,11 +197,13 @@ struct IOSMainTabView: View {
 @MainActor
 final class IOSFloatingTabBarState: ObservableObject {
     @Published private(set) var isCompact = false
+    @Published private(set) var isHidden = false
 
     private var activeTab: IOSMainTab = .home
     private var lastOffset: CGFloat = 0
     private var compactTravel: CGFloat = 0
     private var expandTravel: CGFloat = 0
+    private var hiddenOwners: Set<UUID> = []
 
     func activate(_ tab: IOSMainTab, expandsBar: Bool = true) {
         activeTab = tab
@@ -241,6 +246,15 @@ final class IOSFloatingTabBarState: ObservableObject {
                 expandTravel = 0
             }
         }
+    }
+
+    func setHidden(_ hidden: Bool, owner: UUID) {
+        if hidden {
+            hiddenOwners.insert(owner)
+        } else {
+            hiddenOwners.remove(owner)
+        }
+        isHidden = !hiddenOwners.isEmpty
     }
 
     private func setCompact(_ compact: Bool) {
@@ -358,6 +372,10 @@ private extension IOSMainTab {
 }
 
 extension View {
+    func gleaumFloatingTabBarHidden() -> some View {
+        modifier(IOSFloatingTabBarVisibilityModifier())
+    }
+
     @ViewBuilder
     func gleaumSystemTabBarHidden() -> some View {
         if #available(iOS 18.0, *) {
@@ -374,6 +392,21 @@ extension View {
         } else {
             self
         }
+    }
+}
+
+private struct IOSFloatingTabBarVisibilityModifier: ViewModifier {
+    @EnvironmentObject private var state: IOSFloatingTabBarState
+    @State private var owner = UUID()
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                state.setHidden(true, owner: owner)
+            }
+            .onDisappear {
+                state.setHidden(false, owner: owner)
+            }
     }
 }
 
