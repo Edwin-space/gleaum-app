@@ -183,13 +183,20 @@ class AppDelegate: UIResponder,
     }
 
     // ── 앱 상태 메서드 (Capacitor 플러그인 호환) ─────────────────────────────
-    func applicationWillResignActive(_ application: UIApplication) {}
+    func applicationWillResignActive(_ application: UIApplication) {
+        Task { @MainActor in
+            IOSAppSecurityManager.shared.lockIfNeeded()
+        }
+    }
     func applicationDidEnterBackground(_ application: UIApplication) {}
     func applicationWillEnterForeground(_ application: UIApplication) {}
     func applicationWillTerminate(_ application: UIApplication) {}
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         GleaumThemeManager.shared.applyToConnectedWindows()
+        Task { @MainActor in
+            IOSAppSecurityManager.shared.refreshAvailability()
+        }
         sessionStateCoordinator.resume()
 
         #if targetEnvironment(macCatalyst)

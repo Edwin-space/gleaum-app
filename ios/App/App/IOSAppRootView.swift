@@ -3,6 +3,7 @@ import UIKit
 
 struct IOSAppRootView: View {
     @ObservedObject var model: IOSAppModel
+    @StateObject private var security = IOSAppSecurityManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -17,7 +18,14 @@ struct IOSAppRootView: View {
                     await model.completeOnboarding(with: profile)
                 }
             case .authenticated:
-                IOSMainTabView(model: model, store: model.startupStore)
+                ZStack {
+                    IOSMainTabView(model: model, store: model.startupStore)
+                    if security.isLocked {
+                        IOSAppLockView(security: security)
+                            .transition(.opacity)
+                            .zIndex(10)
+                    }
+                }
             case .offline:
                 OfflineRecoveryView(model: model)
             }
@@ -104,7 +112,7 @@ struct IOSMainTabView: View {
                     .tag(IOSMainTab.budget)
             }
 
-            LegacyRouteLaunchView(tab: .more, model: model)
+            IOSMoreNavigationView(appModel: model, store: store)
                 .tabItem {
                     Label("전체", systemImage: "line.3.horizontal")
                 }
@@ -136,27 +144,49 @@ struct IOSMainTabView: View {
     }
 }
 
-private struct LegacyRouteLaunchView: View {
-    let tab: IOSMainTab
-    @ObservedObject var model: IOSAppModel
-    @State private var opened = false
+private struct IOSAppLockView: View {
+    @ObservedObject var security: IOSAppSecurityManager
+    @State private var attemptedAutomatically = false
 
     var body: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text("화면을 여는 중")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-        }
-        .onAppear {
-            guard !opened else { return }
-            opened = true
-            DispatchQueue.main.async {
-                model.openLegacyRoute(for: tab)
+        ZStack {
+            Color(uiColor: GleaumUIColor.background)
+                .ignoresSafeArea()
+
+            VStack(spacing: 22) {
+                Image(systemName: security.availability.kind.symbol)
+                    .font(.system(size: 46, weight: .medium))
+                    .foregroundStyle(Color(uiColor: GleaumUIColor.brandTeal))
+                    .accessibilityHidden(true)
+
+                VStack(spacing: 7) {
+                    Text("글리움이 잠겨 있어요")
+                        .font(.title2.bold())
+                    Text("\(security.availability.kind.title)로 일정과 자금 정보를 확인해 주세요.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button {
+                    Task { _ = await security.unlock() }
+                } label: {
+                    Label(
+                        "\(security.availability.kind.title)로 잠금 해제",
+                        systemImage: security.availability.kind.symbol
+                    )
+                    .frame(maxWidth: 280)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color(uiColor: GleaumUIColor.brandTeal))
+                .disabled(security.isAuthenticating)
             }
+            .padding(28)
         }
-        .onDisappear {
-            opened = false
+        .task {
+            guard !attemptedAutomatically else { return }
+            attemptedAutomatically = true
+            _ = await security.unlock()
         }
     }
 }

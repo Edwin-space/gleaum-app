@@ -49,6 +49,9 @@
 		E822C34F2FCD79040032518A /* IOSBudgetComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C34E2FCD79040032518A /* IOSBudgetComponents.swift */; };
 		E822C3512FCD79040032518A /* IOSNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3502FCD79040032518A /* IOSNotificationView.swift */; };
 		E822C3532FCD79040032518A /* IOSNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3522FCD79040032518A /* IOSNotificationManager.swift */; };
+		E822C3552FCD79040032518A /* IOSMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3542FCD79040032518A /* IOSMoreView.swift */; };
+		E822C3572FCD79040032518A /* IOSMoreSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3562FCD79040032518A /* IOSMoreSheets.swift */; };
+		E822C3592FCD79040032518A /* IOSAppSecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +101,9 @@
 		E822C34E2FCD79040032518A /* IOSBudgetComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBudgetComponents.swift; sourceTree = "<group>"; };
 		E822C3502FCD79040032518A /* IOSNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSNotificationView.swift; sourceTree = "<group>"; };
 		E822C3522FCD79040032518A /* IOSNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSNotificationManager.swift; sourceTree = "<group>"; };
+		E822C3542FCD79040032518A /* IOSMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMoreView.swift; sourceTree = "<group>"; };
+		E822C3562FCD79040032518A /* IOSMoreSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMoreSheets.swift; sourceTree = "<group>"; };
+		E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSAppSecurityManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +152,9 @@
 				E822C34E2FCD79040032518A /* IOSBudgetComponents.swift */,
 				E822C3502FCD79040032518A /* IOSNotificationView.swift */,
 				E822C3522FCD79040032518A /* IOSNotificationManager.swift */,
+				E822C3542FCD79040032518A /* IOSMoreView.swift */,
+				E822C3562FCD79040032518A /* IOSMoreSheets.swift */,
+				E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -306,6 +315,9 @@
 				E822C34F2FCD79040032518A /* IOSBudgetComponents.swift in Sources */,
 				E822C3512FCD79040032518A /* IOSNotificationView.swift in Sources */,
 				E822C3532FCD79040032518A /* IOSNotificationManager.swift in Sources */,
+				E822C3552FCD79040032518A /* IOSMoreView.swift in Sources */,
+				E822C3572FCD79040032518A /* IOSMoreSheets.swift in Sources */,
+				E822C3592FCD79040032518A /* IOSAppSecurityManager.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

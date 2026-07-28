@@ -305,6 +305,35 @@ struct NativeProfileResponse: Codable, Sendable {
     let profile: NativeProfileSummary
 }
 
+struct NativeProfileUpdateRequest: Codable, Sendable {
+    let displayName: String?
+    let realName: String
+    let nameDisplayMode: String?
+}
+
+struct NativePasswordUpdateRequest: Codable, Sendable {
+    let password: String
+}
+
+struct NativeAccountStatus: Codable, Sendable, Equatable {
+    let withdrawalPending: Bool
+    let isWithdrawn: Bool?
+    let withdrawalRequestedAt: String?
+    let deleteScheduledAt: String?
+    let daysLeft: Int?
+}
+
+struct NativeAccountActionResponse: Codable, Sendable {
+    let success: Bool
+    let message: String
+    let withdrawalRequestedAt: String?
+    let deleteScheduledAt: String?
+}
+
+struct NativeWithdrawalRequest: Codable, Sendable {
+    let reason: String?
+}
+
 struct NativeCompleteOnboardingRequest: Codable, Sendable {
     let displayName: String
     let realName: String?

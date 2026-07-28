@@ -64,6 +64,31 @@ final class IOSAppModel: ObservableObject {
             return
         }
 
+        if CommandLine.arguments.contains("-GLEAUMPreviewMore") {
+            startupStore.loadNotificationPreview()
+            onboardingProfile = NativeProfileSummary(
+                id: "preview",
+                email: "preview@gleaum.com",
+                name: "글리움 관리자",
+                displayName: "글리움 관리자",
+                realName: "유태수",
+                nameDisplayMode: "nickname",
+                avatar: nil,
+                timezone: "Asia/Seoul",
+                locale: "ko-KR",
+                onboardingCompleted: true,
+                notificationSettings: NativeNotificationSettings(
+                    scheduleReminders: true,
+                    routineReminders: true,
+                    expenseReminders: true,
+                    spaceUpdates: true
+                )
+            )
+            selectedTab = .more
+            screen = .authenticated
+            return
+        }
+
         if CommandLine.arguments.contains("-GLEAUMPreviewBudget") {
             startupStore.loadBudgetPreview()
             selectedTab = .budget
@@ -266,6 +291,11 @@ final class IOSAppModel: ObservableObject {
             selectedTab = .budget
             return true
         }
+        if cleanPath == "/mypage" || cleanPath == "/settings" {
+            isPresentingNotifications = false
+            selectedTab = .more
+            return true
+        }
         return false
     }
 
@@ -285,6 +315,8 @@ final class IOSAppModel: ObservableObject {
             || path == "/space"
             || path == "/family"
             || path == "/budget"
+            || path == "/mypage"
+            || path == "/settings"
     }
 
     func completeOnboarding(with profile: NativeProfileSummary) async {
@@ -293,6 +325,10 @@ final class IOSAppModel: ObservableObject {
         await startupStore.prefetch(force: true)
         selectedTab = .home
         screen = .authenticated
+    }
+
+    func applyProfile(_ profile: NativeProfileSummary) {
+        onboardingProfile = profile
     }
 
     func openLegacyRoute(for tab: IOSMainTab) {

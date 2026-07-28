@@ -1964,3 +1964,11 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - Android Google 로그인은 Credential Manager 계정 선택 → Google ID token → Supabase `grant_type=id_token` 교환 방식이다.
 - 외부 설정 잔여: Firebase Android 앱 `com.gleaum.app`에 debug SHA-1 `9D:9E:3B:4F:AB:1C:B3:46:C7:9F:D0:70:F4:A1:07:49:17:7B:64:E2`, release 및 Play App Signing SHA-1을 모두 등록하고 최신 `google-services.json`을 내려받아야 한다.
 - iOS 재개 기준과 P0/P1 순서는 `docs/27-ios-resumption-readiness.md`가 최신 단일 보고서다.
+
+### 2026-07-28 추가 — iOS 전체 메뉴·계정·보안 네이티브화
+
+- iOS 시스템 5탭의 `전체`는 더 이상 WebView를 열지 않는다. Apple `NavigationStack`·inset grouped `List`·`Form`으로 프로필, 알림, 테마, 생체인증 앱 잠금, 비밀번호, 계정 탈퇴/복원과 로그아웃을 제공한다.
+- 앱 잠금은 `LocalAuthentication`을 사용한다. Face ID/Touch ID가 등록된 기기에서만 활성화할 수 있고 앱이 비활성화된 뒤 복귀하면 기기 소유자 인증을 요구한다.
+- 약관·개인정보 원문은 서버 HTML이므로 유일한 의도적 예외로 전용 인앱 `WKWebView`를 유지한다. 외부 브라우저로 이탈하지 않는다.
+- 홈 레이아웃과 기기 캘린더 설정은 구현 전 진입점을 노출하지 않았다. EventKit은 `IOS-002`에서 별도로 마감한다.
+- iPhone 17 Pro 시뮬레이터 라이트·다크·접근성 큰 글자와 Debug·Release 빌드가 통과했다. 다음 우선순위는 `IOS-005` 가족·자녀 네이티브화이며 이후 `IOS-002` EventKit과 실계정·실기기 운영 회귀를 진행한다.

@@ -27,6 +27,60 @@ final class NativeAPIClient: @unchecked Sendable {
         return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
     }
 
+    func updateProfile(
+        displayName: String,
+        realName: String?,
+        nameDisplayMode: String
+    ) async throws -> NativeProfileSummary {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/profile",
+            method: "PATCH",
+            body: try JSONEncoder().encode(
+                NativeProfileUpdateRequest(
+                    displayName: displayName,
+                    realName: realName ?? "",
+                    nameDisplayMode: nameDisplayMode
+                )
+            )
+        )
+        return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
+    }
+
+    func updatePassword(_ password: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/native/security/password",
+            method: "PATCH",
+            body: try JSONEncoder().encode(
+                NativePasswordUpdateRequest(password: password)
+            )
+        )
+    }
+
+    func fetchAccountStatus() async throws -> NativeAccountStatus {
+        let data = try await performAuthorizedRequest(
+            path: "/api/account/status",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeAccountStatus.self, from: data)
+    }
+
+    func requestWithdrawal(reason: String?) async throws -> NativeAccountActionResponse {
+        let data = try await performAuthorizedRequest(
+            path: "/api/account/withdraw",
+            method: "POST",
+            body: try JSONEncoder().encode(NativeWithdrawalRequest(reason: reason))
+        )
+        return try JSONDecoder().decode(NativeAccountActionResponse.self, from: data)
+    }
+
+    func restoreWithdrawal() async throws -> NativeAccountActionResponse {
+        let data = try await performAuthorizedRequest(
+            path: "/api/account/restore",
+            method: "POST"
+        )
+        return try JSONDecoder().decode(NativeAccountActionResponse.self, from: data)
+    }
+
     func updateNotificationSettings(
         _ settings: NativeNotificationSettings
     ) async throws -> NativeProfileSummary {
@@ -414,6 +468,21 @@ enum NativeAPIError: LocalizedError {
             }
             if body.contains("space_access_denied") || body.contains("space_admin_required") {
                 return "이 공간을 관리할 권한이 없습니다."
+            }
+            if body.contains("display_name_required") {
+                return "앱에서 사용할 이름을 입력해 주세요."
+            }
+            if body.contains("display_name_too_long") {
+                return "앱에서 사용할 이름은 24자 이내로 입력해 주세요."
+            }
+            if body.contains("invalid_name_display_mode") {
+                return "이름 표시 방식을 다시 선택해 주세요."
+            }
+            if body.contains("password_too_short") {
+                return "비밀번호는 6자 이상 입력해 주세요."
+            }
+            if body.contains("password_too_long") {
+                return "비밀번호는 72자 이내로 입력해 주세요."
             }
             if body.contains("personal_space_locked") {
                 return "개인 공간에서는 이 작업을 할 수 없어요."

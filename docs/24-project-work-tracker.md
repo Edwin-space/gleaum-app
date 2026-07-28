@@ -3,7 +3,7 @@
 > **단일 기준 문서(SSOT)**: 현재 무엇을 해야 하는지, 무엇이 진행 중인지, 무엇이 언제 어떤 근거로 완료됐는지는 이 문서를 기준으로 판단한다.
 >
 > 최초 작성: 2026-07-16
-> 최종 업데이트: 2026-07-27
+> 최종 업데이트: 2026-07-28
 > 현재 iOS 재구축 기준점: `853c649`, Claude 혼합 WIP 보존 `b12e0f2` (`codex/archive-claude-wip-20260727`), 작업 브랜치 `codex/ios-rebuild-20260727`
 
 ## 1. 운영 규칙
@@ -36,11 +36,11 @@
 |---:|---|---|---|---|
 | 1 | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Debug 실기기 통과·유료 팀 대기` | Personal Team Debug 빌드·iPhone 설치·실행 완료. 유료 Apple Developer Team에서 App ID capability·Release 프로비저닝을 활성화한 뒤 Apple 로그인·APNs·Universal Link 검증 |
 | 2 | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 세션 기반 완료·인증 SDK 대기` | Keychain 이전·refresh 오류 분류·동시 갱신·로그아웃 경합·401 재시도 13개 시나리오와 실기기 실행 통과. 다음은 Apple·Google·이메일 인증을 단일 상태에 연결 |
-| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 1차 기반 구현·iPhone 검증` | SwiftUI를 실제 window root로 전환하고 브랜드 전환·병렬 snapshot·시스템 5탭·홈·일정·공간·가계부·알림의 네이티브 화면과 중앙 목적지 라우팅을 연결했다. 다음은 전체 메뉴와 설정을 전환하고 탭별 `NavigationStack` 상태를 완성 |
-| 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `🟠 일정·공간·가계부·알림 완료` | 홈의 알림 배지, 알림 목록·전체/읽지 않음 필터·개별/전체 읽음·일정/공간 목적지, 서버 수신 설정, iOS 권한·FCM 토큰 등록을 완료했다. 다음은 전체 메뉴·프로필·보안·법적 문서를 Apple 시스템 패턴으로 전환 |
+| 3 | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 핵심 5탭 완료·실계정 회귀 대기` | SwiftUI 단일 root, 브랜드 전환·병렬 snapshot·시스템 5탭과 홈·일정·공간·가계부·전체 메뉴를 모두 네이티브 화면으로 연결했다. 다음은 실제 계정에서 탭별 상태 보존·딥링크·세션 만료 회귀 |
+| 4 | `IOS-010` | 일정·공간·가계부·알림·전체 메뉴 네이티브화 | `✅ 완료` | 2026-07-28 전체 메뉴·프로필 수정·테마·Face ID/Touch ID 앱 잠금·비밀번호·탈퇴/복원·로그아웃을 Apple `NavigationStack`·`List`·`Form`으로 구현했다. 법적 원문만 전용 인앱 `WKWebView`를 유지하며 죽은 기능과 중복 탭 링크는 노출하지 않는다 |
 | 5 | `IOS-005` | 가족·자녀 capability 동등화 | `⬜ 대기` | 가족 관계·일반 가족/자녀 초대 분리와 자녀 등록→OTP→동의→claim→승인/거절을 iOS 네이티브로 구현 |
 | 6 | `IOS-002`~`IOS-004` | EventKit·APNs·Universal Links | `⬜ 대기` | 캘린더·푸시 토큰/딥링크·AASA를 실제 iPhone에서 검증 |
-| 7 | `IOS-011` | iPhone·테마·접근성 QA | `🟠 화면별 진행 중` | 일정·공간·가계부·알림 화면 iPhone 17 Pro 라이트·다크·접근성 최대 글자 확인 완료. 나머지 핵심 화면과 소형/대형 iPhone 회귀, iPad·Split View는 후순위 |
+| 7 | `IOS-011` | iPhone·테마·접근성 QA | `🟠 핵심 화면 통과·기기 회귀 대기` | 일정·공간·가계부·알림·전체 메뉴를 iPhone 17 Pro 라이트·다크·접근성 큰 글자에서 확인했다. 다음은 소형/대형 iPhone, Reduce Motion·VoiceOver 실음성·오프라인/세션 회귀이며 iPad·Split View는 후순위 |
 | 8 | `IOS-006` | TestFlight/App Store 출시 | `⬜ 대기` | 내부 테스트, 개인정보·연령등급·심사 계정·메타데이터 정합화 후 제출 |
 | 9 | `FAM-013` | Android 자녀 계정 연결 전체 회귀 | `🟠 잔여 QA` | 보호자·자녀 실계정으로 등록→OTP→동의→초대→claim→승인/거절 전체 회귀 |
 | 10 | `AND-011` | Android Credential Manager Google 로그인 | `🟠 외부 설정 대기` | Firebase SHA-1·최신 `google-services.json` 반영 후 실제 계정 선택·취소·재로그인 검증 |
@@ -337,8 +337,8 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 | [ ] | `IOS-007` | Xcode·서명·capability·권한 기준선 | `🟠 Debug 실기기 통과·Release 계정 대기` | 2026-07-23 | — | Debug 전용 빈 entitlement를 분리해 Personal Team 서명 빌드, iPhone 16 Pro 설치·실행·프로세스 유지 확인. Release의 Apple 로그인·Push·Associated Domains는 유료 Team capability·프로비저닝 필요 |
 | [ ] | `IOS-008` | 네이티브 인증·세션 마감 | `🟠 코드·시뮬레이터 완료·외부 설정 대기` | 2026-07-27 | — | Keychain·refresh 기반 13/13과 인증 REST 계약 6/6 통과. 사용자 노출 회원가입 화면은 제거하고 AuthenticationServices Apple 로그인, Google 계정 시작, 기존 계정 이메일 로그인만 제공한다. 신규 소셜 사용자는 인증 후 네이티브 온보딩에서 프로필·설정을 완료한다. Apple 공식 시스템 버튼과 Google 공식 G 자산/버튼 규격, 인앱 약관, Supabase ID token/password 세션을 적용했다. 2026-07-28 iOS 번들의 잘못된 Supabase 공개 키를 교정하고 실제 서버 인증 거절 응답을 확인했다. Google은 `ASWebAuthenticationSession` 임시 세션으로 계정 선택·자동 복귀·취소를 검증했으며 GoogleSignIn SDK 마감에는 iOS OAuth Client ID·reversed scheme이 필요. Apple 실인증은 유료 Team capability 필요 |
 | [ ] | `IOS-009` | SwiftUI 단일 앱 셸·라우터·선조회 | `🟠 1차 기반 구현·iPhone 검증` | 2026-07-27 | — | SwiftUI `IOSAppRootView`가 실제 window root를 소유하며 launching/signedOut/onboarding/authenticated/offline 상태를 단일 관리한다. 인증 세션 확정 뒤 `/api/native/profile`의 `onboardingCompleted`를 확인해 신규 소셜 사용자를 네이티브 온보딩으로 분기한다. Launch Screen·브랜드 전환·로그인 공식 BI, `StartupSnapshotStore` 병렬 선조회·5분 캐시·부분 실패, 시스템 `TabView` 5탭, SwiftUI 홈 1차를 구현했다. Capacitor는 지연 생성되는 레거시 화면 폴백으로 축소했다. 다음은 탭별 네이티브 화면으로 폴백 제거 |
-| [ ] | `IOS-010` | 핵심 기능 네이티브화 | `🟠 일정·공간·가계부·알림 완료` | 2026-07-27 | — | 홈·온보딩·일정·공간·개인 가계부·알림의 WebView 폴백을 제거했다. 알림은 홈 배지, 목록·필터·개별/전체 읽음, 일정 상세·공간 이동, 서버 수신 설정, iOS 시스템 권한·FCM 토큰 등록과 푸시 탭 중앙 라우팅을 SwiftUI로 연결했다. 다음은 전체 메뉴·프로필·보안·법적 문서 네이티브화 |
-| [ ] | `IOS-011` | iPhone·테마·접근성 QA | `🟠 일정·공간·가계부·알림 통과·iPad 후순위` | 2026-07-28 | — | 일정·공간·가계부·알림을 iPhone 17 Pro 라이트/다크와 접근성 최대 글자에서 검증했다. 알림은 시스템 의미 색상, SF Symbols, 큰 글자에서 적응형 필터와 세로 행 배치를 적용해 겹침 없이 스크롤되도록 확인했다. 나머지 핵심 화면과 소형/대형 iPhone, Reduce Motion·오프라인/세션·VoiceOver 실음성 회귀가 남음. iPad·Split View는 후순위 |
+| [x] | `IOS-010` | 핵심 기능 네이티브화 | `✅ 완료` | 2026-07-27 | 2026-07-28 | 홈·온보딩·일정·공간·개인 가계부·알림·전체 메뉴의 핵심 사용자 흐름에서 WebView 폴백을 제거했다. 전체 메뉴는 프로필, 화면 모드, 알림, 생체인증 앱 잠금, 비밀번호, 계정 탈퇴/복원, 로그아웃을 공통 API와 로컬 보안 계약에 연결했다. 약관·개인정보 원문만 서버 HTML을 전용 인앱 `WKWebView`로 표시한다 |
+| [ ] | `IOS-011` | iPhone·테마·접근성 QA | `🟠 핵심 화면 통과·iPad 후순위` | 2026-07-28 | — | 일정·공간·가계부·알림·전체 메뉴를 iPhone 17 Pro 라이트/다크와 접근성 큰 글자에서 검증했다. 시스템 의미 색상, SF Symbols, Dynamic Type과 스크롤 가능한 시스템 목록을 유지한다. 소형/대형 iPhone, Reduce Motion·오프라인/세션·VoiceOver 실음성 회귀가 남음. iPad·Split View는 후순위 |
 
 상세 계획: `docs/16-ios-native-roadmap.md`, 재개 감사: `docs/27-ios-resumption-readiness.md`
 
@@ -379,6 +379,7 @@ Android 구현 중 새 공통 API·DB·권한 변경이 발생하면 이 표와 
 
 | 날짜 | 관련 ID | 구분 | 기록 | 검증·다음 행동 |
 |---|---|---|---|---|
+| 2026-07-28 | `IOS-009`, `IOS-010`, `IOS-011` | iOS 전체 메뉴·계정·보안 네이티브화 완료 | 전체 탭의 레거시 WebView 진입을 제거하고 Apple inset grouped `List`와 `Form`으로 프로필 표시 방식, 알림, 시스템/라이트/다크, Face ID/Touch ID 앱 잠금, 비밀번호 변경, 계정 탈퇴·복원, 로그아웃을 구현했다. 앱이 비활성화되면 잠금 상태로 전환하고 복귀 시 `LocalAuthentication`의 기기 소유자 인증을 사용한다. 법적 원문만 사용자 이탈 없는 전용 인앱 `WKWebView`를 유지한다. 미구현 홈 레이아웃·EventKit 설정과 중복 핵심 탭 링크는 노출하지 않았다 | iPhone 17 Pro iOS 26.5 DEBUG fixture에서 라이트·다크·접근성 큰 글자 확인, 중복 disclosure 제거와 실명 빈 값 서버 초기화 계약 보정. generic iOS Simulator Debug·Release build와 `git diff --check` 통과. 다음은 `IOS-005` 가족·자녀 네이티브화 후 `IOS-002` EventKit·실기기 운영 회귀 |
 | 2026-07-28 | `IOS-003`, `IOS-009`, `IOS-010`, `IOS-011` | iOS 알림 센터·권한·푸시 라우팅 네이티브화 | 홈 toolbar의 읽지 않은 알림 배지에서 SwiftUI 알림 센터를 열고 전체/읽지 않음 필터, 새/이전 알림 섹션, 개별·전체 읽음, 연결 일정 상세와 공간 탭 이동을 구현했다. `Form` 기반 설정에서 iOS 시스템 권한 상태·설정 앱 이동과 일정/루틴/가계부/공간 서버 설정을 함께 관리한다. APNs/FCM 토큰은 Cookie·Bearer 공통 인증 API로 `profiles.fcm_token`과 `fcm_tokens`를 동기화하고, 푸시 탭의 `url`·`link`·`deep_link`를 중앙 네이티브 라우터가 처리한다 | iPhone 17 Pro iOS 26.5 DEBUG fixture의 라이트·다크·접근성 최대 글자에서 대비·필터 적응·행 줄바꿈을 확인했다. generic iOS Simulator Debug·Release와 Next production build 55/55 통과. 실제 푸시 송수신은 유료 Apple Team의 APNs capability·Firebase 설정·실기기 토큰과 운영 API 배포가 필요한 `IOS-003`; 다음은 전체 메뉴 네이티브화 |
 | 2026-07-28 | `IOS-009`, `IOS-010`, `IOS-011` | iOS 개인 가계부 핵심 흐름 네이티브화 | 가계부 탭 WebView를 제거하고 개인 가계부 전용 월간 요약·검색·수입/지출 필터·카테고리 비율·정기 예정 내역·최근 내역을 SwiftUI 시스템 목록으로 구현했다. `Form` 기반 수입/지출 생성·편집, 상세·상태 변경·삭제와 개인 공간 강제 저장을 공통 native API에 연결했다. 시작 snapshot 캐시를 우선 표시하고 pull-to-refresh 및 변경 뒤 현재 월+홈만 선택 갱신한다. 자녀 capability에서는 가계부 탭을 숨기며 공유 공간 데이터 경계를 노출하지 않는다 | iPhone 17 Pro iOS 26.5 DEBUG fixture의 라이트·다크·접근성 최대 글자에서 정보 계층과 대비를 확인하고 큰 글자 금액·월 선택 붕괴를 보정했다. generic iOS Simulator Debug·Release build 통과. 실제 계정 CRUD와 정기 항목 서버 생성 결과 회귀는 `IOS-001`; 다음 알림 네이티브화 |
 | 2026-07-28 | `IOS-009`, `IOS-010`, `IOS-011` | iOS 공간 핵심 흐름 네이티브화 | 공간 탭 WebView를 제거하고 시작 snapshot의 공간 응답을 실제 store로 디코딩했다. 개인/공유/가족 공간 전환, 다가오는 일정 상세 연결, 공간 소식 작성, 멤버 권한·가족 관계 수정, 코드만 복사/초대장 공유/재발급, 공간 생성·참여·이름 변경·가족 승격·안전 삭제를 공통 API·capability 계약 그대로 SwiftUI 시스템 컴포넌트에 연결했다. 개인 공간은 일정만 제공하고 커뮤니티·초대·관리 액션을 차단한다 | iPhone 17 Pro iOS 26.5 DEBUG fixture에서 라이트·다크·접근성 최대 글자 화면 확인, 큰 글자 역할 영역 세로 전환 적용. Simulator Debug·Release generic build 통과. 실제 계정 admin/editor/viewer CRUD 회귀는 `IOS-001`에 남기고 다음 개인 가계부 네이티브화 |

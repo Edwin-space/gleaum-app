@@ -5,6 +5,7 @@ import WebKit
 final class LegalDocumentViewController: UIViewController, WKNavigationDelegate {
     private let documentTitle: String
     private let url: URL
+    private let onClose: (() -> Void)?
     private lazy var webView: WKWebView = {
         let configuration = WKWebViewConfiguration()
         let nativeContextScript = WKUserScript(
@@ -23,9 +24,10 @@ final class LegalDocumentViewController: UIViewController, WKNavigationDelegate 
     private let loadingIndicator = UIActivityIndicatorView(style: .medium)
     private let errorLabel = UILabel()
 
-    init(title: String, url: URL) {
+    init(title: String, url: URL, onClose: (() -> Void)? = nil) {
         self.documentTitle = title
         self.url = url
+        self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .fullScreen
     }
@@ -43,7 +45,9 @@ final class LegalDocumentViewController: UIViewController, WKNavigationDelegate 
         loadingIndicator.startAnimating()
     }
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { .default }
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        traitCollection.userInterfaceStyle == .dark ? .lightContent : .darkContent
+    }
 
     private func setupLayout() {
         let header = UIView()
@@ -142,7 +146,11 @@ final class LegalDocumentViewController: UIViewController, WKNavigationDelegate 
     }
 
     @objc private func close() {
-        dismiss(animated: true)
+        if let onClose {
+            onClose()
+        } else {
+            dismiss(animated: true)
+        }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
