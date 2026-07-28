@@ -81,6 +81,7 @@ struct IOSSpaceNavigationView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("공간")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {

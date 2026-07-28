@@ -114,6 +114,8 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - `TabView`: 홈, 일정, 공간, 가계부, 전체
 - 각 탭은 독립 `NavigationStack`과 navigation path를 소유한다.
 - 시스템 tab bar와 SF Symbols를 사용하고 custom floating pill을 사용하지 않는다.
+- iOS 26 이상은 Apple 공식 `tabBarMinimizeBehavior(.onScrollDown)`로 콘텐츠 스크롤 중 tab bar를 축소한다. iOS 15~25는 접근성·상태 보존을 위해 시스템 기본 tab bar를 유지한다.
+- 홈·일정·공간·가계부·전체의 루트 제목은 모두 `largeTitle`, 상세·설정·편집 화면은 `inline`을 사용한다.
 - 생성·필터·선택은 toolbar, sheet, menu, confirmation dialog의 플랫폼 패턴을 따른다.
 
 ### iPad
@@ -133,6 +135,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 6. 모든 정보를 둥근 카드에 넣지 않는다. `List`, `Form`, `Section`, plain grouping과 여백을 우선한다.
 7. 커스텀 blur/gradient/glass는 정보 계층을 해치지 않는 제한된 브랜드 영역에서만 사용한다.
 8. 라이트·다크·시스템, increased contrast, Reduce Motion, VoiceOver를 같은 컴포넌트에서 검증한다.
+9. 테마 선택 화면은 시스템·라이트·다크의 역할 색을 구분하되, 기능 화면의 배경·텍스트는 계속 Apple semantic color를 사용한다. 양쪽 테마 미리보기는 현재 창의 trait에 묶지 않고 두 팔레트를 독립 렌더링한다.
 
 ## 7. 구현 순서
 
@@ -146,8 +149,8 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 ### 2단계 — 시스템 내비게이션
 
-- [x] 시스템 `TabView` 5탭
-- [x] 홈·일정·공간·가계부·전체 탭 `NavigationStack`
+- [x] 시스템 `TabView` 5탭 + iOS 26 스크롤 축소, 구버전 시스템 기본 fallback
+- [x] 홈·일정·공간·가계부·전체 탭 `NavigationStack` + 루트 Large Title 통일
 - [x] 중앙 Route와 푸시 목적지 연결 — 홈·알림·일정 단건·공간·가계부의 네이티브 목적지 판정
 - [ ] Universal Link 실기기 검증 — 유료 Team·Associated Domains 활성화 뒤 완료
 - [ ] iPad `NavigationSplitView` 적응 — 후순위

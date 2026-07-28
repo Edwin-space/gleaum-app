@@ -40,6 +40,7 @@ struct IOSHomeNavigationView: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("홈")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button {

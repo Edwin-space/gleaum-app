@@ -162,23 +162,25 @@ struct IOSAppearanceSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Picker("화면 모드", selection: $preference) {
-                    Label("시스템 설정", systemImage: "circle.lefthalf.filled")
-                        .tag(GleaumThemePreference.system)
-                    Label("라이트", systemImage: "sun.max")
-                        .tag(GleaumThemePreference.light)
-                    Label("다크", systemImage: "moon")
-                        .tag(GleaumThemePreference.dark)
+                ForEach(GleaumThemePreference.allCases, id: \.self) { option in
+                    Button {
+                        preference = option
+                        GleaumThemeManager.shared.preference = option
+                    } label: {
+                        IOSAppearanceOptionRow(
+                            preference: option,
+                            isSelected: preference == option
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
-                .pickerStyle(.inline)
-                .onChange(of: preference) { newValue in
-                    GleaumThemeManager.shared.preference = newValue
-                }
+            } header: {
+                Text("화면 스타일")
             } footer: {
-                Text("시스템 설정은 iPhone의 화면 모드가 바뀌면 글리움도 함께 변경됩니다.")
+                Text("시스템 설정을 선택하면 iPhone의 화면 모드 변경에 맞춰 글리움도 자동으로 전환됩니다.")
             }
 
-            Section {
+            Section("미리보기") {
                 HStack(spacing: 12) {
                     IOSAppearancePreview(style: .light)
                     IOSAppearancePreview(style: .dark)
@@ -200,36 +202,128 @@ struct IOSAppearanceSettingsView: View {
     }
 }
 
+private struct IOSAppearanceOptionRow: View {
+    let preference: GleaumThemePreference
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(tint)
+                .frame(width: 32, height: 32)
+                .background(tint.opacity(0.13), in: RoundedRectangle(cornerRadius: 8))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(IOSAppearanceSettingsView.title(for: preference))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color(uiColor: GleaumUIColor.brandTeal))
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.vertical, 3)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(isSelected ? "선택됨" : "선택 안 됨")
+    }
+
+    private var symbol: String {
+        switch preference {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.stars.fill"
+        }
+    }
+
+    private var subtitle: String {
+        switch preference {
+        case .system: return "iPhone 설정에 맞춰 자동 전환"
+        case .light: return "항상 밝은 화면으로 표시"
+        case .dark: return "항상 어두운 화면으로 표시"
+        }
+    }
+
+    private var tint: Color {
+        switch preference {
+        case .system: return Color(uiColor: GleaumUIColor.brandBlue)
+        case .light: return .orange
+        case .dark: return .indigo
+        }
+    }
+}
+
 private struct IOSAppearancePreview: View {
     let style: ColorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(style == .light ? "라이트" : "다크")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(primaryColor)
+
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color.primary.opacity(0.85))
+                .fill(primaryColor)
                 .frame(width: 58, height: 7)
             RoundedRectangle(cornerRadius: 3)
-                .fill(Color.secondary.opacity(0.35))
+                .fill(secondaryColor.opacity(0.65))
                 .frame(height: 5)
             HStack(spacing: 5) {
                 Circle()
                     .fill(Color(uiColor: GleaumUIColor.brandTeal))
                     .frame(width: 18, height: 18)
                 RoundedRectangle(cornerRadius: 5)
-                    .fill(Color.secondary.opacity(0.16))
+                    .fill(cardColor)
                     .frame(height: 24)
             }
         }
         .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
-        .background(Color(uiColor: GleaumUIColor.surface))
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+        .background(backgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(uiColor: GleaumUIColor.border), lineWidth: 1)
+                .stroke(borderColor, lineWidth: 1)
         )
-        .environment(\.colorScheme, style)
         .accessibilityLabel(style == .light ? "라이트 모드 예시" : "다크 모드 예시")
+    }
+
+    private var backgroundColor: Color {
+        style == .light
+            ? Color(red: 0.980, green: 0.980, blue: 0.992)
+            : Color(red: 0.059, green: 0.090, blue: 0.165)
+    }
+
+    private var cardColor: Color {
+        style == .light
+            ? Color(red: 0.918, green: 0.953, blue: 0.980)
+            : Color(red: 0.105, green: 0.137, blue: 0.260)
+    }
+
+    private var primaryColor: Color {
+        style == .light
+            ? Color(red: 0.102, green: 0.106, blue: 0.180)
+            : Color(red: 0.973, green: 0.980, blue: 0.988)
+    }
+
+    private var secondaryColor: Color {
+        style == .light
+            ? Color(red: 0.431, green: 0.431, blue: 0.400)
+            : Color(red: 0.796, green: 0.835, blue: 0.882)
+    }
+
+    private var borderColor: Color {
+        style == .light ? Color.black.opacity(0.10) : Color.white.opacity(0.14)
     }
 }
 

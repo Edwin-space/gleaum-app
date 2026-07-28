@@ -85,6 +85,43 @@ struct IOSMainTabView: View {
     @ObservedObject var store: StartupSnapshotStore
 
     var body: some View {
+        Group {
+            if #available(iOS 26.0, *) {
+                tabs
+                    .tabBarMinimizeBehavior(.onScrollDown)
+            } else {
+                tabs
+            }
+        }
+        .tint(Color(uiColor: GleaumUIColor.brandTeal))
+        .onChange(of: store.accountContext?.capabilities.canViewHouseholdBudget) { canViewBudget in
+            if canViewBudget != true, model.selectedTab == .budget {
+                model.selectedTab = .home
+            }
+        }
+        .sheet(isPresented: $model.isPresentingNotifications) {
+            IOSNotificationNavigationView(model: model, store: store)
+        }
+        .sheet(item: $model.presentedSchedule) { schedule in
+            Group {
+                if #available(iOS 16.0, *) {
+                    NavigationStack {
+                        IOSScheduleDetailView(store: store, initialSchedule: schedule)
+                    }
+                } else {
+                    NavigationView {
+                        IOSScheduleDetailView(store: store, initialSchedule: schedule)
+                    }
+                    .navigationViewStyle(.stack)
+                }
+            }
+        }
+        .sheet(item: $model.presentedFamilyFlow) { route in
+            IOSFamilyRouteContainer(route: route, appModel: model, store: store)
+        }
+    }
+
+    private var tabs: some View {
         TabView(selection: $model.selectedTab) {
             IOSHomeNavigationView(model: model, store: model.startupStore)
                 .tabItem {
@@ -117,32 +154,6 @@ struct IOSMainTabView: View {
                     Label("전체", systemImage: "line.3.horizontal")
                 }
                 .tag(IOSMainTab.more)
-        }
-        .tint(Color(uiColor: GleaumUIColor.brandTeal))
-        .onChange(of: store.accountContext?.capabilities.canViewHouseholdBudget) { canViewBudget in
-            if canViewBudget != true, model.selectedTab == .budget {
-                model.selectedTab = .home
-            }
-        }
-        .sheet(isPresented: $model.isPresentingNotifications) {
-            IOSNotificationNavigationView(model: model, store: store)
-        }
-        .sheet(item: $model.presentedSchedule) { schedule in
-            Group {
-                if #available(iOS 16.0, *) {
-                    NavigationStack {
-                        IOSScheduleDetailView(store: store, initialSchedule: schedule)
-                    }
-                } else {
-                    NavigationView {
-                        IOSScheduleDetailView(store: store, initialSchedule: schedule)
-                    }
-                    .navigationViewStyle(.stack)
-                }
-            }
-        }
-        .sheet(item: $model.presentedFamilyFlow) { route in
-            IOSFamilyRouteContainer(route: route, appModel: model, store: store)
         }
     }
 }

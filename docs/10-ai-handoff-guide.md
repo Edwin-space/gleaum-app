@@ -1990,3 +1990,10 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 가져오기는 어제부터 앞으로 30일까지 후보를 표시하고 사용자가 고른 이벤트만 개인 공간의 `private` 일정으로 생성한다. 앱 소유 이벤트와 제목 정규화+시작시각 60초 기준 기존 개인 일정 중복은 비활성화한다.
 - iPhone 17 Pro iOS 26.5 Debug fixture의 라이트·다크·접근성 큰 글자 화면과 generic Simulator Debug·Release 빌드가 통과했다. 시뮬레이터 반복 실행 중 추가했던 임시 `UIWindow` 우회는 검은 화면 원인이어서 제거하고 기존 `AppDelegate` 진입 흐름을 유지했다.
 - `IOS-002` 완료 전 실제 iPhone에서 iCloud/Google 캘린더 권한 허용·거절, 내보내기 생성→수정→삭제, 가져오기→재조회 중복 차단을 검증해야 한다.
+
+### 2026-07-28 추가 — iOS 화면 모드·탭 바·루트 제목 보정
+
+- 화면 모드는 시스템/라이트/다크 각각 Blue/Orange/Indigo SF Symbol과 설명을 사용한다. 기능 화면의 배경·본문은 계속 Apple semantic color를 사용하며 역할 색을 전역 테마 색으로 오용하지 않는다.
+- 라이트/다크 미리보기는 현재 앱의 trait에 의존하지 않고 두 팔레트를 독립 렌더링한다. 한쪽 모드에서 두 미리보기가 같은 모습으로 보이던 기존 구조를 복원하지 않는다.
+- 홈·일정·공간·가계부·전체 루트는 모두 Apple Large Title, 상세·설정·편집은 inline title이 기준이다.
+- iOS 26 이상은 시스템 `tabBarMinimizeBehavior(.onScrollDown)`를 사용한다. 커스텀 Instagram 모방 tab bar를 만들지 않으며 iOS 15~25는 시스템 기본 tab bar를 유지한다. 실제 축소 애니메이션은 iPhone 손가락 스크롤에서 최종 회귀한다.

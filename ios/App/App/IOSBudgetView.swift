@@ -82,6 +82,7 @@ struct IOSBudgetNavigationView: View {
         // the monthly summary into unreadable single-character columns.
         .dynamicTypeSize(.small ... .accessibility2)
         .navigationTitle("가계부")
+        .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "항목 또는 카테고리 검색")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

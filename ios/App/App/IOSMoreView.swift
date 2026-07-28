@@ -56,7 +56,9 @@ struct IOSMoreNavigationView: View {
     @ViewBuilder
     private var rootContent: some View {
 #if DEBUG
-        if CommandLine.arguments.contains("-GLEAUMPreviewCalendar") {
+        if CommandLine.arguments.contains("-GLEAUMPreviewAppearance") {
+            IOSAppearanceSettingsView()
+        } else if CommandLine.arguments.contains("-GLEAUMPreviewCalendar") {
             IOSCalendarSettingsView(snapshotStore: store)
         } else {
             content
@@ -81,6 +83,7 @@ struct IOSMoreNavigationView: View {
         .listStyle(.insetGrouped)
         .dynamicTypeSize(.small ... .accessibility2)
         .navigationTitle("전체")
+        .navigationBarTitleDisplayMode(.large)
         .refreshable {
             await model.load(initialProfile: nil, force: true)
         }
@@ -408,7 +411,8 @@ final class IOSMoreViewModel: ObservableObject {
         guard force || profile == nil || accountStatus == nil else { return }
 
 #if DEBUG
-        if CommandLine.arguments.contains("-GLEAUMPreviewMore") {
+        if CommandLine.arguments.contains("-GLEAUMPreviewMore")
+            || CommandLine.arguments.contains("-GLEAUMPreviewAppearance") {
             profile = NativeProfileSummary.preview
             accountStatus = NativeAccountStatus(
                 withdrawalPending: false,
