@@ -41,7 +41,20 @@ struct IOSHomeNavigationView: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("홈")
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button {
+                    model.showNotifications()
+                } label: {
+                    Label(
+                        (store.notificationSummary?.unreadCount ?? 0) > 0
+                            ? "읽지 않은 알림 \(store.notificationSummary?.unreadCount ?? 0)개"
+                            : "알림",
+                        systemImage: (store.notificationSummary?.unreadCount ?? 0) > 0
+                            ? "bell.badge"
+                            : "bell"
+                    )
+                }
+
                 Button {
                     isPresentingSchedule = true
                 } label: {

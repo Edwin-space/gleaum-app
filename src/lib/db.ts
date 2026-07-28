@@ -3906,6 +3906,32 @@ export async function markAllNativeNotificationsRead(
   if (error) throw new Error(error.message || 'notifications_mark_all_failed');
 }
 
+export async function registerNativePushToken(
+  supabase: RouteSupabaseClient,
+  userId: string,
+  token: string,
+  platform: 'ios' | 'android' | 'web',
+): Promise<void> {
+  const normalizedToken = token.trim();
+  if (!normalizedToken) throw new Error('push_token_required');
+
+  const [{ error: profileError }, { error: tokenError }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .update({ fcm_token: normalizedToken })
+      .eq('id', userId),
+    supabase
+      .from('fcm_tokens')
+      .upsert(
+        { user_id: userId, token: normalizedToken, platform },
+        { onConflict: 'user_id,token' },
+      ),
+  ]);
+
+  if (profileError) throw new Error(profileError.message || 'push_profile_update_failed');
+  if (tokenError) throw new Error(tokenError.message || 'push_token_register_failed');
+}
+
 // ── FCM ─────────────────────────────────────────────────────
 
 /** FCM 토큰을 현재 사용자 프로필에 저장 */

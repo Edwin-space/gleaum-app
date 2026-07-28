@@ -34,6 +34,7 @@ final class StartupSnapshotStore: ObservableObject {
     @Published private(set) var spaceSummary: NativeSpaceSummary?
     @Published private(set) var schedules: [NativeScheduleItem] = []
     @Published private(set) var budgetSummary: NativeBudgetSummary?
+    @Published private(set) var notificationSummary: NativeNotificationSummary?
     @Published private(set) var domainErrors: [StartupDomain: String] = [:]
     @Published private(set) var lastUpdatedAt: Date?
 
@@ -114,6 +115,58 @@ final class StartupSnapshotStore: ObservableObject {
         }
         lastUpdatedAt = Date()
         state = domainErrors.isEmpty ? .ready : .partialFailure
+    }
+
+    func applyNotificationSummary(_ summary: NativeNotificationSummary) {
+        notificationSummary = summary
+        domainErrors[.notifications] = nil
+        if let data = try? JSONEncoder().encode(summary) {
+            rawSnapshots[.notifications] = data
+        }
+        lastUpdatedAt = Date()
+        state = domainErrors.isEmpty ? .ready : .partialFailure
+    }
+
+    func markNotificationReadLocally(id: String) {
+        guard let summary = notificationSummary else { return }
+        let items = summary.notifications.map { item in
+            guard item.id == id, !item.read else { return item }
+            return NativeNotificationItem(
+                id: item.id,
+                userId: item.userId,
+                scheduleId: item.scheduleId,
+                title: item.title,
+                body: item.body,
+                type: item.type,
+                read: true,
+                createdAt: item.createdAt
+            )
+        }
+        applyNotificationSummary(
+            NativeNotificationSummary(
+                notifications: items,
+                unreadCount: items.filter { !$0.read }.count
+            )
+        )
+    }
+
+    func markAllNotificationsReadLocally() {
+        guard let summary = notificationSummary else { return }
+        let items = summary.notifications.map { item in
+            NativeNotificationItem(
+                id: item.id,
+                userId: item.userId,
+                scheduleId: item.scheduleId,
+                title: item.title,
+                body: item.body,
+                type: item.type,
+                read: true,
+                createdAt: item.createdAt
+            )
+        }
+        applyNotificationSummary(
+            NativeNotificationSummary(notifications: items, unreadCount: 0)
+        )
     }
 
 #if DEBUG
@@ -437,6 +490,57 @@ final class StartupSnapshotStore: ObservableObject {
         domainErrors = [:]
         lastUpdatedAt = now
     }
+
+    func loadNotificationPreview() {
+        let now = Date()
+        let calendar = Calendar.current
+        let items = [
+            NativeNotificationItem(
+                id: "preview-reminder",
+                userId: "preview",
+                scheduleId: "preview-personal",
+                title: "일정이 곧 시작돼요",
+                body: "주간 계획 정리가 15분 뒤에 시작됩니다.",
+                type: "reminder",
+                read: false,
+                createdAt: ISO8601DateFormatter.gleaum.string(
+                    from: calendar.date(byAdding: .minute, value: -12, to: now) ?? now
+                )
+            ),
+            NativeNotificationItem(
+                id: "preview-invite",
+                userId: "preview",
+                scheduleId: nil,
+                title: "새로운 공간 초대",
+                body: "해나님이 여행 준비 공간으로 초대했어요.",
+                type: "invite",
+                read: false,
+                createdAt: ISO8601DateFormatter.gleaum.string(
+                    from: calendar.date(byAdding: .hour, value: -2, to: now) ?? now
+                )
+            ),
+            NativeNotificationItem(
+                id: "preview-completion",
+                userId: "preview",
+                scheduleId: "preview-shared",
+                title: "일정이 완료되었어요",
+                body: "가족 저녁 식사 일정이 완료 처리되었습니다.",
+                type: "completion",
+                read: true,
+                createdAt: ISO8601DateFormatter.gleaum.string(
+                    from: calendar.date(byAdding: .day, value: -1, to: now) ?? now
+                )
+            ),
+        ]
+        notificationSummary = NativeNotificationSummary(
+            notifications: items,
+            unreadCount: items.filter { !$0.read }.count
+        )
+        loadSchedulePreview()
+        state = .ready
+        domainErrors = [:]
+        lastUpdatedAt = now
+    }
 #endif
 
     func clear() {
@@ -448,6 +552,7 @@ final class StartupSnapshotStore: ObservableObject {
         spaceSummary = nil
         schedules = []
         budgetSummary = nil
+        notificationSummary = nil
         domainErrors = [:]
         lastUpdatedAt = nil
         rawSnapshots = [:]
@@ -566,7 +671,10 @@ final class StartupSnapshotStore: ObservableObject {
                 case .budget:
                     budgetSummary = try JSONDecoder().decode(NativeBudgetSummary.self, from: data)
                 case .notifications:
-                    break
+                    notificationSummary = try JSONDecoder().decode(
+                        NativeNotificationSummary.self,
+                        from: data
+                    )
                 }
             } catch {
                 domainErrors[result.domain] = "응답 형식을 확인하지 못했습니다."

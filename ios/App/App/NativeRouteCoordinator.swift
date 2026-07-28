@@ -47,13 +47,12 @@ final class NativeRouteCoordinator {
     }
 
     func route(path: String) {
-        if path == "/" || path == "/home" {
-            if nativeHomeEnabled {
-                prefersNativeHome = true
-                presentNativeHome()
-            } else {
-                openWebPath("/home")
-            }
+        if nativeHomeEnabled,
+           SessionManager.shared.hasValidSession(),
+           IOSAppModel.shared.handleNativeRoute(path: path) {
+            prefersNativeHome = true
+            pendingPath = nil
+            dismissLegacyBridgeIfNeeded()
             return
         }
 
@@ -92,10 +91,7 @@ final class NativeRouteCoordinator {
         pendingPath = nil
         IOSAppModel.shared.showNativeHome()
 
-        if let bridge = legacyBridge, bridge.presentingViewController != nil {
-            bridge.prepareForNativePresentation()
-            bridge.dismiss(animated: true)
-        }
+        dismissLegacyBridgeIfNeeded()
     }
 
     func shouldPresentNativeHome(for url: URL) -> Bool {
@@ -124,6 +120,13 @@ final class NativeRouteCoordinator {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             bridge.revealWebContent()
+        }
+    }
+
+    private func dismissLegacyBridgeIfNeeded() {
+        if let bridge = legacyBridge, bridge.presentingViewController != nil {
+            bridge.prepareForNativePresentation()
+            bridge.dismiss(animated: true)
         }
     }
 

@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { registerNativePushToken } from '@/lib/db';
+import { createNativeRouteAuth } from '@/lib/supabase/native-route';
 
 export async function POST(req: NextRequest) {
-  const { token, platform } = await req.json() as { token: string; platform: string };
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (n) => cookieStore.get(n)?.value, set: () => {}, remove: () => {} } }
-  );
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  await supabase.from('fcm_tokens').upsert(
-    { user_id: user.id, token, platform },
-    { onConflict: 'user_id,token' }
-  );
-  return NextResponse.json({ ok: true });
+  const auth = await createNativeRouteAuth(req);
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const payload = await req.json().catch(() => null) as {
+    token?: string;
+    platform?: string;
+  } | null;
+  const platform = payload?.platform;
+  if (platform !== 'ios' && platform !== 'android' && platform !== 'web') {
+    return NextResponse.json({ error: 'invalid_push_platform' }, { status: 400 });
+  }
+
+  try {
+    await registerNativePushToken(auth.supabase, auth.user.id, payload?.token ?? '', platform);
+    return NextResponse.json(
+      { ok: true },
+      { headers: { 'Cache-Control': 'no-store', 'X-Gleaum-Auth-Mode': auth.mode } },
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'push_token_register_failed';
+    const status = message.endsWith('_required') ? 400 : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
 }

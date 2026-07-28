@@ -255,11 +255,36 @@ struct NativeAccountCapabilities: Codable, Sendable {
     let canShowAds: Bool
 }
 
-struct NativeNotificationSettings: Codable, Sendable {
+struct NativeNotificationSettings: Codable, Sendable, Equatable {
     let scheduleReminders: Bool
     let routineReminders: Bool
     let expenseReminders: Bool
     let spaceUpdates: Bool
+}
+
+struct NativeNotificationItem: Codable, Identifiable, Sendable, Equatable {
+    let id: String
+    let userId: String
+    let scheduleId: String?
+    let title: String
+    let body: String
+    let type: String
+    let read: Bool
+    let createdAt: String
+}
+
+struct NativeNotificationSummary: Codable, Sendable, Equatable {
+    let notifications: [NativeNotificationItem]
+    let unreadCount: Int
+}
+
+struct NativeNotificationSettingsUpdateRequest: Codable, Sendable {
+    let notificationSettings: NativeNotificationSettings
+}
+
+struct NativePushTokenRequest: Codable, Sendable {
+    let token: String
+    let platform: String
 }
 
 struct NativeProfileSummary: Codable, Sendable {

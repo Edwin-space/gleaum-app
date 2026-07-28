@@ -77,6 +77,11 @@ class AppDelegate: UIResponder,
             object: nil,
             userInfo: ["token": fcmToken ?? ""]
         )
+        if let fcmToken, !fcmToken.isEmpty {
+            Task { @MainActor in
+                await IOSNotificationPermissionManager.shared.register(token: fcmToken)
+            }
+        }
     }
 
     // ── URL Scheme 처리 (gleaum:// — Google OAuth 콜백) ──────────────────────
@@ -154,6 +159,29 @@ class AppDelegate: UIResponder,
         completionHandler([.banner, .badge, .sound])
     }
 
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        defer { completionHandler() }
+        let userInfo = response.notification.request.content.userInfo
+        let rawURL = ["url", "link", "deep_link", "gcm.notification.url"]
+            .compactMap { userInfo[$0] as? String }
+            .first(where: { !$0.isEmpty })
+
+        guard let rawURL else {
+            NativeRouteCoordinator.shared.route(path: "/notifications")
+            return
+        }
+
+        if let url = URL(string: rawURL), url.scheme != nil {
+            _ = NativeRouteCoordinator.shared.handle(url: url)
+        } else {
+            NativeRouteCoordinator.shared.route(path: rawURL)
+        }
+    }
+
     // ── 앱 상태 메서드 (Capacitor 플러그인 호환) ─────────────────────────────
     func applicationWillResignActive(_ application: UIApplication) {}
     func applicationDidEnterBackground(_ application: UIApplication) {}
@@ -184,10 +212,11 @@ class AppDelegate: UIResponder,
     }
 
     func showAuthenticatedState() {
+        IOSAppModel.shared.apply(sessionState: .authenticated)
         if let pendingPath = NativeRouteCoordinator.shared.consumePendingPath() {
-            NativeRouteCoordinator.shared.openWebPath(pendingPath)
-        } else {
-            IOSAppModel.shared.apply(sessionState: .authenticated)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.05) {
+                NativeRouteCoordinator.shared.route(path: pendingPath)
+            }
         }
     }
 

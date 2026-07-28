@@ -40,18 +40,30 @@ final class IOSAppModel: ObservableObject {
 
     @Published private(set) var screen: IOSAppScreen = .launching
     @Published var selectedTab: IOSMainTab = .home
+    @Published var isPresentingNotifications = false
+    @Published var presentedSchedule: NativeScheduleItem?
     @Published private(set) var onboardingProfile: NativeProfileSummary?
 
     let startupStore = StartupSnapshotStore.shared
 
     private var transitionTask: Task<Void, Never>?
     private var prefetchTask: Task<Void, Never>?
+    private var routeTask: Task<Void, Never>?
+    private var pendingNativePath: String?
     private var transitionGeneration = UUID()
 
     private init() {}
 
     func apply(sessionState: AppSessionState) {
 #if DEBUG
+        if CommandLine.arguments.contains("-GLEAUMPreviewNotifications") {
+            startupStore.loadNotificationPreview()
+            selectedTab = .home
+            isPresentingNotifications = true
+            screen = .authenticated
+            return
+        }
+
         if CommandLine.arguments.contains("-GLEAUMPreviewBudget") {
             startupStore.loadBudgetPreview()
             selectedTab = .budget
@@ -108,7 +120,12 @@ final class IOSAppModel: ObservableObject {
         case .signedOut:
             prefetchTask?.cancel()
             prefetchTask = nil
+            routeTask?.cancel()
+            routeTask = nil
+            pendingNativePath = nil
             startupStore.clear()
+            isPresentingNotifications = false
+            presentedSchedule = nil
             onboardingProfile = nil
             transitionTask = Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 550_000_000)
@@ -135,14 +152,22 @@ final class IOSAppModel: ObservableObject {
 
                 self.onboardingProfile = profile
                 if let profile {
-                    self.screen = profile.onboardingCompleted ? .authenticated : .onboarding
+                    if profile.onboardingCompleted {
+                        self.finishAuthenticatedTransition()
+                    } else {
+                        self.screen = .onboarding
+                    }
                     return
                 }
 
                 if let completed = self.startupStore.homeSummary?.user.onboardingCompleted {
-                    self.screen = completed ? .authenticated : .onboarding
+                    if completed {
+                        self.finishAuthenticatedTransition()
+                    } else {
+                        self.screen = .onboarding
+                    }
                 } else if self.startupStore.hasCachedData {
-                    self.screen = .authenticated
+                    self.finishAuthenticatedTransition()
                 } else {
                     self.screen = .offline
                 }
@@ -151,7 +176,7 @@ final class IOSAppModel: ObservableObject {
         case .authenticatedOffline:
             if startupStore.hasCachedData {
                 selectedTab = .home
-                screen = .authenticated
+                finishAuthenticatedTransition()
             } else {
                 screen = .offline
             }
@@ -169,7 +194,97 @@ final class IOSAppModel: ObservableObject {
 
     func showNativeHome() {
         selectedTab = .home
+        isPresentingNotifications = false
         screen = .authenticated
+    }
+
+    func showNotifications() {
+        guard screen == .authenticated else { return }
+        isPresentingNotifications = true
+    }
+
+    func openSchedule(id: String) {
+        guard screen == .authenticated, !id.isEmpty else { return }
+        isPresentingNotifications = false
+        selectedTab = .schedules
+
+        if let cached = startupStore.schedules.first(where: { $0.id == id }) {
+            presentedSchedule = cached
+            return
+        }
+
+        routeTask?.cancel()
+        routeTask = Task { [weak self] in
+            guard let self else { return }
+            if let schedule = try? await NativeAPIClient.shared.fetchSchedule(id: id),
+               !Task.isCancelled {
+                self.presentedSchedule = schedule
+            }
+        }
+    }
+
+    @discardableResult
+    func handleNativeRoute(path: String) -> Bool {
+        guard screen == .authenticated || screen == .launching else { return false }
+        let cleanPath = path.split(separator: "?", maxSplits: 1).first.map(String.init) ?? path
+
+        if screen == .launching {
+            guard supportsNativeRoute(cleanPath) else { return false }
+            pendingNativePath = cleanPath
+            return true
+        }
+
+        if cleanPath == "/" || cleanPath == "/home" {
+            showNativeHome()
+            return true
+        }
+        if cleanPath == "/notifications" {
+            selectedTab = .home
+            showNotifications()
+            return true
+        }
+        if cleanPath == "/schedules" {
+            isPresentingNotifications = false
+            selectedTab = .schedules
+            return true
+        }
+        if cleanPath.hasPrefix("/schedules/") {
+            let id = cleanPath
+                .replacingOccurrences(of: "/schedules/", with: "")
+                .replacingOccurrences(of: "/edit", with: "")
+            openSchedule(id: id)
+            return true
+        }
+        if cleanPath == "/space" || cleanPath == "/family" {
+            isPresentingNotifications = false
+            selectedTab = .space
+            return true
+        }
+        if cleanPath == "/budget",
+           startupStore.accountContext?.capabilities.canViewHouseholdBudget == true {
+            isPresentingNotifications = false
+            selectedTab = .budget
+            return true
+        }
+        return false
+    }
+
+    private func finishAuthenticatedTransition() {
+        screen = .authenticated
+        guard let path = pendingNativePath else { return }
+        pendingNativePath = nil
+        _ = handleNativeRoute(path: path)
+    }
+
+    private func supportsNativeRoute(_ path: String) -> Bool {
+        path == "/"
+            || path == "/home"
+            || path == "/notifications"
+            || path == "/schedules"
+            || path.hasPrefix("/schedules/")
+            || path == "/space"
+            || path == "/family"
+            || path == "/budget"
     }
 
     func completeOnboarding(with profile: NativeProfileSummary) async {

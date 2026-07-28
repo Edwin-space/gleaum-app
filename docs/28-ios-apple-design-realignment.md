@@ -16,6 +16,7 @@
 - 일정 탭은 WebView 폴백을 제거했다. 시스템 `List`·검색·유형/기간 필터, 상세, `Form` 기반 생성/수정, 상태 변경, 삭제 확인과 시작 snapshot 캐시를 연결했다.
 - 공간 탭은 WebView 폴백을 제거했다. 시스템 `List`·toolbar·menu·sheet·confirmation dialog로 개인/공유/가족 공간 전환, 다가오는 일정, 소식, 멤버, 초대, 공간 생성·참여·설정을 연결했다. 개인 공간은 커뮤니티·초대·관리 액션을 노출하지 않으며 공유 공간 역할과 가족 관계 표시값을 분리한다.
 - 가계부 탭은 WebView 폴백을 제거했다. 개인 원장 API만 사용해 월간 흐름·검색·카테고리·반복 예정·최근 내역과 `Form` 기반 수입/지출 CRUD·상태 변경을 연결했다. 가계부 제한 계정은 탭을 숨기고 공유 공간 원장은 선택할 수 없다.
+- 알림은 홈 toolbar 배지에서 여는 SwiftUI 알림 센터로 전환했다. 시스템 목록·필터·개별/전체 읽음, 일정 상세·공간 이동, 서버 수신 설정, iOS 권한 상태·설정 앱 이동과 APNs/FCM 토큰 등록을 연결했다. 푸시 탭은 중앙 네이티브 라우터가 목적지를 판정하고 핵심 화면을 WebView 없이 연다.
 
 ## 1. 감사 결론
 
@@ -145,7 +146,8 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 
 - [x] 시스템 `TabView` 5탭
 - [x] 홈·일정·공간·가계부 탭 `NavigationStack` (전체는 네이티브 전환 시 완료)
-- [ ] 중앙 Route와 Universal Link/푸시 목적지 연결
+- [x] 중앙 Route와 푸시 목적지 연결 — 홈·알림·일정 단건·공간·가계부의 네이티브 목적지 판정
+- [ ] Universal Link 실기기 검증 — 유료 Team·Associated Domains 활성화 뒤 완료
 - [ ] iPad `NavigationSplitView` 적응 — 후순위
 - [x] Capacitor modal 홈·custom floating tab을 실제 앱 root에서 제거
 
@@ -156,14 +158,15 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - [x] 일정 목록·상세·생성/수정
 - [x] 공간 목록·전환·상세·일정·소식·멤버·초대·설정 1차
 - [x] 개인 가계부 — 월간 흐름·검색·카테고리·반복 예정·CRUD·상태·개인 데이터 경계
-- [ ] 알림·전체 메뉴·설정
+- [x] 알림 — 목록·필터·읽음·연결 목적지·서버 설정·iOS 권한·FCM 토큰
+- [ ] 전체 메뉴·프로필·보안·법적 문서 설정
 
 ### 4단계 — 품질 마감
 
 - [ ] iPhone 소형/표준/대형
 - [ ] iPad portrait/landscape/Split View
-- [ ] 라이트/다크/시스템 — 일정·공간·가계부 화면별 통과, 나머지 핵심 화면 대기
-- [ ] Dynamic Type/VoiceOver/Reduce Motion — 일정·공간·가계부 Dynamic Type/VoiceOver 구조 통과, 전체 회귀 대기
+- [ ] 라이트/다크/시스템 — 일정·공간·가계부·알림 화면별 통과, 나머지 핵심 화면 대기
+- [ ] Dynamic Type/VoiceOver/Reduce Motion — 일정·공간·가계부·알림 Dynamic Type/VoiceOver 구조 통과, 전체 회귀 대기
 - [ ] 오프라인/부분 실패/세션 갱신/딥링크 회귀
 
 ## 8. 다음 작업의 금지 사항

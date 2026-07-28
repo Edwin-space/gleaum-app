@@ -116,6 +116,23 @@ struct IOSMainTabView: View {
                 model.selectedTab = .home
             }
         }
+        .sheet(isPresented: $model.isPresentingNotifications) {
+            IOSNotificationNavigationView(model: model, store: store)
+        }
+        .sheet(item: $model.presentedSchedule) { schedule in
+            Group {
+                if #available(iOS 16.0, *) {
+                    NavigationStack {
+                        IOSScheduleDetailView(store: store, initialSchedule: schedule)
+                    }
+                } else {
+                    NavigationView {
+                        IOSScheduleDetailView(store: store, initialSchedule: schedule)
+                    }
+                    .navigationViewStyle(.stack)
+                }
+            }
+        }
     }
 }
 

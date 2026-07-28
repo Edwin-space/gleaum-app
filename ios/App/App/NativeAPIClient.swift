@@ -27,6 +27,51 @@ final class NativeAPIClient: @unchecked Sendable {
         return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
     }
 
+    func updateNotificationSettings(
+        _ settings: NativeNotificationSettings
+    ) async throws -> NativeProfileSummary {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/profile",
+            method: "PATCH",
+            body: try JSONEncoder().encode(
+                NativeNotificationSettingsUpdateRequest(notificationSettings: settings)
+            )
+        )
+        return try JSONDecoder().decode(NativeProfileResponse.self, from: data).profile
+    }
+
+    func fetchNotifications() async throws -> NativeNotificationSummary {
+        let data = try await performAuthorizedRequest(
+            path: "/api/native/notifications",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(NativeNotificationSummary.self, from: data)
+    }
+
+    func markNotificationRead(id: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/native/notifications/\(id)",
+            method: "PATCH"
+        )
+    }
+
+    func markAllNotificationsRead() async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/native/notifications",
+            method: "PATCH"
+        )
+    }
+
+    func registerPushToken(_ token: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/push/register-token",
+            method: "POST",
+            body: try JSONEncoder().encode(
+                NativePushTokenRequest(token: token, platform: "ios")
+            )
+        )
+    }
+
     func completeOnboarding(
         _ payload: NativeCompleteOnboardingRequest
     ) async throws -> NativeProfileSummary {
