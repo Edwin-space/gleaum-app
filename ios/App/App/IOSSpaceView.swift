@@ -263,9 +263,14 @@ struct IOSSpaceNavigationView: View {
             Section("공간 관리") {
                 if canInviteMembers {
                     Button {
-                        presentedSheet = .invite(space: activeSpace)
+                        presentedSheet = activeSpace.spaceKind == "family"
+                            ? .familyInvite(space: activeSpace)
+                            : .invite(space: activeSpace)
                     } label: {
-                        Label("멤버 초대", systemImage: "person.badge.plus")
+                        Label(
+                            activeSpace.spaceKind == "family" ? "가족 초대" : "멤버 초대",
+                            systemImage: "person.badge.plus"
+                        )
                     }
                 }
 
@@ -291,6 +296,8 @@ struct IOSSpaceNavigationView: View {
             IOSSpacePostComposer(store: store, space: space)
         case .invite(let space):
             IOSSpaceInviteView(store: store, space: space)
+        case .familyInvite(let space):
+            IOSFamilyInviteChooser(store: store, space: space)
         case .member(let space, let member):
             IOSSpaceMemberEditor(store: store, space: space, member: member)
         case .settings(let space):
@@ -337,6 +344,7 @@ private enum IOSSpaceSheet: Identifiable {
     case join
     case post(space: NativeSpaceListItem)
     case invite(space: NativeSpaceListItem)
+    case familyInvite(space: NativeSpaceListItem)
     case member(space: NativeSpaceListItem, member: NativeSpaceMemberItem)
     case settings(space: NativeSpaceListItem)
 
@@ -346,6 +354,7 @@ private enum IOSSpaceSheet: Identifiable {
         case .join: return "join"
         case .post(let space): return "post-\(space.id)"
         case .invite(let space): return "invite-\(space.id)"
+        case .familyInvite(let space): return "family-invite-\(space.id)"
         case .member(let space, let member): return "member-\(space.id)-\(member.userId)"
         case .settings(let space): return "settings-\(space.id)"
         }

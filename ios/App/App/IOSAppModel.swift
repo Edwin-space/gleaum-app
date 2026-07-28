@@ -42,6 +42,7 @@ final class IOSAppModel: ObservableObject {
     @Published var selectedTab: IOSMainTab = .home
     @Published var isPresentingNotifications = false
     @Published var presentedSchedule: NativeScheduleItem?
+    @Published var presentedFamilyFlow: IOSFamilyRoute?
     @Published private(set) var onboardingProfile: NativeProfileSummary?
 
     let startupStore = StartupSnapshotStore.shared
@@ -56,6 +57,32 @@ final class IOSAppModel: ObservableObject {
 
     func apply(sessionState: AppSessionState) {
 #if DEBUG
+        if CommandLine.arguments.contains("-GLEAUMPreviewFamily") {
+            startupStore.loadSpacePreview()
+            onboardingProfile = NativeProfileSummary(
+                id: "preview",
+                email: "guardian@gleaum.com",
+                name: "글리움 관리자",
+                displayName: "글리움 관리자",
+                realName: nil,
+                nameDisplayMode: "nickname",
+                avatar: nil,
+                timezone: "Asia/Seoul",
+                locale: "ko-KR",
+                onboardingCompleted: true,
+                notificationSettings: NativeNotificationSettings(
+                    scheduleReminders: true,
+                    routineReminders: true,
+                    expenseReminders: true,
+                    spaceUpdates: true
+                )
+            )
+            selectedTab = .space
+            presentedFamilyFlow = .manage(spaceId: "preview-family-space")
+            screen = .authenticated
+            return
+        }
+
         if CommandLine.arguments.contains("-GLEAUMPreviewNotifications") {
             startupStore.loadNotificationPreview()
             selectedTab = .home
@@ -147,10 +174,10 @@ final class IOSAppModel: ObservableObject {
             prefetchTask = nil
             routeTask?.cancel()
             routeTask = nil
-            pendingNativePath = nil
             startupStore.clear()
             isPresentingNotifications = false
             presentedSchedule = nil
+            presentedFamilyFlow = nil
             onboardingProfile = nil
             transitionTask = Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 550_000_000)
@@ -214,12 +241,15 @@ final class IOSAppModel: ObservableObject {
     }
 
     func signOut() {
+        pendingNativePath = nil
+        presentedFamilyFlow = nil
         SessionManager.shared.clearSession()
     }
 
     func showNativeHome() {
         selectedTab = .home
         isPresentingNotifications = false
+        presentedFamilyFlow = nil
         screen = .authenticated
     }
 
@@ -255,7 +285,7 @@ final class IOSAppModel: ObservableObject {
 
         if screen == .launching {
             guard supportsNativeRoute(cleanPath) else { return false }
-            pendingNativePath = cleanPath
+            pendingNativePath = path
             return true
         }
 
@@ -285,6 +315,29 @@ final class IOSAppModel: ObservableObject {
             selectedTab = .space
             return true
         }
+        if cleanPath == "/space/children" {
+            let spaceId = queryValue(named: "sid", in: path)
+                ?? startupStore.spaceSummary?.activeSpace?.id
+            guard let spaceId, !spaceId.isEmpty else { return false }
+            isPresentingNotifications = false
+            selectedTab = .space
+            presentedFamilyFlow = .manage(spaceId: spaceId)
+            return true
+        }
+        if cleanPath.hasPrefix("/invite/child/") {
+            let token = cleanPath.replacingOccurrences(of: "/invite/child/", with: "")
+            guard !token.isEmpty else { return false }
+            isPresentingNotifications = false
+            presentedFamilyFlow = .claim(token: token)
+            return true
+        }
+        if cleanPath == "/family/guardian/verify",
+           let token = queryValue(named: "token", in: path),
+           !token.isEmpty {
+            isPresentingNotifications = false
+            presentedFamilyFlow = .consent(token: token)
+            return true
+        }
         if cleanPath == "/budget",
            startupStore.accountContext?.capabilities.canViewHouseholdBudget == true {
             isPresentingNotifications = false
@@ -297,6 +350,17 @@ final class IOSAppModel: ObservableObject {
             return true
         }
         return false
+    }
+
+    @discardableResult
+    func queueNativeRoute(path: String) -> Bool {
+        let cleanPath = path.split(separator: "?", maxSplits: 1).first.map(String.init) ?? path
+        guard supportsNativeRoute(cleanPath) else { return false }
+        if screen == .authenticated || screen == .launching {
+            return handleNativeRoute(path: path)
+        }
+        pendingNativePath = path
+        return true
     }
 
     private func finishAuthenticatedTransition() {
@@ -314,6 +378,9 @@ final class IOSAppModel: ObservableObject {
             || path.hasPrefix("/schedules/")
             || path == "/space"
             || path == "/family"
+            || path == "/space/children"
+            || path.hasPrefix("/invite/child/")
+            || path == "/family/guardian/verify"
             || path == "/budget"
             || path == "/mypage"
             || path == "/settings"
@@ -337,5 +404,14 @@ final class IOSAppModel: ObservableObject {
             return
         }
         NativeRouteCoordinator.shared.openWebPath(path)
+    }
+
+    private func queryValue(named name: String, in path: String) -> String? {
+        guard let components = URLComponents(
+            string: path.hasPrefix("http") ? path : "https://www.gleaum.com\(path)"
+        ) else {
+            return nil
+        }
+        return components.queryItems?.first(where: { $0.name == name })?.value
     }
 }

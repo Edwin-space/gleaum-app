@@ -39,7 +39,7 @@ final class NativeRouteCoordinator {
         }
 
         if url.host == "gleaum.com" || url.host == "www.gleaum.com" {
-            route(path: url.path.isEmpty ? "/home" : url.path)
+            route(path: pathAndQuery(from: url, fallback: "/home"))
             return true
         }
 
@@ -48,8 +48,7 @@ final class NativeRouteCoordinator {
 
     func route(path: String) {
         if nativeHomeEnabled,
-           SessionManager.shared.hasValidSession(),
-           IOSAppModel.shared.handleNativeRoute(path: path) {
+           IOSAppModel.shared.queueNativeRoute(path: path) {
             prefersNativeHome = true
             pendingPath = nil
             dismissLegacyBridgeIfNeeded()
@@ -141,12 +140,25 @@ final class NativeRouteCoordinator {
     private func nativePath(from url: URL) -> String {
         if url.host == "invite" {
             let code = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            return code.isEmpty ? "/invite" : "/invite/\(code)"
+            let path = code.isEmpty ? "/invite" : "/invite/\(code)"
+            return appendQuery(of: url, to: path)
         }
         if let host = url.host, !host.isEmpty {
             let suffix = url.path == "/" ? "" : url.path
-            return "/\(host)\(suffix)"
+            return appendQuery(of: url, to: "/\(host)\(suffix)")
         }
-        return url.path.isEmpty ? "/home" : url.path
+        return pathAndQuery(from: url, fallback: "/home")
+    }
+
+    private func pathAndQuery(from url: URL, fallback: String) -> String {
+        appendQuery(of: url, to: url.path.isEmpty ? fallback : url.path)
+    }
+
+    private func appendQuery(of url: URL, to path: String) -> String {
+        guard let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.percentEncodedQuery,
+              !query.isEmpty else {
+            return path
+        }
+        return "\(path)?\(query)"
     }
 }

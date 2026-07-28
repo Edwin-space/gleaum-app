@@ -216,6 +216,72 @@ struct NativeSpaceMemberUpdateRequest: Codable, Sendable {
     let familyRole: String?
 }
 
+struct NativeFamilyDependent: Codable, Identifiable, Sendable, Equatable {
+    let id: String
+    let spaceId: String
+    let displayName: String
+    let birthDate: String
+    let expectedEmail: String?
+    let candidateEmail: String?
+    let candidateProvider: String?
+    let status: String
+}
+
+struct NativeFamilyDependentsResponse: Codable, Sendable {
+    let dependents: [NativeFamilyDependent]
+}
+
+struct NativeCreateFamilyDependentRequest: Codable, Sendable {
+    let spaceId: String
+    let displayName: String
+    let birthDate: String
+    let expectedEmail: String?
+    let relationshipType: String
+}
+
+struct NativeCreateFamilyDependentResponse: Codable, Sendable {
+    let dependentId: String
+    let status: String
+    let nextAction: String
+}
+
+struct NativeGuardianChallenge: Codable, Sendable, Identifiable {
+    let dependentId: String
+    let displayName: String
+    let email: String
+    let challengeToken: String
+    let expiresAt: String
+
+    var id: String { challengeToken }
+}
+
+struct NativeGuardianChallengeResponse: Codable, Sendable {
+    let success: Bool
+    let email: String
+    let challengeToken: String
+    let expiresAt: String
+}
+
+struct NativeGuardianOTPRequest: Codable, Sendable {
+    let challengeToken: String
+    let code: String
+}
+
+struct NativeGuardianConsentRequest: Codable, Sendable {
+    let token: String
+    let consentTypes: [String]
+}
+
+struct NativeChildInvitation: Codable, Sendable {
+    let token: String
+    let inviteUrl: String
+    let expiresAt: String
+}
+
+struct NativeChildInvitationClaimRequest: Codable, Sendable {
+    let token: String
+}
+
 struct NativeCreateScheduleRequest: Codable, Sendable {
     let title: String
     let type: String

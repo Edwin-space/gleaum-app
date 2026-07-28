@@ -141,6 +141,9 @@ struct IOSMainTabView: View {
                 }
             }
         }
+        .sheet(item: $model.presentedFamilyFlow) { route in
+            IOSFamilyRouteContainer(route: route, appModel: model, store: store)
+        }
     }
 }
 

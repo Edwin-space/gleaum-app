@@ -327,6 +327,122 @@ final class NativeAPIClient: @unchecked Sendable {
         )
     }
 
+    func fetchFamilyDependents(spaceId: String) async throws -> [NativeFamilyDependent] {
+        guard let encodedSpaceId = spaceId.addingPercentEncoding(
+            withAllowedCharacters: .urlQueryAllowed
+        ) else {
+            throw NativeAPIError.invalidURL
+        }
+        let data = try await performAuthorizedRequest(
+            path: "/api/spaces/children?spaceId=\(encodedSpaceId)",
+            method: "GET"
+        )
+        return try JSONDecoder().decode(
+            NativeFamilyDependentsResponse.self,
+            from: data
+        ).dependents
+    }
+
+    func createFamilyDependent(
+        spaceId: String,
+        displayName: String,
+        birthDate: String,
+        expectedEmail: String?,
+        relationshipType: String
+    ) async throws -> NativeCreateFamilyDependentResponse {
+        let data = try await performAuthorizedRequest(
+            path: "/api/spaces/children",
+            method: "POST",
+            body: try JSONEncoder().encode(
+                NativeCreateFamilyDependentRequest(
+                    spaceId: spaceId,
+                    displayName: displayName,
+                    birthDate: birthDate,
+                    expectedEmail: expectedEmail,
+                    relationshipType: relationshipType
+                )
+            )
+        )
+        return try JSONDecoder().decode(NativeCreateFamilyDependentResponse.self, from: data)
+    }
+
+    func startGuardianVerification(
+        for dependent: NativeFamilyDependent
+    ) async throws -> NativeGuardianChallenge {
+        let data = try await performAuthorizedRequest(
+            path: "/api/spaces/children/\(dependent.id)/guardian-verification/start",
+            method: "POST"
+        )
+        let response = try JSONDecoder().decode(NativeGuardianChallengeResponse.self, from: data)
+        return NativeGuardianChallenge(
+            dependentId: dependent.id,
+            displayName: dependent.displayName,
+            email: response.email,
+            challengeToken: response.challengeToken,
+            expiresAt: response.expiresAt
+        )
+    }
+
+    func verifyGuardianOTP(challengeToken: String, code: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/spaces/children/guardian-verification/verify-otp",
+            method: "POST",
+            body: try JSONEncoder().encode(
+                NativeGuardianOTPRequest(
+                    challengeToken: challengeToken,
+                    code: code
+                )
+            )
+        )
+    }
+
+    func completeGuardianConsent(challengeToken: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/spaces/children/guardian-verification/complete",
+            method: "POST",
+            body: try JSONEncoder().encode(
+                NativeGuardianConsentRequest(
+                    token: challengeToken,
+                    consentTypes: [
+                        "service_registration",
+                        "personal_data_processing",
+                        "family_data_sharing",
+                    ]
+                )
+            )
+        )
+    }
+
+    func createChildInvitation(dependentId: String) async throws -> NativeChildInvitation {
+        let data = try await performAuthorizedRequest(
+            path: "/api/spaces/children/\(dependentId)/invite",
+            method: "POST"
+        )
+        return try JSONDecoder().decode(NativeChildInvitation.self, from: data)
+    }
+
+    func approveChildLink(dependentId: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/spaces/children/\(dependentId)/approve",
+            method: "POST"
+        )
+    }
+
+    func rejectChildLink(dependentId: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/spaces/children/\(dependentId)/reject",
+            method: "POST"
+        )
+    }
+
+    func claimChildInvitation(token: String) async throws {
+        _ = try await performAuthorizedRequest(
+            path: "/api/spaces/children/invitations/claim",
+            method: "POST",
+            body: try JSONEncoder().encode(NativeChildInvitationClaimRequest(token: token))
+        )
+    }
+
     private func performSpaceMutation<Payload: Encodable>(
         path: String,
         method: String,
@@ -510,6 +626,60 @@ enum NativeAPIError: LocalizedError {
             }
             if body.contains("cannot_remove_self") {
                 return "공간 지기 본인은 멤버 목록에서 제거할 수 없습니다."
+            }
+            if body.contains("family_space_required") {
+                return "가족 공간에서만 자녀 계정을 연결할 수 있습니다."
+            }
+            if body.contains("guardian_email_cannot_be_child_email") {
+                return "보호자 이메일은 자녀 계정 제한값으로 사용할 수 없습니다."
+            }
+            if body.contains("expected_email_already_registered") {
+                return "이미 등록된 자녀 이메일입니다."
+            }
+            if body.contains("invalid_expected_email") {
+                return "연결 허용 이메일 형식을 확인해 주세요."
+            }
+            if body.contains("invalid_dependent_profile") {
+                return "자녀 이름과 생년월일을 다시 확인해 주세요."
+            }
+            if body.contains("verification_rate_limited") {
+                return "확인 코드는 1분 후 다시 요청할 수 있습니다."
+            }
+            if body.contains("verified_guardian_email_required") {
+                return "이메일 확인이 완료된 보호자 계정이 필요합니다."
+            }
+            if body.contains("invalid_verification_code") {
+                return "8자리 확인 코드가 올바르지 않습니다."
+            }
+            if body.contains("verification_expired") {
+                return "확인 코드가 만료되었습니다. 새 코드를 받아 주세요."
+            }
+            if body.contains("guardian_verification_required")
+                || body.contains("verified_guardian_consent_required")
+                || body.contains("email_otp_verification_required") {
+                return "보호자 이메일 확인과 필수 동의를 먼저 완료해 주세요."
+            }
+            if body.contains("required_consents_missing") {
+                return "필수 동의 항목을 모두 확인해 주세요."
+            }
+            if body.contains("invited_email_mismatch") {
+                return "초대에 지정된 이메일과 현재 로그인 계정이 다릅니다."
+            }
+            if body.contains("guardian_account_cannot_claim_child_invitation") {
+                return "보호자 계정으로는 자녀 초대를 수락할 수 없습니다."
+            }
+            if body.contains("expired_invitation") {
+                return "초대 링크가 만료되었습니다. 보호자에게 새 링크를 요청해 주세요."
+            }
+            if body.contains("invalid_or_used_invitation")
+                || body.contains("invalid_invitation") {
+                return "이미 사용되었거나 유효하지 않은 초대 링크입니다."
+            }
+            if body.contains("existing_space_member_requires_conversion") {
+                return "이미 공간 멤버인 계정은 자녀 계정으로 바로 전환할 수 없습니다."
+            }
+            if body.contains("child_link_not_pending") {
+                return "현재 승인 대기 중인 연결 요청이 없습니다."
             }
             return "서버 요청에 실패했습니다. (\(status))"
         }

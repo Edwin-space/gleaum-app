@@ -52,6 +52,8 @@
 		E822C3552FCD79040032518A /* IOSMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3542FCD79040032518A /* IOSMoreView.swift */; };
 		E822C3572FCD79040032518A /* IOSMoreSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3562FCD79040032518A /* IOSMoreSheets.swift */; };
 		E822C3592FCD79040032518A /* IOSAppSecurityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */; };
+		E822C35B2FCD79040032518A /* IOSFamilyChildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C35A2FCD79040032518A /* IOSFamilyChildView.swift */; };
+		E822C35D2FCD79040032518A /* IOSFamilyChildSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E822C35C2FCD79040032518A /* IOSFamilyChildSheets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -104,6 +106,8 @@
 		E822C3542FCD79040032518A /* IOSMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMoreView.swift; sourceTree = "<group>"; };
 		E822C3562FCD79040032518A /* IOSMoreSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMoreSheets.swift; sourceTree = "<group>"; };
 		E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSAppSecurityManager.swift; sourceTree = "<group>"; };
+		E822C35A2FCD79040032518A /* IOSFamilyChildView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFamilyChildView.swift; sourceTree = "<group>"; };
+		E822C35C2FCD79040032518A /* IOSFamilyChildSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFamilyChildSheets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +159,8 @@
 				E822C3542FCD79040032518A /* IOSMoreView.swift */,
 				E822C3562FCD79040032518A /* IOSMoreSheets.swift */,
 				E822C3582FCD79040032518A /* IOSAppSecurityManager.swift */,
+				E822C35A2FCD79040032518A /* IOSFamilyChildView.swift */,
+				E822C35C2FCD79040032518A /* IOSFamilyChildSheets.swift */,
 				E822C3062FCD79040032518A /* LoginViewController.swift */,
 				E822C3072FCD79040032518A /* NativeSessionPlugin.swift */,
 				E822C30D2FCD79040032518A /* NativeBiometricPlugin.swift */,
@@ -318,6 +324,8 @@
 				E822C3552FCD79040032518A /* IOSMoreView.swift in Sources */,
 				E822C3572FCD79040032518A /* IOSMoreSheets.swift in Sources */,
 				E822C3592FCD79040032518A /* IOSAppSecurityManager.swift in Sources */,
+				E822C35B2FCD79040032518A /* IOSFamilyChildView.swift in Sources */,
+				E822C35D2FCD79040032518A /* IOSFamilyChildSheets.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
