@@ -1,6 +1,69 @@
 import SwiftUI
 import UIKit
 
+struct IOSSpaceMembersView: View {
+    @ObservedObject var store: StartupSnapshotStore
+    let space: NativeSpaceListItem
+    let members: [NativeSpaceMemberItem]
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedMember: NativeSpaceMemberItem?
+
+    var body: some View {
+        Group {
+            if #available(iOS 16.0, *) {
+                NavigationStack {
+                    memberList
+                }
+            } else {
+                NavigationView {
+                    memberList
+                }
+                .navigationViewStyle(.stack)
+            }
+        }
+        .sheet(item: $selectedMember) { member in
+            IOSSpaceMemberEditor(store: store, space: space, member: member)
+        }
+    }
+
+    private var memberList: some View {
+        List {
+            Section {
+                ForEach(members) { member in
+                    if canEditMembers {
+                        Button {
+                            selectedMember = member
+                        } label: {
+                            IOSSpaceMemberRow(member: member, isFamily: space.spaceKind == "family")
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        IOSSpaceMemberRow(member: member, isFamily: space.spaceKind == "family")
+                    }
+                }
+            } footer: {
+                Text("일정과 소식에서 함께하는 구성원입니다.")
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("공간 멤버")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("닫기") {
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private var canEditMembers: Bool {
+        space.role == "admin"
+            && (store.accountContext?.capabilities.canManageSpaces ?? false)
+    }
+}
+
 struct IOSSpaceMemberRow: View {
     let member: NativeSpaceMemberItem
     let isFamily: Bool

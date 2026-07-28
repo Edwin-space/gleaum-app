@@ -114,7 +114,8 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 - `TabView`: 홈, 일정, 공간, 가계부, 전체
 - 각 탭은 독립 `NavigationStack`과 navigation path를 소유한다.
 - `TabView`의 선택·탭 상태와 SF Symbols는 유지한다. iOS 18 이상은 사용자 제공 Instagram iOS 영상처럼 전체 메뉴를 유지하며 폭·높이·아이콘·레이블을 전환하는 적응형 플로팅 컨테이너를 사용하고, iOS 15~17은 시스템 tab bar를 사용한다.
-- 콘텐츠 오프셋 증가 14pt에서 축소, 역방향 10pt 또는 목록 상단에서 확장한다. 탭 전환 시 확장하고 Reduce Motion과 접근성 글자 크기를 존중한다.
+- 실제 콘텐츠 오프셋이 24pt 이상일 때 누적 14pt 이동으로 축소하고, 역방향 30pt 또는 목록 상단에서 확장한다. 짧은 목록의 rubber-band로 축소 직후 재확장되지 않아야 한다. 탭 전환 시 확장하고 Reduce Motion과 접근성 글자 크기를 존중한다.
+- 확장 상태의 76pt 높이를 루트 스크롤 safe area에 항상 예약해 마지막 콘텐츠와 고정 하단 액션을 가리지 않는다.
 - 홈·일정·공간·가계부·전체의 루트 제목은 모두 `largeTitle`, 상세·설정·편집 화면은 `inline`을 사용한다.
 - 생성·필터·선택은 toolbar, sheet, menu, confirmation dialog의 플랫폼 패턴을 따른다.
 
@@ -136,6 +137,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 7. 커스텀 blur/gradient/glass는 정보 계층을 해치지 않는 제한된 브랜드 영역에서만 사용한다.
 8. 라이트·다크·시스템, increased contrast, Reduce Motion, VoiceOver를 같은 컴포넌트에서 검증한다.
 9. 테마 선택 화면은 시스템·라이트·다크의 역할 색을 구분하되, 기능 화면의 배경·텍스트는 계속 Apple semantic color를 사용한다. 양쪽 테마 미리보기는 현재 창의 trait에 묶지 않고 두 팔레트를 독립 렌더링한다.
+10. 라이트/시스템 모드에서도 핵심 정보 그룹이 배경과 합쳐지지 않도록 일정·커뮤니티·가계부 역할에 맞는 동적 surface를 사용한다. 역할 색은 정보 구분에만 쓰며 임의 장식색을 추가하지 않는다.
 
 ## 7. 구현 순서
 

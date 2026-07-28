@@ -3,7 +3,6 @@ import UIKit
 
 struct IOSSpaceNavigationView: View {
     @ObservedObject var store: StartupSnapshotStore
-    @Environment(\.sizeCategory) private var sizeCategory
 
     @State private var presentedSheet: IOSSpaceSheet?
     @State private var isSwitchingSpace = false
@@ -39,8 +38,6 @@ struct IOSSpaceNavigationView: View {
                 upcomingScheduleSection(summary)
                 if !activeSpace.isPersonal {
                     postSection(summary, activeSpace: activeSpace)
-                    memberSection(summary, activeSpace: activeSpace)
-                    managementSection(summary, activeSpace: activeSpace)
                 }
             } else if let error = store.domainErrors[.spaces] {
                 Section {
@@ -119,79 +116,63 @@ struct IOSSpaceNavigationView: View {
         activeSpace: NativeSpaceListItem
     ) -> some View {
         Section {
-            Menu {
-                ForEach(summary.spaces) { space in
-                    Button {
-                        guard !space.isActive else { return }
-                        activate(space)
-                    } label: {
-                        if space.isActive {
-                            Label(space.name, systemImage: "checkmark")
-                        } else {
-                            Text(space.name)
+            HStack(spacing: 10) {
+                Menu {
+                    ForEach(summary.spaces) { space in
+                        Button {
+                            guard !space.isActive else { return }
+                            activate(space)
+                        } label: {
+                            if space.isActive {
+                                Label(space.name, systemImage: "checkmark")
+                            } else {
+                                Text(space.name)
+                            }
                         }
                     }
-                }
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: IOSSpaceFormat.symbol(for: activeSpace))
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(Color(uiColor: GleaumUIColor.brandTeal))
-                        .frame(width: 34, height: 34)
-                        .background(Color(uiColor: GleaumUIColor.brandTeal).opacity(0.12))
-                        .clipShape(Circle())
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(activeSpace.name)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: IOSSpaceFormat.symbol(for: activeSpace))
                             .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        Text(IOSSpaceFormat.kindTitle(activeSpace.spaceKind))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(uiColor: GleaumUIColor.brandTeal))
+                            .frame(width: 34, height: 34)
+                            .background(Color(uiColor: GleaumUIColor.brandTeal).opacity(0.13))
+                            .clipShape(Circle())
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(activeSpace.name)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text(spaceContext(activeSpace))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        if isSwitchingSpace {
+                            ProgressView()
+                        } else if summary.spaces.count > 1 {
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
                     }
-
-                    Spacer()
-
-                    if isSwitchingSpace {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
+                    .contentShape(Rectangle())
                 }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(isSwitchingSpace || summary.spaces.count < 2)
-            .accessibilityLabel("현재 공간 \(activeSpace.name)")
-            .accessibilityHint(summary.spaces.count > 1 ? "두 번 탭하여 공간을 전환합니다." : "")
+                .buttonStyle(.plain)
+                .disabled(isSwitchingSpace || summary.spaces.count < 2)
+                .accessibilityLabel("현재 공간 \(activeSpace.name)")
+                .accessibilityHint(summary.spaces.count > 1 ? "두 번 탭하여 공간을 전환합니다." : "")
 
-            if sizeCategory.isAccessibilityCategory {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("\(activeSpace.memberCount)명", systemImage: "person.2")
-                    Text(IOSSpaceFormat.roleTitle(activeSpace.role))
-                        .foregroundStyle(.secondary)
+                Spacer(minLength: 6)
+
+                if !activeSpace.isPersonal {
+                    spaceActions(summary, activeSpace: activeSpace)
                 }
-                .font(.subheadline)
-            } else {
-                HStack {
-                    Label("\(activeSpace.memberCount)명", systemImage: "person.2")
-                    Spacer()
-                    Text(IOSSpaceFormat.roleTitle(activeSpace.role))
-                        .foregroundStyle(.secondary)
-                }
-                .font(.subheadline)
             }
-        } header: {
-            Text("현재 공간")
-        } footer: {
-            if activeSpace.isPersonal {
-                Text("개인 공간의 일정과 기록은 다른 공간 멤버에게 공유되지 않습니다.")
-            } else {
-                Text("공간을 전환하면 소식, 일정, 멤버 정보가 선택한 공간 기준으로 바뀝니다.")
-            }
+            .padding(.vertical, 2)
         }
+        .listRowBackground(Color(uiColor: GleaumUIColor.communitySurface))
     }
 
     private func upcomingScheduleSection(_ summary: NativeSpaceSummary) -> some View {
@@ -209,6 +190,7 @@ struct IOSSpaceNavigationView: View {
                 }
             }
         }
+        .listRowBackground(Color(uiColor: GleaumUIColor.scheduleSurface))
     }
 
     private func postSection(
@@ -233,58 +215,7 @@ struct IOSSpaceNavigationView: View {
         } header: {
             Text("공간 소식")
         }
-    }
-
-    private func memberSection(
-        _ summary: NativeSpaceSummary,
-        activeSpace: NativeSpaceListItem
-    ) -> some View {
-        Section("멤버") {
-            ForEach(summary.members) { member in
-                if canAdminister(activeSpace) && !activeSpace.isPersonal {
-                    Button {
-                        presentedSheet = .member(space: activeSpace, member: member)
-                    } label: {
-                        IOSSpaceMemberRow(member: member, isFamily: activeSpace.spaceKind == "family")
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    IOSSpaceMemberRow(member: member, isFamily: activeSpace.spaceKind == "family")
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func managementSection(
-        _ summary: NativeSpaceSummary,
-        activeSpace: NativeSpaceListItem
-    ) -> some View {
-        if !activeSpace.isPersonal,
-           canAdminister(activeSpace) {
-            Section("공간 관리") {
-                if canInviteMembers {
-                    Button {
-                        presentedSheet = activeSpace.spaceKind == "family"
-                            ? .familyInvite(space: activeSpace)
-                            : .invite(space: activeSpace)
-                    } label: {
-                        Label(
-                            activeSpace.spaceKind == "family" ? "가족 초대" : "멤버 초대",
-                            systemImage: "person.badge.plus"
-                        )
-                    }
-                }
-
-                if canManageSpaces {
-                    Button {
-                        presentedSheet = .settings(space: activeSpace)
-                    } label: {
-                        Label("공간 설정", systemImage: "gearshape")
-                    }
-                }
-            }
-        }
+        .listRowBackground(Color(uiColor: GleaumUIColor.communitySurface))
     }
 
     @ViewBuilder
@@ -300,6 +231,8 @@ struct IOSSpaceNavigationView: View {
             IOSSpaceInviteView(store: store, space: space)
         case .familyInvite(let space):
             IOSFamilyInviteChooser(store: store, space: space)
+        case .members(let space, let members):
+            IOSSpaceMembersView(store: store, space: space, members: members)
         case .member(let space, let member):
             IOSSpaceMemberEditor(store: store, space: space, member: member)
         case .settings(let space):
@@ -317,6 +250,53 @@ struct IOSSpaceNavigationView: View {
 
     private func canAdminister(_ space: NativeSpaceListItem) -> Bool {
         canManageSpaces && space.role == "admin"
+    }
+
+    private func spaceContext(_ space: NativeSpaceListItem) -> String {
+        if space.isPersonal {
+            return IOSSpaceFormat.kindTitle(space.spaceKind)
+        }
+        return "\(IOSSpaceFormat.kindTitle(space.spaceKind)) · \(space.memberCount)명 · \(IOSSpaceFormat.roleTitle(space.role))"
+    }
+
+    private func spaceActions(
+        _ summary: NativeSpaceSummary,
+        activeSpace: NativeSpaceListItem
+    ) -> some View {
+        Menu {
+            Button {
+                presentedSheet = .members(space: activeSpace, members: summary.members)
+            } label: {
+                Label("멤버 \(activeSpace.memberCount)명", systemImage: "person.2")
+            }
+
+            if canInviteMembers {
+                Button {
+                    presentedSheet = activeSpace.spaceKind == "family"
+                        ? .familyInvite(space: activeSpace)
+                        : .invite(space: activeSpace)
+                } label: {
+                    Label(
+                        activeSpace.spaceKind == "family" ? "가족 초대" : "멤버 초대",
+                        systemImage: "person.badge.plus"
+                    )
+                }
+            }
+
+            if canAdminister(activeSpace) {
+                Button {
+                    presentedSheet = .settings(space: activeSpace)
+                } label: {
+                    Label("공간 설정", systemImage: "gearshape")
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.title3)
+                .frame(width: 34, height: 34)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("공간 메뉴")
     }
 
     private func activate(_ space: NativeSpaceListItem) {
@@ -347,6 +327,7 @@ private enum IOSSpaceSheet: Identifiable {
     case post(space: NativeSpaceListItem)
     case invite(space: NativeSpaceListItem)
     case familyInvite(space: NativeSpaceListItem)
+    case members(space: NativeSpaceListItem, members: [NativeSpaceMemberItem])
     case member(space: NativeSpaceListItem, member: NativeSpaceMemberItem)
     case settings(space: NativeSpaceListItem)
 
@@ -357,6 +338,7 @@ private enum IOSSpaceSheet: Identifiable {
         case .post(let space): return "post-\(space.id)"
         case .invite(let space): return "invite-\(space.id)"
         case .familyInvite(let space): return "family-invite-\(space.id)"
+        case .members(let space, _): return "members-\(space.id)"
         case .member(let space, let member): return "member-\(space.id)-\(member.userId)"
         case .settings(let space): return "settings-\(space.id)"
         }

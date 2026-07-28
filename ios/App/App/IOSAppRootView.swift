@@ -138,6 +138,7 @@ struct IOSMainTabView: View {
                         selection: $model.selectedTab,
                         state: tabBarState
                     )
+                    .frame(height: 76, alignment: .bottom)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
@@ -227,11 +228,12 @@ final class IOSFloatingTabBarState: ObservableObject {
             return
         }
 
-        let delta = normalizedOffset - lastOffset
+        let rawDelta = normalizedOffset - lastOffset
         lastOffset = normalizedOffset
-        guard abs(delta) >= 0.75 else { return }
+        guard abs(rawDelta) >= 0.75 else { return }
+        let delta = min(max(rawDelta, -12), 12)
 
-        if delta > 0 {
+        if delta > 0, normalizedOffset >= 24 {
             compactTravel += delta
             expandTravel = 0
             if compactTravel >= 14 {
@@ -241,7 +243,7 @@ final class IOSFloatingTabBarState: ObservableObject {
         } else {
             expandTravel += -delta
             compactTravel = 0
-            if expandTravel >= 10 {
+            if expandTravel >= 30 {
                 setCompact(false)
                 expandTravel = 0
             }
@@ -417,6 +419,14 @@ private struct IOSFloatingTabBarScrollModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                // The custom floating bar lives above the system safe area.
+                // Reserve its full expanded footprint so the final row never
+                // becomes unreachable behind the bar.
+                Color.clear
+                    .frame(height: 76)
+                    .accessibilityHidden(true)
+            }
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y + geometry.contentInsets.top
             } action: { _, newOffset in

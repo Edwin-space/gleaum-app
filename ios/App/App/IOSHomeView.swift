@@ -23,7 +23,7 @@ struct IOSHomeNavigationView: View {
 
     private var content: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
+            LazyVStack(alignment: .leading, spacing: 18) {
                 if let summary = store.homeSummary {
                     greeting(summary)
                     scheduleOverview(summary)
@@ -37,6 +37,7 @@ struct IOSHomeNavigationView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 18)
+            .padding(.bottom, 12)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .gleaumTabBarScrollTracking(for: .home)
@@ -88,10 +89,15 @@ struct IOSHomeNavigationView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .gleaumSectionSurface(GleaumUIColor.heroSurface)
     }
 
     private func scheduleOverview(_ summary: NativeHomeSummary) -> some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: 14) {
+            Label("종합 일정", systemImage: "calendar.badge.clock")
+                .font(.headline)
+                .foregroundStyle(Color(uiColor: GleaumUIColor.brandBlue))
+
             HStack(spacing: 0) {
                 metric(value: summary.schedules.todayCount, label: "오늘")
                 Divider().frame(height: 42)
@@ -100,10 +106,8 @@ struct IOSHomeNavigationView: View {
                 metric(value: summary.spaces.memberCount, label: "공간 멤버")
             }
             .padding(.vertical, 4)
-        } label: {
-            Label("종합 일정", systemImage: "calendar.badge.clock")
-                .font(.headline)
         }
+        .gleaumSectionSurface(GleaumUIColor.scheduleSurface)
     }
 
     private func metric(value: Int, label: String) -> some View {
@@ -149,6 +153,7 @@ struct IOSHomeNavigationView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
+        .gleaumSectionSurface(GleaumUIColor.communitySurface)
     }
 
     private func scheduleRow(_ item: NativeScheduleItem) -> some View {
@@ -189,16 +194,15 @@ struct IOSHomeNavigationView: View {
                 }
             }
 
-            GroupBox {
-                VStack(spacing: 12) {
-                    ledgerRow("수입", amount: summary.ledger.incomeTotal, color: GleaumUIColor.brandGreen)
-                    Divider()
-                    ledgerRow("지출", amount: summary.ledger.expenseTotal, color: .systemOrange)
-                    Divider()
-                    ledgerRow("순액", amount: summary.ledger.net, color: GleaumUIColor.brandTeal)
-                }
+            VStack(spacing: 12) {
+                ledgerRow("수입", amount: summary.ledger.incomeTotal, color: GleaumUIColor.brandGreen)
+                Divider()
+                ledgerRow("지출", amount: summary.ledger.expenseTotal, color: .systemOrange)
+                Divider()
+                ledgerRow("순액", amount: summary.ledger.net, color: GleaumUIColor.brandTeal)
             }
         }
+        .gleaumSectionSurface(GleaumUIColor.financeSurface)
     }
 
     private func ledgerRow(_ title: String, amount: Int, color: UIColor) -> some View {
