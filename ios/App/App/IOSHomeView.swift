@@ -89,7 +89,7 @@ struct IOSHomeNavigationView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .gleaumSectionSurface(GleaumUIColor.heroSurface)
+        .gleaumSectionSurface(GleaumUIColor.surface)
     }
 
     private func scheduleOverview(_ summary: NativeHomeSummary) -> some View {
@@ -107,7 +107,7 @@ struct IOSHomeNavigationView: View {
             }
             .padding(.vertical, 4)
         }
-        .gleaumSectionSurface(GleaumUIColor.scheduleSurface)
+        .gleaumSectionSurface(GleaumUIColor.surface)
     }
 
     private func metric(value: Int, label: String) -> some View {
@@ -153,7 +153,7 @@ struct IOSHomeNavigationView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
-        .gleaumSectionSurface(GleaumUIColor.communitySurface)
+        .gleaumSectionSurface(GleaumUIColor.surface)
     }
 
     private func scheduleRow(_ item: NativeScheduleItem) -> some View {
@@ -202,7 +202,7 @@ struct IOSHomeNavigationView: View {
                 ledgerRow("순액", amount: summary.ledger.net, color: GleaumUIColor.brandTeal)
             }
         }
-        .gleaumSectionSurface(GleaumUIColor.financeSurface)
+        .gleaumSectionSurface(GleaumUIColor.surface)
     }
 
     private func ledgerRow(_ title: String, amount: Int, color: UIColor) -> some View {

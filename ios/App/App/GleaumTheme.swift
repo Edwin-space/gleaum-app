@@ -126,19 +126,6 @@ enum GleaumUIColor {
         light: UIColor(red: 0.918, green: 0.953, blue: 0.980, alpha: 1),
         dark: UIColor(red: 0.105, green: 0.137, blue: 0.260, alpha: 1)
     )
-    static let scheduleSurface = dynamic(
-        light: UIColor(red: 0.925, green: 0.969, blue: 0.992, alpha: 1),
-        dark: UIColor(red: 0.075, green: 0.137, blue: 0.220, alpha: 1)
-    )
-    static let communitySurface = dynamic(
-        light: UIColor(red: 0.925, green: 0.984, blue: 0.973, alpha: 1),
-        dark: UIColor(red: 0.059, green: 0.157, blue: 0.157, alpha: 1)
-    )
-    static let financeSurface = dynamic(
-        light: UIColor(red: 0.941, green: 0.984, blue: 0.961, alpha: 1),
-        dark: UIColor(red: 0.067, green: 0.149, blue: 0.122, alpha: 1)
-    )
-
     private static func dynamic(light: UIColor, dark: UIColor) -> UIColor {
         UIColor { traits in
             traits.userInterfaceStyle == .dark ? dark : light

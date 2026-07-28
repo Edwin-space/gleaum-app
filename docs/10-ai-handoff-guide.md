@@ -2000,5 +2000,5 @@ Google Play 배포/Android 단말에서 네이티브 Google 로그인 처리가 
 - 사용자 제공 Instagram iOS 녹화 대조 후 이전 `tabBarMinimizeBehavior` 해석은 폐기했다. iOS 18 이상은 5개 메뉴를 모두 유지하는 `IOSFloatingTabBar`를 사용한다. 스크롤 시 캡슐·아이콘을 비례 축소하고 레이블만 숨기며, 역방향·상단·탭 전환에서 복원한다. iOS 15~17은 시스템 탭 바 fallback이다.
 - `IOSFloatingTabBarState`는 실제 스크롤 오프셋이 24pt 이상일 때만 14pt 누적 이동으로 축소하고, 역방향 30pt에서 복원한다. 짧은 목록의 rubber-band가 축소 직후 바를 다시 튕겨 올리지 않도록 한 기준이다. 접근성 글자 크기에서는 축소를 막고 Reduce Motion에서는 spring을 사용하지 않는다.
 - 플로팅 바의 확장 높이 76pt는 모든 루트 스크롤의 safe area에 예약한다. 마지막 행·작성 버튼·고정 하단 액션이 바 뒤에 가려지는 구조를 다시 만들지 않는다.
-- 라이트/시스템 모드의 홈과 공간은 Apple semantic background 위에 의미별 동적 surface를 사용한다. 일정은 Blue, 공간 소식은 Teal, 가계부는 Green 계열이며 다크 모드에서도 같은 정보 역할만 유지한다.
+- 라이트/시스템 모드의 홈과 공간은 가계부와 동일한 Apple semantic white surface를 사용한다. 일정·공간 소식·가계부의 역할 구분은 배경 전체를 물들이지 않고 SF Symbol·제목·상태 강조색으로만 표현한다.
 - 공간 루트의 우선순위는 `현재 공간(전환) → 다가오는 일정 → 공간 소식`이다. 멤버·초대·공간 설정은 현재 공간 행의 점 3개 보조 메뉴로 이동했으며 루트에 독립 관리 섹션을 다시 노출하지 않는다.

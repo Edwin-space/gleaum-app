@@ -172,7 +172,7 @@ struct IOSSpaceNavigationView: View {
             }
             .padding(.vertical, 2)
         }
-        .listRowBackground(Color(uiColor: GleaumUIColor.communitySurface))
+        .listRowBackground(Color(uiColor: GleaumUIColor.surface))
     }
 
     private func upcomingScheduleSection(_ summary: NativeSpaceSummary) -> some View {
@@ -190,7 +190,7 @@ struct IOSSpaceNavigationView: View {
                 }
             }
         }
-        .listRowBackground(Color(uiColor: GleaumUIColor.scheduleSurface))
+        .listRowBackground(Color(uiColor: GleaumUIColor.surface))
     }
 
     private func postSection(
@@ -215,7 +215,7 @@ struct IOSSpaceNavigationView: View {
         } header: {
             Text("공간 소식")
         }
-        .listRowBackground(Color(uiColor: GleaumUIColor.communitySurface))
+        .listRowBackground(Color(uiColor: GleaumUIColor.surface))
     }
 
     @ViewBuilder

@@ -137,7 +137,7 @@ Android의 `NativeStartupPrefetcher`와 `NativeAppDataCache`는 **동작 계약 
 7. 커스텀 blur/gradient/glass는 정보 계층을 해치지 않는 제한된 브랜드 영역에서만 사용한다.
 8. 라이트·다크·시스템, increased contrast, Reduce Motion, VoiceOver를 같은 컴포넌트에서 검증한다.
 9. 테마 선택 화면은 시스템·라이트·다크의 역할 색을 구분하되, 기능 화면의 배경·텍스트는 계속 Apple semantic color를 사용한다. 양쪽 테마 미리보기는 현재 창의 trait에 묶지 않고 두 팔레트를 독립 렌더링한다.
-10. 라이트/시스템 모드에서도 핵심 정보 그룹이 배경과 합쳐지지 않도록 일정·커뮤니티·가계부 역할에 맞는 동적 surface를 사용한다. 역할 색은 정보 구분에만 쓰며 임의 장식색을 추가하지 않는다.
+10. 라이트/시스템 모드의 핵심 정보 그룹은 가계부와 동일한 white semantic surface와 hairline border로 구분한다. 일정·커뮤니티·가계부의 역할 색은 SF Symbol·제목·상태에만 사용하고 카드 배경 전체를 물들이지 않는다.
 
 ## 7. 구현 순서
 
