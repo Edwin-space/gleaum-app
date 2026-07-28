@@ -16,10 +16,10 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="img-logo-01">
-                                <rect key="frame" x="159" y="389" width="96" height="96"/>
+                                <rect key="frame" x="169" y="399" width="76" height="76"/>
                             </imageView>
                             <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="GleaumBIInverse" translatesAutoresizingMaskIntoConstraints="NO" id="img-bi-01">
-                                <rect key="frame" x="135" y="501" width="144" height="36"/>
+                                <rect key="frame" x="137" y="487" width="140" height="35"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="cGa-bB-1UN"/>
@@ -27,12 +27,12 @@
                         <constraints>
                             <constraint firstItem="img-logo-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c001"/>
                             <constraint firstItem="img-logo-01" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-11" id="c002"/>
-                            <constraint firstItem="img-logo-01" firstAttribute="width" constant="96" id="c003"/>
-                            <constraint firstItem="img-logo-01" firstAttribute="height" constant="96" id="c004"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="width" constant="76" id="c003"/>
+                            <constraint firstItem="img-logo-01" firstAttribute="height" constant="76" id="c004"/>
                             <constraint firstItem="img-bi-01" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c005"/>
-                            <constraint firstItem="img-bi-01" firstAttribute="top" secondItem="img-logo-01" secondAttribute="bottom" constant="16" id="c006"/>
-                            <constraint firstItem="img-bi-01" firstAttribute="width" constant="144" id="c007"/>
-                            <constraint firstItem="img-bi-01" firstAttribute="height" constant="36" id="c008"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="top" secondItem="img-logo-01" secondAttribute="bottom" constant="12" id="c006"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="width" constant="140" id="c007"/>
+                            <constraint firstItem="img-bi-01" firstAttribute="height" constant="35" id="c008"/>
                         </constraints>
                     </view>
                 </viewController>

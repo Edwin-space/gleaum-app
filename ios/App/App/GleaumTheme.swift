@@ -17,6 +17,20 @@ enum GleaumThemePreference: String, CaseIterable {
     }
 }
 
+/// iPhone 화면 전반에서 공유하는 기본 간격과 컨트롤 규격입니다.
+/// 화면별 임의 수치를 추가하지 말고 이 기준을 우선 사용합니다.
+enum GleaumIOSMetric {
+    static let pageHorizontalPadding: CGFloat = 24
+    static let readableContentWidth: CGFloat = 420
+    static let authenticationControlHeight: CGFloat = 52
+    static let textFieldHeight: CGFloat = 52
+    static let controlCornerRadius: CGFloat = 12
+    static let brandMarkSize: CGFloat = 76
+    static let brandWordmarkWidth: CGFloat = 140
+    static let brandWordmarkHeight: CGFloat = 35
+    static let brandAssetSpacing: CGFloat = 12
+}
+
 /// iOS 화면과 WebView가 동일한 라이트·다크·시스템 선택을 사용하도록 관리합니다.
 final class GleaumThemeManager {
     static let shared = GleaumThemeManager()

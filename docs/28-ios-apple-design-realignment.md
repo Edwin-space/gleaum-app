@@ -12,7 +12,7 @@
 - 시스템 `TabView` 5탭과 snapshot 기반 SwiftUI 홈 1차를 구현했다.
 - Capacitor는 앱 시작 때 WebView를 만들지 않으며, 네이티브 전환 전 화면에서만 지연 생성되는 폴백으로 축소했다.
 - 현재 제품 우선순위는 iPhone이다. iPad·Split View와 Android 태블릿·폴더블은 휴대전화 기능 마감 뒤 재개한다.
-- 네이티브 로그인은 소셜 계정 우선 구조·Dynamic Type·공식 BI로 재정렬했다. iOS Debug Supabase 키와 오래된 refresh token 판정을 보정했으며, 시뮬레이터에서 실제 인증 서버 응답을 확인했다.
+- 네이티브 로그인은 Apple·Google·기존 이메일 로그인만 제공하며 별도 회원가입 UI를 두지 않는다. Apple 공식 시스템 버튼과 Google 공식 G 자산/버튼 규격, Dynamic Type, 공식 BI를 적용했다. 정적 Launch Screen·브랜드 전환·로그인의 로고/BI 규격과 중앙 축을 통일하고 인증 액션은 하단 엄지 접근 영역에 배치했다. 신규 소셜 사용자는 인증 후 네이티브 온보딩으로 분기한다.
 
 ## 1. 감사 결론
 

@@ -8,7 +8,7 @@ import Capacitor
  *   NativeSession.getSession()    → { session: String | null }
  *   NativeSession.saveSession()   → void
  *   NativeSession.clearSession()  → void
- *   NativeSession.logout()        → void (세션 삭제 + LoginViewController 표시)
+ *   NativeSession.logout()        → void (세션 삭제 + SwiftUI signedOut 전환)
  */
 @objc(NativeSessionPlugin)
 public class NativeSessionPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -47,27 +47,9 @@ public class NativeSessionPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve()
     }
 
-    // 로그아웃: 세션 삭제 + LoginViewController 표시
+    // 로그아웃: 세션 삭제 알림을 통해 SwiftUI root가 signedOut 화면으로 전환합니다.
     @objc func logout(_ call: CAPPluginCall) {
         SessionManager.shared.clearSession()
         call.resolve()
-
-        DispatchQueue.main.async {
-            self.presentLoginScreen()
-        }
-    }
-
-    private func presentLoginScreen() {
-        guard let rootVC = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: \.isKeyWindow)?.rootViewController else { return }
-        let loginVC = LoginViewController()
-        loginVC.modalPresentationStyle = .fullScreen
-        loginVC.modalTransitionStyle   = .crossDissolve
-
-        // 이미 LoginViewController가 표시 중이면 스킵
-        if rootVC.presentedViewController is LoginViewController { return }
-        rootVC.present(loginVC, animated: true)
     }
 }

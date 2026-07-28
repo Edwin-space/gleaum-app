@@ -11,8 +11,7 @@ struct IOSAppRootView: View {
             case .launching:
                 BrandTransitionView(reduceMotion: reduceMotion)
             case .signedOut:
-                LoginViewControllerContainer()
-                    .ignoresSafeArea()
+                IOSLoginView()
             case .authenticated:
                 IOSMainTabView(model: model)
             case .offline:
@@ -33,11 +32,14 @@ private struct BrandTransitionView: View {
             Color(red: 0.039, green: 0.043, blue: 0.063)
                 .ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: GleaumIOSMetric.brandAssetSpacing) {
                 Image("Splash")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 104, height: 104)
+                    .frame(
+                        width: GleaumIOSMetric.brandMarkSize,
+                        height: GleaumIOSMetric.brandMarkSize
+                    )
                     .scaleEffect(appeared ? 1 : 0.88)
                     .opacity(appeared ? 1 : 0)
                     .accessibilityLabel("글리움")
@@ -45,7 +47,10 @@ private struct BrandTransitionView: View {
                 Image("GleaumBIInverse")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 144, height: 36)
+                    .frame(
+                        width: GleaumIOSMetric.brandWordmarkWidth,
+                        height: GleaumIOSMetric.brandWordmarkHeight
+                    )
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared || reduceMotion ? 0 : 8)
                     .accessibilityLabel("gleaum")
@@ -151,12 +156,4 @@ private struct OfflineRecoveryView: View {
         }
         .padding(28)
     }
-}
-
-private struct LoginViewControllerContainer: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> LoginViewController {
-        LoginViewController()
-    }
-
-    func updateUIViewController(_ uiViewController: LoginViewController, context: Context) {}
 }
