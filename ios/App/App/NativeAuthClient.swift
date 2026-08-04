@@ -3,6 +3,7 @@ import Foundation
 enum NativeIdentityProvider: String {
     case apple
     case google
+    case kakao
 }
 
 struct NativeAuthResponse {
@@ -104,15 +105,20 @@ final class NativeAuthClient: @unchecked Sendable {
     func signIn(
         provider: NativeIdentityProvider,
         idToken: String,
-        rawNonce: String
+        rawNonce: String,
+        accessToken: String? = nil
     ) async throws -> NativeAuthResponse {
-        try await request(
+        var body: [String: Any] = [
+            "provider": provider.rawValue,
+            "id_token": idToken,
+            "nonce": rawNonce,
+        ]
+        if let accessToken, !accessToken.isEmpty {
+            body["access_token"] = accessToken
+        }
+        return try await request(
             path: "auth/v1/token?grant_type=id_token",
-            body: [
-                "provider": provider.rawValue,
-                "id_token": idToken,
-                "nonce": rawNonce,
-            ]
+            body: body
         )
     }
 
@@ -195,15 +201,109 @@ final class NativeAuthClient: @unchecked Sendable {
         return NativeAuthResponse(sessionJSON: sessionJSON)
     }
 
+    func fetchIdentities() async throws -> [NativeUserIdentity] {
+        let accessToken = try await SessionManager.shared.accessTokenForRequest()
+        guard let request = makeRequest(
+            path: "auth/v1/user",
+            method: "GET",
+            authorization: accessToken,
+            body: nil
+        ) else {
+            throw NativeAuthError.invalidConfiguration
+        }
+
+        let (data, response) = try await transport.send(request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw NativeAuthError.invalidResponse
+        }
+
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let identitiesRaw = json["identities"] as? [[String: Any]] else {
+            return []
+        }
+
+        var identities: [NativeUserIdentity] = []
+        for dict in identitiesRaw {
+            guard let id = dict["id"] as? String,
+                  let provider = dict["provider"] as? String else { continue }
+            let identityData = dict["identity_data"] as? [String: Any]
+            let email = (identityData?["email"] as? String) ?? (identityData?["preferred_username"] as? String)
+            let lastSignInAt = dict["last_sign_in_at"] as? String
+            identities.append(NativeUserIdentity(id: id, provider: provider, email: email, lastSignInAt: lastSignInAt))
+        }
+        return identities
+    }
+
+    func linkIdentity(
+        provider: NativeIdentityProvider,
+        idToken: String,
+        rawNonce: String,
+        accessToken kakaoToken: String? = nil
+    ) async throws -> [NativeUserIdentity] {
+        let accessToken = try await SessionManager.shared.accessTokenForRequest()
+        var body: [String: Any] = [
+            "provider": provider.rawValue,
+            "id_token": idToken,
+            "nonce": rawNonce,
+        ]
+        if let kakaoToken, !kakaoToken.isEmpty {
+            body["access_token"] = kakaoToken
+        }
+
+        guard let request = makeRequest(
+            path: "auth/v1/user/identities",
+            method: "POST",
+            authorization: accessToken,
+            body: body
+        ) else {
+            throw NativeAuthError.invalidConfiguration
+        }
+
+        let (data, response) = try await transport.send(request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NativeAuthError.invalidResponse
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            let msg = Self.errorMessage(from: data)
+            throw NativeAuthError.requestFailed(status: http.statusCode, message: msg)
+        }
+
+        return try await fetchIdentities()
+    }
+
+    func unlinkIdentity(identityId: String) async throws -> [NativeUserIdentity] {
+        let accessToken = try await SessionManager.shared.accessTokenForRequest()
+        guard !configuration.anonKey.isEmpty,
+              let url = URL(string: "auth/v1/user/identities/\(identityId)", relativeTo: configuration.baseURL)?.absoluteURL else {
+            throw NativeAuthError.invalidConfiguration
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.timeoutInterval = 20
+        request.setValue(configuration.anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await transport.send(request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NativeAuthError.invalidResponse
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            let msg = Self.errorMessage(from: data)
+            throw NativeAuthError.requestFailed(status: http.statusCode, message: msg)
+        }
+
+        return try await fetchIdentities()
+    }
+
     private func makeRequest(
         path: String,
         method: String,
         authorization: String,
-        body: [String: Any]
+        body: [String: Any]?
     ) -> URLRequest? {
         guard !configuration.anonKey.isEmpty,
-              let url = URL(string: path, relativeTo: configuration.baseURL)?.absoluteURL,
-              let data = try? JSONSerialization.data(withJSONObject: body) else {
+              let url = URL(string: path, relativeTo: configuration.baseURL)?.absoluteURL else {
             return nil
         }
 
@@ -215,7 +315,10 @@ final class NativeAuthClient: @unchecked Sendable {
         request.setValue("Bearer \(authorization)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = data
+
+        if let body {
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        }
         return request
     }
 
@@ -233,3 +336,21 @@ final class NativeAuthClient: @unchecked Sendable {
         .first { !$0.isEmpty } ?? ""
     }
 }
+
+struct NativeUserIdentity: Identifiable, Codable, Equatable {
+    let id: String
+    let provider: String
+    let email: String?
+    let lastSignInAt: String?
+
+    var providerDisplayName: String {
+        switch provider.lowercased() {
+        case "apple": return "Apple"
+        case "google": return "Google"
+        case "kakao": return "카카오"
+        case "email": return "이메일"
+        default: return provider.capitalized
+        }
+    }
+}
+

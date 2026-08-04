@@ -75,6 +75,7 @@ struct IOSMoreNavigationView: View {
             }
 
             profileSection
+            socialAccountsSection
             preferencesSection
             securitySection
             serviceSection
@@ -132,6 +133,55 @@ struct IOSMoreNavigationView: View {
             .buttonStyle(.plain)
             .disabled(model.profile == nil)
             .accessibilityHint("이름과 표시 방식을 편집합니다.")
+        }
+    }
+
+    private var socialAccountsSection: some View {
+        Section("소셜 계정 연동") {
+            IOSSocialIdentityRow(
+                providerName: "카카오",
+                iconName: "message.fill",
+                tint: Color(red: 0.98, green: 0.85, blue: 0.0),
+                identity: model.identity(for: "kakao"),
+                isProcessing: model.linkingProvider == "kakao",
+                canUnlink: model.canUnlink,
+                onLink: { _ in
+                    Task { await model.linkKakao() }
+                },
+                onUnlink: { id in
+                    Task { await model.unlinkIdentity(id: id) }
+                }
+            )
+
+            IOSSocialIdentityRow(
+                providerName: "Apple",
+                iconName: "applelogo",
+                tint: .primary,
+                identity: model.identity(for: "apple"),
+                isProcessing: model.linkingProvider == "apple",
+                canUnlink: model.canUnlink,
+                onLink: { window in
+                    Task { await model.linkApple(window: window) }
+                },
+                onUnlink: { id in
+                    Task { await model.unlinkIdentity(id: id) }
+                }
+            )
+
+            IOSSocialIdentityRow(
+                providerName: "Google",
+                iconName: "g.circle.fill",
+                tint: .red,
+                identity: model.identity(for: "google"),
+                isProcessing: model.linkingProvider == "google",
+                canUnlink: model.canUnlink,
+                onLink: { window in
+                    Task { await model.linkGoogle(window: window) }
+                },
+                onUnlink: { id in
+                    Task { await model.unlinkIdentity(id: id) }
+                }
+            )
         }
     }
 
@@ -231,13 +281,14 @@ struct IOSMoreNavigationView: View {
             }
             .buttonStyle(.plain)
 
-            Link(destination: URL(string: "mailto:helper@gleaum.com")!) {
+            Button {
+                legalDocument = .support
+            } label: {
                 IOSMoreRow(
-                    title: "문의하기",
-                    subtitle: "helper@gleaum.com",
-                    symbol: "envelope",
-                    tint: Color(uiColor: GleaumUIColor.brandBlue),
-                    showsChevron: false
+                    title: "고객지원·광고 신고",
+                    subtitle: "FAQ와 1:1 문의",
+                    symbol: "questionmark.bubble",
+                    tint: Color(uiColor: GleaumUIColor.brandBlue)
                 )
             }
             .buttonStyle(.plain)
@@ -311,6 +362,73 @@ struct IOSMoreNavigationView: View {
                 return success
             }
         }
+    }
+}
+
+private struct IOSSocialIdentityRow: View {
+    let providerName: String
+    let iconName: String
+    let tint: Color
+    let identity: NativeUserIdentity?
+    let isProcessing: Bool
+    let canUnlink: Bool
+    var onLink: ((UIWindow?) -> Void)?
+    var onUnlink: ((String) -> Void)?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: iconName)
+                .font(.body.weight(.bold))
+                .foregroundStyle(tint)
+                .frame(width: 26)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(providerName)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.primary)
+                if let identity, let email = identity.email, !email.isEmpty {
+                    Text(email)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            if isProcessing {
+                ProgressView()
+                    .controlSize(.small)
+            } else if let identity {
+                HStack(spacing: 6) {
+                    Text("연동됨")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                    if canUnlink {
+                        Button("해제") {
+                            onUnlink?(identity.id)
+                        }
+                        .font(.caption)
+                        .buttonStyle(.bordered)
+                        .tint(.red)
+                    }
+                }
+            } else {
+                Button("연동하기") {
+                    onLink?(getKeyWindow())
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderedProminent)
+                .tint(tint)
+            }
+        }
+        .padding(.vertical, 3)
+    }
+
+    private func getKeyWindow() -> UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
     }
 }
 
@@ -394,9 +512,19 @@ struct IOSProfileAvatar: View {
 final class IOSMoreViewModel: ObservableObject {
     @Published private(set) var profile: NativeProfileSummary?
     @Published private(set) var accountStatus: NativeAccountStatus?
+    @Published private(set) var identities: [NativeUserIdentity] = []
+    @Published private(set) var linkingProvider: String?
     @Published private(set) var isLoading = false
     @Published private(set) var isPerformingAccountAction = false
     @Published var errorMessage: String?
+
+    var canUnlink: Bool {
+        identities.count > 1
+    }
+
+    func identity(for provider: String) -> NativeUserIdentity? {
+        identities.first { $0.provider.lowercased() == provider.lowercased() }
+    }
 
     var errorBinding: Binding<Bool> {
         Binding(
@@ -430,6 +558,7 @@ final class IOSMoreViewModel: ObservableObject {
         defer { isLoading = false }
         async let fetchedProfile = NativeAPIClient.shared.fetchProfile()
         async let fetchedStatus = NativeAPIClient.shared.fetchAccountStatus()
+        async let fetchedIdentities = NativeAuthClient.shared.fetchIdentities()
 
         do {
             profile = try await fetchedProfile
@@ -445,6 +574,111 @@ final class IOSMoreViewModel: ObservableObject {
             if errorMessage == nil {
                 errorMessage = error.localizedDescription
             }
+        }
+
+        do {
+            identities = try await fetchedIdentities
+        } catch {}
+    }
+
+    func linkKakao() async {
+        linkingProvider = "kakao"
+        defer { linkingProvider = nil }
+
+        let coordinator = NativeKakaoSignInCoordinator()
+        coordinator.start { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                switch result {
+                case .success(let cred):
+                    do {
+                        self.identities = try await NativeAuthClient.shared.linkIdentity(
+                            provider: .kakao,
+                            idToken: cred.idToken,
+                            rawNonce: cred.rawNonce,
+                            accessToken: cred.accessToken
+                        )
+                    } catch {
+                        self.errorMessage = error.localizedDescription
+                    }
+                case .failure(let error):
+                    if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
+        }
+    }
+
+    func linkApple(window: UIWindow?) async {
+        guard let window else {
+            errorMessage = "인증 화면을 준비하지 못했습니다."
+            return
+        }
+        linkingProvider = "apple"
+        defer { linkingProvider = nil }
+
+        let coordinator = NativeAppleSignInCoordinator()
+        coordinator.start(presentationWindow: window) { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                switch result {
+                case .success(let cred):
+                    do {
+                        self.identities = try await NativeAuthClient.shared.linkIdentity(
+                            provider: .apple,
+                            idToken: cred.idToken,
+                            rawNonce: cred.rawNonce
+                        )
+                    } catch {
+                        self.errorMessage = error.localizedDescription
+                    }
+                case .failure(let error):
+                    if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
+        }
+    }
+
+    func linkGoogle(window: UIWindow?) async {
+        guard let window else {
+            errorMessage = "인증 화면을 준비하지 못했습니다."
+            return
+        }
+        linkingProvider = "google"
+        defer { linkingProvider = nil }
+
+        let coordinator = NativeSocialOAuthCoordinator(provider: .google)
+        coordinator.start(presentationWindow: window) { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                switch result {
+                case .success:
+                    if let fetched = try? await NativeAuthClient.shared.fetchIdentities() {
+                        self.identities = fetched
+                    }
+                case .failure(let error):
+                    if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
+        }
+    }
+
+    func unlinkIdentity(id: String) async {
+        guard canUnlink else {
+            errorMessage = "최소 하나 이상의 로그인 수단이 연결되어 있어야 해요."
+            return
+        }
+        isPerformingAccountAction = true
+        defer { isPerformingAccountAction = false }
+        do {
+            identities = try await NativeAuthClient.shared.unlinkIdentity(identityId: id)
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
@@ -488,11 +722,23 @@ private enum IOSMoreSheet: String, Identifiable {
 enum IOSLegalDocument: String, Identifiable {
     case terms
     case privacy
+    case support
 
     var id: String { rawValue }
-    var title: String { self == .privacy ? "개인정보처리방침" : "이용약관" }
+    var title: String {
+        switch self {
+        case .terms: "이용약관"
+        case .privacy: "개인정보처리방침"
+        case .support: "고객지원·광고 신고"
+        }
+    }
     var url: URL {
-        URL(string: "https://www.gleaum.com/legal/\(rawValue)?app=1")!
+        switch self {
+        case .terms, .privacy:
+            URL(string: "https://www.gleaum.com/legal/\(rawValue)?app=1")!
+        case .support:
+            URL(string: "https://www.gleaum.com/support?app=1#inquiry")!
+        }
     }
 }
 
