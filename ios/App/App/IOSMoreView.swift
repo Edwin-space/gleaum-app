@@ -160,14 +160,10 @@ struct IOSMoreNavigationView: View {
                 systemSymbolName: "applelogo",
                 tint: .primary,
                 identity: model.identity(for: "apple"),
-                isProcessing: model.linkingProvider == "apple",
+                isProcessing: false,
                 canUnlink: model.canUnlink,
-                onLink: { window in
-                    Task { await model.linkApple(window: window) }
-                },
-                onUnlink: { id in
-                    Task { await model.unlinkIdentity(id: id) }
-                }
+                onLink: nil,
+                onUnlink: nil
             )
 
             IOSSocialIdentityRow(
@@ -430,13 +426,21 @@ private struct IOSSocialIdentityRow: View {
                         .tint(.red)
                     }
                 }
-            } else {
+            } else if let onLink {
                 Button("연동하기") {
-                    onLink?(getKeyWindow())
+                    onLink(getKeyWindow())
                 }
                 .font(.caption.weight(.semibold))
                 .buttonStyle(.borderedProminent)
                 .tint(tint)
+            } else {
+                Text("연동 준비 중입니다")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color(uiColor: GleaumUIColor.mutedSurface))
+                    .clipShape(Capsule())
             }
         }
         .padding(.vertical, 3)
