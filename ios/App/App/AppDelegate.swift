@@ -115,7 +115,9 @@ class AppDelegate: UIResponder,
 
         // ASWebAuthenticationSession 외부 복귀나 이메일 확인 링크의 세션을
         // 네이티브 인증과 동일한 형식으로 저장한다.
+        // ASWebAuthenticationSession이 이미 처리한 딥링크는 중복 세션 교환을 방지한다.
         if url.scheme == "gleaum", url.host == "auth",
+           !SessionManager.shared.hasValidSession(),
            let sessionJSON = NativeAuthClient.sessionJSON(fromOAuthCallback: url) {
             SessionManager.shared.saveSession(sessionJSON)
             dismissAuthPresentation()

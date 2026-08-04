@@ -23,6 +23,10 @@ import androidx.lifecycle.lifecycleScope
 import com.gleaum.app.databinding.ActivityLoginBinding
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.kakao.sdk.auth.model.OAuthToken
+import com.kakao.sdk.common.model.ClientError
+import com.kakao.sdk.common.model.ClientErrorCause
+import com.kakao.sdk.user.UserApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +44,7 @@ import android.util.Base64
  *
  * 로그인 방식:
  * - Google로 계속하기: Android Credential Manager → Google ID token → Supabase 세션
+ * - 카카오로 계속하기: Kakao SDK → Kakao ID token → Supabase 세션
  * - 이메일로 계속하기: 네이티브 이메일 로그인/회원가입 → Supabase Auth REST API → 세션 저장
  */
 class LoginActivity : AppCompatActivity() {
@@ -48,6 +53,7 @@ class LoginActivity : AppCompatActivity() {
     private var emailSignupMode = false
     private var emailLoading = false
     private var googleLoading = false
+    private var kakaoLoading = false
     private var syncingConsentChecks = false
     private var pendingStartPath: String? = null
 
@@ -75,6 +81,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.btnGoogle.setOnClickListener { handleGoogleSignIn() }
+        binding.btnKakao.setOnClickListener { handleKakaoSignIn() }
         binding.btnEmail.setOnClickListener { showEmailPanel(signup = false) }
         binding.btnEmailBack.setOnClickListener { showSocialPanel() }
         binding.btnToggleEmailMode.setOnClickListener { setEmailMode(!emailSignupMode) }
@@ -109,7 +116,7 @@ class LoginActivity : AppCompatActivity() {
     // ── Google 로그인 — Android Credential Manager ─────────────────────────
 
     private fun handleGoogleSignIn() {
-        if (googleLoading) return
+        if (googleLoading || kakaoLoading) return
         setGoogleLoading(true)
         val rawNonce = generateRawNonce()
         val googleOption = GetSignInWithGoogleOption.Builder(
@@ -166,6 +173,7 @@ class LoginActivity : AppCompatActivity() {
         binding.btnGoogleText.visibility = if (loading) View.GONE   else View.VISIBLE
         binding.googleIcon.visibility    = if (loading) View.GONE   else View.VISIBLE
         binding.btnGoogle.isClickable    = !loading
+        binding.btnKakao.isClickable     = !loading && !kakaoLoading
     }
 
     private fun generateRawNonce(): String {
@@ -191,6 +199,45 @@ class LoginActivity : AppCompatActivity() {
                 "사용할 Google 계정을 찾지 못했습니다. 기기에 Google 계정을 추가해 주세요."
             else -> "Google 계정 선택을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요."
         }
+    }
+
+    // ── 카카오 로그인 — Kakao SDK + Supabase ID token ────────────────────
+
+    private fun handleKakaoSignIn() {
+        if (kakaoLoading || googleLoading) return
+        setKakaoLoading(true)
+        try {
+            val oauthUrl = "https://tyvjdsescukaeorcuaga.supabase.co/auth/v1/authorize?provider=kakao&redirect_to=gleaum://auth/callback"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(oauthUrl))
+            startActivity(intent)
+        } catch (e: Exception) {
+            showToast("카카오 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.")
+        } finally {
+            setKakaoLoading(false)
+        }
+    }
+
+    private fun isKakaoCancellation(error: Throwable): Boolean =
+        (error as? ClientError)?.reason == ClientErrorCause.Cancelled
+
+    private fun mapKakaoError(error: Throwable): String {
+        val raw = error.message.orEmpty().lowercase()
+        return when {
+            "network" in raw || "timeout" in raw ->
+                "네트워크 연결을 확인한 뒤 카카오 로그인을 다시 시도해 주세요."
+            "not support" in raw || "unsupported" in raw ->
+                "현재 카카오톡에서 로그인을 진행할 수 없어 카카오계정 로그인이 필요해요."
+            else -> "카카오 로그인을 완료하지 못했어요. 잠시 후 다시 시도해 주세요."
+        }
+    }
+
+    private fun setKakaoLoading(loading: Boolean) {
+        kakaoLoading = loading
+        binding.kakaoLoading.visibility = if (loading) View.VISIBLE else View.GONE
+        binding.btnKakaoText.visibility = if (loading) View.GONE else View.VISIBLE
+        binding.kakaoIcon.visibility = if (loading) View.GONE else View.VISIBLE
+        binding.btnKakao.isClickable = !loading
+        binding.btnGoogle.isClickable = !loading && !googleLoading
     }
 
     // ── 이메일 로그인/회원가입 — Native Supabase Auth ─────────────────────
@@ -341,6 +388,7 @@ class LoginActivity : AppCompatActivity() {
             runOnUiThread {
                 setEmailLoading(false)
                 setGoogleLoading(false)
+                setKakaoLoading(false)
                 if (emailSignupMode) {
                     showToast("가입 확인 메일을 보냈어요. 메일 인증 후 로그인해 주세요.")
                     setEmailMode(signup = false)
@@ -362,6 +410,7 @@ class LoginActivity : AppCompatActivity() {
         runOnUiThread {
             setEmailLoading(false)
             setGoogleLoading(false)
+            setKakaoLoading(false)
             goToMain()
         }
     }

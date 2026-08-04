@@ -380,22 +380,22 @@ private final class IOSLoginViewModel: ObservableObject {
     }
 
     func continueWithKakao() {
-        guard !isLoading else { return }
+        guard !isLoading, let window = Self.presentationWindow else { return }
         setLoading(true)
-        kakaoCoordinator.start { [weak self] result in
-            guard let self else { return }
-            switch result {
-            case .success(let credential):
-                Task { @MainActor in
-                    await self.exchangeKakaoCredential(credential)
-                }
-            case .failure(let error):
-                if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
-                    Task { @MainActor in
-                        await self.continueWithSocialOAuth(provider: .kakao)
+        let coordinator = NativeSocialOAuthCoordinator(provider: .kakao)
+        self.activeSocialOAuthCoordinator = coordinator
+        coordinator.start(presentationWindow: window) { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                self.activeSocialOAuthCoordinator = nil
+                self.setLoading(false)
+                switch result {
+                case .success(let sessionJSON):
+                    self.completeAuthentication(sessionJSON)
+                case .failure(let error):
+                    if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
+                        self.showError(error.localizedDescription)
                     }
-                } else {
-                    self.setLoading(false)
                 }
             }
         }
