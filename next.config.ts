@@ -6,48 +6,40 @@ import type { NextConfig } from "next";
 //   그러나 connect-src·img-src·object-src 제한으로 데이터 유출 경로를 차단.
 const CSP = [
   "default-src 'self'",
-  // Next.js 인라인 스크립트 + Google 서비스 (GA4, OAuth, Maps) + 카카오 AdFit
-  // www.gstatic.com: firebase-messaging-sw.js의 importScripts(FCM SDK) — 누락 시 SW 평가 실패로 웹 푸시 전체 미작동
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://maps.googleapis.com https://www.gstatic.com https://t1.kakaocdn.net https://*.daumcdn.net",
-  // cdn.jsdelivr.net: Pretendard 폰트 CSS/woff2
-  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://t1.kakaocdn.net https://*.daumcdn.net",
-  // 외부 이미지: Google 프로필, Supabase Storage
-  "img-src 'self' data: blob: https: ",
+  // 공개 웹은 소개·지원·약관·앱 연결만 제공한다. 웹 로그인·광고·FCM SDK는 로드하지 않는다.
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://cdn.jsdelivr.net",
-  // 서비스워커(sw.js, firebase-messaging-sw.js)는 same-origin만 허용
+  // 기존 PWA 설치본의 서비스워커 자가 해제만 허용한다.
   "worker-src 'self'",
-  // XHR/fetch 허용 도메인 — 이 목록 외 도메인으로의 데이터 전송 차단
   [
     "connect-src 'self'",
     "https://*.supabase.co",
-    "wss://*.supabase.co",
-    "https://firebaseinstallations.googleapis.com",
-    "https://fcmregistrations.googleapis.com",
-    "https://firebase.googleapis.com",
     "https://www.google-analytics.com",
     "https://analytics.google.com",
     "https://www.googletagmanager.com",
-    "https://maps.googleapis.com",
-    "https://t1.kakaocdn.net",
-    "https://*.daumcdn.net",
-    "https://*.kakao.com",
-    "https://*.daum.net",
   ].join(" "),
-  // 카카오 AdFit 광고 iframe
-  "frame-src https://accounts.google.com https://t1.kakaocdn.net https://*.daumcdn.net https://*.kakao.com",
-  // Flash/ActiveX 완전 차단
+  "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
 ].join("; ");
 
 const securityHeaders = [
   // XSS 데이터 유출 경로 제한
   { key: "Content-Security-Policy", value: CSP },
-  // 클릭재킹 방지
+  // 클릭재킹·교차 출처 창/리소스 격리
   { key: "X-Frame-Options", value: "DENY" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  { key: "Origin-Agent-Cluster", value: "?1" },
   // MIME 스니핑 방지
   { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-DNS-Prefetch-Control", value: "off" },
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   // 레퍼러 정보 최소화
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // 불필요한 브라우저 기능 비활성화
@@ -77,6 +69,10 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  turbopack: {
+    root: __dirname,
+  },
+
   // ── 번들 최적화: 사용한 아이콘/함수만 포함 ──
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns', 'sonner'],
@@ -99,13 +95,8 @@ const nextConfig: NextConfig = {
 
   async headers() {
     return [
-      // 정적 자산(JS/CSS/폰트): 1년 불변 캐시 (hash 포함 파일명)
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
+      // `_next/static`은 Next.js가 해시 기반 immutable 캐시를 직접 관리한다.
+      // 여기서 덮어쓰면 개발·재검증 동작이 깨질 수 있으므로 별도 헤더를 두지 않는다.
       // 공개 자산: 1일 캐시
       {
         source: '/(favicon.*|splash/.*|favicons/.*|manifest.json)',
@@ -137,6 +128,33 @@ const nextConfig: NextConfig = {
           { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
         ],
       },
+      {
+        source: '/api/support/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+        ],
+      },
+      ...[
+        '/auth/callback',
+        '/login/:path*',
+        '/home/:path*',
+        '/onboarding/:path*',
+        '/schedules/:path*',
+        '/space/:path*',
+        '/budget/:path*',
+        '/mypage/:path*',
+        '/notifications/:path*',
+        '/settings/:path*',
+        '/family/:path*',
+        '/invite/:path*',
+      ].map((source) => ({
+        source,
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+        ],
+      })),
     ];
   },
 };
