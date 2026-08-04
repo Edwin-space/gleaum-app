@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 
 /// iOS 인증 진입점입니다.
-/// 별도 회원가입 화면은 제공하지 않으며 신규 사용자는 Apple 또는 Google 인증 후
+/// 별도 회원가입 화면은 제공하지 않으며 신규 사용자는 간편 로그인 인증 후
 /// 네이티브 온보딩에서 프로필과 필수 동의를 완료합니다.
 struct IOSLoginView: View {
     @StateObject private var model = IOSLoginViewModel()
@@ -119,6 +119,10 @@ struct IOSLoginView: View {
                 model.continueWithGoogle()
             }
 
+            KakaoContinueButton(isEnabled: !model.isLoading) {
+                model.continueWithKakao()
+            }
+
             authenticationDivider
                 .padding(.vertical, 6)
 
@@ -228,7 +232,7 @@ struct IOSLoginView: View {
             .disabled(model.isLoading || !model.canSubmitEmail)
             .padding(.top, 18)
 
-            Text("처음 이용하시나요? Apple 또는 Google 계정으로 시작해 주세요.")
+            Text("처음 이용하시나요? 간편 로그인으로 바로 시작할 수 있어요.")
                 .font(.footnote)
                 .foregroundStyle(GleaumLoginPalette.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -320,7 +324,9 @@ private final class IOSLoginViewModel: ObservableObject {
     @Published private(set) var alertMessage = ""
 
     private let appleCoordinator = NativeAppleSignInCoordinator()
-    private let googleCoordinator = NativeGoogleOAuthCoordinator()
+    private let googleCoordinator = NativeSocialOAuthCoordinator(provider: .google)
+    private let kakaoCoordinator = NativeKakaoSignInCoordinator()
+    private var activeSocialOAuthCoordinator: NativeSocialOAuthCoordinator?
 
     var canSubmitEmail: Bool {
         Self.isValidEmail(email) && password.count >= 6
@@ -368,6 +374,53 @@ private final class IOSLoginViewModel: ObservableObject {
             case .failure(let error):
                 if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
                     self.showError(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    func continueWithKakao() {
+        guard !isLoading else { return }
+        setLoading(true)
+        kakaoCoordinator.start { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let credential):
+                Task { @MainActor in
+                    await self.exchangeKakaoCredential(credential)
+                }
+            case .failure(let error):
+                if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
+                    Task { @MainActor in
+                        await self.continueWithSocialOAuth(provider: .kakao)
+                    }
+                } else {
+                    self.setLoading(false)
+                }
+            }
+        }
+    }
+
+    private func continueWithSocialOAuth(provider: NativeSocialOAuthProvider) async {
+        guard let window = Self.presentationWindow else {
+            setLoading(false)
+            showError("인증 화면을 준비하지 못했습니다.")
+            return
+        }
+        let coordinator = NativeSocialOAuthCoordinator(provider: provider)
+        self.activeSocialOAuthCoordinator = coordinator
+        coordinator.start(presentationWindow: window) { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                self.activeSocialOAuthCoordinator = nil
+                self.setLoading(false)
+                switch result {
+                case .success(let sessionJSON):
+                    self.completeAuthentication(sessionJSON)
+                case .failure(let error):
+                    if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
+                        self.showError(error.localizedDescription)
+                    }
                 }
             }
         }
@@ -424,15 +477,51 @@ private final class IOSLoginViewModel: ObservableObject {
                     sessionJSON: sessionJSON
                 )
             }
-            completeAuthentication(sessionJSON)
+            completeAuthentication(
+                sessionJSON,
+                onboardingContext: IOSPendingOnboardingContext(
+                    provider: .apple,
+                    suggestedDisplayName: credential.displayName
+                )
+            )
         } catch {
             setLoading(false)
             showError(error.localizedDescription)
         }
     }
 
-    private func completeAuthentication(_ sessionJSON: String) {
+    private func exchangeKakaoCredential(_ credential: NativeKakaoCredential) async {
+        if credential.idToken.isEmpty {
+            await continueWithSocialOAuth(provider: .kakao)
+            return
+        }
+        do {
+            let response = try await NativeAuthClient.shared.signIn(
+                provider: .kakao,
+                idToken: credential.idToken,
+                rawNonce: credential.rawNonce,
+                accessToken: credential.accessToken
+            )
+            guard let sessionJSON = response.sessionJSON else {
+                throw NativeAuthError.invalidResponse
+            }
+            completeAuthentication(sessionJSON)
+        } catch {
+            await continueWithSocialOAuth(provider: .kakao)
+        }
+    }
+
+    private func completeAuthentication(
+        _ sessionJSON: String,
+        onboardingContext: IOSPendingOnboardingContext? = nil
+    ) {
+        if let onboardingContext {
+            IOSPendingOnboardingContextStore.shared.save(onboardingContext)
+        } else {
+            IOSPendingOnboardingContextStore.shared.clear()
+        }
         guard SessionManager.shared.saveSession(sessionJSON) else {
+            IOSPendingOnboardingContextStore.shared.clear()
             setLoading(false)
             showError("로그인 정보를 안전하게 저장하지 못했습니다. 다시 시도해 주세요.")
             return
@@ -547,6 +636,66 @@ private struct GoogleContinueButton: View {
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.56)
         .accessibilityLabel("Google로 계속하기")
+    }
+}
+
+private struct KakaoContinueButton: View {
+    let isEnabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                KakaoLoginMark()
+                    .fill(Color(red: 0.098, green: 0.098, blue: 0.098))
+                    .frame(width: 21, height: 19)
+
+                Text("카카오로 계속하기")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.098, green: 0.098, blue: 0.098))
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: GleaumIOSMetric.authenticationControlHeight)
+            .background(Color(red: 0.996, green: 0.898, blue: 0))
+            .clipShape(
+                RoundedRectangle(cornerRadius: GleaumIOSMetric.controlCornerRadius)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.56)
+        .accessibilityLabel("카카오로 계속하기")
+    }
+}
+
+private struct KakaoLoginMark: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.width * 0.5, y: 0))
+        path.addCurve(
+            to: CGPoint(x: rect.width, y: rect.height * 0.46),
+            control1: CGPoint(x: rect.width * 0.78, y: 0),
+            control2: CGPoint(x: rect.width, y: rect.height * 0.18)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.width * 0.68, y: rect.height * 0.86),
+            control1: CGPoint(x: rect.width, y: rect.height * 0.67),
+            control2: CGPoint(x: rect.width * 0.87, y: rect.height * 0.8)
+        )
+        path.addLine(to: CGPoint(x: rect.width * 0.72, y: rect.height))
+        path.addLine(to: CGPoint(x: rect.width * 0.48, y: rect.height * 0.88))
+        path.addCurve(
+            to: CGPoint(x: 0, y: rect.height * 0.46),
+            control1: CGPoint(x: rect.width * 0.21, y: rect.height * 0.88),
+            control2: CGPoint(x: 0, y: rect.height * 0.69)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.width * 0.5, y: 0),
+            control1: CGPoint(x: 0, y: rect.height * 0.18),
+            control2: CGPoint(x: rect.width * 0.22, y: 0)
+        )
+        path.closeSubpath()
+        return path
     }
 }
 
