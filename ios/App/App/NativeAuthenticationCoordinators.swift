@@ -1,6 +1,9 @@
 import AuthenticationServices
 import CryptoKit
 import Foundation
+import KakaoSDKAuth
+import KakaoSDKCommon
+import KakaoSDKUser
 import Security
 import UIKit
 
@@ -8,6 +11,12 @@ struct NativeAppleCredential {
     let idToken: String
     let rawNonce: String
     let displayName: String?
+}
+
+struct NativeKakaoCredential {
+    let idToken: String
+    let accessToken: String
+    let rawNonce: String
 }
 
 enum NativeAuthenticationCoordinatorError: LocalizedError, Equatable {
@@ -135,10 +144,97 @@ extension NativeAppleSignInCoordinator:
     }
 }
 
+enum NativeSocialOAuthProvider: String {
+    case google
+
+    var prefersEphemeralSession: Bool {
+        true
+    }
+}
+
 @MainActor
-final class NativeGoogleOAuthCoordinator: NSObject, ASWebAuthenticationPresentationContextProviding {
+final class NativeKakaoSignInCoordinator {
+    func start(completion: @escaping (Result<NativeKakaoCredential, Error>) -> Void) {
+        let rawNonce = Self.randomNonce()
+        let callback: (OAuthToken?, Error?) -> Void = { token, error in
+            DispatchQueue.main.async {
+                if let error {
+                    if Self.isCancelled(error) {
+                        completion(.failure(NativeAuthenticationCoordinatorError.cancelled))
+                    } else {
+                        completion(.failure(NativeAuthenticationCoordinatorError.requestFailed))
+                    }
+                    return
+                }
+                guard let token,
+                      let idToken = token.idToken,
+                      !idToken.isEmpty else {
+                    completion(.failure(NativeAuthenticationCoordinatorError.missingCredential))
+                    return
+                }
+                completion(.success(NativeKakaoCredential(
+                    idToken: idToken,
+                    accessToken: token.accessToken,
+                    rawNonce: rawNonce
+                )))
+            }
+        }
+
+        if UserApi.isKakaoTalkLoginAvailable() {
+            UserApi.shared.loginWithKakaoTalk(
+                launchMethod: .CustomScheme,
+                nonce: rawNonce
+            ) { token, error in
+                if let error, !Self.isCancelled(error) {
+                    UserApi.shared.loginWithKakaoAccount(
+                        nonce: rawNonce,
+                        completion: callback
+                    )
+                    return
+                }
+                callback(token, error)
+            }
+        } else {
+            UserApi.shared.loginWithKakaoAccount(
+                nonce: rawNonce,
+                completion: callback
+            )
+        }
+    }
+
+    private static func isCancelled(_ error: Error) -> Bool {
+        guard let sdkError = error as? SdkError else {
+            return false
+        }
+        if case .ClientFailed(let reason, _) = sdkError,
+           case .Cancelled = reason {
+            return true
+        }
+        return false
+    }
+
+    private static func randomNonce(length: Int = 32) -> String {
+        var bytes = [UInt8](repeating: 0, count: length)
+        guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+            return UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        }
+        return Data(bytes)
+            .base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+}
+
+@MainActor
+final class NativeSocialOAuthCoordinator: NSObject, ASWebAuthenticationPresentationContextProviding {
+    private let provider: NativeSocialOAuthProvider
     private weak var presentationWindow: UIWindow?
     private var authenticationSession: ASWebAuthenticationSession?
+
+    init(provider: NativeSocialOAuthProvider) {
+        self.provider = provider
+    }
 
     func start(
         presentationWindow: UIWindow,
@@ -155,14 +251,17 @@ final class NativeGoogleOAuthCoordinator: NSObject, ASWebAuthenticationPresentat
             return
         }
 
-        let forwardedParameters = #"{"prompt":"select_account"}"#
-        components.queryItems = [
-            URLQueryItem(name: "provider", value: "google"),
+        var queryItems = [
+            URLQueryItem(name: "provider", value: provider.rawValue),
             URLQueryItem(name: "redirect_to", value: "gleaum://auth/callback"),
             URLQueryItem(name: "flow_type", value: "implicit"),
-            URLQueryItem(name: "prompt", value: "select_account"),
-            URLQueryItem(name: "query_params", value: forwardedParameters),
         ]
+        if provider == .google {
+            let forwardedParameters = #"{"prompt":"select_account"}"#
+            queryItems.append(URLQueryItem(name: "prompt", value: "select_account"))
+            queryItems.append(URLQueryItem(name: "query_params", value: forwardedParameters))
+        }
+        components.queryItems = queryItems
         guard let url = components.url else {
             completion(.failure(NativeAuthError.invalidConfiguration))
             return
@@ -189,7 +288,7 @@ final class NativeGoogleOAuthCoordinator: NSObject, ASWebAuthenticationPresentat
             }
         }
         session.presentationContextProvider = self
-        session.prefersEphemeralWebBrowserSession = true
+        session.prefersEphemeralWebBrowserSession = provider.prefersEphemeralSession
         authenticationSession = session
 
         if !session.start() {

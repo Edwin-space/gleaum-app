@@ -2,6 +2,8 @@ import UIKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
+import KakaoSDKAuth
+import KakaoSDKCommon
 import UserNotifications
 import SwiftUI
 
@@ -20,7 +22,13 @@ class AppDelegate: UIResponder,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // ── 1. Firebase 초기화 ────────────────────────────────────────────────
         FirebaseApp.configure()
+        if let kakaoAppKey = Bundle.main.object(
+            forInfoDictionaryKey: "GleaumKakaoNativeAppKey"
+        ) as? String, !kakaoAppKey.isEmpty {
+            KakaoSDK.initSDK(appKey: kakaoAppKey)
+        }
         Messaging.messaging().delegate = self
+        triggerCrashlyticsVerificationIfRequested()
         GleaumThemeManager.shared.applyToConnectedWindows()
 
         // ── 2. APNs 토큰 등록 (권한 팝업 없음 — 토큰만 취득) ─────────────────
@@ -62,6 +70,19 @@ class AppDelegate: UIResponder,
         return true
     }
 
+    private func triggerCrashlyticsVerificationIfRequested() {
+#if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("-GleaumCrashlyticsTest") else {
+            return
+        }
+
+        // Xcode 실행 인자를 명시한 경우에만 충돌시켜 Crashlytics 수신을 검증한다.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            fatalError("Gleaum Crashlytics verification")
+        }
+#endif
+    }
+
     @objc private func onNativeSessionSaved() {
         sessionStateCoordinator.sessionSaved()
     }
@@ -87,6 +108,10 @@ class AppDelegate: UIResponder,
     // ── URL Scheme 처리 (gleaum:// — Google OAuth 콜백) ──────────────────────
     func application(_ app: UIApplication, open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+
+        if AuthApi.isKakaoTalkLoginUrl(url) {
+            return AuthController.handleOpenUrl(url: url, options: options)
+        }
 
         // ASWebAuthenticationSession 외부 복귀나 이메일 확인 링크의 세션을
         // 네이티브 인증과 동일한 형식으로 저장한다.
@@ -166,6 +191,11 @@ class AppDelegate: UIResponder,
     ) {
         defer { completionHandler() }
         let userInfo = response.notification.request.content.userInfo
+        if let campaignId = userInfo["campaign_id"] as? String, !campaignId.isEmpty {
+            Task {
+                try? await NativeAPIClient.shared.trackCampaignClick(id: campaignId)
+            }
+        }
         let rawURL = ["url", "link", "deep_link", "gcm.notification.url"]
             .compactMap { userInfo[$0] as? String }
             .first(where: { !$0.isEmpty })

@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Check,
   CircleDollarSign,
-  Globe2,
   LayoutDashboard,
   ShieldCheck,
   Smartphone,
@@ -15,36 +14,42 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { GleaumBI, GleaumLogoImg } from '@/components/ui/GleaumLogo';
+import { AppStoreBadgeButton, GooglePlayBadgeButton } from '@/components/ui/OfficialStoreBadges';
 import styles from './PcLandingPage.module.css';
-
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.gleaum.app';
 
 const FEATURES = [
   {
+    slug: 'today-home',
     icon: LayoutDashboard,
     eyebrow: 'HOME',
     title: '오늘 필요한 것만 한 화면에',
     description: '오늘 일정, 활성 공간, 최근 흐름을 한 번에 확인하고 필요한 기능으로 바로 이동합니다.',
   },
   {
+    slug: 'schedule',
     icon: CalendarDays,
     eyebrow: 'SCHEDULE',
     title: '개인과 공유 일정을 명확하게',
     description: '내 일정과 공간 일정을 구분해 관리하고, 기기 캘린더의 일정도 선택해 가져올 수 있습니다.',
   },
   {
+    slug: 'space',
     icon: UsersRound,
     eyebrow: 'SPACE',
     title: '관계마다 독립적인 공간',
     description: '연인, 가족, 모임별로 일정과 소식을 나누되 개인 데이터와 공간 데이터의 경계를 지킵니다.',
   },
   {
+    slug: 'budget',
     icon: WalletCards,
     eyebrow: 'BUDGET',
     title: '개인 자금 흐름을 한눈에',
     description: '수입과 지출, 고정 항목을 분리해 기록하고 월별 흐름을 놓치지 않도록 정리합니다.',
   },
 ];
+
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.gleaum.app';
+const APP_STORE_URL = 'https://apps.apple.com/kr/app/id6795727692';
 
 export function PcLandingPage() {
   return (
@@ -57,13 +62,12 @@ export function PcLandingPage() {
         <nav className={styles.nav} aria-label="주요 메뉴">
           <a href="#service">서비스</a>
           <a href="#features">기능</a>
+          <Link href="/features">사용 방법</Link>
           <a href="#platforms">플랫폼</a>
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/login" className={styles.textLink}>웹에서 시작</Link>
-          <a href={PLAY_STORE_URL} target="_blank" rel="noreferrer" className={styles.headerCta}>
-            Android 앱
-          </a>
+          <Link href="/support" className={styles.textLink}>고객지원</Link>
+          <Link href="/download" className={styles.headerCta}>앱 다운로드</Link>
         </div>
       </header>
 
@@ -84,22 +88,20 @@ export function PcLandingPage() {
             함께하는 일정과 소식은 관계별 공간에서 선명하게 연결하세요.
           </p>
           <div className={styles.heroActions}>
-            <a href={PLAY_STORE_URL} target="_blank" rel="noreferrer" className={styles.primaryCta}>
-              Google Play에서 시작
+            <Link href="/download" className={styles.primaryCta}>
+              앱에서 시작
               <ArrowRight size={18} />
-            </a>
-            <Link href="/login" className={styles.secondaryCta}>
-              웹 서비스 이용
             </Link>
+            <a href="#features" className={styles.secondaryCta}>기능 둘러보기</a>
           </div>
           <div className={styles.trustRow}>
             <span><Check size={15} /> 개인·공간 데이터 분리</span>
-            <span><Check size={15} /> Android 네이티브 지원</span>
+            <span><Check size={15} /> Android·iPhone 네이티브 지원</span>
             <span><Check size={15} /> 무료로 시작</span>
           </div>
         </div>
 
-        <div className={styles.heroVisual} aria-label="현재 글리움 Android 화면을 재구성한 미리보기">
+        <div className={styles.heroVisual} aria-label="현재 글리움 앱 화면을 재구성한 미리보기">
           <div className={styles.orbitOne} />
           <div className={styles.orbitTwo} />
           <PhoneShell variant="home" className={styles.heroPhone} />
@@ -136,18 +138,19 @@ export function PcLandingPage() {
         <SectionHeading
           eyebrow="CONNECTED, NOT COMPLICATED"
           title="함께 쓰지만, 뒤섞이지 않도록"
-          description="실제 Android 서비스의 현재 정보 구조를 기준으로 핵심 기능을 다시 정리했습니다."
+          description="실제 글리움 앱의 현재 정보 구조를 기준으로 핵심 기능을 다시 정리했습니다."
         />
         <div className={styles.featureGrid}>
-          {FEATURES.map(({ icon: Icon, eyebrow, title, description }) => (
-            <article className={styles.featureCard} key={title}>
+          {FEATURES.map(({ icon: Icon, eyebrow, title, description, slug }) => (
+            <Link className={styles.featureCard} href={`/features/${slug}`} key={title}>
               <div className={styles.featureTop}>
                 <span className={styles.featureIcon}><Icon size={23} /></span>
                 <span className={styles.featureEyebrow}>{eyebrow}</span>
               </div>
               <h3>{title}</h3>
               <p>{description}</p>
-            </article>
+              <strong>사용 방법 보기 →</strong>
+            </Link>
           ))}
         </div>
       </section>
@@ -194,34 +197,32 @@ export function PcLandingPage() {
         <SectionHeading
           eyebrow="ONE SERVICE, RIGHT EXPERIENCE"
           title="같은 데이터, 플랫폼에 맞는 경험"
-          description="웹과 Android는 같은 서비스 모델을 사용하며, 화면은 각 환경에 맞게 구성합니다."
+          description="Android와 Apple 앱은 같은 서비스 모델을 사용하며, 각 운영체제에 맞는 네이티브 경험을 제공합니다."
           align="center"
         />
         <div className={styles.platformGrid}>
-          <article>
+          <div className={styles.platformCard}>
             <span className={styles.platformIcon}><Smartphone size={26} /></span>
             <div>
-              <small>AVAILABLE NOW</small>
-              <h3>Android</h3>
+              <small>AVAILABLE NOW FOR ANDROID</small>
+              <h3>Google Play</h3>
               <p>Material 3 기반 네이티브 화면과 기기 캘린더, 생체인증, 푸시 알림을 지원합니다.</p>
+              <div style={{ marginTop: '12px' }}>
+                <GooglePlayBadgeButton href={PLAY_STORE_URL} height={44} />
+              </div>
             </div>
-          </article>
-          <article>
-            <span className={styles.platformIcon}><Globe2 size={26} /></span>
-            <div>
-              <small>AVAILABLE NOW</small>
-              <h3>Web</h3>
-              <p>설치 없이 PC와 모바일 브라우저에서 핵심 서비스를 이어서 사용할 수 있습니다.</p>
-            </div>
-          </article>
-          <article className={styles.platformPending}>
+          </div>
+          <div className={styles.platformCard}>
             <span className={styles.platformIcon}></span>
             <div>
-              <small>IN DEVELOPMENT</small>
-              <h3>Apple</h3>
-              <p>iPhone을 우선으로 네이티브 기능 정합성을 완성한 뒤 Apple 생태계로 확장합니다.</p>
+              <small>AVAILABLE NOW FOR IPHONE</small>
+              <h3>App Store</h3>
+              <p>Apple 디자인에 맞춘 네이티브 화면과 기기 캘린더, 생체인증, 푸시 알림을 지원합니다.</p>
+              <div style={{ marginTop: '12px' }}>
+                <AppStoreBadgeButton href={APP_STORE_URL} height={44} />
+              </div>
             </div>
-          </article>
+          </div>
         </div>
       </section>
 
@@ -232,11 +233,11 @@ export function PcLandingPage() {
           <p>혼자 시작하고 필요한 순간에 소중한 사람과 공간으로 연결할 수 있습니다.</p>
         </div>
         <div className={styles.ctaActions}>
-          <a href={PLAY_STORE_URL} target="_blank" rel="noreferrer" className={styles.primaryCta}>
-            Android 앱 다운로드
+          <Link href="/download" className={styles.primaryCta}>
+            글리움 앱 다운로드
             <ArrowRight size={18} />
-          </a>
-          <Link href="/login" className={styles.secondaryCta}>웹에서 시작</Link>
+          </Link>
+          <Link href="/support" className={styles.secondaryCta}>고객지원</Link>
         </div>
       </section>
 
@@ -249,6 +250,8 @@ export function PcLandingPage() {
         <div className={styles.footerLinks}>
           <Link href="/legal/terms">이용약관</Link>
           <Link href="/legal/privacy">개인정보처리방침</Link>
+          <Link href="/features">기능 안내</Link>
+          <Link href="/support">고객지원</Link>
           <Link href="/download">다운로드</Link>
         </div>
         <small>© 2026 Gleaum. All rights reserved.</small>
