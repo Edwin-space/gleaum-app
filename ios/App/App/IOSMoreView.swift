@@ -140,47 +140,26 @@ struct IOSMoreNavigationView: View {
         Section("소셜 계정 연동") {
             IOSSocialIdentityRow(
                 providerName: "카카오",
-                iconName: "message.fill",
+                assetName: nil,
+                systemSymbolName: "message.fill",
                 tint: Color(red: 0.98, green: 0.85, blue: 0.0),
-                identity: model.identity(for: "kakao"),
-                isProcessing: model.linkingProvider == "kakao",
-                canUnlink: model.canUnlink,
-                onLink: { _ in
-                    Task { await model.linkKakao() }
-                },
-                onUnlink: { id in
-                    Task { await model.unlinkIdentity(id: id) }
-                }
+                identity: model.identity(for: "kakao")
             )
 
             IOSSocialIdentityRow(
                 providerName: "Apple",
-                iconName: "applelogo",
+                assetName: nil,
+                systemSymbolName: "applelogo",
                 tint: .primary,
-                identity: model.identity(for: "apple"),
-                isProcessing: model.linkingProvider == "apple",
-                canUnlink: model.canUnlink,
-                onLink: { window in
-                    Task { await model.linkApple(window: window) }
-                },
-                onUnlink: { id in
-                    Task { await model.unlinkIdentity(id: id) }
-                }
+                identity: model.identity(for: "apple")
             )
 
             IOSSocialIdentityRow(
                 providerName: "Google",
-                iconName: "g.circle.fill",
+                assetName: "GoogleGOfficial",
+                systemSymbolName: nil,
                 tint: .red,
-                identity: model.identity(for: "google"),
-                isProcessing: model.linkingProvider == "google",
-                canUnlink: model.canUnlink,
-                onLink: { window in
-                    Task { await model.linkGoogle(window: window) }
-                },
-                onUnlink: { id in
-                    Task { await model.unlinkIdentity(id: id) }
-                }
+                identity: model.identity(for: "google")
             )
         }
     }
@@ -367,20 +346,27 @@ struct IOSMoreNavigationView: View {
 
 private struct IOSSocialIdentityRow: View {
     let providerName: String
-    let iconName: String
+    let assetName: String?
+    let systemSymbolName: String?
     let tint: Color
     let identity: NativeUserIdentity?
-    let isProcessing: Bool
-    let canUnlink: Bool
-    var onLink: ((UIWindow?) -> Void)?
-    var onUnlink: ((String) -> Void)?
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: iconName)
-                .font(.body.weight(.bold))
-                .foregroundStyle(tint)
-                .frame(width: 26)
+            Group {
+                if let assetName {
+                    Image(assetName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                } else if let systemSymbolName {
+                    Image(systemName: systemSymbolName)
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(tint)
+                        .frame(width: 20, height: 20)
+                }
+            }
+            .frame(width: 26)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(providerName)
@@ -390,45 +376,30 @@ private struct IOSSocialIdentityRow: View {
                     Text(email)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else {
+                    Text("추가 연동 기능 준비 중")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
 
             Spacer()
 
-            if isProcessing {
-                ProgressView()
-                    .controlSize(.small)
-            } else if let identity {
-                HStack(spacing: 6) {
-                    Text("연동됨")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.green)
-                    if canUnlink {
-                        Button("해제") {
-                            onUnlink?(identity.id)
-                        }
-                        .font(.caption)
-                        .buttonStyle(.bordered)
-                        .tint(.red)
-                    }
-                }
+            if let identity {
+                Text("연동됨")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.green)
             } else {
-                Button("연동하기") {
-                    onLink?(getKeyWindow())
-                }
-                .font(.caption.weight(.semibold))
-                .buttonStyle(.borderedProminent)
-                .tint(tint)
+                Text("연동 준비 중입니다")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color(uiColor: GleaumUIColor.mutedSurface))
+                    .clipShape(Capsule())
             }
         }
         .padding(.vertical, 3)
-    }
-
-    private func getKeyWindow() -> UIWindow? {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow }
     }
 }
 
