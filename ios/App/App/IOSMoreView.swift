@@ -581,29 +581,53 @@ final class IOSMoreViewModel: ObservableObject {
         } catch {}
     }
 
+    private var activeAppleCoordinator: NativeAppleSignInCoordinator?
+    private var activeKakaoCoordinator: NativeKakaoSignInCoordinator?
+    private var activeSocialOAuthCoordinator: NativeSocialOAuthCoordinator?
+
     func linkKakao() async {
         linkingProvider = "kakao"
-        defer { linkingProvider = nil }
-
         let coordinator = NativeKakaoSignInCoordinator()
+        activeKakaoCoordinator = coordinator
+
         coordinator.start { [weak self] result in
             Task { @MainActor in
                 guard let self else { return }
+                self.activeKakaoCoordinator = nil
                 switch result {
                 case .success(let cred):
-                    do {
-                        self.identities = try await NativeAuthClient.shared.linkIdentity(
-                            provider: .kakao,
-                            idToken: cred.idToken,
-                            rawNonce: cred.rawNonce,
-                            accessToken: cred.accessToken
-                        )
-                    } catch {
-                        self.errorMessage = error.localizedDescription
+                    if !cred.idToken.isEmpty {
+                        do {
+                            self.identities = try await NativeAuthClient.shared.linkIdentity(
+                                provider: .kakao,
+                                idToken: cred.idToken,
+                                rawNonce: cred.rawNonce,
+                                accessToken: cred.accessToken
+                            )
+                            self.linkingProvider = nil
+                        } catch {
+                            if let window = self.getKeyWindow() {
+                                await self.linkSocialOAuth(provider: .kakao, window: window)
+                            } else {
+                                self.linkingProvider = nil
+                                self.errorMessage = error.localizedDescription
+                            }
+                        }
+                    } else if let window = self.getKeyWindow() {
+                        await self.linkSocialOAuth(provider: .kakao, window: window)
+                    } else {
+                        self.linkingProvider = nil
                     }
                 case .failure(let error):
                     if (error as? NativeAuthenticationCoordinatorError) != .cancelled {
-                        self.errorMessage = error.localizedDescription
+                        if let window = self.getKeyWindow() {
+                            await self.linkSocialOAuth(provider: .kakao, window: window)
+                        } else {
+                            self.linkingProvider = nil
+                            self.errorMessage = error.localizedDescription
+                        }
+                    } else {
+                        self.linkingProvider = nil
                     }
                 }
             }
@@ -616,12 +640,14 @@ final class IOSMoreViewModel: ObservableObject {
             return
         }
         linkingProvider = "apple"
-        defer { linkingProvider = nil }
-
         let coordinator = NativeAppleSignInCoordinator()
+        activeAppleCoordinator = coordinator
+
         coordinator.start(presentationWindow: window) { [weak self] result in
             Task { @MainActor in
                 guard let self else { return }
+                self.activeAppleCoordinator = nil
+                self.linkingProvider = nil
                 switch result {
                 case .success(let cred):
                     do {
@@ -647,13 +673,19 @@ final class IOSMoreViewModel: ObservableObject {
             errorMessage = "인증 화면을 준비하지 못했습니다."
             return
         }
-        linkingProvider = "google"
-        defer { linkingProvider = nil }
+        await linkSocialOAuth(provider: .google, window: window)
+    }
 
-        let coordinator = NativeSocialOAuthCoordinator(provider: .google)
-        coordinator.start(presentationWindow: window) { [weak self] result in
+    func linkSocialOAuth(provider: NativeSocialOAuthProvider, window: UIWindow) async {
+        linkingProvider = provider.rawValue
+        let coordinator = NativeSocialOAuthCoordinator(provider: provider)
+        activeSocialOAuthCoordinator = coordinator
+
+        coordinator.start(presentationWindow: window, isLinking: true) { [weak self] result in
             Task { @MainActor in
                 guard let self else { return }
+                self.activeSocialOAuthCoordinator = nil
+                self.linkingProvider = nil
                 switch result {
                 case .success:
                     if let fetched = try? await NativeAuthClient.shared.fetchIdentities() {
@@ -666,6 +698,13 @@ final class IOSMoreViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    private func getKeyWindow() -> UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
     }
 
     func unlinkIdentity(id: String) async {

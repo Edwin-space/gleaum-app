@@ -146,6 +146,7 @@ extension NativeAppleSignInCoordinator:
 
 enum NativeSocialOAuthProvider: String {
     case google
+    case kakao
 
     var prefersEphemeralSession: Bool {
         true
@@ -166,14 +167,12 @@ final class NativeKakaoSignInCoordinator {
                     }
                     return
                 }
-                guard let token,
-                      let idToken = token.idToken,
-                      !idToken.isEmpty else {
+                guard let token else {
                     completion(.failure(NativeAuthenticationCoordinatorError.missingCredential))
                     return
                 }
                 completion(.success(NativeKakaoCredential(
-                    idToken: idToken,
+                    idToken: token.idToken ?? "",
                     accessToken: token.accessToken,
                     rawNonce: rawNonce
                 )))
@@ -238,13 +237,15 @@ final class NativeSocialOAuthCoordinator: NSObject, ASWebAuthenticationPresentat
 
     func start(
         presentationWindow: UIWindow,
+        isLinking: Bool = false,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
         self.presentationWindow = presentationWindow
 
+        let path = isLinking ? "auth/v1/user/identities/authorize" : "auth/v1/authorize"
         guard var components = URLComponents(
             url: GleaumSupabaseConfiguration.app.baseURL
-                .appendingPathComponent("auth/v1/authorize"),
+                .appendingPathComponent(path),
             resolvingAgainstBaseURL: false
         ) else {
             completion(.failure(NativeAuthError.invalidConfiguration))
@@ -254,8 +255,10 @@ final class NativeSocialOAuthCoordinator: NSObject, ASWebAuthenticationPresentat
         var queryItems = [
             URLQueryItem(name: "provider", value: provider.rawValue),
             URLQueryItem(name: "redirect_to", value: "gleaum://auth/callback"),
-            URLQueryItem(name: "flow_type", value: "implicit"),
         ]
+        if !isLinking {
+            queryItems.append(URLQueryItem(name: "flow_type", value: "implicit"))
+        }
         if provider == .google {
             let forwardedParameters = #"{"prompt":"select_account"}"#
             queryItems.append(URLQueryItem(name: "prompt", value: "select_account"))
@@ -278,13 +281,17 @@ final class NativeSocialOAuthCoordinator: NSObject, ASWebAuthenticationPresentat
                     completion(.failure(NativeAuthenticationCoordinatorError.cancelled))
                     return
                 }
-                guard error == nil,
-                      let callbackURL,
-                      let sessionJSON = NativeAuthClient.sessionJSON(fromOAuthCallback: callbackURL) else {
+                guard error == nil, let callbackURL else {
                     completion(.failure(NativeAuthenticationCoordinatorError.requestFailed))
                     return
                 }
-                completion(.success(sessionJSON))
+                if isLinking {
+                    completion(.success("linked"))
+                } else if let sessionJSON = NativeAuthClient.sessionJSON(fromOAuthCallback: callbackURL) {
+                    completion(.success(sessionJSON))
+                } else {
+                    completion(.failure(NativeAuthenticationCoordinatorError.requestFailed))
+                }
             }
         }
         session.presentationContextProvider = self
