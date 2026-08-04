@@ -143,7 +143,15 @@ struct IOSMoreNavigationView: View {
                 assetName: nil,
                 systemSymbolName: "message.fill",
                 tint: Color(red: 0.98, green: 0.85, blue: 0.0),
-                identity: model.identity(for: "kakao")
+                identity: model.identity(for: "kakao"),
+                isProcessing: model.linkingProvider == "kakao",
+                canUnlink: model.canUnlink,
+                onLink: { _ in
+                    Task { await model.linkKakao() }
+                },
+                onUnlink: { id in
+                    Task { await model.unlinkIdentity(id: id) }
+                }
             )
 
             IOSSocialIdentityRow(
@@ -151,7 +159,15 @@ struct IOSMoreNavigationView: View {
                 assetName: nil,
                 systemSymbolName: "applelogo",
                 tint: .primary,
-                identity: model.identity(for: "apple")
+                identity: model.identity(for: "apple"),
+                isProcessing: model.linkingProvider == "apple",
+                canUnlink: model.canUnlink,
+                onLink: { window in
+                    Task { await model.linkApple(window: window) }
+                },
+                onUnlink: { id in
+                    Task { await model.unlinkIdentity(id: id) }
+                }
             )
 
             IOSSocialIdentityRow(
@@ -159,7 +175,15 @@ struct IOSMoreNavigationView: View {
                 assetName: "GoogleGOfficial",
                 systemSymbolName: nil,
                 tint: .red,
-                identity: model.identity(for: "google")
+                identity: model.identity(for: "google"),
+                isProcessing: model.linkingProvider == "google",
+                canUnlink: model.canUnlink,
+                onLink: { window in
+                    Task { await model.linkGoogle(window: window) }
+                },
+                onUnlink: { id in
+                    Task { await model.unlinkIdentity(id: id) }
+                }
             )
         }
     }
@@ -350,6 +374,10 @@ private struct IOSSocialIdentityRow: View {
     let systemSymbolName: String?
     let tint: Color
     let identity: NativeUserIdentity?
+    let isProcessing: Bool
+    let canUnlink: Bool
+    var onLink: ((UIWindow?) -> Void)?
+    var onUnlink: ((String) -> Void)?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -377,7 +405,7 @@ private struct IOSSocialIdentityRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("추가 연동 기능 준비 중")
+                    Text(identity != nil ? "연동 완료" : "미연동 계정")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -385,21 +413,40 @@ private struct IOSSocialIdentityRow: View {
 
             Spacer()
 
-            if let identity {
-                Text("연동됨")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.green)
+            if isProcessing {
+                ProgressView()
+                    .controlSize(.small)
+            } else if let identity {
+                HStack(spacing: 6) {
+                    Text("연동됨")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                    if canUnlink {
+                        Button("해제") {
+                            onUnlink?(identity.id)
+                        }
+                        .font(.caption)
+                        .buttonStyle(.bordered)
+                        .tint(.red)
+                    }
+                }
             } else {
-                Text("연동 준비 중입니다")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color(uiColor: GleaumUIColor.mutedSurface))
-                    .clipShape(Capsule())
+                Button("연동하기") {
+                    onLink?(getKeyWindow())
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderedProminent)
+                .tint(tint)
             }
         }
         .padding(.vertical, 3)
+    }
+
+    private func getKeyWindow() -> UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
     }
 }
 
