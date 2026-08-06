@@ -38,6 +38,20 @@ class NativeScheduleListActivity : AppCompatActivity() {
         applyLightSystemBars()
         render()
         loadSchedules()
+        checkScheduleCreatedAd(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        checkScheduleCreatedAd(intent)
+    }
+
+    private fun checkScheduleCreatedAd(currentIntent: Intent?) {
+        if (currentIntent?.getBooleanExtra("show_schedule_created_ad", false) == true) {
+            currentIntent.removeExtra("show_schedule_created_ad")
+            NativeAdFitManager.showScheduleTransitionAd(this)
+        }
     }
 
     override fun onResume() {

@@ -384,9 +384,17 @@ class NativeScheduleCreateActivity : AppCompatActivity() {
                 val saved = if (id == null) NativeScheduleApi.create(this, payload) else NativeScheduleApi.update(this, id, payload)
                 NativeAppDataCache.upsertSchedule(saved)
                 runCatching { NativeCalendarAutoSync.upsert(this, saved) }
+                if (id == null) {
+                    NativeMarketingAttribution.scheduleCreated(
+                        this,
+                        if (payload.optString("visibility") == "space") "space" else "personal",
+                    )
+                }
                 runOnUiThread {
                     saving = false
-                    startActivity(Intent(this, NativeScheduleListActivity::class.java))
+                    startActivity(Intent(this, NativeScheduleListActivity::class.java).apply {
+                        putExtra("show_schedule_created_ad", true)
+                    })
                     finish()
                 }
             } catch (e: Exception) {

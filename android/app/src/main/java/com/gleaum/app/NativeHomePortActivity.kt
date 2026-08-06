@@ -78,6 +78,14 @@ class NativeHomePortActivity : AppCompatActivity() {
         calendarExpanded = normalizedHomeLayout() == "calendar_first"
         render()
         loadHomeSummary()
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                NativeAdFitManager.handleAppExitWithAd(this@NativeHomePortActivity) {
+                    finishAffinity()
+                }
+            }
+        })
     }
 
     private fun applyLightSystemBars() {
@@ -144,6 +152,7 @@ class NativeHomePortActivity : AppCompatActivity() {
         (application as? GleaumApp)?.syncAdvertisingEligibility()
         summary = loaded
         selectedDateKey = loaded.selectedDate.takeIf { it.isNotBlank() }
+        NativeNotificationPermission.requestOnce(this)
         loading = false
         errorMessage = null
         render()
@@ -1456,7 +1465,7 @@ class NativeHomePortActivity : AppCompatActivity() {
     private fun matchWrap(): LinearLayout.LayoutParams = LinearLayout.LayoutParams(match(), wrap())
 
     companion object {
-        private const val HOME_BOTTOM_ADFIT_CLIENT_ID = "DAN-Brd0FQAE3ByDWwJu"
+        private const val HOME_BOTTOM_ADFIT_CLIENT_ID = NativeAdFitManager.ADFIT_HOME_LAUNCH_ID
         private const val TAG = "GleaumHomeAdFit"
         private const val CAPACITOR_PREFS_NAME = "CapacitorStorage"
         private const val HOME_LAYOUT_KEY = "gleaum:home-layout"

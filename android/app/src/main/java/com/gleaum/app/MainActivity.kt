@@ -55,8 +55,22 @@ class MainActivity : BridgeActivity() {
         loadStartPath(intent)
 
         createNotificationChannels()
+        NativeNotificationPermission.requestOnce(this)
         setupEdgeToEdge()
         handleIntent(intent)
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val webView = bridge?.webView
+                if (webView?.canGoBack() == true) {
+                    webView.goBack()
+                } else {
+                    NativeAdFitManager.handleAppExitWithAd(this@MainActivity) {
+                        finishAffinity()
+                    }
+                }
+            }
+        })
     }
 
     override fun onNewIntent(intent: Intent) {
