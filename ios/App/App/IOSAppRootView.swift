@@ -14,7 +14,10 @@ struct IOSAppRootView: View {
             case .signedOut:
                 IOSLoginView()
             case .onboarding:
-                IOSOnboardingView(profile: model.onboardingProfile) { profile in
+                IOSOnboardingView(
+                    profile: model.onboardingProfile,
+                    authenticationContext: model.onboardingContext
+                ) { profile in
                     await model.completeOnboarding(with: profile)
                 }
             case .authenticated:
@@ -84,6 +87,8 @@ struct IOSMainTabView: View {
     @ObservedObject var model: IOSAppModel
     @ObservedObject var store: StartupSnapshotStore
     @StateObject private var tabBarState = IOSFloatingTabBarState()
+    @Environment(\.scenePhase) private var scenePhase
+    private let adFitController = IOSAdFitAppTransitionController.shared
 
     var body: some View {
         Group {
@@ -97,10 +102,19 @@ struct IOSMainTabView: View {
         .tint(Color(uiColor: GleaumUIColor.brandTeal))
         .onChange(of: model.selectedTab) { selectedTab in
             tabBarState.activate(selectedTab)
+            adFitController.presentWhenHomeIsReady()
         }
         .onChange(of: store.accountContext?.capabilities.canViewHouseholdBudget) { canViewBudget in
             if canViewBudget != true, model.selectedTab == .budget {
                 model.selectedTab = .home
+            }
+        }
+        .onChange(of: store.accountContext?.capabilities.canShowAds) { _ in
+            adFitController.presentWhenHomeIsReady()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                adFitController.presentWhenHomeIsReady()
             }
         }
         .sheet(isPresented: $model.isPresentingNotifications) {
@@ -123,30 +137,47 @@ struct IOSMainTabView: View {
         .sheet(item: $model.presentedFamilyFlow) { route in
             IOSFamilyRouteContainer(route: route, appModel: model, store: store)
         }
+        .sheet(isPresented: spaceJoinBinding) {
+            IOSSpaceJoinView(store: store, initialCode: model.presentedSpaceJoinCode ?? "")
+        }
         .onAppear {
             tabBarState.activate(model.selectedTab, expandsBar: false)
+            adFitController.presentWhenHomeIsReady()
         }
+    }
+
+    private var spaceJoinBinding: Binding<Bool> {
+        Binding(
+            get: { model.presentedSpaceJoinCode != nil },
+            set: { if !$0 { model.presentedSpaceJoinCode = nil } }
+        )
     }
 
     @available(iOS 18.0, *)
     private var adaptiveTabs: some View {
         tabs
-            .safeAreaInset(edge: .bottom, spacing: 0) {
+            .overlay(alignment: .bottom) {
                 if !tabBarState.isHidden {
                     IOSFloatingTabBar(
                         tabs: availableTabs,
                         selection: $model.selectedTab,
                         state: tabBarState
                     )
-                    .frame(height: 76, alignment: .bottom)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: tabBarState.isCompact ? 58 : 76, alignment: .bottom)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
+            .background(
+                Color(uiColor: GleaumUIColor.background)
+                    .ignoresSafeArea()
+            )
+            .animation(.spring(response: 0.34, dampingFraction: 0.86), value: tabBarState.isCompact)
     }
 
     private var availableTabs: [IOSMainTab] {
         var result: [IOSMainTab] = [.home, .schedules, .space]
-        if store.accountContext?.capabilities.canViewHouseholdBudget == true {
+        if store.accountContext?.capabilities.canViewHouseholdBudget ?? true {
             result.append(.budget)
         }
         result.append(.more)
@@ -176,7 +207,7 @@ struct IOSMainTabView: View {
                 }
                 .tag(IOSMainTab.space)
 
-            if store.accountContext?.capabilities.canViewHouseholdBudget == true {
+            if store.accountContext?.capabilities.canViewHouseholdBudget ?? true {
                 IOSBudgetNavigationView(store: store)
                     .gleaumSystemTabBarHidden()
                     .tabItem {
@@ -419,14 +450,11 @@ private struct IOSFloatingTabBarScrollModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                // The custom floating bar lives above the system safe area.
-                // Reserve its full expanded footprint so the final row never
-                // becomes unreachable behind the bar.
-                Color.clear
-                    .frame(height: 76)
-                    .accessibilityHidden(true)
-            }
+            .contentMargins(
+                .bottom,
+                tabBarState.isHidden ? 0 : 76,
+                for: .scrollContent
+            )
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y + geometry.contentInsets.top
             } action: { _, newOffset in

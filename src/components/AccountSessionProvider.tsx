@@ -10,7 +10,11 @@ import {
   type ReactNode,
 } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { DENIED_ACCOUNT_CAPABILITIES, type AccountCapability } from '@/lib/account-capabilities';
+import {
+  DEFAULT_ACCOUNT_CAPABILITIES,
+  DENIED_ACCOUNT_CAPABILITIES,
+  type AccountCapability,
+} from '@/lib/account-capabilities';
 import type { AccountSessionContext } from '@/types';
 
 type AccountSessionStatus = 'loading' | 'ready' | 'unauthenticated' | 'error';
@@ -23,6 +27,13 @@ interface AccountSessionValue {
 }
 
 const AccountSessionContextValue = createContext<AccountSessionValue | null>(null);
+
+const RETIRED_WEB_SESSION: AccountSessionValue = {
+  context: null,
+  status: 'unauthenticated',
+  capabilities: DENIED_ACCOUNT_CAPABILITIES,
+  refresh: async () => {},
+};
 
 export function AccountSessionProvider({ children }: { children: ReactNode }) {
   const [context, setContext] = useState<AccountSessionContext | null>(null);
@@ -63,7 +74,7 @@ export function AccountSessionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AccountSessionValue>(() => ({
     context,
     status,
-    capabilities: context?.capabilities ?? DENIED_ACCOUNT_CAPABILITIES,
+    capabilities: context?.capabilities ?? (status === 'unauthenticated' ? DENIED_ACCOUNT_CAPABILITIES : DEFAULT_ACCOUNT_CAPABILITIES),
     refresh,
   }), [context, refresh, status]);
 
@@ -75,9 +86,9 @@ export function AccountSessionProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAccountSession(): AccountSessionValue {
-  const value = useContext(AccountSessionContextValue);
-  if (!value) throw new Error('useAccountSession must be used within AccountSessionProvider');
-  return value;
+  // 웹 앱 종료 후 공개 레이아웃에는 세션 공급자를 두지 않는다. 과거 기능 페이지가
+  // 빌드되는 동안에는 모든 권한을 거부한 상태로만 렌더링해 인증 통신을 재활성화하지 않는다.
+  return useContext(AccountSessionContextValue) ?? RETIRED_WEB_SESSION;
 }
 
 export function useAccountCapability(capability: AccountCapability): boolean {

@@ -19,6 +19,16 @@ export const DENIED_ACCOUNT_CAPABILITIES: Readonly<AccountCapabilities> = Object
   canShowAds: false,
 });
 
+export const DEFAULT_ACCOUNT_CAPABILITIES: Readonly<AccountCapabilities> = Object.freeze({
+  canManageSpaces: true,
+  canInviteMembers: true,
+  canViewHouseholdBudget: true,
+  canCompleteRoutine: true,
+  canUseCheckIn: false,
+  canRequestLocationPermission: false,
+  canShowAds: true,
+});
+
 export function capabilitiesForAccountMode(mode: AccountMode): AccountCapabilities {
   const isRestricted = isManagedMinorAccountMode(mode);
 

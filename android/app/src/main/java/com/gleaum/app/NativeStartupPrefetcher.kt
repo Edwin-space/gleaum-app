@@ -19,7 +19,6 @@ object NativeStartupPrefetcher {
         val appContext = context.applicationContext
         val ready = CountDownLatch(1).also { accountReady = it }
         NativeAppDataCache.clear()
-        NativeAccountContextStore.clear(appContext)
 
         executor.execute {
             runCatching { NativeAccountContextStore.refresh(appContext) }

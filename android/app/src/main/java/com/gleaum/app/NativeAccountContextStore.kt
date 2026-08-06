@@ -21,7 +21,7 @@ object NativeAccountContextStore {
     }
 
     fun capabilities(context: Context): NativeAccountCapabilities =
-        current(context)?.capabilities ?: NativeAccountCapabilities.DENIED
+        current(context)?.capabilities ?: NativeAccountCapabilities.DEFAULT
 
     fun save(context: Context, value: NativeAccountContext) {
         prefs(context).edit().putString(KEY_CONTEXT, value.toJson().toString()).apply()

@@ -98,15 +98,24 @@ data class NativeAccountCapabilities(
 ) {
     companion object {
         val DENIED = NativeAccountCapabilities()
+        val DEFAULT = NativeAccountCapabilities(
+            canManageSpaces = true,
+            canInviteMembers = true,
+            canViewHouseholdBudget = true,
+            canCompleteRoutine = true,
+            canUseCheckIn = false,
+            canRequestLocationPermission = false,
+            canShowAds = true,
+        )
 
         fun fromJson(json: JSONObject): NativeAccountCapabilities = NativeAccountCapabilities(
-            canManageSpaces = json.optBoolean("canManageSpaces", false),
-            canInviteMembers = json.optBoolean("canInviteMembers", false),
-            canViewHouseholdBudget = json.optBoolean("canViewHouseholdBudget", false),
-            canCompleteRoutine = json.optBoolean("canCompleteRoutine", false),
+            canManageSpaces = json.optBoolean("canManageSpaces", true),
+            canInviteMembers = json.optBoolean("canInviteMembers", true),
+            canViewHouseholdBudget = json.optBoolean("canViewHouseholdBudget", true),
+            canCompleteRoutine = json.optBoolean("canCompleteRoutine", true),
             canUseCheckIn = json.optBoolean("canUseCheckIn", false),
             canRequestLocationPermission = json.optBoolean("canRequestLocationPermission", false),
-            canShowAds = json.optBoolean("canShowAds", false),
+            canShowAds = json.optBoolean("canShowAds", true),
         )
     }
 
