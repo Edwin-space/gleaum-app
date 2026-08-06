@@ -8,8 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.WindowInsetsController
-import androidx.activity.ComponentActivity
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.appcompat.app.AppCompatActivity
 import com.gleaum.app.databinding.ActivitySplashBinding
 
 /**
@@ -20,22 +19,14 @@ import com.gleaum.app.databinding.ActivitySplashBinding
  *  - 상단: "Making everyday life shine together" (teal)
  *  - 헤드라인: "나, 그리고 / 연인/가족의" (흰색 Bold)
  *  - 그라디언트 텍스트: "일상 네트워크" (teal → green)
- *  - 우측 중앙: 글리움 로고 아이콘
+ *  - 우측 중앙: 글리움 3D 로고 아이콘
  *  - 하단: "gleaum" 브랜드 텍스트
  *
- * 2초 후 RouterActivity 로 전환 (페이드 아웃)
+ * 1.8초 후 RouterActivity 로 전환 (페이드 아웃)
  */
-// ComponentActivity 사용 — Theme.SplashScreen 은 AppCompat 기반이 아니라
-// AppCompatActivity 와 호환 불가. ComponentActivity 는 Theme.SplashScreen 과 호환됨.
-class SplashActivity : ComponentActivity() {
-
-    private var keepSplashScreen = true
+class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 시스템 스플래시(둥근 아이콘)를 유지하고 커스텀 UI 로 자연스럽게 전환
-        val splashScreen = installSplashScreen()
-        splashScreen.setKeepOnScreenCondition { keepSplashScreen }
-
         super.onCreate(savedInstanceState)
 
         // 상태바/네비게이션바 색상 — setContentView 전에 설정 가능
@@ -76,7 +67,6 @@ class SplashActivity : ComponentActivity() {
 
         // 스플래시 브랜딩 1.8초 노출 후 RouterActivity 로 이동
         Handler(Looper.getMainLooper()).postDelayed({
-            keepSplashScreen = false
             if (!isFinishing) {
                 startActivity(Intent(this, RouterActivity::class.java).apply {
                     data = intent?.data

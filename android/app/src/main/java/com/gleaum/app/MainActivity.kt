@@ -58,6 +58,7 @@ class MainActivity : BridgeActivity() {
         NativeNotificationPermission.requestOnce(this)
         setupEdgeToEdge()
         handleIntent(intent)
+        NativeAdFitManager.preloadExitAd(this)
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

@@ -95,6 +95,7 @@ class NativeHomePortActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyLightSystemBars()
+        NativeAdFitManager.preloadExitAd(this)
         if (!loading && summary != null && NativeAppDataCache.home == null) {
             loadHomeSummary(force = true)
         }

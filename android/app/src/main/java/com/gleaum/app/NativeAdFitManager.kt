@@ -20,6 +20,9 @@ object NativeAdFitManager {
     const val ADFIT_SCHEDULE_TRANSITION_ID = "DAN-VG6AtTLdBJTNevr6" // 일정 등록 완료 후 전환 팝업
     const val ADFIT_APP_EXIT_ID = "DAN-41h5P4d0nqgrMVmK"             // 뒤로가기 앱 종료 팝업
 
+    private var exitAdLoader: AdFitPopupAdLoader? = null
+    private var preloadedExitAd: AdFitPopupAd? = null
+
     /**
      * 일정 등록 완료 후 일정 화면으로 복귀할 때 띄우는 앱 전환 팝업 광고
      */
@@ -69,18 +72,45 @@ object NativeAdFitManager {
     }
 
     /**
+     * 앱 화면(홈/메인) 진입 시 앱 종료 광고를 사전 로드합니다.
+     */
+    fun preloadExitAd(activity: FragmentActivity) {
+        if (activity.isFinishing || activity.isDestroyed || !NativeAccountContextStore.capabilities(activity).canShowAds) {
+            return
+        }
+        if (preloadedExitAd != null) return
+
+        val loader = AdFitPopupAdLoader.create(activity, ADFIT_APP_EXIT_ID)
+        exitAdLoader = loader
+
+        val request = AdFitPopupAdRequest.Builder(AdFitPopupAd.Type.Exit)
+            .setTestModeEnabled(BuildConfig.DEBUG)
+            .build()
+
+        loader.loadAd(
+            request,
+            object : AdFitPopupAdLoader.OnAdLoadListener {
+                override fun onAdLoaded(ad: AdFitPopupAd) {
+                    if (activity.isFinishing || activity.isDestroyed) {
+                        return
+                    }
+                    preloadedExitAd = ad
+                    Log.d(TAG, "App exit ad preloaded successfully")
+                }
+
+                override fun onAdLoadError(errorCode: Int) {
+                    Log.w(TAG, "App exit ad preload error: $errorCode")
+                }
+            }
+        )
+    }
+
+    /**
      * 뒤로가기 키로 앱을 종료하는 구간에서 띄우는 앱 종료 팝업 광고.
-     * 팝업에서 종료 확정, 닫기, 백버튼 클릭 이벤트 수신 시 앱을 완전히 종료(finishAffinity)합니다.
+     * 사전 로드된 광고가 있으면 즉시 띄우고, 없으면 라이브 요청 후 팝업을 표시합니다.
      */
     fun handleAppExitWithAd(activity: FragmentActivity, onFallbackExit: () -> Unit = { activity.finishAffinity() }) {
         if (activity.isFinishing || activity.isDestroyed || !NativeAccountContextStore.capabilities(activity).canShowAds) {
-            onFallbackExit()
-            return
-        }
-
-        val loader = AdFitPopupAdLoader.create(activity, ADFIT_APP_EXIT_ID)
-        if (loader.isBlockedByRequestPolicy) {
-            Log.d(TAG, "App exit ad blocked by request policy")
             onFallbackExit()
             return
         }
@@ -102,6 +132,25 @@ object NativeAdFitManager {
             }
         }
 
+        val ad = preloadedExitAd
+        if (ad != null) {
+            preloadedExitAd = null
+            runCatching {
+                AdFitPopupAdDialogFragment.Builder(ad)
+                    .setNavigationBarColor(
+                        NativeTheme.background(activity),
+                        !NativeTheme.isDark(activity)
+                    )
+                    .build()
+                    .show(activity.supportFragmentManager, AdFitPopupAdDialogFragment.TAG)
+            }.onFailure {
+                Log.w(TAG, "Preloaded exit ad show failed", it)
+                onFallbackExit()
+            }
+            return
+        }
+
+        val loader = AdFitPopupAdLoader.create(activity, ADFIT_APP_EXIT_ID)
         val request = AdFitPopupAdRequest.Builder(AdFitPopupAd.Type.Exit)
             .setTestModeEnabled(BuildConfig.DEBUG)
             .build()
@@ -109,15 +158,14 @@ object NativeAdFitManager {
         val requested = loader.loadAd(
             request,
             object : AdFitPopupAdLoader.OnAdLoadListener {
-                override fun onAdLoaded(ad: AdFitPopupAd) {
+                override fun onAdLoaded(loadedAd: AdFitPopupAd) {
                     if (activity.isFinishing || activity.isDestroyed || !NativeAccountContextStore.capabilities(activity).canShowAds) {
-                        loader.destroy()
                         onFallbackExit()
                         return
                     }
                     activity.runOnUiThread {
                         runCatching {
-                            AdFitPopupAdDialogFragment.Builder(ad)
+                            AdFitPopupAdDialogFragment.Builder(loadedAd)
                                 .setNavigationBarColor(
                                     NativeTheme.background(activity),
                                     !NativeTheme.isDark(activity)
@@ -141,5 +189,11 @@ object NativeAdFitManager {
         if (!requested) {
             onFallbackExit()
         }
+    }
+
+    fun destroy() {
+        exitAdLoader?.destroy()
+        exitAdLoader = null
+        preloadedExitAd = null
     }
 }
