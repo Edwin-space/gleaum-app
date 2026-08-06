@@ -30,6 +30,14 @@
 				<string>gleaum</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>KakaoSDK</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakao91f44190b16410348f8784b29ae314d0</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
@@ -37,12 +45,22 @@
 	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5dmpkc2VzY3VrYWVvcmN1YWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUxNDksImV4cCI6MjA5MzA2MTE0OX0.oFPpDadJIGbEe7du222Wr0ZdRnBJp46-v7oQbBfszqE</string>
 	<key>GleaumSupabaseURL</key>
 	<string>https://tyvjdsescukaeorcuaga.supabase.co</string>
+	<key>GleaumKakaoNativeAppKey</key>
+	<string>91f44190b16410348f8784b29ae314d0</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaokompassauth</string>
+	</array>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>글리움 일정을 iPhone 캘린더에 저장하고 중복 내보내기를 확인하기 위해 캘린더 접근이 필요합니다.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>글리움 일정을 iPhone 캘린더에 저장하고 중복 내보내기를 확인하기 위해 캘린더 접근이 필요합니다.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>앱 잠금 해제를 위해 Face ID를 사용합니다.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>맞춤형 광고 제공과 광고 성과 측정을 위해 기기 식별자 사용 권한이 필요합니다.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
@@ -74,6 +92,8 @@
 	<false/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>맞춤형 광고 제공 및 광고 성과 측정을 위해 권한을 요청합니다.</string>
 	<key>WKAppBoundDomains</key>
 	<array>
 		<string>gleaum.com</string>
