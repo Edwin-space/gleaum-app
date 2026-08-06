@@ -29,9 +29,12 @@ import com.gleaum.app.databinding.ActivitySplashBinding
 // AppCompatActivity 와 호환 불가. ComponentActivity 는 Theme.SplashScreen 과 호환됨.
 class SplashActivity : ComponentActivity() {
 
+    private var keepSplashScreen = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 시스템 스플래시(둥근 아이콘)를 즉시 제거하고 커스텀 UI 로 전환
-        installSplashScreen()
+        // 시스템 스플래시(둥근 아이콘)를 유지하고 커스텀 UI 로 자연스럽게 전환
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { keepSplashScreen }
 
         super.onCreate(savedInstanceState)
 
@@ -71,8 +74,9 @@ class SplashActivity : ComponentActivity() {
             }
         }
 
-        // 2초 후 RouterActivity 로 이동
+        // 스플래시 브랜딩 1.8초 노출 후 RouterActivity 로 이동
         Handler(Looper.getMainLooper()).postDelayed({
+            keepSplashScreen = false
             if (!isFinishing) {
                 startActivity(Intent(this, RouterActivity::class.java).apply {
                     data = intent?.data
@@ -83,6 +87,6 @@ class SplashActivity : ComponentActivity() {
                 @Suppress("DEPRECATION")
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             }
-        }, 2000L)
+        }, 1800L)
     }
 }

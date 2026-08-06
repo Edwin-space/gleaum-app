@@ -16,7 +16,7 @@ object NativeAdFitManager {
     private const val TAG = "GleaumAdFit"
 
     // ── Kakao AdFit Ad Unit IDs ───────────────────────────────────────
-    const val ADFIT_HOME_LAUNCH_ID = "DAN-8GjjSLh3IXRv8FGt"          // 홈/스플래시 앱 진입 전환 팝업
+    const val ADFIT_HOME_LAUNCH_ID = "DAN-Brd0FQAE3ByDWwJu"          // 홈/스플래시 앱 진입 전환 팝업
     const val ADFIT_SCHEDULE_TRANSITION_ID = "DAN-VG6AtTLdBJTNevr6" // 일정 등록 완료 후 전환 팝업
     const val ADFIT_APP_EXIT_ID = "DAN-41h5P4d0nqgrMVmK"             // 뒤로가기 앱 종료 팝업
 
